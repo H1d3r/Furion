@@ -162,7 +162,7 @@ public static class Policy
     /// <returns>
     ///     <see cref="CompositePolicy" />
     /// </returns>
-    public static CompositePolicy Composite(IEnumerable<PolicyBase<object>> policies) => new(policies);
+    public static CompositePolicy Composite(params IEnumerable<PolicyBase<object>> policies) => new(policies);
 
     /// <summary>
     ///     并发锁策略
@@ -312,7 +312,7 @@ public static class Policy<TResult>
     /// <returns>
     ///     <see cref="CompositePolicy{TResult}" />
     /// </returns>
-    public static CompositePolicy<TResult> Composite(IEnumerable<PolicyBase<TResult>> policies) => new(policies);
+    public static CompositePolicy<TResult> Composite(params IEnumerable<PolicyBase<TResult>> policies) => new(policies);
 
     /// <summary>
     ///     初始化并发锁策略

@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Reflection;
+
 namespace Furion.HttpRemote;
 
 /// <summary>
@@ -158,4 +160,20 @@ internal sealed partial class HttpRemoteService
     public Task SendAsync(HttpLongPollingBuilder httpLongPollingBuilder, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default) =>
         new LongPollingManager(this, httpLongPollingBuilder, configure).StartAsync(cancellationToken);
+
+    /// <inheritdoc />
+    public object? Declarative(MethodInfo method, object[] args) =>
+        SendAs(HttpRequestBuilder.Declarative(method, args));
+
+    /// <inheritdoc />
+    public Task<T?> DeclarativeAsync<T>(MethodInfo method, object[] args) =>
+        SendAsAsync<T>(HttpRequestBuilder.Declarative(method, args));
+
+    /// <inheritdoc />
+    public object? SendAs(HttpDeclarativeBuilder httpDeclarativeBuilder) =>
+        new DeclarativeManager(this, httpDeclarativeBuilder).Start();
+
+    /// <inheritdoc />
+    public Task<T?> SendAsAsync<T>(HttpDeclarativeBuilder httpDeclarativeBuilder) =>
+        new DeclarativeManager(this, httpDeclarativeBuilder).StartAsync<T>();
 }

@@ -50,7 +50,7 @@ public sealed class CompositePolicy : CompositePolicy<object>
     ///     <inheritdoc cref="CompositePolicy" />
     /// </summary>
     /// <param name="policies">策略集合</param>
-    public CompositePolicy(IEnumerable<PolicyBase<object>> policies)
+    public CompositePolicy(params IEnumerable<PolicyBase<object>> policies)
         : base(policies)
     {
     }
@@ -79,7 +79,7 @@ public class CompositePolicy<TResult> : PolicyBase<TResult>
     ///     <inheritdoc cref="CompositePolicy{TResult}" />
     /// </summary>
     /// <param name="policies">策略集合</param>
-    public CompositePolicy(IEnumerable<PolicyBase<TResult>> policies)
+    public CompositePolicy(params IEnumerable<PolicyBase<TResult>> policies)
         : this() =>
         Join(policies);
 
@@ -117,7 +117,7 @@ public class CompositePolicy<TResult> : PolicyBase<TResult>
     /// <returns>
     ///     <see cref="CompositePolicy{TResult}" />
     /// </returns>
-    public CompositePolicy<TResult> Join(IEnumerable<PolicyBase<TResult>> policies) => Join(policies.ToArray());
+    public CompositePolicy<TResult> Join(params IEnumerable<PolicyBase<TResult>> policies) => Join(policies.ToArray());
 
     /// <summary>
     ///     添加执行失败时操作方法
@@ -229,7 +229,7 @@ public class CompositePolicy<TResult> : PolicyBase<TResult>
     /// </summary>
     /// <param name="policies">策略集合</param>
     /// <exception cref="ArgumentException"></exception>
-    internal static void EnsureLegalData(IEnumerable<PolicyBase<TResult>?> policies)
+    internal static void EnsureLegalData(params IEnumerable<PolicyBase<TResult>?> policies)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(policies);

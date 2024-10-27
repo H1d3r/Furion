@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -35,6 +36,46 @@ namespace Furion.Extensions;
 /// </summary>
 internal static class TypeExtensions
 {
+    /// <summary>
+    ///     检查类型是否是数组或集合类型
+    /// </summary>
+    /// <param name="type">
+    ///     <see cref="Type" />
+    /// </param>
+    /// <param name="underlyingType">元素类型</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal static bool IsArrayOrCollection(this Type type, [NotNullWhen(true)] out Type? underlyingType)
+    {
+        underlyingType = null;
+
+        // 检查类型是否是数组类型
+        if (type.IsArray)
+        {
+            underlyingType = type.GetElementType()!;
+            return true;
+        }
+
+        // 如果不是泛型类型
+        if (!type.IsGenericType)
+        {
+            return false;
+        }
+
+        // 获取泛型参数
+        var genericArguments = type.GetGenericArguments();
+
+        // 检查类型是否是为单个泛型参数类型且实现了 IEnumerable<> 接口
+        if (genericArguments.Length != 1 || !typeof(IEnumerable<>).IsDefinitionEquals(type))
+        {
+            return false;
+        }
+
+        underlyingType = genericArguments[0];
+        return true;
+    }
+
     /// <summary>
     ///     检查类型是否是基本类型
     /// </summary>
@@ -69,6 +110,19 @@ internal static class TypeExtensions
             type = underlyingType;
         }
     }
+
+    /// <summary>
+    ///     检查类型是否是基本类型或枚举类型或由它们组成的数组或集合类型
+    /// </summary>
+    /// <param name="type">
+    ///     <see cref="Type" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal static bool IsBaseTypeOrEnumOrCollection(this Type type) =>
+        type.IsBasicType() || type.IsEnum || (type.IsArrayOrCollection(out var underlyingType) &&
+                                              underlyingType.IsBaseTypeOrEnumOrCollection());
 
     /// <summary>
     ///     检查类型是否是静态类型
@@ -205,6 +259,47 @@ internal static class TypeExtensions
                    && compareType.IsGenericType
                    && type.IsGenericTypeDefinition // 💡
                    && type == compareType.GetGenericTypeDefinition());
+    }
+
+    /// <summary>
+    ///     检查类型和指定类型定义是否相等
+    /// </summary>
+    /// <remarks>将查找所有派生的基类和实现的接口。</remarks>
+    /// <param name="type">
+    ///     <see cref="Type" />
+    /// </param>
+    /// <param name="compareType">
+    ///     <see cref="Type" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal static bool IsDefinitionEquals(this Type type, Type? compareType)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(compareType);
+
+        // 检查类型和指定类型定义是否相等
+        if (type.IsDefinitionEqual(compareType))
+        {
+            return true;
+        }
+
+        // 递归查找所有基类
+        var baseType = compareType.BaseType;
+        while (baseType is not null && baseType != typeof(object))
+        {
+            // 检查类型和指定类型定义是否相等
+            if (type.IsDefinitionEqual(baseType))
+            {
+                return true;
+            }
+
+            baseType = baseType.BaseType;
+        }
+
+        // 检查所有实现的接口定义是否一致
+        return compareType.GetInterfaces().Any(type.IsDefinitionEqual);
     }
 
     /// <summary>

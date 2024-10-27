@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Reflection;
@@ -241,7 +242,8 @@ internal static class ObjectExtensions
             // 尝试查找对象类型的所有公开且可读的实例属性集合并转换为字典类型并返回
             return objType.GetProperties(bindingFlags)
                 .Where(property => property.CanRead)
-                .ToDictionary(object (property) => property.Name, property => property.GetValue(obj));
+                .ToDictionary(object (property) => AliasAsUtility.GetPropertyName(property, out _),
+                    property => property.GetValue(obj));
         }
         catch (Exception e)
         {
@@ -257,8 +259,8 @@ internal static class ObjectExtensions
     ///     <see cref="object" />
     /// </param>
     /// <param name="path">模板路径。支持 <c>{Key}</c> 或 <c>{Key.Property}</c> 或 {Key.Property.NestProperty} 语法格式。</param>
-    /// <param name="modelName">模板字符串中对象名；默认值为：<c>model</c>。</param>
-    /// <param name="isMatch">用于检查是否以 <c>modelName.</c> 开头</param>
+    /// <param name="prefix">模板字符串前缀；默认值为：<c>model</c>。</param>
+    /// <param name="isMatch">用于检查是否以 <c>prefix.</c> 开头</param>
     /// <param name="bindingFlags">
     ///     <see cref="BindingFlags" />
     /// </param>
@@ -266,22 +268,22 @@ internal static class ObjectExtensions
     ///     <see cref="object" />
     /// </returns>
     internal static object? GetPropertyValueFromPath(this object obj, string path, out bool isMatch,
-        string modelName = "model",
+        string prefix = "model",
         BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(obj);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        ArgumentException.ThrowIfNullOrWhiteSpace(modelName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
 
         // 初始化 isMatch 返回值
         isMatch = false;
 
         // 移除前后空格
-        var modelNameTrim = modelName.Trim();
+        var prefixTrim = prefix.Trim();
 
-        // 如果 templatePath 与 modelName 相等则直接返回 obj
-        if (path.Trim() == modelNameTrim)
+        // 如果 templatePath 与 prefix 相等则直接返回 obj
+        if (path.Trim() == prefixTrim)
         {
             return obj;
         }
@@ -289,8 +291,8 @@ internal static class ObjectExtensions
         // 根据 . 将路径分割成多个部分
         var parts = path.Split('.', StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToArray();
 
-        // 检查首个元素是否等于 modelName 的值，如果是则跳过首元素
-        if (parts.Length > 0 && parts[0] == modelNameTrim)
+        // 检查首个元素是否等于 prefix 的值，如果是则跳过首元素
+        if (parts.Length > 0 && parts[0] == prefixTrim)
         {
             isMatch = true;
             parts = parts.Skip(1).ToArray();
@@ -319,6 +321,13 @@ internal static class ObjectExtensions
             {
                 return null;
             }
+        }
+
+        // 处理 IEnumerable<T> 类型，使用 string.Join 进行拼接
+        if (current is IEnumerable enumerable and not string &&
+            typeof(IEnumerable<>).IsDefinitionEquals(current.GetType()))
+        {
+            current = string.Join(',', enumerable.Cast<object>());
         }
 
         return current;
