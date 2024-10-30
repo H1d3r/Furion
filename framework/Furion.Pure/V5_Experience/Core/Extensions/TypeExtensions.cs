@@ -212,7 +212,7 @@ internal static class TypeExtensions
     /// <param name="type">
     ///     <see cref="Type" />
     /// </param>
-    /// <param name="inherit">是否查找基类型特性</param>
+    /// <param name="inherit">是否在基类中搜索</param>
     /// <returns>
     ///     <typeparamref name="TAttribute" />
     /// </returns>

@@ -26,34 +26,32 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     请求标头特性
+///     Cookie 特性
 /// </summary>
-/// <remarks>支持指定多次。</remarks>
+/// <remarks>支持多次指定。</remarks>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface | AttributeTargets.Parameter,
     AllowMultiple = true)]
-public sealed class HeadersAttribute : Attribute
+public sealed class CookieAttribute : Attribute
 {
     /// <summary>
-    ///     <see cref="Values" /> 私有字段
+    ///     <see cref="Value" /> 私有字段
     /// </summary>
-    private object? _values;
+    private object? _value;
 
     /// <summary>
-    ///     <inheritdoc cref="HeadersAttribute" />
+    ///     <inheritdoc cref="CookieAttribute" />
     /// </summary>
-    /// <remarks>作用于参数</remarks>
-#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
-    public HeadersAttribute()
-#pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
+    /// <remarks>特性作用于参数时有效。</remarks>
+    public CookieAttribute()
     {
     }
 
     /// <summary>
-    ///     <inheritdoc cref="HeadersAttribute" />
+    ///     <inheritdoc cref="CookieAttribute" />
     /// </summary>
-    /// <remarks>当用于方法或接口时，则进行移除指定标头操作。</remarks>
-    /// <param name="name">标头</param>
-    public HeadersAttribute(string name)
+    /// <remarks>当特性作用于方法或接口时，则表示移除指定 Cookie 操作。</remarks>
+    /// <param name="name">Cookie</param>
+    public CookieAttribute(string name)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -62,40 +60,45 @@ public sealed class HeadersAttribute : Attribute
     }
 
     /// <summary>
-    ///     <inheritdoc cref="HeadersAttribute" />
+    ///     <inheritdoc cref="CookieAttribute" />
     /// </summary>
-    /// <param name="name">标头</param>
-    /// <param name="value">标头的值</param>
-    public HeadersAttribute(string name, object? value)
+    /// <param name="name">Cookie</param>
+    /// <param name="value">Cookie 的值</param>
+    public CookieAttribute(string name, object? value)
         : this(name) =>
-        Values = value;
+        Value = value;
 
     /// <summary>
-    ///     标头
+    ///     Cookie
     /// </summary>
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>
-    ///     标头的值
+    ///     Cookie 的值
     /// </summary>
-    public object? Values
+    public object? Value
     {
-        get => _values;
+        get => _value;
         set
         {
-            _values = value;
-            HasSetValues = true;
+            _value = value;
+            HasSetValue = true;
         }
     }
 
     /// <summary>
     ///     别名
     /// </summary>
-    /// <remarks>当用于参数时有效。</remarks>
+    /// <remarks>特性用于参数时有效。</remarks>
     public string? AliasAs { get; set; }
 
     /// <summary>
-    ///     是否设置了标头的值
+    ///     是否转义
     /// </summary>
-    internal bool HasSetValues { get; private set; }
+    public bool Escape { get; set; }
+
+    /// <summary>
+    ///     是否设置了值
+    /// </summary>
+    internal bool HasSetValue { get; private set; }
 }

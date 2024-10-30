@@ -28,12 +28,20 @@ namespace Furion.HttpRemote;
 /// <summary>
 ///     查询参数特性
 /// </summary>
-[AttributeUsage(AttributeTargets.Parameter)]
+/// <remarks>支持多次指定。</remarks>
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface | AttributeTargets.Parameter,
+    AllowMultiple = true)]
 public sealed class QueryAttribute : Attribute
 {
     /// <summary>
+    ///     <see cref="Value" /> 私有字段
+    /// </summary>
+    private object? _value;
+
+    /// <summary>
     ///     <inheritdoc cref="QueryAttribute" />
     /// </summary>
+    /// <remarks>特性作用于参数时有效。</remarks>
     public QueryAttribute()
     {
     }
@@ -41,12 +49,47 @@ public sealed class QueryAttribute : Attribute
     /// <summary>
     ///     <inheritdoc cref="QueryAttribute" />
     /// </summary>
-    /// <param name="aliasAs">别名</param>
-    public QueryAttribute(string aliasAs) => AliasAs = aliasAs;
+    /// <remarks>当特性作用于方法或接口时，则表示移除指定查询参数操作。</remarks>
+    /// <param name="name">查询参数</param>
+    public QueryAttribute(string name)
+    {
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        Name = name;
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="QueryAttribute" />
+    /// </summary>
+    /// <param name="name">查询参数</param>
+    /// <param name="value">查询参数的值</param>
+    public QueryAttribute(string name, object? value)
+        : this(name) =>
+        Value = value;
+
+    /// <summary>
+    ///     查询参数
+    /// </summary>
+    public string? Name { get; set; }
+
+    /// <summary>
+    ///     查询参数的值
+    /// </summary>
+    public object? Value
+    {
+        get => _value;
+        set
+        {
+            _value = value;
+            HasSetValue = true;
+        }
+    }
 
     /// <summary>
     ///     别名
     /// </summary>
+    /// <remarks>特性用于参数时有效。</remarks>
     public string? AliasAs { get; set; }
 
     /// <summary>
@@ -57,5 +100,11 @@ public sealed class QueryAttribute : Attribute
     /// <summary>
     ///     参数前缀
     /// </summary>
+    /// <remarks>作用于对象类型时有效。</remarks>
     public string? Prefix { get; set; }
+
+    /// <summary>
+    ///     是否设置了值
+    /// </summary>
+    internal bool HasSetValue { get; private set; }
 }

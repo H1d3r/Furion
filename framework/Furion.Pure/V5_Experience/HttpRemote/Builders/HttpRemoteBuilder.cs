@@ -47,7 +47,12 @@ public sealed class HttpRemoteBuilder
     internal IList<Func<IEnumerable<IHttpContentProcessor>>>? _httpContentProcessorProviders;
 
     /// <summary>
-    ///     <see cref="IHttpDeclarative" /> 集合
+    ///     <see cref="IHttpDeclarativeExtractor" /> 集合
+    /// </summary>
+    internal IList<Func<IEnumerable<IHttpDeclarativeExtractor>>>? _httpDeclarativeExtractors;
+
+    /// <summary>
+    ///     <see cref="IHttpDeclarative" /> 类型集合
     /// </summary>
     internal HashSet<Type>? _httpDeclarativeTypes;
 
@@ -193,9 +198,9 @@ public sealed class HttpRemoteBuilder
     /// <returns>
     ///     <see cref="HttpRemoteBuilder" />
     /// </returns>
-    public HttpRemoteBuilder AddDeclarative<TDeclarative>()
+    public HttpRemoteBuilder AddHttpDeclarative<TDeclarative>()
         where TDeclarative : IHttpDeclarative =>
-        AddDeclarative(typeof(TDeclarative));
+        AddHttpDeclarative(typeof(TDeclarative));
 
     /// <summary>
     ///     添加 HTTP 声明式服务
@@ -207,7 +212,7 @@ public sealed class HttpRemoteBuilder
     ///     <see cref="HttpRemoteBuilder" />
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public HttpRemoteBuilder AddDeclarative(Type declarativeType)
+    public HttpRemoteBuilder AddHttpDeclarative(Type declarativeType)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(declarativeType);
@@ -234,12 +239,12 @@ public sealed class HttpRemoteBuilder
     /// <returns>
     ///     <see cref="HttpRemoteBuilder" />
     /// </returns>
-    public HttpRemoteBuilder AddDeclarativeFromAssemblies(params IEnumerable<Assembly> assemblies)
+    public HttpRemoteBuilder AddHttpDeclarativeFromAssemblies(params IEnumerable<Assembly> assemblies)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(assemblies);
 
-        AddDeclaratives(assemblies.SelectMany(s =>
+        AddHttpDeclaratives(assemblies.SelectMany(s =>
             s.GetExportedTypes().Where(t => t.IsInterface && typeof(IHttpDeclarative).IsAssignableFrom(t))));
 
         return this;
@@ -255,15 +260,35 @@ public sealed class HttpRemoteBuilder
     ///     <see cref="HttpRemoteBuilder" />
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    public HttpRemoteBuilder AddDeclaratives(params IEnumerable<Type> declarativeTypes)
+    public HttpRemoteBuilder AddHttpDeclaratives(params IEnumerable<Type> declarativeTypes)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(declarativeTypes);
 
         foreach (var declarativeType in declarativeTypes)
         {
-            AddDeclarative(declarativeType);
+            AddHttpDeclarative(declarativeType);
         }
+
+        return this;
+    }
+
+    /// <summary>
+    ///     添加 HTTP 声明式 <see cref="IHttpDeclarativeExtractor" /> 集合提取器
+    /// </summary>
+    /// <remarks>支持多次调用。</remarks>
+    /// <param name="configure"><see cref="IHttpDeclarativeExtractor" /> 实例提供器</param>
+    /// <returns>
+    ///     <see cref="HttpRemoteBuilder" />
+    /// </returns>
+    public HttpRemoteBuilder AddHttpDeclarativeExtractors(Func<IEnumerable<IHttpDeclarativeExtractor>> configure)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(configure);
+
+        _httpDeclarativeExtractors ??= new List<Func<IEnumerable<IHttpDeclarativeExtractor>>>();
+
+        _httpDeclarativeExtractors.Add(configure);
 
         return this;
     }
@@ -309,7 +334,8 @@ public sealed class HttpRemoteBuilder
                 new HttpRemoteOptions
                 {
                     DefaultContentType = DefaultContentType ?? Constants.DEFAULT_CONTENT_TYPE,
-                    DefaultFileDownloadDirectory = DefaultFileDownloadDirectory
+                    DefaultFileDownloadDirectory = DefaultFileDownloadDirectory,
+                    HttpDeclarativeExtractors = _httpDeclarativeExtractors?.AsReadOnly()
                 }));
 
         // 注册或替换 IObjectContentConverterFactory 工厂
@@ -346,8 +372,12 @@ public sealed class HttpRemoteBuilder
             services.TryAddSingleton(httpDeclarativeType, provider =>
             {
                 // 创建 HTTP 远程请求声明式代理实例
-                dynamic httpDeclarative =
-                    DispatchProxyAsync.Create(httpDeclarativeType, httpDeclarativeDispatchProxyType);
+                var httpDeclarative =
+                    DispatchProxyAsync.Create(httpDeclarativeType, httpDeclarativeDispatchProxyType) as
+                        HttpDeclarativeDispatchProxy;
+
+                // 空检查
+                ArgumentNullException.ThrowIfNull(httpDeclarative);
 
                 // 解析 IHttpRemoteService 服务并设置给 RemoteService 属性
                 httpDeclarative.RemoteService = provider.GetRequiredService<IHttpRemoteService>();
