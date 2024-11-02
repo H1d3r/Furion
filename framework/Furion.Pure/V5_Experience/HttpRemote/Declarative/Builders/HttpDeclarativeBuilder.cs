@@ -39,6 +39,7 @@ public sealed class HttpDeclarativeBuilder
     /// </summary>
     internal static readonly Dictionary<Type, IHttpDeclarativeExtractor> _extractors = new()
     {
+        { typeof(ValidationAttributeDeclarativeExtractor), new ValidationAttributeDeclarativeExtractor() },
         { typeof(HttpClientNameDeclarativeExtractor), new HttpClientNameDeclarativeExtractor() },
         { typeof(TraceIdentifierDeclarativeExtractor), new TraceIdentifierDeclarativeExtractor() },
         { typeof(ProfilerDeclarativeExtractor), new ProfilerDeclarativeExtractor() },
