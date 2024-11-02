@@ -26,7 +26,7 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     跟踪标识特性
+///     HTTP 声明式跟踪标识特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
 public sealed class TraceIdentifierAttribute : Attribute

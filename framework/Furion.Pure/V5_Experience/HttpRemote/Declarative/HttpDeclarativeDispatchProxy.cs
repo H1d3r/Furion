@@ -28,12 +28,12 @@ using System.Reflection;
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 远程请求声明式代理类
+///     HTTP 声明式远程请求代理类
 /// </summary>
 public class HttpDeclarativeDispatchProxy : DispatchProxyAsync
 {
     /// <inheritdoc cref="IHttpRemoteService" />
-    internal IHttpRemoteService RemoteService { get; set; } = null!;
+    public IHttpRemoteService RemoteService { get; internal set; } = null!;
 
     /// <inheritdoc />
     public override object Invoke(MethodInfo method, object[] args) => RemoteService.Declarative(method, args)!;

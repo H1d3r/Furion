@@ -30,7 +30,7 @@ using System.Reflection;
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="HeaderAttribute" /> 特性提取器
+///     HTTP 声明式 <see cref="HeaderAttribute" /> 特性提取器
 /// </summary>
 internal sealed class HeaderDeclarativeExtractor : IHttpDeclarativeExtractor
 {
@@ -69,7 +69,7 @@ internal sealed class HeaderDeclarativeExtractor : IHttpDeclarativeExtractor
 
         /* 情况二：当特性作用于参数时 */
 
-        // 查找所有贴有 [Header] 特性的参数
+        // 查找所有贴有 [Header] 特性的参数集合
         var headerParameters = context.Parameters.Where(u =>
                 HttpDeclarativeExtractorContext.FilterSpecialParameter(u.Key) &&
                 u.Key.IsDefined(typeof(HeaderAttribute), true))

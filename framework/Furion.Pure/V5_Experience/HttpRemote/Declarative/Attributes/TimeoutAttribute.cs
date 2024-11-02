@@ -26,7 +26,7 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     超时时间特性
+///     HTTP 声明式超时时间特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
 public sealed class TimeoutAttribute : Attribute

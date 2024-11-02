@@ -29,7 +29,7 @@ using Furion.Utilities;
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     路径参数提取器
+///     HTTP 声明式 路径参数提取器
 /// </summary>
 internal sealed class PathDeclarativeExtractor : IHttpDeclarativeExtractor
 {
@@ -54,7 +54,7 @@ internal sealed class PathDeclarativeExtractor : IHttpDeclarativeExtractor
 
         /* 情况二：将所有非特殊参数添加到路径参数中 */
 
-        // 查找所有路径参数
+        // 查找所有路径参数集合
         var pathParameters = context.Parameters
             .Where(u => HttpDeclarativeExtractorContext.FilterSpecialParameter(u.Key)).ToArray();
 

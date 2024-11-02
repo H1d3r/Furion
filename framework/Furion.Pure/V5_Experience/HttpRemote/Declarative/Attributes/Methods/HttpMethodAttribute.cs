@@ -26,7 +26,7 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 远程请求声明式请求方式特性
+///     HTTP 声明式请求方式特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public class HttpMethodAttribute : Attribute

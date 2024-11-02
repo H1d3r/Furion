@@ -26,7 +26,7 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     启用请求分析工具特性
+///     HTTP 声明式启用请求分析工具特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
 public sealed class ProfilerAttribute : Attribute

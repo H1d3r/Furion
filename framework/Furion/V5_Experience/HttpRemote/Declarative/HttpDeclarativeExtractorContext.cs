@@ -33,7 +33,7 @@ namespace Furion.HttpRemote;
 public sealed class HttpDeclarativeExtractorContext
 {
     /// <summary>
-    ///     特殊参数类型
+    ///     特殊类型参数集合
     /// </summary>
     internal static Type[] _specialParameterTypes =
     [
@@ -76,7 +76,7 @@ public sealed class HttpDeclarativeExtractorContext
     public IReadOnlyDictionary<ParameterInfo, object?> Parameters { get; }
 
     /// <summary>
-    ///     过滤特殊参数类型
+    ///     过滤特殊类型参数
     /// </summary>
     /// <param name="parameter">
     ///     <see cref="ParameterInfo" />
