@@ -26,18 +26,19 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式提取器
+///     HTTP 声明式客户端所偏好的自然语言和区域特性
 /// </summary>
-public interface IHttpDeclarativeExtractor
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
+public sealed class AcceptLanguageAttribute : Attribute
 {
     /// <summary>
-    ///     提取方法信息构建 <see cref="HttpRequestBuilder" /> 实例
+    ///     <inheritdoc cref="AcceptLanguageAttribute" />
     /// </summary>
-    /// <param name="httpRequestBuilder">
-    ///     <see cref="HttpRequestBuilder" />
-    /// </param>
-    /// <param name="context">
-    ///     <see cref="HttpDeclarativeExtractorContext" />
-    /// </param>
-    void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context);
+    /// <param name="language">自然语言和区域设置</param>
+    public AcceptLanguageAttribute(string? language) => Language = language;
+
+    /// <summary>
+    ///     自然语言和区域设置
+    /// </summary>
+    public string? Language { get; set; }
 }

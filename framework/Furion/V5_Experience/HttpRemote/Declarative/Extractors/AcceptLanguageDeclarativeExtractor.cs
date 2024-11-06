@@ -23,21 +23,25 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Extensions;
+
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式提取器
+///     HTTP 声明式 <see cref="AcceptLanguageAttribute" /> 特性提取器
 /// </summary>
-public interface IHttpDeclarativeExtractor
+internal sealed class AcceptLanguageDeclarativeExtractor : IHttpDeclarativeExtractor
 {
-    /// <summary>
-    ///     提取方法信息构建 <see cref="HttpRequestBuilder" /> 实例
-    /// </summary>
-    /// <param name="httpRequestBuilder">
-    ///     <see cref="HttpRequestBuilder" />
-    /// </param>
-    /// <param name="context">
-    ///     <see cref="HttpDeclarativeExtractorContext" />
-    /// </param>
-    void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context);
+    /// <inheritdoc />
+    public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
+    {
+        // 检查方法或接口是否贴有 [AcceptLanguage] 特性
+        if (!context.Method.IsDefined<AcceptLanguageAttribute>(out var acceptLanguageAttribute, true))
+        {
+            return;
+        }
+
+        // 设置客户端所偏好的自然语言和区域设置
+        httpRequestBuilder.AcceptLanguage(acceptLanguageAttribute.Language);
+    }
 }
