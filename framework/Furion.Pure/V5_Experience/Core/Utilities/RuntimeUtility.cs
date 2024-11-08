@@ -23,16 +23,46 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-namespace Furion.HttpRemote;
+using System.Runtime.InteropServices;
+
+namespace Furion.Utilities;
 
 /// <summary>
-///     HTTP 声明式模拟浏览器环境特性
+///     提供运行时实用方法
 /// </summary>
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
-public sealed class SimulateBrowserAttribute : Attribute
+public static class RuntimeUtility
 {
     /// <summary>
-    ///     是否模拟移动端，默认值为：<c>false</c>（即模拟桌面端）
+    ///     获取操作系统描述
     /// </summary>
-    public bool Mobile { get; set; }
+    public static string OSDescription => RuntimeInformation.OSDescription;
+
+    /// <summary>
+    ///     获取操作系统基本名称
+    /// </summary>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    public static string GetOSName()
+    {
+        // 检查操作系统是否是 Windows 平台
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return "Windows";
+        }
+
+        // 检查操作系统是否是 Linux 平台
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return "Linux";
+        }
+
+        // 检查操作系统是否是 macOS 平台
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            return "macOS";
+        }
+
+        return "Unknown";
+    }
 }

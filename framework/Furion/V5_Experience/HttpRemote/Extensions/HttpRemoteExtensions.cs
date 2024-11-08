@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Extensions;
 using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -57,7 +58,9 @@ public static class HttpRemoteExtensions
     /// </returns>
     public static string? ProfilerHeaders(this HttpRequestMessage httpRequestMessage,
         string? summary = "Request Headers") =>
-        StringUtility.FormatKeyValuesSummary(httpRequestMessage.Headers, summary);
+        StringUtility.FormatKeyValuesSummary(
+            httpRequestMessage.Headers.ConcatIgnoreNull(httpRequestMessage.Content?.Headers),
+            summary);
 
     /// <summary>
     ///     分析 <see cref="HttpResponseMessage" /> 标头
@@ -71,7 +74,8 @@ public static class HttpRemoteExtensions
     /// </returns>
     public static string? ProfilerHeaders(this HttpResponseMessage httpResponseMessage,
         string? summary = "Response Headers") =>
-        StringUtility.FormatKeyValuesSummary(httpResponseMessage.Headers.Concat(httpResponseMessage.Content.Headers),
+        StringUtility.FormatKeyValuesSummary(
+            httpResponseMessage.Headers.ConcatIgnoreNull(httpResponseMessage.Content.Headers),
             summary);
 
     /// <summary>
@@ -99,6 +103,9 @@ public static class HttpRemoteExtensions
         // 空检查
         ArgumentNullException.ThrowIfNull(httpRequestMessage);
 
+        // 获取 HttpContent 实例
+        var httpContent = httpRequestMessage.Content;
+
         // 格式化常规条目
         var generalEntry = StringUtility.FormatKeyValuesSummary(new[]
         {
@@ -106,8 +113,10 @@ public static class HttpRemoteExtensions
                 [httpRequestMessage.RequestUri?.OriginalString!]),
             new KeyValuePair<string, IEnumerable<string>>("HTTP Method", [httpRequestMessage.Method.ToString()]),
             new KeyValuePair<string, IEnumerable<string>>("Status Code",
-                [$"{(int)httpResponseMessage.StatusCode} {httpResponseMessage.StatusCode}"])
-        }.Concat(generalCustomKeyValues ?? []), generalSummary);
+                [$"{(int)httpResponseMessage.StatusCode} {httpResponseMessage.StatusCode}"]),
+            new KeyValuePair<string, IEnumerable<string>>("HTTP Content",
+                [$"{httpContent?.GetType().Name}"])
+        }.ConcatIgnoreNull(generalCustomKeyValues), generalSummary);
 
         // 格式化响应条目
         var responseEntry = httpResponseMessage.ProfilerHeaders(responseSummary);
