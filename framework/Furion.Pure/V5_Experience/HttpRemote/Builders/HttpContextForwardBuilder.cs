@@ -129,13 +129,16 @@ public sealed class HttpContextForwardBuilder
     internal void CopyQueryAndRouteValues(HttpRequestBuilder httpRequestBuilder)
     {
         // 获取查询参数集合
-        var queryValues = HttpContext.Request.Query;
+        var queryValues = HttpContext.Request.Query.ToArray();
 
         // 空检查
-        if (queryValues.Count > 0)
+        if (queryValues.Length > 0)
         {
+            // 将查询参数添加到查询参数集合中
+            httpRequestBuilder.WithQueryParameters(queryValues);
+
             // 将查询参数添加到路径参数集合中
-            httpRequestBuilder.WithPathParameters(queryValues.ToDictionary(u => u.Key, u => u.Value.ToString()));
+            httpRequestBuilder.WithPathParameters(queryValues);
         }
 
         // 获取路由参数集合
@@ -357,26 +360,36 @@ public sealed class HttpContextForwardBuilder
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
+    /// <exception cref="InvalidOperationException"></exception>
     internal async Task<Stream> ReadBodyAsync(HttpRequestBuilder httpRequestBuilder)
     {
-        // 获取 HttpRequest 实例
-        var httpRequest = HttpContext.Request;
+        try
+        {
+            // 获取 HttpRequest 实例
+            var httpRequest = HttpContext.Request;
 
-        // 将请求体流的位置重置回起始位置
-        httpRequest.Body.Position = 0;
+            // 将请求体流的位置重置回起始位置
+            httpRequest.Body.Position = 0;
 
-        // 初始化 MemoryStream 实例
-        var memoryStream = new MemoryStream();
+            // 初始化 MemoryStream 实例
+            var memoryStream = new MemoryStream();
 
-        // 将请求体流复制到内存流
-        await httpRequest.Body.CopyToAsync(memoryStream, HttpContext.RequestAborted);
+            // 将请求体流复制到内存流
+            await httpRequest.Body.CopyToAsync(memoryStream, HttpContext.RequestAborted);
 
-        // 将内存流的位置重置到起始位置
-        memoryStream.Position = 0;
+            // 将内存流的位置重置到起始位置
+            memoryStream.Position = 0;
 
-        // 添加内存流到请求结束时需要释放的集合中
-        httpRequestBuilder.AddDisposable(memoryStream);
+            // 添加内存流到请求结束时需要释放的集合中
+            httpRequestBuilder.AddDisposable(memoryStream);
 
-        return memoryStream;
+            return memoryStream;
+        }
+        // 捕获不支持 Body 流重复读异常
+        catch (NotSupportedException e)
+        {
+            throw new InvalidOperationException(
+                "Please ensure that the `app.UseEnableBuffering()` middleware is registered.", e);
+        }
     }
 }

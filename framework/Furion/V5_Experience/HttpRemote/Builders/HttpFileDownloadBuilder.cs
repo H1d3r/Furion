@@ -28,7 +28,7 @@ namespace Furion.HttpRemote;
 /// <summary>
 ///     HTTP 文件下载构建器
 /// </summary>
-/// <remarks>使用 <c>HttpRequestBuilder.Download(requestUri, destinationPath)</c> 静态方法创建。</remarks>
+/// <remarks>使用 <c>HttpRequestBuilder.DownloadFile(requestUri, destinationPath)</c> 静态方法创建。</remarks>
 public sealed class HttpFileDownloadBuilder
 {
     /// <summary>

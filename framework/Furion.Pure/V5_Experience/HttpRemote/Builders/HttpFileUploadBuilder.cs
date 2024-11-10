@@ -32,7 +32,7 @@ namespace Furion.HttpRemote;
 /// <summary>
 ///     HTTP 文件上传构建器
 /// </summary>
-/// <remarks>使用 <c>HttpRequestBuilder.Upload(requestUri, fileFullName, name)</c> 静态方法创建。</remarks>
+/// <remarks>使用 <c>HttpRequestBuilder.UploadFile(requestUri, fileFullName, name)</c> 静态方法创建。</remarks>
 public sealed class HttpFileUploadBuilder
 {
     /// <summary>
