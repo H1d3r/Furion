@@ -26,6 +26,27 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     用于标识无需接收 HTTP 远程请求返回值
+///     <see cref="VoidContent" /> 内容转换器
 /// </summary>
-public sealed class DoesNoReceiveContent;
+public class VoidContentConverter : IHttpContentConverter<VoidContent>
+{
+    /// <inheritdoc />
+    public virtual VoidContent?
+        Read(HttpResponseMessage httpResponseMessage, CancellationToken cancellationToken = default) =>
+        default;
+
+    /// <inheritdoc />
+    public virtual Task<VoidContent?> ReadAsync(HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult<VoidContent?>(default);
+
+    /// <inheritdoc />
+    public virtual object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) =>
+        Read(httpResponseMessage, cancellationToken);
+
+    /// <inheritdoc />
+    public virtual async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) =>
+        await ReadAsync(httpResponseMessage, cancellationToken);
+}
