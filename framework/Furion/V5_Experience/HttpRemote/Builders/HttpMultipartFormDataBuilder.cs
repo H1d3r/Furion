@@ -24,11 +24,11 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Furion.Utilities;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Channels;
 
 namespace Furion.HttpRemote;
@@ -97,8 +97,20 @@ public sealed class HttpMultipartFormDataBuilder
         // 空检查
         ArgumentNullException.ThrowIfNull(rawJson);
 
-        // 解析 JSON 字符串类型
-        var rawObject = rawJson is string jsonString ? JsonDocument.Parse(jsonString) : rawJson;
+        var rawObject = rawJson;
+
+        // 检查是否是字符串类型
+        if (rawJson is not string rawString)
+        {
+            return AddRaw(rawObject, null, MediaTypeNames.Application.Json, contentEncoding);
+        }
+
+        // 尝试验证并获取 JsonDocument 实例（需 using）
+        var jsonDocument = JsonUtility.Parse(rawString);
+        rawObject = jsonDocument;
+
+        // 添加请求结束时需要释放的对象
+        _httpRequestBuilder.AddDisposable(jsonDocument);
 
         return AddRaw(rawObject, null, MediaTypeNames.Application.Json, contentEncoding);
     }
@@ -277,37 +289,37 @@ public sealed class HttpMultipartFormDataBuilder
     /// <summary>
     ///     从本地路径中添加文件
     /// </summary>
-    /// <param name="fileFullName">文件完整路径</param>
+    /// <param name="filePath">文件路径</param>
     /// <param name="name">表单名称</param>
     /// <param name="contentType">内容类型</param>
     /// <param name="contentEncoding">内容编码</param>
     /// <returns>
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
-    public HttpMultipartFormDataBuilder AddFileAsStream(string fileFullName, string name,
+    public HttpMultipartFormDataBuilder AddFileAsStream(string filePath, string name,
         string contentType = "application/octet-stream", Encoding? contentEncoding = null)
     {
         // 空检查
-        ArgumentException.ThrowIfNullOrWhiteSpace(fileFullName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         // 检查文件是否存在
-        if (!File.Exists(fileFullName))
+        if (!File.Exists(filePath))
         {
-            throw new FileNotFoundException($"The specified file `{fileFullName}` does not exist.");
+            throw new FileNotFoundException($"The specified file `{filePath}` does not exist.");
         }
 
         // 获取文件名
-        var fileName = Path.GetFileName(fileFullName);
+        var fileName = Path.GetFileName(filePath);
 
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
         // 读取文件流（没有 using）
-        var fileStream = File.OpenRead(fileFullName);
+        var fileStream = File.OpenRead(filePath);
 
         // 获取文件信息
-        var fileInfo = new FileInfo(fileFullName);
+        var fileInfo = new FileInfo(filePath);
         var fileLength = fileInfo.Length;
 
         // 添加文件流到请求结束时需要释放的集合中
@@ -319,7 +331,7 @@ public sealed class HttpMultipartFormDataBuilder
     /// <summary>
     ///     从本地路径中添加文件（带上传进度）
     /// </summary>
-    /// <param name="fileFullName">文件完整路径</param>
+    /// <param name="filePath">文件路径</param>
     /// <param name="name">表单名称</param>
     /// <param name="progressChannel">文件传输进度信息的通道</param>
     /// <param name="contentType">内容类型</param>
@@ -327,36 +339,36 @@ public sealed class HttpMultipartFormDataBuilder
     /// <returns>
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
-    public HttpMultipartFormDataBuilder AddFileWithProgressAsStream(string fileFullName, string name,
-        Channel<FileTransferProgress> progressChannel,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null)
+    public HttpMultipartFormDataBuilder AddFileWithProgressAsStream(string filePath, string name,
+        Channel<FileTransferProgress> progressChannel, string contentType = "application/octet-stream",
+        Encoding? contentEncoding = null)
     {
         // 空检查
-        ArgumentException.ThrowIfNullOrWhiteSpace(fileFullName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentNullException.ThrowIfNull(progressChannel);
 
         // 检查文件是否存在
-        if (!File.Exists(fileFullName))
+        if (!File.Exists(filePath))
         {
-            throw new FileNotFoundException($"The specified file `{fileFullName}` does not exist.");
+            throw new FileNotFoundException($"The specified file `{filePath}` does not exist.");
         }
 
         // 获取文件名
-        var fileName = Path.GetFileName(fileFullName);
+        var fileName = Path.GetFileName(filePath);
 
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
         // 读取文件流（没有 using）
-        var fileStream = File.OpenRead(fileFullName);
+        var fileStream = File.OpenRead(filePath);
 
         // 获取文件信息
-        var fileInfo = new FileInfo(fileFullName);
+        var fileInfo = new FileInfo(filePath);
         var fileLength = fileInfo.Length;
 
         // 初始化带读写进度的文件流
-        var progressFileStream = new ProgressFileStream(fileStream, fileFullName, fileLength, progressChannel);
+        var progressFileStream = new ProgressFileStream(fileStream, filePath, fileLength, progressChannel);
 
         // 添加文件流到请求结束时需要释放的集合中
         _httpRequestBuilder.AddDisposable(progressFileStream);
@@ -367,37 +379,37 @@ public sealed class HttpMultipartFormDataBuilder
     /// <summary>
     ///     从本地路径中添加文件
     /// </summary>
-    /// <param name="fileFullName">文件完整路径</param>
+    /// <param name="filePath">文件路径</param>
     /// <param name="name">表单名称</param>
     /// <param name="contentType">内容类型</param>
     /// <param name="contentEncoding">内容编码</param>
     /// <returns>
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
-    public HttpMultipartFormDataBuilder AddFileAsByteArray(string fileFullName, string name,
+    public HttpMultipartFormDataBuilder AddFileAsByteArray(string filePath, string name,
         string contentType = "application/octet-stream", Encoding? contentEncoding = null)
     {
         // 空检查
-        ArgumentException.ThrowIfNullOrWhiteSpace(fileFullName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         // 检查文件是否存在
-        if (!File.Exists(fileFullName))
+        if (!File.Exists(filePath))
         {
-            throw new FileNotFoundException($"The specified file `{fileFullName}` does not exist.");
+            throw new FileNotFoundException($"The specified file `{filePath}` does not exist.");
         }
 
         // 获取文件名
-        var fileName = Path.GetFileName(fileFullName);
+        var fileName = Path.GetFileName(filePath);
 
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
         // 读取文件字节数组
-        var bytes = File.ReadAllBytes(fileFullName);
+        var bytes = File.ReadAllBytes(filePath);
 
         // 获取文件信息
-        var fileInfo = new FileInfo(fileFullName);
+        var fileInfo = new FileInfo(filePath);
         var fileLength = fileInfo.Length;
 
         return AddByteArray(bytes, name, fileName, fileLength, contentType, contentEncoding);

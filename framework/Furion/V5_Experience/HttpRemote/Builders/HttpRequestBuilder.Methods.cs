@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Furion.Utilities;
 using Microsoft.Net.Http.Headers;
 using System.Globalization;
 using System.Net.Http.Headers;
@@ -124,8 +125,26 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder SetJsonContent(object? rawJson, Encoding? contentEncoding = null) =>
-        SetRawContent(rawJson, MediaTypeNames.Application.Json, contentEncoding);
+    /// <exception cref="JsonException"></exception>
+    public HttpRequestBuilder SetJsonContent(object? rawJson, Encoding? contentEncoding = null)
+    {
+        var rawObject = rawJson;
+
+        // 检查是否是字符串类型
+        if (rawJson is not string rawString)
+        {
+            return SetRawContent(rawObject, MediaTypeNames.Application.Json, contentEncoding);
+        }
+
+        // 尝试验证并获取 JsonDocument 实例（需 using）
+        var jsonDocument = JsonUtility.Parse(rawString);
+        rawObject = jsonDocument;
+
+        // 添加请求结束时需要释放的对象
+        AddDisposable(jsonDocument);
+
+        return SetRawContent(rawObject, MediaTypeNames.Application.Json, contentEncoding);
+    }
 
     /// <summary>
     ///     设置 HTML 内容

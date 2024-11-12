@@ -106,7 +106,7 @@ public partial interface IHttpRemoteService
     ///     上传文件
     /// </summary>
     /// <param name="requestUri">请求地址</param>
-    /// <param name="fileFullName">文件完整路径</param>
+    /// <param name="filePath">文件路径</param>
     /// <param name="name">表单名称；默认值为 <c>file</c>。</param>
     /// <param name="onProgressChanged">用于传输进度发生变化时执行的委托</param>
     /// <param name="configure">自定义配置委托</param>
@@ -116,16 +116,15 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="HttpResponseMessage" />
     /// </returns>
-    HttpResponseMessage UploadFile(string? requestUri, string fileFullName, string name = "file",
-        Func<FileTransferProgress, Task>? onProgressChanged = null,
-        Action<HttpRequestBuilder>? configure = null,
+    HttpResponseMessage UploadFile(string? requestUri, string filePath, string name = "file",
+        Func<FileTransferProgress, Task>? onProgressChanged = null, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     ///     上传文件
     /// </summary>
     /// <param name="requestUri">请求地址</param>
-    /// <param name="fileFullName">文件完整路径</param>
+    /// <param name="filePath">文件路径</param>
     /// <param name="name">表单名称；默认值为 <c>file</c>。</param>
     /// <param name="onProgressChanged">用于传输进度发生变化时执行的委托</param>
     /// <param name="configure">自定义配置委托</param>
@@ -135,9 +134,8 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Task{TResult}" />
     /// </returns>
-    Task<HttpResponseMessage> UploadFileAsync(string? requestUri, string fileFullName, string name = "file",
-        Func<FileTransferProgress, Task>? onProgressChanged = null,
-        Action<HttpRequestBuilder>? configure = null,
+    Task<HttpResponseMessage> UploadFileAsync(string? requestUri, string filePath, string name = "file",
+        Func<FileTransferProgress, Task>? onProgressChanged = null, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
