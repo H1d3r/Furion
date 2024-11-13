@@ -1,7 +1,8 @@
 <Project>
 	<PropertyGroup>
+		<LangVersion>preview</LangVersion>
 		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-		<Version>4.9.5.19</Version>
+		<Version>4.9.5.21</Version>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<Authors>百小僧</Authors>
@@ -29,10 +30,6 @@
 
 	<PropertyGroup>
 		<DocumentationFile>$(MSBuildProjectName).xml</DocumentationFile>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
