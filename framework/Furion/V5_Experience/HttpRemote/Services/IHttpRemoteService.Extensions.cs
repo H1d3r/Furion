@@ -110,6 +110,7 @@ public partial interface IHttpRemoteService
     /// <param name="name">表单名称；默认值为 <c>file</c>。</param>
     /// <param name="onProgressChanged">用于传输进度发生变化时执行的委托</param>
     /// <param name="configure">自定义配置委托</param>
+    /// <param name="fileName">文件的名称</param>
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
@@ -118,7 +119,7 @@ public partial interface IHttpRemoteService
     /// </returns>
     HttpResponseMessage UploadFile(string? requestUri, string filePath, string name = "file",
         Func<FileTransferProgress, Task>? onProgressChanged = null, Action<HttpRequestBuilder>? configure = null,
-        CancellationToken cancellationToken = default);
+        string? fileName = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     ///     上传文件
@@ -128,6 +129,7 @@ public partial interface IHttpRemoteService
     /// <param name="name">表单名称；默认值为 <c>file</c>。</param>
     /// <param name="onProgressChanged">用于传输进度发生变化时执行的委托</param>
     /// <param name="configure">自定义配置委托</param>
+    /// <param name="fileName">文件的名称</param>
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
@@ -136,7 +138,7 @@ public partial interface IHttpRemoteService
     /// </returns>
     Task<HttpResponseMessage> UploadFileAsync(string? requestUri, string filePath, string name = "file",
         Func<FileTransferProgress, Task>? onProgressChanged = null, Action<HttpRequestBuilder>? configure = null,
-        CancellationToken cancellationToken = default);
+        string? fileName = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     ///     上传文件

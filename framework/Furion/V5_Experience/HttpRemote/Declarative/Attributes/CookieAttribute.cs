@@ -34,11 +34,6 @@ namespace Furion.HttpRemote;
 public sealed class CookieAttribute : Attribute
 {
     /// <summary>
-    ///     <see cref="Value" /> 私有字段
-    /// </summary>
-    private object? _value;
-
-    /// <summary>
     ///     <inheritdoc cref="CookieAttribute" />
     /// </summary>
     /// <remarks>特性作用于参数时有效。</remarks>
@@ -78,10 +73,10 @@ public sealed class CookieAttribute : Attribute
     /// </summary>
     public object? Value
     {
-        get => _value;
+        get;
         set
         {
-            _value = value;
+            field = value;
             HasSetValue = true;
         }
     }

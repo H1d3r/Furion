@@ -26,32 +26,33 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式请求内容特性
+///     HTTP 声明式多部分内容表单特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Parameter)]
-public sealed class BodyAttribute : Attribute
+public sealed class MultipartAttribute : Attribute
 {
     /// <summary>
-    ///     <inheritdoc cref="BodyAttribute" />
+    ///     <inheritdoc cref="MultipartAttribute" />
     /// </summary>
-    public BodyAttribute()
+    public MultipartAttribute()
     {
     }
 
     /// <summary>
     ///     <inheritdoc cref="BodyAttribute" />
     /// </summary>
-    /// <param name="contentType">内容类型</param>
-    public BodyAttribute(string contentType) => ContentType = contentType;
+    /// <param name="name">表单名称</param>
+    public MultipartAttribute(string name) => Name = name;
 
     /// <summary>
-    ///     <inheritdoc cref="QueryAttribute" />
+    ///     表单名称
     /// </summary>
-    /// <param name="contentType">内容类型</param>
-    /// <param name="contentEncoding">内容编码</param>
-    public BodyAttribute(string contentType, string contentEncoding)
-        : this(contentType) =>
-        ContentEncoding = contentEncoding;
+    public string? Name { get; set; }
+
+    /// <summary>
+    ///     文件的名称
+    /// </summary>
+    public string? FileName { get; set; }
 
     /// <summary>
     ///     内容类型
@@ -64,8 +65,17 @@ public sealed class BodyAttribute : Attribute
     public string? ContentEncoding { get; set; }
 
     /// <summary>
-    ///     是否使用 <see cref="StringContent" /> 构建 <see cref="FormUrlEncodedContent" />。默认 <c>false</c>
+    ///     将字符串作为多部分表单文件的来源
     /// </summary>
-    /// <remarks>当 <see cref="ContentType" /> 值为 <c>application/x-www-form-urlencoded</c> 时有效。</remarks>
-    public bool UseStringContent { get; set; }
+    /// <remarks>用于读取多部分内容表单文件。当参数类型为 <see cref="string" /> 时有效。</remarks>
+    public FileSourceType AsFileFrom { get; set; }
+
+    /// <summary>
+    ///     表示是否作为表单的一项
+    /// </summary>
+    /// <remarks>
+    ///     <para>当参数类型为对象类型时有效。</para>
+    ///     <para>该属性值为 <c>true</c> 时作为表单的一项。否则将遍历对象类型的每一个公开属性作为表单的项。默认值为：<c>true</c>。</para>
+    /// </remarks>
+    public bool AsFormItem { get; set; } = true;
 }

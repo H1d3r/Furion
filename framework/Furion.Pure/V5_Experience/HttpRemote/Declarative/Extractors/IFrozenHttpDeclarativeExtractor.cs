@@ -23,56 +23,15 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Text;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="MultipartFormDataContent" /> 条目
+///     HTTP 声明式提取器排序（冻结）
 /// </summary>
-internal sealed class MultipartFormDataItem
+public interface IFrozenHttpDeclarativeExtractor : IHttpDeclarativeExtractor
 {
     /// <summary>
-    ///     <inheritdoc cref="MultipartFormDataItem" />
+    ///     获取提取器的顺序值。值越小，提取器越晚被调用
     /// </summary>
-    /// <param name="name">表单名称</param>
-    internal MultipartFormDataItem(string name)
-    {
-        // 空检查
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-
-        Name = name;
-    }
-
-    /// <summary>
-    ///     表单名称
-    /// </summary>
-    internal string Name { get; }
-
-    /// <summary>
-    ///     内容类型
-    /// </summary>
-    internal string? ContentType { get; init; }
-
-    /// <summary>
-    ///     内容编码
-    /// </summary>
-    /// <remarks>默认值为 <c>utf-8</c> 编码。</remarks>
-    internal Encoding? ContentEncoding { get; init; } = Encoding.UTF8;
-
-    /// <summary>
-    ///     原始请求内容
-    /// </summary>
-    /// <remarks>此属性值最终将转换为 <see cref="HttpContent" /> 类型实例。</remarks>
-    internal object? RawContent { get; init; }
-
-    /// <summary>
-    ///     文件的名称
-    /// </summary>
-    internal string? FileName { get; init; }
-
-    /// <summary>
-    ///     文件大小
-    /// </summary>
-    internal long? FileSize { get; init; }
+    int Order { get; }
 }

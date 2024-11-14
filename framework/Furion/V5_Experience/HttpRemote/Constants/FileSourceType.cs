@@ -26,46 +26,28 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式请求内容特性
+///     指定多部分内容表单文件的来源类型
 /// </summary>
-[AttributeUsage(AttributeTargets.Parameter)]
-public sealed class BodyAttribute : Attribute
+public enum FileSourceType
 {
     /// <summary>
-    ///     <inheritdoc cref="BodyAttribute" />
+    ///     缺省值
     /// </summary>
-    public BodyAttribute()
-    {
-    }
+    /// <remarks>不用作为文件的来源。</remarks>
+    None = 0,
 
     /// <summary>
-    ///     <inheritdoc cref="BodyAttribute" />
+    ///     文件路径
     /// </summary>
-    /// <param name="contentType">内容类型</param>
-    public BodyAttribute(string contentType) => ContentType = contentType;
+    Path,
 
     /// <summary>
-    ///     <inheritdoc cref="QueryAttribute" />
+    ///     Base64 字符串
     /// </summary>
-    /// <param name="contentType">内容类型</param>
-    /// <param name="contentEncoding">内容编码</param>
-    public BodyAttribute(string contentType, string contentEncoding)
-        : this(contentType) =>
-        ContentEncoding = contentEncoding;
+    Base64String,
 
     /// <summary>
-    ///     内容类型
+    ///     互联网地址
     /// </summary>
-    public string? ContentType { get; set; }
-
-    /// <summary>
-    ///     内容编码
-    /// </summary>
-    public string? ContentEncoding { get; set; }
-
-    /// <summary>
-    ///     是否使用 <see cref="StringContent" /> 构建 <see cref="FormUrlEncodedContent" />。默认 <c>false</c>
-    /// </summary>
-    /// <remarks>当 <see cref="ContentType" /> 值为 <c>application/x-www-form-urlencoded</c> 时有效。</remarks>
-    public bool UseStringContent { get; set; }
+    Remote
 }

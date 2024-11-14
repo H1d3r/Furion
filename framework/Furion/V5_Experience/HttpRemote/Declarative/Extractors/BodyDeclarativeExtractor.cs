@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Extensions;
+using System.Net.Mime;
 using System.Reflection;
 
 namespace Furion.HttpRemote;
@@ -37,7 +39,7 @@ internal sealed class BodyDeclarativeExtractor : IHttpDeclarativeExtractor
     {
         // 查找单个贴有 [Body] 特性的参数
         var bodyParameter = context.Parameters.SingleOrDefault(u =>
-            HttpDeclarativeExtractorContext.FilterSpecialParameter(u.Key) &&
+            !HttpDeclarativeExtractorContext.IsFrozenParameter(u.Key) &&
             u.Key.IsDefined(typeof(BodyAttribute), true));
 
         // 解析参数信息
@@ -57,6 +59,13 @@ internal sealed class BodyDeclarativeExtractor : IHttpDeclarativeExtractor
 
         // 设置原始请求内容
         httpRequestBuilder.SetRawContent(value, bodyAttribute.ContentType);
+
+        // 检查是否启用 StringContent 方式构建 application/x-www-form-urlencoded 请求内容
+        if (httpRequestBuilder.ContentType.IsIn([MediaTypeNames.Application.FormUrlEncoded]) &&
+            bodyAttribute.UseStringContent)
+        {
+            httpRequestBuilder.AddHttpContentProcessors(() => [new StringContentForFormUrlEncodedContentProcessor()]);
+        }
 
         // 设置内容编码
         if (!string.IsNullOrWhiteSpace(bodyAttribute.ContentEncoding))

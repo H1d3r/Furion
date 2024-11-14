@@ -26,18 +26,32 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式 <see cref="MultipartContent" /> 请求内容提取器
+///     HTTP 声明式 <see cref="HttpMultipartFormDataBuilder" /> 多部分内容表单配置提取器
 /// </summary>
-internal sealed class MultipartBodyDeclarativeExtractor : IHttpDeclarativeExtractor
+internal sealed class HttpMultipartFormDataBuilderDeclarativeExtractor : IFrozenHttpDeclarativeExtractor
 {
     /// <inheritdoc />
     public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
     {
         // 尝试解析单个 Action<HttpMultipartFormDataBuilder> 类型参数
-        if (context.Args.SingleOrDefault(u => u is Action<HttpMultipartFormDataBuilder>) is
-            Action<HttpMultipartFormDataBuilder> multipartContentBuilderAction)
+        if (context.Args.SingleOrDefault(u => u is Action<HttpMultipartFormDataBuilder>) is not
+            Action<HttpMultipartFormDataBuilder> multipartFormDataBuilderAction)
         {
-            httpRequestBuilder.SetMultipartContent(multipartContentBuilderAction);
+            return;
+        }
+
+        // 处理和 [Multipart] 特性冲突问题
+        if (httpRequestBuilder.MultipartFormDataBuilder is not null)
+        {
+            multipartFormDataBuilderAction.Invoke(httpRequestBuilder.MultipartFormDataBuilder);
+        }
+        else
+        {
+            // 设置多部分内容表单
+            httpRequestBuilder.SetMultipartContent(multipartFormDataBuilderAction);
         }
     }
+
+    /// <inheritdoc />
+    public int Order => 2;
 }

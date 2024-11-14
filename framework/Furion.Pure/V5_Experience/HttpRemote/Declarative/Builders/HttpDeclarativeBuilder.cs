@@ -23,7 +23,10 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 using Furion.Extensions;
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace Furion.HttpRemote;
@@ -37,26 +40,33 @@ public sealed class HttpDeclarativeBuilder
     /// <summary>
     ///     HTTP 声明式 <see cref="IHttpDeclarativeExtractor" /> 提取器集合
     /// </summary>
-    internal static readonly Dictionary<Type, IHttpDeclarativeExtractor> _extractors = new()
-    {
-        { typeof(ValidationDeclarativeExtractor), new ValidationDeclarativeExtractor() },
-        { typeof(HttpClientNameDeclarativeExtractor), new HttpClientNameDeclarativeExtractor() },
-        { typeof(TraceIdentifierDeclarativeExtractor), new TraceIdentifierDeclarativeExtractor() },
-        { typeof(ProfilerDeclarativeExtractor), new ProfilerDeclarativeExtractor() },
-        { typeof(SimulateBrowserDeclarativeExtractor), new SimulateBrowserDeclarativeExtractor() },
-        { typeof(AcceptLanguageDeclarativeExtractor), new AcceptLanguageDeclarativeExtractor() },
-        { typeof(DisableCacheDeclarativeExtractor), new DisableCacheDeclarativeExtractor() },
-        { typeof(EnsureSuccessStatusCodeDeclarativeExtractor), new EnsureSuccessStatusCodeDeclarativeExtractor() },
-        { typeof(TimeoutDeclarativeExtractor), new TimeoutDeclarativeExtractor() },
-        { typeof(QueryDeclarativeExtractor), new QueryDeclarativeExtractor() },
-        { typeof(PathDeclarativeExtractor), new PathDeclarativeExtractor() },
-        { typeof(CookieDeclarativeExtractor), new CookieDeclarativeExtractor() },
-        { typeof(HeaderDeclarativeExtractor), new HeaderDeclarativeExtractor() },
-        { typeof(BodyDeclarativeExtractor), new BodyDeclarativeExtractor() },
-        // 确保以下 HTTP 声明式提取器末位注册
-        { typeof(MultipartBodyDeclarativeExtractor), new MultipartBodyDeclarativeExtractor() },
-        { typeof(HttpRequestBuilderDeclarativeExtractor), new HttpRequestBuilderDeclarativeExtractor() }
-    };
+    internal static readonly ConcurrentDictionary<Type, IHttpDeclarativeExtractor> _extractors = new([
+        new(typeof(ValidationDeclarativeExtractor), new ValidationDeclarativeExtractor()),
+        new(typeof(HttpClientNameDeclarativeExtractor), new HttpClientNameDeclarativeExtractor()),
+        new(typeof(TraceIdentifierDeclarativeExtractor), new TraceIdentifierDeclarativeExtractor()),
+        new(typeof(ProfilerDeclarativeExtractor), new ProfilerDeclarativeExtractor()),
+        new(typeof(SimulateBrowserDeclarativeExtractor), new SimulateBrowserDeclarativeExtractor()),
+        new(typeof(AcceptLanguageDeclarativeExtractor), new AcceptLanguageDeclarativeExtractor()),
+        new(typeof(DisableCacheDeclarativeExtractor), new DisableCacheDeclarativeExtractor()),
+        new(typeof(EnsureSuccessStatusCodeDeclarativeExtractor), new EnsureSuccessStatusCodeDeclarativeExtractor()),
+        new(typeof(TimeoutDeclarativeExtractor), new TimeoutDeclarativeExtractor()),
+        new(typeof(QueryDeclarativeExtractor), new QueryDeclarativeExtractor()),
+        new(typeof(PathDeclarativeExtractor), new PathDeclarativeExtractor()),
+        new(typeof(CookieDeclarativeExtractor), new CookieDeclarativeExtractor()),
+        new(typeof(HeaderDeclarativeExtractor), new HeaderDeclarativeExtractor()),
+        new(typeof(BodyDeclarativeExtractor), new BodyDeclarativeExtractor())
+    ]);
+
+    /// <summary>
+    ///     HTTP 声明式 <see cref="IHttpDeclarativeExtractor" /> 提取器集合（冻结）
+    /// </summary>
+    /// <remarks>该集合用于确保某些 HTTP 声明式提取器始终位于最后。</remarks>
+    internal static readonly ConcurrentDictionary<Type, IFrozenHttpDeclarativeExtractor> _frozenExtractors = new([
+        new(typeof(MultipartDeclarativeExtractor), new MultipartDeclarativeExtractor()),
+        new(typeof(HttpMultipartFormDataBuilderDeclarativeExtractor),
+            new HttpMultipartFormDataBuilderDeclarativeExtractor()),
+        new(typeof(HttpRequestBuilderDeclarativeExtractor), new HttpRequestBuilderDeclarativeExtractor())
+    ]);
 
     /// <summary>
     ///     标识是否已加载自定义 HTTP 声明式提取器
@@ -125,12 +135,15 @@ public sealed class HttpDeclarativeBuilder
             _hasLoadedExtractors = true;
 
             // 添加自定义 IHttpDeclarativeExtractor 数组
-            _extractors.TryAddAt(httpRemoteOptions.HttpDeclarativeExtractors?.SelectMany(u => u.Invoke()).ToArray(),
-                value => value.GetType(), _extractors.Count - 2);
+            _extractors.TryAdd(httpRemoteOptions.HttpDeclarativeExtractors?.SelectMany(u => u.Invoke()).ToArray(),
+                value => value.GetType());
         }
 
+        // 组合所有 HTTP 声明式提取器
+        var extractors = _extractors.Values.Concat(_frozenExtractors.Values.OrderByDescending(e => e.Order)).ToArray();
+
         // 遍历 HTTP 声明式提取器集合
-        foreach (var extractor in _extractors.Values)
+        foreach (var extractor in extractors)
         {
             // 提取方法信息构建 HttpRequestBuilder 实例
             extractor.Extract(httpRequestBuilder, httpDeclarativeExtractorContext);

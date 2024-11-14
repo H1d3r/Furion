@@ -30,7 +30,7 @@ using System.Text;
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     多部分表单数据内容处理器
+///     多部分内容表单数据内容处理器
 /// </summary>
 public class MultipartFormDataContentProcessor : IHttpContentProcessor
 {
