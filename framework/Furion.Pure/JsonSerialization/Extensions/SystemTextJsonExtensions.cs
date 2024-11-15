@@ -57,7 +57,7 @@ public static class SystemTextJsonExtensions
     /// </summary>
     /// <param name="converters"></param>
     /// <param name="overMaxLengthOf17">是否超过最大长度 17 再处理</param>
-    /// <remarks></remarks>
+    /// <returns></returns>
     public static IList<JsonConverter> AddLongTypeConverters(this IList<JsonConverter> converters, bool overMaxLengthOf17 = false)
     {
         converters.Add(new SystemTextJsonLongToStringJsonConverter(overMaxLengthOf17));
@@ -69,10 +69,12 @@ public static class SystemTextJsonExtensions
     /// <summary>
     /// 添加 Clay 类型序列化处理
     /// </summary>
-    /// <remarks></remarks>
-    public static IList<JsonConverter> AddClayConverters(this IList<JsonConverter> converters)
+    /// <param name="converters"></param>
+    /// <param name="toCamelCaseKey">输出键小写</param>
+    /// <returns></returns>
+    public static IList<JsonConverter> AddClayConverters(this IList<JsonConverter> converters, bool toCamelCaseKey = true)
     {
-        converters.Add(new SystemTextJsonClayJsonConverter());
+        converters.Add(new SystemTextJsonClayJsonConverter(toCamelCaseKey));
 
         return converters;
     }

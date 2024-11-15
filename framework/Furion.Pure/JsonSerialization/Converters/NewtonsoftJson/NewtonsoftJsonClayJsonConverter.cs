@@ -36,6 +36,28 @@ namespace Furion.JsonSerialization;
 public class NewtonsoftJsonClayJsonConverter : JsonConverter<Clay>
 {
     /// <summary>
+    /// 构造函数
+    /// </summary>
+    public NewtonsoftJsonClayJsonConverter()
+        : this(true)
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="toCamelCaseKey"></param>
+    public NewtonsoftJsonClayJsonConverter(bool toCamelCaseKey)
+    {
+        ToCamelCaseKey = toCamelCaseKey;
+    }
+
+    /// <summary>
+    /// 输出键小写
+    /// </summary>
+    public bool ToCamelCaseKey { get; set; } = true;
+
+    /// <summary>
     /// 反序列化
     /// </summary>
     /// <param name="reader"></param>
@@ -58,6 +80,44 @@ public class NewtonsoftJsonClayJsonConverter : JsonConverter<Clay>
     /// <param name="serializer"></param>
     public override void WriteJson(JsonWriter writer, Clay value, JsonSerializer serializer)
     {
-        writer.WriteRawValue(value.ToString());
+        var json = value.ToString();
+
+        if (ToCamelCaseKey)
+        {
+            writer.WriteRawValue(ConvertKeysToCamelCase(JToken.Parse(json)).ToString());
+        }
+        else
+        {
+            writer.WriteRawValue(json);
+        }
+    }
+
+    /// <summary>
+    /// 转换 Key 为小写
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    private static JToken ConvertKeysToCamelCase(JToken token)
+    {
+        if (token is JObject jObj)
+        {
+            var newJObject = new JObject();
+            foreach (var prop in jObj.Properties())
+            {
+                var newKey = char.ToLower(prop.Name[0]) + prop.Name.Substring(1);
+                newJObject[newKey] = ConvertKeysToCamelCase(prop.Value);
+            }
+            return newJObject;
+        }
+        else if (token is JArray jArray)
+        {
+            var newArray = new JArray();
+            foreach (var item in jArray)
+            {
+                newArray.Add(ConvertKeysToCamelCase(item));
+            }
+            return newArray;
+        }
+        return token;
     }
 }

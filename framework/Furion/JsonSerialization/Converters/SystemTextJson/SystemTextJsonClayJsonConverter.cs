@@ -25,6 +25,7 @@
 
 using Furion.ClayObject;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace Furion.JsonSerialization;
@@ -36,11 +37,26 @@ namespace Furion.JsonSerialization;
 public class SystemTextJsonClayJsonConverter : JsonConverter<Clay>
 {
     /// <summary>
-    /// 默认构造函数
+    /// 构造函数
     /// </summary>
     public SystemTextJsonClayJsonConverter()
+        : this(true)
     {
     }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="toCamelCaseKey"></param>
+    public SystemTextJsonClayJsonConverter(bool toCamelCaseKey)
+    {
+        ToCamelCaseKey = toCamelCaseKey;
+    }
+
+    /// <summary>
+    /// 输出键小写
+    /// </summary>
+    public bool ToCamelCaseKey { get; set; } = true;
 
     /// <summary>
     /// 反序列化
@@ -62,6 +78,49 @@ public class SystemTextJsonClayJsonConverter : JsonConverter<Clay>
     /// <param name="options"></param>
     public override void Write(Utf8JsonWriter writer, Clay value, JsonSerializerOptions options)
     {
-        writer.WriteRawValue(value.ToString());
+        var json = value.ToString();
+
+        if (ToCamelCaseKey)
+        {
+            writer.WriteRawValue(ConvertKeysToCamelCase(JsonNode.Parse(json)).ToString());
+        }
+        else
+        {
+            writer.WriteRawValue(json);
+        }
+    }
+
+    /// <summary>
+    /// 转换 Key 为小写
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns></returns>
+    private static JsonNode ConvertKeysToCamelCase(JsonNode node)
+    {
+        if (node is JsonObject obj)
+        {
+            var newObj = new JsonObject();
+            foreach (var prop in obj)
+            {
+                var newKey = char.ToLower(prop.Key[0]) + prop.Key.Substring(1);
+                newObj[newKey] = DeepCopy(ConvertKeysToCamelCase(prop.Value));
+            }
+            return newObj;
+        }
+        else if (node is JsonArray array)
+        {
+            var newArray = new JsonArray();
+            foreach (var item in array)
+            {
+                newArray.Add(DeepCopy(ConvertKeysToCamelCase(item)));
+            }
+            return newArray;
+        }
+        return node;
+    }
+
+    private static JsonNode DeepCopy(JsonNode node)
+    {
+        return JsonSerializer.Deserialize<JsonNode>(node.ToJsonString());
     }
 }
