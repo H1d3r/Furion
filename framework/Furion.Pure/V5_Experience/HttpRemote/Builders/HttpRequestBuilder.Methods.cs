@@ -369,7 +369,7 @@ public sealed partial class HttpRequestBuilder
     ///     设置请求标头
     /// </summary>
     /// <remarks>支持多次调用。</remarks>
-    /// <param name="headerSource">请求头源对象</param>
+    /// <param name="headerSource">请求标头源对象</param>
     /// <param name="escape">是否转义字符串，默认 <c>false</c></param>
     /// <param name="culture">
     ///     <see cref="CultureInfo" />
@@ -1011,12 +1011,7 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder EnsureSuccessStatusCode()
-    {
-        EnsureSuccessStatusCodeEnabled = true;
-
-        return this;
-    }
+    public HttpRequestBuilder EnsureSuccessStatusCode() => EnsureSuccessStatusCode(true);
 
     /// <summary>
     ///     设置是否如果 HTTP 响应的 IsSuccessStatusCode 属性是 <c>false</c>，则引发异常
@@ -1096,12 +1091,7 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder DisableCache()
-    {
-        DisableCacheEnabled = true;
-
-        return this;
-    }
+    public HttpRequestBuilder DisableCache() => DisableCache(true);
 
     /// <summary>
     ///     设置禁用 HTTP 缓存
@@ -1251,12 +1241,7 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder Profiler()
-    {
-        ProfilerEnabled = true;
-
-        return this;
-    }
+    public HttpRequestBuilder Profiler() => Profiler(true);
 
     /// <summary>
     ///     设置是否启用请求分析工具
@@ -1268,6 +1253,7 @@ public sealed partial class HttpRequestBuilder
     public HttpRequestBuilder Profiler(bool enabled)
     {
         ProfilerEnabled = enabled;
+        __Disabled_Profiler__ = !enabled;
 
         return this;
     }
@@ -1282,6 +1268,59 @@ public sealed partial class HttpRequestBuilder
     /// </returns>
     public HttpRequestBuilder AcceptLanguage(string? language) =>
         WithHeader(HeaderNames.AcceptLanguage, language, replace: true);
+
+    /// <summary>
+    ///     设置 HTTP 请求的属性
+    /// </summary>
+    /// <remarks>支持多次调用。</remarks>
+    /// <param name="key">键</param>
+    /// <param name="value">值</param>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder WithProperty(string key, object? value)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(key);
+
+        return WithProperties(new Dictionary<string, object?> { { key, value } });
+    }
+
+    /// <summary>
+    ///     设置 HTTP 请求的属性集合
+    /// </summary>
+    /// <remarks>支持多次调用。</remarks>
+    /// <param name="properties">HTTP 请求的属性集合</param>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder WithProperties(IDictionary<string, object?> properties)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(properties);
+
+        Properties.TryAdd(properties);
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置 HTTP 请求的属性集合
+    /// </summary>
+    /// <remarks>支持多次调用。</remarks>
+    /// <param name="propertySource">请求的属性源对象</param>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder WithProperties(object? propertySource)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(propertySource);
+
+        return WithProperties(
+            propertySource.ObjectToDictionary()!.ToDictionary(u => u.Key.ToCultureString(CultureInfo.InvariantCulture)!,
+                u => u.Value));
+    }
 
     /// <summary>
     ///     添加请求结束时需要释放的对象

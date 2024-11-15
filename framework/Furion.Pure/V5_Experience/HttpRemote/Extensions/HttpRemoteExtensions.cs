@@ -35,7 +35,7 @@ namespace Furion.HttpRemote.Extensions;
 public static class HttpRemoteExtensions
 {
     /// <summary>
-    ///     添加 HTTP 远程请求分析工具中间件
+    ///     添加 HTTP 远程请求分析工具处理委托
     /// </summary>
     /// <param name="builder">
     ///     <see cref="IHttpClientBuilder" />

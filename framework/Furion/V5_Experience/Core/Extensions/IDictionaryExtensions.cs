@@ -44,9 +44,26 @@ internal static class IDictionaryExtensions
     /// <param name="value">
     ///     <typeparamref name="TValue" />
     /// </param>
-    internal static void AddOrUpdate<TKey, TValue>(this IDictionary<TKey, List<TValue>> dictionary
-        , TKey key
-        , TValue value)
+    internal static void AddOrUpdate<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        where TKey : notnull =>
+        dictionary[key] = value;
+
+    /// <summary>
+    ///     添加或更新
+    /// </summary>
+    /// <typeparam name="TKey">字典键类型</typeparam>
+    /// <typeparam name="TValue">字典值类型</typeparam>
+    /// <param name="dictionary">
+    ///     <see cref="IDictionary{TKey, TValue}" />
+    /// </param>
+    /// <param name="key">
+    ///     <typeparamref name="TKey" />
+    /// </param>
+    /// <param name="value">
+    ///     <typeparamref name="TValue" />
+    /// </param>
+    internal static void AddOrUpdate<TKey, TValue>(this IDictionary<TKey, List<TValue>> dictionary, TKey key,
+        TValue value)
         where TKey : notnull
     {
         // 空检查
@@ -168,8 +185,32 @@ internal static class IDictionaryExtensions
         // 逐条遍历合并更新
         foreach (var (key, value) in concatDictionary)
         {
-            // 检查键是否存在
             dictionary[key] = value;
+        }
+    }
+
+    /// <summary>
+    ///     尝试添加
+    /// </summary>
+    /// <typeparam name="TKey">字典键类型</typeparam>
+    /// <typeparam name="TValue">字典值类型</typeparam>
+    /// <param name="dictionary">
+    ///     <see cref="IDictionary{TKey, TValue}" />
+    /// </param>
+    /// <param name="concatDictionary">
+    ///     <see cref="IDictionary{TKey, TValue}" />
+    /// </param>
+    internal static void TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary,
+        IDictionary<TKey, TValue> concatDictionary)
+        where TKey : notnull
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(concatDictionary);
+
+        // 逐条遍历合并更新
+        foreach (var (key, value) in concatDictionary)
+        {
+            dictionary.TryAdd(key, value);
         }
     }
 

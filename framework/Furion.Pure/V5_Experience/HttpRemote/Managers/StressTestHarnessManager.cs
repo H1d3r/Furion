@@ -87,7 +87,7 @@ internal sealed class StressTestHarnessManager
     ///     <see cref="CancellationToken" />
     /// </param>
     /// <returns>
-    ///     <see cref="Task{TResult}" />
+    ///     <see cref="StressTestHarnessResult" />
     /// </returns>
     internal async Task<StressTestHarnessResult> StartAsync(CancellationToken cancellationToken = default)
     {
@@ -155,6 +155,7 @@ internal sealed class StressTestHarnessManager
                             Interlocked.Increment(ref totalFailedRequests);
                         }
                     }
+                    // 任务被取消
                     catch (Exception e) when (cancellationToken.IsCancellationRequested ||
                                               e is OperationCanceledException)
                     {

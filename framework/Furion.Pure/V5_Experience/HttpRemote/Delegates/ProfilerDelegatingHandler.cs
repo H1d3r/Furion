@@ -24,13 +24,16 @@
 // ------------------------------------------------------------------------
 
 using Furion.HttpRemote.Extensions;
+using Furion.Utilities;
+using Microsoft.Extensions.Http.Logging;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Net;
 
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 远程请求分析工具中间件
+///     HTTP 远程请求分析工具处理委托
 /// </summary>
 /// <remarks>参考文献：https://learn.microsoft.com/zh-cn/aspnet/core/fundamentals/http-requests?view=aspnetcore-8.0#outgoing-request-middleware</remarks>
 /// <param name="logger">
@@ -38,10 +41,29 @@ namespace Furion.HttpRemote;
 /// </param>
 public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : DelegatingHandler
 {
+    /// <summary>
+    ///     是否启用请求分析工具
+    /// </summary>
+    /// <param name="httpRequestMessage">
+    ///     <see cref="HttpRequestMessage" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal static bool IsEnabled(HttpRequestMessage httpRequestMessage) =>
+        !(httpRequestMessage.Options.TryGetValue(new HttpRequestOptionsKey<string>(Constants.DISABLED_PROFILER_KEY),
+            out var value) && value == "TRUE");
+
     /// <inheritdoc />
     protected override HttpResponseMessage Send(HttpRequestMessage httpRequestMessage,
         CancellationToken cancellationToken)
     {
+        // 检查是否启用请求分析工具
+        if (!IsEnabled(httpRequestMessage))
+        {
+            return base.Send(httpRequestMessage, cancellationToken);
+        }
+
         // 记录请求标头
         LogRequestHeaders(logger, httpRequestMessage);
 
@@ -60,6 +82,9 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
         // 记录常规和响应标头
         LogResponseHeadersAndSummary(logger, httpResponseMessage, requestDuration);
 
+        // 打印 CookieContainer 内容
+        LogCookieContainer(logger, httpRequestMessage, ExtractSocketsHttpHandler());
+
         return httpResponseMessage;
     }
 
@@ -67,6 +92,12 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage httpRequestMessage,
         CancellationToken cancellationToken)
     {
+        // 检查是否启用请求分析工具
+        if (!IsEnabled(httpRequestMessage))
+        {
+            return await base.SendAsync(httpRequestMessage, cancellationToken);
+        }
+
         // 记录请求标头
         LogRequestHeaders(logger, httpRequestMessage);
 
@@ -84,6 +115,9 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
 
         // 记录常规和响应标头
         LogResponseHeadersAndSummary(logger, httpResponseMessage, requestDuration);
+
+        // 打印 CookieContainer 内容
+        LogCookieContainer(logger, httpRequestMessage, ExtractSocketsHttpHandler());
 
         return httpResponseMessage;
     }
@@ -116,6 +150,42 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
             [new KeyValuePair<string, IEnumerable<string>>("Request Duration (ms)", [$"{requestDuration:N2}"])]));
 
     /// <summary>
+    ///     打印 <see cref="CookieContainer" /> 内容
+    /// </summary>
+    /// <param name="logger">
+    ///     <see cref="ILogger" />
+    /// </param>
+    /// <param name="request">
+    ///     <see cref="HttpRequestMessage" />
+    /// </param>
+    /// <param name="socketsHttpHandler">
+    ///     <see cref="SocketsHttpHandler" />
+    /// </param>
+    internal static void LogCookieContainer(ILogger logger, HttpRequestMessage request,
+        SocketsHttpHandler? socketsHttpHandler)
+    {
+        // 空检查
+        if (socketsHttpHandler is null || request.RequestUri is null)
+        {
+            return;
+        }
+
+        // 获取 Cookie 集合
+        var cookies = socketsHttpHandler.CookieContainer.GetCookies(request.RequestUri);
+
+        // 空检查
+        if (cookies is { Count: 0 })
+        {
+            return;
+        }
+
+        // 打印日志
+        Log(logger, StringUtility.FormatKeyValuesSummary(
+            cookies.ToDictionary(u => u.Name, u => Enumerable.Empty<string>().Concat([u.Value])),
+            "Cookie Container"));
+    }
+
+    /// <summary>
     ///     打印日志
     /// </summary>
     /// <param name="logger">
@@ -136,4 +206,21 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
         // 打印日志
         logger.LogInformation("{message}", message);
     }
+
+    /// <summary>
+    ///     提取 <see cref="SocketsHttpHandler" /> 实例
+    /// </summary>
+    /// <returns>
+    ///     <see cref="SocketsHttpHandler" />
+    /// </returns>
+    internal SocketsHttpHandler? ExtractSocketsHttpHandler() =>
+        InnerHandler switch
+        {
+            LoggingHttpMessageHandler loggingHttpMessageHandler =>
+                loggingHttpMessageHandler.InnerHandler as SocketsHttpHandler,
+            LoggingScopeHttpMessageHandler loggingScopeHttpMessageHandler =>
+                loggingScopeHttpMessageHandler.InnerHandler as SocketsHttpHandler,
+            SocketsHttpHandler innerSocketsHttpHandler => innerSocketsHttpHandler,
+            _ => null
+        };
 }
