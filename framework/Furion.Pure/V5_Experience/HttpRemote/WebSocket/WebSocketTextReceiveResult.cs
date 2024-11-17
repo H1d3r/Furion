@@ -28,27 +28,25 @@ using System.Net.WebSockets;
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     WebSocket 接收到的数据结果
+///     WebSocket 接收的文本消息的结果类
 /// </summary>
-/// <typeparam name="TResult">结果的目标类型</typeparam>
-public sealed class WebSocketReceiveResult<TResult> : WebSocketReceiveResult
+public sealed class WebSocketTextReceiveResult : WebSocketReceiveResult
 {
     /// <inheritdoc />
-    public WebSocketReceiveResult(int count, WebSocketMessageType messageType, bool endOfMessage)
-        : base(count, messageType, endOfMessage)
+    public WebSocketTextReceiveResult(int count, bool endOfMessage)
+        : base(count, WebSocketMessageType.Text, endOfMessage)
     {
     }
 
     /// <inheritdoc />
-    public WebSocketReceiveResult(int count, WebSocketMessageType messageType, bool endOfMessage,
-        WebSocketCloseStatus? closeStatus, string? closeStatusDescription)
-        : base(count, messageType, endOfMessage,
-            closeStatus, closeStatusDescription)
+    public WebSocketTextReceiveResult(int count, bool endOfMessage, WebSocketCloseStatus? closeStatus,
+        string? closeStatusDescription)
+        : base(count, WebSocketMessageType.Text, endOfMessage, closeStatus, closeStatusDescription)
     {
     }
 
     /// <summary>
-    ///     <typeparamref name="TResult" />
+    ///     文本消息
     /// </summary>
-    public TResult Result { get; internal init; } = default!;
+    public string Message { get; internal init; } = default!;
 }

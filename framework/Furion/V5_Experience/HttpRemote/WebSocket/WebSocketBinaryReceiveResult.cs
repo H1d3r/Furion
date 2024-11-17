@@ -23,35 +23,30 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.AspNetCore.Http;
+using System.Net.WebSockets;
 
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="HttpContext" /> 转发配置选项
+///     WebSocket 接收的二进制消息的结果类
 /// </summary>
-public sealed class HttpContextForwardOptions
+public sealed class WebSocketBinaryReceiveResult : WebSocketReceiveResult
 {
-    /// <summary>
-    ///     是否转发响应状态码
-    /// </summary>
-    /// <remarks>默认值为：<c>true</c>。</remarks>
-    public bool WithStatusCode { get; set; } = true;
+    /// <inheritdoc />
+    public WebSocketBinaryReceiveResult(int count, bool endOfMessage)
+        : base(count, WebSocketMessageType.Binary, endOfMessage)
+    {
+    }
+
+    /// <inheritdoc />
+    public WebSocketBinaryReceiveResult(int count, bool endOfMessage, WebSocketCloseStatus? closeStatus,
+        string? closeStatusDescription)
+        : base(count, WebSocketMessageType.Binary, endOfMessage, closeStatus, closeStatusDescription)
+    {
+    }
 
     /// <summary>
-    ///     是否转发响应标头
+    ///     二进制消息
     /// </summary>
-    /// <remarks>默认值为：<c>true</c>。</remarks>
-    public bool WithResponseHeaders { get; set; } = true;
-
-    /// <summary>
-    ///     是否转发响应内容标头
-    /// </summary>
-    /// <remarks>默认值为：<c>true</c>。</remarks>
-    public bool WithResponseContentHeaders { get; set; } = true;
-
-    /// <summary>
-    ///     用于在转发响应之前执行自定义操作
-    /// </summary>
-    public Action<HttpContext, HttpResponseMessage>? OnForward { get; set; }
+    public byte[] Message { get; internal init; } = default!;
 }
