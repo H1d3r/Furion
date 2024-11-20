@@ -24,7 +24,7 @@ public class TestEventBus : IDynamicApiController, IDisposable
     // 发布 ToDo:Create 消息
     public async Task CreateDoTo()
     {
-        await _eventPublisher.PublishAsync("ToDo:Create");
+        await _eventPublisher.PublishAsync("ToDo:Create", "Furion");
     }
 
     // 发布枚举消息
@@ -93,7 +93,7 @@ public class ToDoEventSubscriber : IEventSubscriber, ISingleton
     public async Task CreateToDo(EventHandlerExecutingContext context)
     {
         var todo = context.Source;
-        _logger.LogInformation("创建一个 ToDo：{Name}", todo.Payload);
+        _logger.LogInformation("创建一个 ToDo：{Name}", context.GetPayload<string>());
         await Task.CompletedTask;
     }
 
