@@ -26,8 +26,10 @@
 using Furion.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Furion.HttpRemote;
 
@@ -395,8 +397,8 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
     /// <param name="completionOption">
     ///     <see cref="HttpCompletionOption" />
     /// </param>
-    /// <param name="sendAsyncMethod">异步发送请求的委托</param>
-    /// <param name="sendMethod">同步发送请求的委托</param>
+    /// <param name="sendAsyncMethod">异步发送 HTTP 请求的委托</param>
+    /// <param name="sendMethod">同步发送 HTTP 请求的委托</param>
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
@@ -433,7 +435,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         var httpRequestMessage =
             httpRequestBuilder.Build(RemoteOptions, _httpContentProcessorFactory, httpClient.BaseAddress);
 
-        // 处理发送请求之前
+        // 处理发送 HTTP 请求之前
         HandlePreSendRequest(httpRequestBuilder, requestEventHandler, httpRequestMessage);
 
         // 检查是否启用请求分析工具
@@ -498,8 +500,8 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         }
         catch (Exception e)
         {
-            // 处理发送请求发送异常
-            HandleSendRequestFailed(httpRequestBuilder, requestEventHandler, e, httpResponseMessage);
+            // 处理发送 HTTP 请求发生异常
+            HandleRequestFailed(httpRequestBuilder, requestEventHandler, e, httpResponseMessage);
 
             throw;
         }
@@ -508,8 +510,8 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
             // 停止计时
             stopwatch.Stop();
 
-            // 处理发送请求之后
-            HandlePostSendRequest(httpRequestBuilder, requestEventHandler, httpResponseMessage);
+            // 处理收到 HTTP 响应之后
+            HandlePostReceiveResponse(httpRequestBuilder, requestEventHandler, httpResponseMessage);
 
             // 释放资源集合
             if (!httpRequestBuilder.HttpClientPoolingEnabled)
@@ -520,7 +522,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
     }
 
     /// <summary>
-    ///     处理发送请求之前
+    ///     处理发送 HTTP 请求之前
     /// </summary>
     /// <param name="httpRequestBuilder">
     ///     <see cref="HttpRequestBuilder" />
@@ -544,7 +546,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
     }
 
     /// <summary>
-    ///     处理发送请求之后
+    ///     处理收到 HTTP 响应之后
     /// </summary>
     /// <param name="httpRequestBuilder">
     ///     <see cref="HttpRequestBuilder" />
@@ -555,7 +557,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
     /// <param name="httpResponseMessage">
     ///     <see cref="HttpResponseMessage" />
     /// </param>
-    internal static void HandlePostSendRequest(HttpRequestBuilder httpRequestBuilder,
+    internal static void HandlePostReceiveResponse(HttpRequestBuilder httpRequestBuilder,
         IHttpRequestEventHandler? requestEventHandler, HttpResponseMessage? httpResponseMessage)
     {
         // 空检查
@@ -567,14 +569,14 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         // 空检查
         if (requestEventHandler is not null)
         {
-            DelegateExtensions.TryInvoke(requestEventHandler.OnPostSendRequest, httpResponseMessage);
+            DelegateExtensions.TryInvoke(requestEventHandler.OnPostReceiveResponse, httpResponseMessage);
         }
 
-        httpRequestBuilder.OnPostSendRequest.TryInvoke(httpResponseMessage);
+        httpRequestBuilder.OnPostReceiveResponse.TryInvoke(httpResponseMessage);
     }
 
     /// <summary>
-    ///     处理发送请求发送异常
+    ///     处理发送 HTTP 请求发生异常
     /// </summary>
     /// <param name="httpRequestBuilder">
     ///     <see cref="HttpRequestBuilder" />
@@ -588,16 +590,16 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
     /// <param name="httpResponseMessage">
     ///     <see cref="HttpResponseMessage" />
     /// </param>
-    internal static void HandleSendRequestFailed(HttpRequestBuilder httpRequestBuilder,
+    internal static void HandleRequestFailed(HttpRequestBuilder httpRequestBuilder,
         IHttpRequestEventHandler? requestEventHandler, Exception e, HttpResponseMessage? httpResponseMessage)
     {
         // 空检查
         if (requestEventHandler is not null)
         {
-            DelegateExtensions.TryInvoke(requestEventHandler.OnSendRequestFailed, e, httpResponseMessage);
+            DelegateExtensions.TryInvoke(requestEventHandler.OnRequestFailed, e, httpResponseMessage);
         }
 
-        httpRequestBuilder.OnSendRequestFailed.TryInvoke(e, httpResponseMessage);
+        httpRequestBuilder.OnRequestFailed.TryInvoke(e, httpResponseMessage);
     }
 
     /// <summary>
@@ -763,7 +765,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         ArgumentNullException.ThrowIfNull(httpResponseMessage);
 
         // 空检查
-        if (httpRequestBuilder.StatusCodeHandlers.IsNullOrEmpty())
+        if (httpRequestBuilder.StatusCodeHandlers is null || httpRequestBuilder.StatusCodeHandlers.Count == 0)
         {
             return;
         }
@@ -772,7 +774,8 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         var statusCode = (int)httpResponseMessage.StatusCode;
 
         // 查找响应状态码所有处理程序
-        var statusCodeHandlers = httpRequestBuilder.StatusCodeHandlers.Where(u => u.Key.Contains(statusCode))
+        var statusCodeHandlers = httpRequestBuilder.StatusCodeHandlers
+            .Where(u => u.Key.Any(code => IsMatchedStatusCode(code, statusCode)))
             .Select(u => u.Value).ToList();
 
         // 空检查
@@ -784,6 +787,51 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         // 并行执行所有的处理程序，并等待所有任务完成
         await Task.WhenAll(statusCodeHandlers.Select(handler =>
             handler.TryInvokeAsync(httpResponseMessage, cancellationToken)));
+    }
+
+    /// <summary>
+    ///     检查状态码代码是否匹配响应状态码
+    /// </summary>
+    /// <param name="code">状态码代码</param>
+    /// <param name="statusCode">响应状态码</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal static bool IsMatchedStatusCode(object code, int statusCode)
+    {
+        switch (code)
+        {
+            // 处理 int 类型状态码
+            case int intStatusCode when intStatusCode == statusCode:
+                return true;
+            // 处理 HttpStatusCode 类型状态码
+            case HttpStatusCode httpStatusCode when (int)httpStatusCode == statusCode:
+                return true;
+            // 处理通配符状态码
+            case "*" or '*':
+                return true;
+            // 处理字符串类型状态码
+            case string stringStatusCode when !stringStatusCode.Contains('+') &&
+                                              int.TryParse(stringStatusCode, out var intStatusCodeResult) &&
+                                              intStatusCodeResult == statusCode:
+                return true;
+            // 处理区间类型状态码，如 200-500
+            case string stringStatusCode when StatusCodeRangeRegex().IsMatch(stringStatusCode):
+                // 根据 - 符号切割
+                var parts = stringStatusCode.Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+                // 比较状态码区间
+                if (parts.Length == 2 && int.TryParse(parts[0], out var start) && int.TryParse(parts[1], out var end))
+                {
+                    return statusCode >= start && statusCode <= end;
+                }
+
+                break;
+            default:
+                return false;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -836,4 +884,11 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
 
         return httpRemoteResult;
     }
+
+    /// <summary>
+    ///     状态码区间正则表达式
+    /// </summary>
+    /// <returns></returns>
+    [GeneratedRegex(@"^\d+-\d+$")]
+    private static partial Regex StatusCodeRangeRegex();
 }

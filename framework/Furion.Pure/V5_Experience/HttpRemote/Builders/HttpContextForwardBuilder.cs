@@ -27,8 +27,11 @@ using Furion.AspNetCore.Extensions;
 using Furion.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
-using System.Net.Http.Headers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 using System.Net.Mime;
+using MediaTypeHeaderValue = System.Net.Http.Headers.MediaTypeHeaderValue;
 
 namespace Furion.HttpRemote;
 
@@ -38,6 +41,21 @@ namespace Furion.HttpRemote;
 public sealed class HttpContextForwardBuilder
 {
     /// <summary>
+    ///     <see cref="IActionResultContentConverter" /> 实例
+    /// </summary>
+    internal static readonly Lazy<IActionResultContentConverter> _actionResultContentConverterInstance =
+        new(() => new IActionResultContentConverter());
+
+    /// <summary>
+    ///     忽略在转发时需要跳过的请求标头列表
+    /// </summary>
+    internal static HashSet<string> _ignoreRequestHeaders =
+    [
+        Constants.X_FORWARD_TO_HEADER, "Host", "Accept", "Accept-CH", "Accept-Charset", "Accept-Encoding",
+        "Accept-Language", "Accept-Patch", "Accept-Post", "Accept-Ranges"
+    ];
+
+    /// <summary>
     ///     <inheritdoc cref="HttpContextForwardBuilder" />
     /// </summary>
     /// <param name="httpContext">
@@ -45,7 +63,11 @@ public sealed class HttpContextForwardBuilder
     /// </param>
     /// <param name="httpMethod">请求方式</param>
     /// <param name="requestUri">请求地址。若为空则尝试从请求标头 <c>X-Forward-To</c> 中获取目标地址。</param>
-    internal HttpContextForwardBuilder(HttpContext? httpContext, HttpMethod httpMethod, Uri? requestUri = null)
+    /// <param name="forwardOptions">
+    ///     <see cref="HttpContextForwardOptions" />
+    /// </param>
+    internal HttpContextForwardBuilder(HttpContext? httpContext, HttpMethod httpMethod, Uri? requestUri = null,
+        HttpContextForwardOptions? forwardOptions = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(httpMethod);
@@ -54,10 +76,8 @@ public sealed class HttpContextForwardBuilder
         HttpContext = httpContext;
         Method = httpMethod;
 
-        // 尝试从请求标头 X-Forward-To 中获取目标地址
-        var targetUrl = httpContext.Request.Headers[Constants.X_FORWARD_TO_HEADER].ToString();
-        RequestUri = requestUri ??
-                     (string.IsNullOrWhiteSpace(targetUrl) ? null : new Uri(targetUrl, UriKind.RelativeOrAbsolute));
+        RequestUri = GetTargetUri(httpContext, requestUri);
+        ForwardOptions = GetForwardOptions(httpContext, forwardOptions);
     }
 
     /// <summary>
@@ -73,6 +93,51 @@ public sealed class HttpContextForwardBuilder
     /// <inheritdoc cref="Microsoft.AspNetCore.Http.HttpContext" />
     public HttpContext HttpContext { get; }
 
+    /// <inheritdoc cref="HttpContextForwardOptions" />
+    public HttpContextForwardOptions ForwardOptions { get; }
+
+    /// <summary>
+    ///     获取目标地址
+    /// </summary>
+    /// <param name="httpContext">
+    ///     <see cref="HttpContext" />
+    /// </param>
+    /// <param name="requestUri">请求地址。若为空则尝试从请求标头 <c>X-Forward-To</c> 中获取目标地址。</param>
+    /// <returns>
+    ///     <see cref="Uri" />
+    /// </returns>
+    internal static Uri? GetTargetUri(HttpContext httpContext, Uri? requestUri = null)
+    {
+        // 空检查
+        if (requestUri is not null)
+        {
+            return requestUri;
+        }
+
+        // 尝试从请求标头 X-Forward-To 中获取目标地址
+        var targetUrl = httpContext.Request.Headers[Constants.X_FORWARD_TO_HEADER].ToString();
+
+        return string.IsNullOrWhiteSpace(targetUrl) ? null : new Uri(targetUrl, UriKind.RelativeOrAbsolute);
+    }
+
+    /// <summary>
+    ///     获取 <see cref="HttpContextForwardOptions" /> 实例
+    /// </summary>
+    /// <param name="httpContext">
+    ///     <see cref="HttpContext" />
+    /// </param>
+    /// <param name="forwardOptions">
+    ///     <see cref="HttpContextForwardOptions" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="HttpContextForwardOptions" />
+    /// </returns>
+    internal static HttpContextForwardOptions GetForwardOptions(HttpContext httpContext,
+        HttpContextForwardOptions? forwardOptions) =>
+        forwardOptions ??
+        httpContext.RequestServices.GetService<IOptions<HttpContextForwardOptions>>()
+            ?.Value ?? new HttpContextForwardOptions();
+
     /// <summary>
     ///     构建 <see cref="HttpRequestBuilder" /> 实例
     /// </summary>
@@ -83,7 +148,8 @@ public sealed class HttpContextForwardBuilder
     internal HttpRequestBuilder Build(Action<HttpRequestBuilder>? configure = null)
     {
         // 初始化 HttpRequestBuilder 实例
-        var httpRequestBuilder = HttpRequestBuilder.Create(Method, RequestUri, configure).DisableCache();
+        var httpRequestBuilder = HttpRequestBuilder.Create(Method, RequestUri, configure)
+            .AddHttpContentConverters(() => [_actionResultContentConverterInstance.Value]).DisableCache();
 
         // 复制查询参数和路由参数
         CopyQueryAndRouteValues(httpRequestBuilder);
@@ -107,7 +173,8 @@ public sealed class HttpContextForwardBuilder
     internal async Task<HttpRequestBuilder> BuildAsync(Action<HttpRequestBuilder>? configure = null)
     {
         // 初始化 HttpRequestBuilder 实例
-        var httpRequestBuilder = HttpRequestBuilder.Create(Method, RequestUri, configure).DisableCache();
+        var httpRequestBuilder = HttpRequestBuilder.Create(Method, RequestUri, configure)
+            .AddHttpContentConverters(() => [new IActionResultContentConverter()]).DisableCache();
 
         // 复制查询参数和路由参数
         CopyQueryAndRouteValues(httpRequestBuilder);
@@ -135,8 +202,12 @@ public sealed class HttpContextForwardBuilder
         // 空检查
         if (queryValues.Length > 0)
         {
-            // 将查询参数添加到查询参数集合中
-            httpRequestBuilder.WithQueryParameters(queryValues);
+            // 检查是否转发查询参数（URL 参数）
+            if (ForwardOptions.WithQueryParameters)
+            {
+                // 将查询参数添加到查询参数集合中
+                httpRequestBuilder.WithQueryParameters(queryValues);
+            }
 
             // 将查询参数添加到路径参数集合中
             httpRequestBuilder.WithPathParameters(queryValues);
@@ -165,10 +236,26 @@ public sealed class HttpContextForwardBuilder
         var httpRequest = HttpContext.Request;
 
         // 添加原始请求地址标头
-        httpRequestBuilder.WithHeader(Constants.X_ORIGINAL_URL_HEADER, httpRequest.GetFullRequestUrl());
+        httpRequestBuilder.WithHeader(Constants.X_ORIGINAL_URL_HEADER, httpRequest.GetFullRequestUrl(), replace: true);
 
-        // 复制原始请求标头
-        httpRequestBuilder.WithHeaders(httpRequest.Headers);
+        // 检查是否转发请求标头
+        if (!ForwardOptions.WithRequestHeaders)
+        {
+            return;
+        }
+
+        // 忽略特定请求标头列表
+        httpRequestBuilder.WithHeaders(
+            httpRequest.Headers.Where(u => !u.Key.IsIn(_ignoreRequestHeaders, StringComparer.OrdinalIgnoreCase)),
+            replace: true);
+
+        // 检查是否需要重新设置 Host 请求标头
+        if (ForwardOptions.ResetHostRequestHeader)
+        {
+            httpRequestBuilder.WithHeader(HeaderNames.Host,
+                $"{RequestUri?.Host}{(string.IsNullOrWhiteSpace(RequestUri?.Port.ToString()) ? string.Empty : $":{RequestUri.Port}")}",
+                replace: true);
+        }
     }
 
     /// <summary>
@@ -239,8 +326,8 @@ public sealed class HttpContextForwardBuilder
         // 初始化 StreamContent 实例
         var streamContent = new StreamContent(bodyStream);
 
-        // 设置原始请求内容
-        httpRequestBuilder.SetRawContent(streamContent, contentType);
+        // 设置请求内容
+        httpRequestBuilder.SetContent(streamContent, contentType);
     }
 
     /// <summary>

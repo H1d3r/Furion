@@ -33,10 +33,22 @@ namespace Furion.HttpRemote;
 public sealed class HttpContextForwardOptions
 {
     /// <summary>
+    ///     是否转发查询参数（URL 参数）
+    /// </summary>
+    /// <remarks>默认值为：<c>true</c>。</remarks>
+    public bool WithQueryParameters { get; set; } = true;
+
+    /// <summary>
+    ///     是否转发请求标头
+    /// </summary>
+    /// <remarks>默认值为：<c>true</c>。</remarks>
+    public bool WithRequestHeaders { get; set; } = true;
+
+    /// <summary>
     ///     是否转发响应状态码
     /// </summary>
     /// <remarks>默认值为：<c>true</c>。</remarks>
-    public bool WithStatusCode { get; set; } = true;
+    public bool WithResponseStatusCode { get; set; } = true;
 
     /// <summary>
     ///     是否转发响应标头
@@ -49,6 +61,12 @@ public sealed class HttpContextForwardOptions
     /// </summary>
     /// <remarks>默认值为：<c>true</c>。</remarks>
     public bool WithResponseContentHeaders { get; set; } = true;
+
+    /// <summary>
+    ///     表示是否重新设置 Host 请求标头
+    /// </summary>
+    /// <remarks>在一些目标服务器中，可能需要校验该请求标头。默认值为：<c>false</c>。</remarks>
+    public bool ResetHostRequestHeader { get; set; }
 
     /// <summary>
     ///     用于在转发响应之前执行自定义操作

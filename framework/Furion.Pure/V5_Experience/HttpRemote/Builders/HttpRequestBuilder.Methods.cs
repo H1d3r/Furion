@@ -134,7 +134,7 @@ public sealed partial class HttpRequestBuilder
         // 检查是否是字符串类型
         if (rawJson is not string rawString)
         {
-            return SetRawContent(rawObject, MediaTypeNames.Application.Json, contentEncoding);
+            return SetContent(rawObject, MediaTypeNames.Application.Json, contentEncoding);
         }
 
         // 尝试验证并获取 JsonDocument 实例（需 using）
@@ -144,7 +144,7 @@ public sealed partial class HttpRequestBuilder
         // 添加请求结束时需要释放的对象
         AddDisposable(jsonDocument);
 
-        return SetRawContent(rawObject, MediaTypeNames.Application.Json, contentEncoding);
+        return SetContent(rawObject, MediaTypeNames.Application.Json, contentEncoding);
     }
 
     /// <summary>
@@ -156,7 +156,7 @@ public sealed partial class HttpRequestBuilder
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
     public HttpRequestBuilder SetHtmlContent(string? htmlString, Encoding? contentEncoding = null) =>
-        SetRawContent(htmlString, MediaTypeNames.Text.Html, contentEncoding);
+        SetContent(htmlString, MediaTypeNames.Text.Html, contentEncoding);
 
     /// <summary>
     ///     设置 XML 内容
@@ -167,7 +167,7 @@ public sealed partial class HttpRequestBuilder
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
     public HttpRequestBuilder SetXmlContent(string? xmlString, Encoding? contentEncoding = null) =>
-        SetRawContent(xmlString, MediaTypeNames.Application.Xml, contentEncoding);
+        SetContent(xmlString, MediaTypeNames.Application.Xml, contentEncoding);
 
     /// <summary>
     ///     设置文本内容
@@ -178,7 +178,26 @@ public sealed partial class HttpRequestBuilder
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
     public HttpRequestBuilder SetTextContent(string? text, Encoding? contentEncoding = null) =>
-        SetRawContent(text, MediaTypeNames.Text.Plain, contentEncoding);
+        SetContent(text, MediaTypeNames.Text.Plain, contentEncoding);
+
+    /// <summary>
+    ///     设置原始字符串内容
+    /// </summary>
+    /// <remarks>字符串内容将被双引号包围并发送，格式如下：<c>"内容"</c>。</remarks>
+    /// <param name="text">文本</param>
+    /// <param name="contentType">内容类型</param>
+    /// <param name="contentEncoding">内容编码</param>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder SetRawStringContent(string text, string contentType, Encoding? contentEncoding = null)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
+
+        return SetContent($"\"{text}\"", contentType, contentEncoding);
+    }
 
     /// <summary>
     ///     设置 URL 编码的键值对表单内容
@@ -195,19 +214,20 @@ public sealed partial class HttpRequestBuilder
     public HttpRequestBuilder SetFormUrlEncodedContent(object? rawObject, Encoding? contentEncoding = null,
         bool useStringContent = false)
     {
-        SetRawContent(rawObject, MediaTypeNames.Application.FormUrlEncoded, contentEncoding);
+        SetContent(rawObject, MediaTypeNames.Application.FormUrlEncoded, contentEncoding);
 
         // 检查是否启用 StringContent 方式构建 application/x-www-form-urlencoded 请求内容
         if (useStringContent)
         {
-            AddHttpContentProcessors(() => [new StringContentForFormUrlEncodedContentProcessor()]);
+            AddHttpContentProcessors(() =>
+                [_stringContentForFormUrlEncodedContentProcessorInstance.Value]);
         }
 
         return this;
     }
 
     /// <summary>
-    ///     设置原始请求内容
+    ///     设置请求内容
     /// </summary>
     /// <param name="rawContent">原始请求内容</param>
     /// <param name="contentType">内容类型</param>
@@ -215,7 +235,7 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder SetRawContent(object? rawContent, string? contentType = null,
+    public HttpRequestBuilder SetContent(object? rawContent, string? contentType = null,
         Encoding? contentEncoding = null)
     {
         // 空检查
@@ -254,7 +274,7 @@ public sealed partial class HttpRequestBuilder
     ///     设置多部分内容表单，请求类型为 <c>multipart/form-data</c>
     /// </summary>
     /// <remarks>
-    ///     该操作将强制覆盖 <see cref="SetRawContent" />、<see cref="SetContentEncoding(System.Text.Encoding)" /> 和
+    ///     该操作将强制覆盖 <see cref="SetContent" />、<see cref="SetContentEncoding(System.Text.Encoding)" /> 和
     ///     <see cref="SetContentType" /> 设置的内容。
     /// </remarks>
     /// <param name="configure">自定义配置委托</param>
@@ -281,7 +301,7 @@ public sealed partial class HttpRequestBuilder
     ///     设置多部分内容表单，请求类型为 <c>multipart/form-data</c>
     /// </summary>
     /// <remarks>
-    ///     该操作将强制覆盖 <see cref="SetRawContent" />、<see cref="SetContentEncoding(System.Text.Encoding)" /> 和
+    ///     该操作将强制覆盖 <see cref="SetContent" />、<see cref="SetContentEncoding(System.Text.Encoding)" /> 和
     ///     <see cref="SetContentType" /> 设置的内容。
     /// </remarks>
     /// <param name="httpMultipartFormDataBuilder">
@@ -882,7 +902,7 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
-    ///     添加 <see cref="IHttpContentProcessor" /> 集合提供器
+    ///     添加 <see cref="IHttpContentProcessor" /> 请求内容处理器
     /// </summary>
     /// <remarks>支持多次调用。</remarks>
     /// <param name="configure"><see cref="IHttpContentProcessor" /> 实例提供器</param>
@@ -902,10 +922,10 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
-    ///     添加 <see cref="IHttpContentProcessor" /> 集合提供器
+    ///     添加 <see cref="IHttpContentConverter" /> 响应内容转换器
     /// </summary>
     /// <remarks>支持多次调用。</remarks>
-    /// <param name="configure"><see cref="IHttpContentProcessor" /> 实例提供器</param>
+    /// <param name="configure"><see cref="IHttpContentConverter" /> 实例提供器</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -972,18 +992,18 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
-    ///     设置在发送 HTTP 请求之后执行的操作
+    ///     设置在收到 HTTP 响应之后执行的操作
     /// </summary>
     /// <param name="configure">自定义配置委托</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder SetOnPostSendRequest(Action<HttpResponseMessage> configure)
+    public HttpRequestBuilder SetOnPostReceiveResponse(Action<HttpResponseMessage> configure)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
 
-        OnPostSendRequest = configure;
+        OnPostReceiveResponse = configure;
 
         return this;
     }
@@ -995,12 +1015,12 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder SetOnSendRequestFailed(Action<Exception, HttpResponseMessage?> configure)
+    public HttpRequestBuilder SetOnRequestFailed(Action<Exception, HttpResponseMessage?> configure)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
 
-        OnSendRequestFailed = configure;
+        OnRequestFailed = configure;
 
         return this;
     }
@@ -1149,7 +1169,10 @@ public sealed partial class HttpRequestBuilder
     /// <summary>
     ///     设置是否启用 <see cref="HttpClient" /> 的池化管理
     /// </summary>
-    /// <remarks>用于在并发请求中复用同一个 <see cref="HttpClient" /> 实例。</remarks>
+    /// <remarks>
+    ///     <para>用于在并发请求中复用同一个 <see cref="HttpClient" /> 实例。</para>
+    ///     <para>注意：启用池化管理后，在请求完成之后需手动调用 <see cref="ReleaseResources" /> 方法释放资源。</para>
+    /// </remarks>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -1161,16 +1184,24 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
-    ///     设置模拟浏览器环境
+    ///     添加请求结束时需要释放的对象
     /// </summary>
-    /// <remarks>设置此配置后，将在单次请求标头中添加主流浏览器的 <c>User-Agent</c> 值。</remarks>
-    /// <param name="simulateMobile">是否模拟移动端，默认值为：<c>false</c>（即模拟桌面端）。</param>
+    /// <param name="disposable">
+    ///     <see cref="IDisposable" />
+    /// </param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder SimulateBrowser(bool simulateMobile = false) =>
-        WithHeader(HeaderNames.UserAgent,
-            !simulateMobile ? Constants.USER_AGENT_OF_BROWSER : Constants.USER_AGENT_OF_MOBILE_BROWSER, replace: true);
+    public HttpRequestBuilder AddDisposable(IDisposable disposable)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(disposable);
+
+        Disposables ??= [];
+        Disposables.Add(disposable);
+
+        return this;
+    }
 
     /// <summary>
     ///     释放资源集合
@@ -1190,6 +1221,42 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
+    ///     设置模拟浏览器环境
+    /// </summary>
+    /// <remarks>设置此配置后，将在单次请求标头中添加主流浏览器的 <c>User-Agent</c> 值。</remarks>
+    /// <param name="simulateMobile">是否模拟移动端，默认值为：<c>false</c>（即模拟桌面端）。</param>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder SimulateBrowser(bool simulateMobile = false) =>
+        WithHeader(HeaderNames.UserAgent,
+            !simulateMobile ? Constants.USER_AGENT_OF_BROWSER : Constants.USER_AGENT_OF_MOBILE_BROWSER, replace: true);
+
+    /// <summary>
+    ///     添加状态码处理程序
+    /// </summary>
+    /// <remarks>支持多次调用。</remarks>
+    /// <param name="statusCode">HTTP 状态码</param>
+    /// <param name="handler">自定义处理程序</param>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder WithStatusCodeHandler(object statusCode,
+        Func<HttpResponseMessage, CancellationToken, Task> handler) =>
+        WithStatusCodeHandler([statusCode], handler);
+
+    /// <summary>
+    ///     添加任何状态码处理程序
+    /// </summary>
+    /// <remarks>支持多次调用。</remarks>
+    /// <param name="handler">自定义处理程序</param>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder WithAnyStatusCodeHandler(Func<HttpResponseMessage, CancellationToken, Task> handler) =>
+        WithStatusCodeHandler(["*"], handler);
+
+    /// <summary>
     ///     添加状态码处理程序
     /// </summary>
     /// <remarks>支持多次调用。</remarks>
@@ -1198,7 +1265,7 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
-    public HttpRequestBuilder WithStatusCodeHandler(IEnumerable<int> statusCodes,
+    public HttpRequestBuilder WithStatusCodeHandler(IEnumerable<object> statusCodes,
         Func<HttpResponseMessage, CancellationToken, Task> handler)
     {
         // 空检查
@@ -1215,25 +1282,13 @@ public sealed partial class HttpRequestBuilder
         // 空检查
         ArgumentNullException.ThrowIfNull(handler);
 
-        StatusCodeHandlers ??= new Dictionary<IEnumerable<int>, Func<HttpResponseMessage, CancellationToken, Task>>();
+        StatusCodeHandlers ??=
+            new Dictionary<IEnumerable<object>, Func<HttpResponseMessage, CancellationToken, Task>>();
 
         StatusCodeHandlers[statusCodes] = handler;
 
         return this;
     }
-
-    /// <summary>
-    ///     添加状态码处理程序
-    /// </summary>
-    /// <remarks>支持多次调用。</remarks>
-    /// <param name="statusCode">HTTP 状态码</param>
-    /// <param name="handler">自定义处理程序</param>
-    /// <returns>
-    ///     <see cref="HttpRequestBuilder" />
-    /// </returns>
-    public HttpRequestBuilder WithStatusCodeHandler(int statusCode,
-        Func<HttpResponseMessage, CancellationToken, Task> handler) =>
-        WithStatusCodeHandler([statusCode], handler);
 
     /// <summary>
     ///     设置是否启用请求分析工具
@@ -1320,26 +1375,6 @@ public sealed partial class HttpRequestBuilder
         return WithProperties(
             propertySource.ObjectToDictionary()!.ToDictionary(u => u.Key.ToCultureString(CultureInfo.InvariantCulture)!,
                 u => u.Value));
-    }
-
-    /// <summary>
-    ///     添加请求结束时需要释放的对象
-    /// </summary>
-    /// <param name="disposable">
-    ///     <see cref="IDisposable" />
-    /// </param>
-    /// <returns>
-    ///     <see cref="HttpRequestBuilder" />
-    /// </returns>
-    internal HttpRequestBuilder AddDisposable(IDisposable disposable)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(disposable);
-
-        Disposables ??= [];
-        Disposables.Add(disposable);
-
-        return this;
     }
 
     /// <summary>

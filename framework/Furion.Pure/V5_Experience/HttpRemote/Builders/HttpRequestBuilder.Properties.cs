@@ -176,14 +176,14 @@ public sealed partial class HttpRequestBuilder
     public Action<HttpRequestMessage>? OnPreSendRequest { get; private set; }
 
     /// <summary>
-    ///     用于处理在发送 HTTP 请求之后的操作
+    ///     用于处理在收到 HTTP 响应之后的操作
     /// </summary>
-    public Action<HttpResponseMessage>? OnPostSendRequest { get; private set; }
+    public Action<HttpResponseMessage>? OnPostReceiveResponse { get; private set; }
 
     /// <summary>
     ///     用于处理在发送 HTTP 请求发生异常时的操作
     /// </summary>
-    public Action<Exception, HttpResponseMessage?>? OnSendRequestFailed { get; private set; }
+    public Action<Exception, HttpResponseMessage?>? OnRequestFailed { get; private set; }
 
     /// <summary>
     ///     身份验证凭据请求授权标头
@@ -248,7 +248,7 @@ public sealed partial class HttpRequestBuilder
     /// <summary>
     ///     状态码处理程序
     /// </summary>
-    internal IDictionary<IEnumerable<int>, Func<HttpResponseMessage, CancellationToken, Task>>? StatusCodeHandlers
+    internal IDictionary<IEnumerable<object>, Func<HttpResponseMessage, CancellationToken, Task>>? StatusCodeHandlers
     {
         get;
         private set;
