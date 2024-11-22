@@ -28,6 +28,7 @@ using Furion.UnifyResult;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Encodings.Web;
 
 namespace Furion.Authorization;
 
@@ -62,6 +63,9 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
 
             // 处理规范化结果
             await UnifyWrapper(httpContext, exception);
+
+            // 终止响应体被二次写入
+            await httpContext.Response.CompleteAsync();
         }
     }
 
@@ -167,7 +171,12 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
 
             // 终止返回
             httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await httpContext.Response.WriteAsJsonAsync(data, App.GetOptions<JsonOptions>()?.JsonSerializerOptions);
+
+            // 解决中文乱码问题
+            var jsonSerializerOptions = App.GetOptions<JsonOptions>()?.JsonSerializerOptions ?? new();
+            jsonSerializerOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+
+            await httpContext.Response.WriteAsJsonAsync(data, jsonSerializerOptions);
         }
         else throw exception;
     }
