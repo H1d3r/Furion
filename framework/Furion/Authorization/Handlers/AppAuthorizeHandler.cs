@@ -28,7 +28,6 @@ using Furion.UnifyResult;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Encodings.Web;
 
 namespace Furion.Authorization;
 
@@ -169,14 +168,10 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
                 Exception = exception
             }), out var data);
 
-            // 终止返回
+            // 设置响应状态码
             httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-            // 解决中文乱码问题
-            var jsonSerializerOptions = App.GetOptions<JsonOptions>()?.JsonSerializerOptions ?? new();
-            jsonSerializerOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-
-            await httpContext.Response.WriteAsJsonAsync(data, jsonSerializerOptions);
+            await httpContext.Response.WriteAsJsonAsync(data, App.GetOptions<JsonOptions>()?.JsonSerializerOptions);
         }
         else throw exception;
     }
