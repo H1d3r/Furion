@@ -26,20 +26,25 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式 <see cref="EnsureSuccessStatusCodeAttribute" /> 特性提取器
+///     <see cref="HttpResponseMessage" /> 内容转换器
 /// </summary>
-internal sealed class EnsureSuccessStatusCodeDeclarativeExtractor : IHttpDeclarativeExtractor
+public class HttpResponseMessageConverter : IHttpContentConverter<HttpResponseMessage>
 {
     /// <inheritdoc />
-    public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
-    {
-        // 检查方法或接口是否贴有 [EnsureSuccessStatusCode] 特性
-        if (!context.IsMethodDefined<EnsureSuccessStatusCodeAttribute>(out var ensureSuccessStatusCodeAttribute, true))
-        {
-            return;
-        }
+    public HttpResponseMessage? Read(HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) =>
+        httpResponseMessage;
 
-        // 设置是否如果 HTTP 响应的 IsSuccessStatusCode 属性是 false，则引发异常
-        httpRequestBuilder.EnsureSuccessStatusCode(ensureSuccessStatusCodeAttribute.Enabled);
-    }
+    /// <inheritdoc />
+    public Task<HttpResponseMessage?> ReadAsync(HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult<HttpResponseMessage?>(httpResponseMessage);
+
+    /// <inheritdoc />
+    public object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) => Read(httpResponseMessage, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) => await ReadAsync(httpResponseMessage, cancellationToken);
 }

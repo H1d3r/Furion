@@ -25,6 +25,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using System.Reflection;
 
 namespace Furion.Extensions;
@@ -50,6 +51,19 @@ public static class CoreServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    ///     尝试获取应用环境
+    /// </summary>
+    /// <param name="services">
+    ///     <see cref="IServiceCollection" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="IHostEnvironment" />
+    /// </returns>
+    public static IHostEnvironment? TryGetHostEnvironment(this IServiceCollection services) =>
+        services.FirstOrDefault(u => u.ServiceType == typeof(IHostEnvironment))?.ImplementationInstance as
+            IHostEnvironment;
 
     /// <summary>
     ///     获取核心模块选项

@@ -23,8 +23,6 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Extensions;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
@@ -36,7 +34,7 @@ internal sealed class ProfilerDeclarativeExtractor : IHttpDeclarativeExtractor
     public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
     {
         // 检查方法或接口是否贴有 [Profiler] 特性
-        if (!context.Method.IsDefined<ProfilerAttribute>(out var profilerAttribute, true))
+        if (!context.IsMethodDefined<ProfilerAttribute>(out var profilerAttribute, true))
         {
             return;
         }

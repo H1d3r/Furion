@@ -716,7 +716,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
             contentLength > httpRequestBuilder.MaxResponseContentBufferSize)
         {
             throw new HttpRequestException(
-                $"Cannot write more bytes to the buffer than the configured maximum buffer size: {httpRequestBuilder.MaxResponseContentBufferSize}.");
+                $"Cannot write more bytes to the buffer than the configured maximum buffer size: `{httpRequestBuilder.MaxResponseContentBufferSize}`.");
         }
     }
 

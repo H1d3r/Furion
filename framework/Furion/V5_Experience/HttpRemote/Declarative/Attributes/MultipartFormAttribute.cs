@@ -26,20 +26,27 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式 <see cref="EnsureSuccessStatusCodeAttribute" /> 特性提取器
+///     HTTP 声明式多部分表单内容特性
 /// </summary>
-internal sealed class EnsureSuccessStatusCodeDeclarativeExtractor : IHttpDeclarativeExtractor
+/// <remarks>需配合 <see cref="MultipartAttribute" /> 使用。</remarks>
+[AttributeUsage(AttributeTargets.Method)]
+public sealed class MultipartFormAttribute : Attribute
 {
-    /// <inheritdoc />
-    public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
+    /// <summary>
+    ///     <inheritdoc cref="MultipartFormAttribute" />
+    /// </summary>
+    public MultipartFormAttribute()
     {
-        // 检查方法或接口是否贴有 [EnsureSuccessStatusCode] 特性
-        if (!context.IsMethodDefined<EnsureSuccessStatusCodeAttribute>(out var ensureSuccessStatusCodeAttribute, true))
-        {
-            return;
-        }
-
-        // 设置是否如果 HTTP 响应的 IsSuccessStatusCode 属性是 false，则引发异常
-        httpRequestBuilder.EnsureSuccessStatusCode(ensureSuccessStatusCodeAttribute.Enabled);
     }
+
+    /// <summary>
+    ///     <inheritdoc cref="MultipartFormAttribute" />
+    /// </summary>
+    /// <param name="boundary">多部分表单内容的边界</param>
+    public MultipartFormAttribute(string boundary) => Boundary = boundary;
+
+    /// <summary>
+    ///     多部分表单内容的边界
+    /// </summary>
+    public string? Boundary { get; set; }
 }

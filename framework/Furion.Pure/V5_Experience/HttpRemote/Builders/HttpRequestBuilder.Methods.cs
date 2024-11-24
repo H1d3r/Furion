@@ -41,6 +41,17 @@ namespace Furion.HttpRemote;
 public sealed partial class HttpRequestBuilder
 {
     /// <summary>
+    ///     线程锁
+    /// </summary>
+    /// <remarks>用于保证 <see cref="AddStringContentForFormUrlEncodedContentProcessor" /> 方法调用是线程安全的。</remarks>
+    internal readonly object _lock = new();
+
+    /// <summary>
+    ///     表示是否已添加了 <see cref="StringContentForFormUrlEncodedContentProcessor" /> 处理器
+    /// </summary>
+    internal bool _isAddedStringContentForFormUrlEncodedContentProcessor;
+
+    /// <summary>
     ///     设置跟踪标识
     /// </summary>
     /// <param name="traceIdentifier">设置跟踪标识</param>
@@ -129,22 +140,19 @@ public sealed partial class HttpRequestBuilder
     /// <exception cref="JsonException"></exception>
     public HttpRequestBuilder SetJsonContent(object? rawJson, Encoding? contentEncoding = null)
     {
-        var rawObject = rawJson;
-
         // 检查是否是字符串类型
         if (rawJson is not string rawString)
         {
-            return SetContent(rawObject, MediaTypeNames.Application.Json, contentEncoding);
+            return SetContent(rawJson, MediaTypeNames.Application.Json, contentEncoding);
         }
 
         // 尝试验证并获取 JsonDocument 实例（需 using）
         var jsonDocument = JsonUtility.Parse(rawString);
-        rawObject = jsonDocument;
 
         // 添加请求结束时需要释放的对象
         AddDisposable(jsonDocument);
 
-        return SetContent(rawObject, MediaTypeNames.Application.Json, contentEncoding);
+        return SetContent(jsonDocument, MediaTypeNames.Application.Json, contentEncoding);
     }
 
     /// <summary>
@@ -200,7 +208,7 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
-    ///     设置 URL 编码的键值对表单内容
+    ///     设置 URL 编码表单内容
     /// </summary>
     /// <param name="rawObject">原始对象</param>
     /// <param name="contentEncoding">内容编码</param>
@@ -219,8 +227,7 @@ public sealed partial class HttpRequestBuilder
         // 检查是否启用 StringContent 方式构建 application/x-www-form-urlencoded 请求内容
         if (useStringContent)
         {
-            AddHttpContentProcessors(() =>
-                [_stringContentForFormUrlEncodedContentProcessorInstance.Value]);
+            AddStringContentForFormUrlEncodedContentProcessor();
         }
 
         return this;
@@ -249,7 +256,7 @@ public sealed partial class HttpRequestBuilder
                 rawContent is not MultipartContent)
             {
                 throw new NotSupportedException(
-                    $"The method does not support setting the request content type to `{MediaTypeNames.Multipart.FormData}`. Please use the `{nameof(SetMultipartContent)}` method instead. If you are using an HTTP declarative requests, define the parameter with the `Action<HttpMultipartFormDataBuilder>` type.");
+                    $"The method does not support setting the request content type to `{MediaTypeNames.Multipart.FormData}`. Please use the `{nameof(SetMultipartContent)}` method instead. If you are using an HTTP declarative requests, define the parameter with the `Action<HttpMultipartFormDataBuilder>` type or annotate the parameter with the `MultipartAttribute`.");
             }
         }
 
@@ -271,7 +278,7 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
-    ///     设置多部分内容表单，请求类型为 <c>multipart/form-data</c>
+    ///     设置多部分表单内容，请求类型为 <c>multipart/form-data</c>
     /// </summary>
     /// <remarks>
     ///     该操作将强制覆盖 <see cref="SetContent" />、<see cref="SetContentEncoding(System.Text.Encoding)" /> 和
@@ -298,7 +305,7 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
-    ///     设置多部分内容表单，请求类型为 <c>multipart/form-data</c>
+    ///     设置多部分表单内容，请求类型为 <c>multipart/form-data</c>
     /// </summary>
     /// <remarks>
     ///     该操作将强制覆盖 <see cref="SetContent" />、<see cref="SetContentEncoding(System.Text.Encoding)" /> 和
@@ -333,7 +340,7 @@ public sealed partial class HttpRequestBuilder
     /// <param name="comparer">
     ///     <see cref="IEqualityComparer{T}" />
     /// </param>
-    /// <param name="replace">是否值已存在时则采用替换的方式，否则采用追加方式。默认值为 <c>false</c>。</param>
+    /// <param name="replace">是否替换已存在的请求标头。默认值为 <c>false</c>。</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -358,7 +365,7 @@ public sealed partial class HttpRequestBuilder
     /// <param name="comparer">
     ///     <see cref="IEqualityComparer{T}" />
     /// </param>
-    /// <param name="replace">是否值已存在时则采用替换的方式，否则采用追加方式。默认值为 <c>false</c>。</param>
+    /// <param name="replace">是否替换已存在的请求标头。默认值为 <c>false</c>。</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -397,7 +404,7 @@ public sealed partial class HttpRequestBuilder
     /// <param name="comparer">
     ///     <see cref="IEqualityComparer{T}" />
     /// </param>
-    /// <param name="replace">是否值已存在时则采用替换的方式，否则采用追加方式。默认值为 <c>false</c>。</param>
+    /// <param name="replace">是否替换已存在的请求标头。默认值为 <c>false</c>。</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -511,7 +518,7 @@ public sealed partial class HttpRequestBuilder
     /// <param name="comparer">
     ///     <see cref="IEqualityComparer{T}" />
     /// </param>
-    /// <param name="replace">是否值已存在时则采用替换的方式，否则采用追加方式。默认值为 <c>false</c>。</param>
+    /// <param name="replace">是否替换已存在的查询参数。默认值为 <c>false</c>。</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -537,7 +544,7 @@ public sealed partial class HttpRequestBuilder
     /// <param name="comparer">
     ///     <see cref="IEqualityComparer{T}" />
     /// </param>
-    /// <param name="replace">是否值已存在时则采用替换的方式，否则采用追加方式。默认值为 <c>false</c>。</param>
+    /// <param name="replace">是否替换已存在的查询参数。默认值为 <c>false</c>。</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -577,7 +584,7 @@ public sealed partial class HttpRequestBuilder
     /// <param name="comparer">
     ///     <see cref="IEqualityComparer{T}" />
     /// </param>
-    /// <param name="replace">是否值已存在时则采用替换的方式，否则采用追加方式。默认值为 <c>false</c>。</param>
+    /// <param name="replace">是否替换已存在的查询参数。默认值为 <c>false</c>。</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -598,7 +605,7 @@ public sealed partial class HttpRequestBuilder
     ///     设置需要从 URL 中移除的查询参数集合
     /// </summary>
     /// <remarks>支持多次调用。</remarks>
-    /// <param name="parameterNames">查询参数名集合</param>
+    /// <param name="parameterNames">查询参数键集合</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -816,7 +823,7 @@ public sealed partial class HttpRequestBuilder
     ///     需要从请求中移除的 Cookie 集合
     /// </summary>
     /// <remarks>支持多次调用。</remarks>
-    /// <param name="cookieNames">Cookie 名集合</param>
+    /// <param name="cookieNames">Cookie 键集合</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
     /// </returns>
@@ -944,6 +951,7 @@ public sealed partial class HttpRequestBuilder
     /// <summary>
     ///     设置用于处理在设置 <see cref="HttpRequestMessage" /> 的 <c>Content</c> 时的操作
     /// </summary>
+    /// <remarks>支持多次调用。</remarks>
     /// <param name="configure">自定义配置委托</param>
     /// <returns>
     ///     <see cref="HttpRequestBuilder" />
@@ -1186,6 +1194,7 @@ public sealed partial class HttpRequestBuilder
     /// <summary>
     ///     添加请求结束时需要释放的对象
     /// </summary>
+    /// <remarks>支持多次调用。</remarks>
     /// <param name="disposable">
     ///     <see cref="IDisposable" />
     /// </param>
@@ -1396,5 +1405,23 @@ public sealed partial class HttpRequestBuilder
 
         // 清空集合
         Disposables.Clear();
+    }
+
+    /// <summary>
+    ///     添加 <see cref="StringContentForFormUrlEncodedContentProcessor" /> 处理器
+    /// </summary>
+    internal void AddStringContentForFormUrlEncodedContentProcessor()
+    {
+        lock (_lock)
+        {
+            // 检查是否已添加 StringContentForFormUrlEncodedContentProcessor 处理器
+            if (_isAddedStringContentForFormUrlEncodedContentProcessor)
+            {
+                return;
+            }
+
+            _isAddedStringContentForFormUrlEncodedContentProcessor = true;
+            AddHttpContentProcessors(() => [_stringContentForFormUrlEncodedContentProcessorInstance.Value]);
+        }
     }
 }

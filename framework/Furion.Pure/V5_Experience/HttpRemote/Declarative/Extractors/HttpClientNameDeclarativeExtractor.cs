@@ -23,8 +23,6 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Extensions;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
@@ -36,7 +34,7 @@ internal sealed class HttpClientNameDeclarativeExtractor : IHttpDeclarativeExtra
     public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
     {
         // 检查方法或接口是否贴有 [HttpClientName] 特性
-        if (!context.Method.IsDefined<HttpClientNameAttribute>(out var httpClientNameAttribute, true))
+        if (!context.IsMethodDefined<HttpClientNameAttribute>(out var httpClientNameAttribute, true))
         {
             return;
         }

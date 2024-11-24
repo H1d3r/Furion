@@ -40,9 +40,8 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
     public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
     {
         // 查找所有贴有 [Multipart] 特性的参数
-        var multipartParameters = context.Parameters.Where(u =>
-            !HttpDeclarativeExtractorContext.IsFrozenParameter(u.Key) &&
-            u.Key.IsDefined(typeof(MultipartAttribute), true)).ToArray();
+        var multipartParameters = context.UnFrozenParameters
+            .Where(u => u.Key.IsDefined(typeof(MultipartAttribute), true)).ToArray();
 
         // 空检查
         if (multipartParameters is { Length: 0 })
@@ -53,6 +52,9 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
         // 初始化 HttpMultipartFormDataBuilder 实例
         var httpMultipartFormDataBuilder = new HttpMultipartFormDataBuilder(httpRequestBuilder);
 
+        // 设置多部分表单内容的边界
+        SetBoundary(context.Method, httpMultipartFormDataBuilder);
+
         // 遍历所有贴有 [Multipart] 特性的参数
         foreach (var (parameter, value) in multipartParameters)
         {
@@ -60,12 +62,40 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
             AddMultipart(parameter, value, httpMultipartFormDataBuilder);
         }
 
-        // 设置多部分内容表单
+        // 设置多部分表单内容
         httpRequestBuilder.SetMultipartContent(httpMultipartFormDataBuilder);
     }
 
     /// <inheritdoc />
     public int Order => 3;
+
+    /// <summary>
+    ///     设置多部分表单内容的边界
+    /// </summary>
+    /// <param name="method">
+    ///     <see cref="MethodInfo" />
+    /// </param>
+    /// <param name="httpMultipartFormDataBuilder">
+    ///     <see cref="HttpMultipartFormDataBuilder" />
+    /// </param>
+    internal static void SetBoundary(MethodInfo method, HttpMultipartFormDataBuilder httpMultipartFormDataBuilder)
+    {
+        // 检查方法是否定义了 MultipartFormAttribute 特性
+        if (!method.IsDefined(typeof(MultipartFormAttribute), true))
+        {
+            return;
+        }
+
+        // 获取 MultipartFormAttribute 实例
+        var multipartFormAttribute = method.GetCustomAttribute<MultipartFormAttribute>(true)!;
+
+        // 空检查
+        if (!string.IsNullOrWhiteSpace(multipartFormAttribute.Boundary))
+        {
+            // 多部分表单内容的边界
+            httpMultipartFormDataBuilder.SetBoundary(multipartFormAttribute.Boundary);
+        }
+    }
 
     /// <summary>
     ///     添加多部分表单内容
@@ -117,14 +147,12 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
                 break;
             // 添加文件
             case string fileSource when multipartAttribute.AsFileFrom is not FileSourceType.None:
-                AddFileFromSource(fileSource, name, multipartAttribute, httpMultipartFormDataBuilder,
-                    contentEncoding);
+                AddFileFromSource(fileSource, name, multipartAttribute, httpMultipartFormDataBuilder, contentEncoding);
                 break;
             // 添加单个表单项或对象
             default:
                 AddFormItemOrObject(value, name, parameter.ParameterType, multipartAttribute,
-                    httpMultipartFormDataBuilder,
-                    contentEncoding);
+                    httpMultipartFormDataBuilder, contentEncoding);
                 break;
         }
     }
@@ -144,8 +172,8 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
     internal static void AddFileFromSource(string fileSource, string name, MultipartAttribute multipartAttribute,
         HttpMultipartFormDataBuilder httpMultipartFormDataBuilder, Encoding? contentEncoding)
     {
-        // 获取多部分表单文件的来源
-        var fileSourceType = multipartAttribute.AsFileFrom;
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileSource, nameof(fileSource));
 
         // 获取内容类型
         var contentType = multipartAttribute.ContentType ?? MediaTypeNames.Application.Octet;
@@ -153,24 +181,25 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
         // 获取文件的名称
         var fileName = multipartAttribute.FileName;
 
-        switch (fileSourceType)
+        switch (multipartAttribute.AsFileFrom)
         {
-            // 从文件路径中添加
+            // 从本地文件路径中添加
             case FileSourceType.Path:
                 httpMultipartFormDataBuilder.AddFileAsStream(fileSource, name, fileName, contentType, contentEncoding);
                 break;
-            // 从 Base64 字符串中添加
+            // 从 Base64 字符串文件中添加
             case FileSourceType.Base64String:
                 httpMultipartFormDataBuilder.AddFileFromBase64String(fileSource, name, fileName, contentType,
                     contentEncoding);
                 break;
-            // 从互联网地址中添加
+            // 从互联网文件地址中添加
             case FileSourceType.Remote:
                 httpMultipartFormDataBuilder.AddFileFromRemote(fileSource, name, fileName, contentType,
                     contentEncoding);
                 break;
             case FileSourceType.None:
             default:
+                // 不做任何操作
                 break;
         }
     }

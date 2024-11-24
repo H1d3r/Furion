@@ -26,7 +26,7 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     指定多部分内容表单文件的来源类型
+///     指定多部分表单内容文件的来源类型
 /// </summary>
 public enum FileSourceType
 {
@@ -37,17 +37,17 @@ public enum FileSourceType
     None = 0,
 
     /// <summary>
-    ///     文件路径
+    ///     本地文件路径
     /// </summary>
     Path,
 
     /// <summary>
-    ///     Base64 字符串
+    ///     Base64 字符串文件
     /// </summary>
     Base64String,
 
     /// <summary>
-    ///     互联网地址
+    ///     互联网文件地址
     /// </summary>
     Remote
 }
