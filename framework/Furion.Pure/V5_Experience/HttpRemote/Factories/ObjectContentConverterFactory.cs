@@ -23,25 +23,14 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Text;
-
 namespace Furion.HttpRemote;
 
-/// <summary>
-///     <see cref="IHttpContentProcessor" /> 工厂
-/// </summary>
-public interface IHttpContentProcessorFactory
+/// <inheritdoc cref="IObjectContentConverterFactory" />
+internal sealed class ObjectContentConverterFactory : IObjectContentConverterFactory
 {
-    /// <summary>
-    ///     构建 <see cref="HttpContent" /> 实例
-    /// </summary>
-    /// <param name="rawContent">原始请求内容</param>
-    /// <param name="contentType">内容类型</param>
-    /// <param name="encoding">内容编码</param>
-    /// <param name="processors"><see cref="IHttpContentProcessor" /> 数组</param>
-    /// <returns>
-    ///     <see cref="HttpContent" />
-    /// </returns>
-    HttpContent? Build(object? rawContent, string contentType, Encoding? encoding = null,
-        params IHttpContentProcessor[]? processors);
+    /// <inheritdoc />
+    public ObjectContentConverter<TResult> GetConverter<TResult>() => new();
+
+    /// <inheritdoc />
+    public ObjectContentConverter GetConverter(Type resultType) => new();
 }

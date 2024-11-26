@@ -30,7 +30,7 @@ namespace Furion.HttpRemote;
 /// <summary>
 ///     <see cref="HttpContent" /> 请求内容处理器
 /// </summary>
-/// <remarks>用于将原始响应内容转换成 <see cref="HttpContent" /> 实例</remarks>
+/// <remarks>用于将原始请求内容转换成 <see cref="HttpContent" /> 实例</remarks>
 public interface IHttpContentProcessor
 {
     /// <summary>

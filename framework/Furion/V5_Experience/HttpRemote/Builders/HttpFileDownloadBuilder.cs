@@ -94,6 +94,11 @@ public sealed class HttpFileDownloadBuilder
     public Action<Exception>? OnTransferFailed { get; private set; }
 
     /// <summary>
+    ///     用于处理在文件存在且配置为跳过时的操作
+    /// </summary>
+    public Action? OnFileExistAndSkip { get; private set; }
+
+    /// <summary>
     ///     用于传输进度发生变化时的操作
     /// </summary>
     public Func<FileTransferProgress, Task>? OnProgressChanged { get; private set; }
@@ -152,23 +157,6 @@ public sealed class HttpFileDownloadBuilder
     }
 
     /// <summary>
-    ///     设置用于传输进度发生变化时执行的委托
-    /// </summary>
-    /// <param name="configure">自定义配置委托</param>
-    /// <returns>
-    ///     <see cref="HttpFileDownloadBuilder" />
-    /// </returns>
-    public HttpFileDownloadBuilder SetOnProgressChanged(Func<FileTransferProgress, Task> configure)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(configure);
-
-        OnProgressChanged = configure;
-
-        return this;
-    }
-
-    /// <summary>
     ///     设置当目标文件已存在时的行为
     /// </summary>
     /// <param name="fileExistsBehavior">
@@ -185,7 +173,7 @@ public sealed class HttpFileDownloadBuilder
     }
 
     /// <summary>
-    ///     设置进度更新（通知）的间隔时间
+    ///     设置文件传输进度（通知）的间隔时间
     /// </summary>
     /// <param name="progressInterval">进度更新（通知）的间隔时间</param>
     /// <returns>
@@ -222,6 +210,23 @@ public sealed class HttpFileDownloadBuilder
     }
 
     /// <summary>
+    ///     设置用于传输进度发生变化时执行的委托
+    /// </summary>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="HttpFileDownloadBuilder" />
+    /// </returns>
+    public HttpFileDownloadBuilder SetOnProgressChanged(Func<FileTransferProgress, Task> configure)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(configure);
+
+        OnProgressChanged = configure;
+
+        return this;
+    }
+
+    /// <summary>
     ///     设置在文件传输完成时的操作
     /// </summary>
     /// <param name="configure">自定义配置委托；委托参数为文件传输总花费时间（毫秒）</param>
@@ -251,6 +256,23 @@ public sealed class HttpFileDownloadBuilder
         ArgumentNullException.ThrowIfNull(configure);
 
         OnTransferFailed = configure;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置在文件存在且配置为跳过时的操作
+    /// </summary>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="HttpFileDownloadBuilder" />
+    /// </returns>
+    public HttpFileDownloadBuilder SetOnFileExistAndSkip(Action configure)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(configure);
+
+        OnFileExistAndSkip = configure;
 
         return this;
     }

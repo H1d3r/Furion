@@ -23,25 +23,29 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Text;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="IHttpContentProcessor" /> 工厂
+///     <see cref="IHttpContentConverter{TResult}" /> 内容处理器基类
 /// </summary>
-public interface IHttpContentProcessorFactory
+/// <typeparam name="TResult">转换的目标类型</typeparam>
+public abstract class HttpContentConverterBase<TResult> : IHttpContentConverter<TResult>
 {
-    /// <summary>
-    ///     构建 <see cref="HttpContent" /> 实例
-    /// </summary>
-    /// <param name="rawContent">原始请求内容</param>
-    /// <param name="contentType">内容类型</param>
-    /// <param name="encoding">内容编码</param>
-    /// <param name="processors"><see cref="IHttpContentProcessor" /> 数组</param>
-    /// <returns>
-    ///     <see cref="HttpContent" />
-    /// </returns>
-    HttpContent? Build(object? rawContent, string contentType, Encoding? encoding = null,
-        params IHttpContentProcessor[]? processors);
+    /// <inheritdoc />
+    public abstract TResult? Read(HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default);
+
+    /// <inheritdoc />
+    public abstract Task<TResult?> ReadAsync(HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default);
+
+    /// <inheritdoc />
+    public virtual object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) =>
+        Read(httpResponseMessage, cancellationToken);
+
+    /// <inheritdoc />
+    public virtual async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
+        CancellationToken cancellationToken = default) =>
+        await ReadAsync(httpResponseMessage, cancellationToken);
 }

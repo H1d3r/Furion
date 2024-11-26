@@ -23,25 +23,53 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="IHttpContentProcessor" /> 工厂
+///     <see cref="IHttpContentProcessor" /> 内容处理器基类
 /// </summary>
-public interface IHttpContentProcessorFactory
+public abstract class HttpContentProcessorBase : IHttpContentProcessor
 {
+    /// <inheritdoc />
+    public abstract bool CanProcess(object? rawContent, string contentType);
+
+    /// <inheritdoc />
+    public abstract HttpContent? Process(object? rawContent, string contentType, Encoding? encoding);
+
     /// <summary>
-    ///     构建 <see cref="HttpContent" /> 实例
+    ///     尝试解析 <see cref="HttpContent" /> 类型
     /// </summary>
     /// <param name="rawContent">原始请求内容</param>
     /// <param name="contentType">内容类型</param>
     /// <param name="encoding">内容编码</param>
-    /// <param name="processors"><see cref="IHttpContentProcessor" /> 数组</param>
+    /// <param name="httpContent">
+    ///     <see cref="HttpContent" />
+    /// </param>
     /// <returns>
     ///     <see cref="HttpContent" />
     /// </returns>
-    HttpContent? Build(object? rawContent, string contentType, Encoding? encoding = null,
-        params IHttpContentProcessor[]? processors);
+    public virtual bool TryProcess([NotNullWhen(false)] object? rawContent, string contentType, Encoding? encoding,
+        out HttpContent? httpContent)
+    {
+        switch (rawContent)
+        {
+            case null:
+                httpContent = null;
+                return true;
+            case HttpContent content:
+                // 设置 Content-Type
+                content.Headers.ContentType ??=
+                    new MediaTypeHeaderValue(contentType) { CharSet = encoding?.BodyName ?? Constants.UTF8_ENCODING };
+
+                httpContent = content;
+                return true;
+            default:
+                httpContent = null;
+                return false;
+        }
+    }
 }

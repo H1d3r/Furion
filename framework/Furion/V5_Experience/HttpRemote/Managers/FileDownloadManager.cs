@@ -128,6 +128,9 @@ internal sealed class FileDownloadManager
             // 根据文件是否存在及配置的行为来决定是否应继续进行文件下载
             if (!ShouldContinueWithDownload(httpResponseMessage, out var destinationPath))
             {
+                // 处理文件存在且配置为跳过时的操作
+                HandleFileExistAndSkip();
+
                 return;
             }
 
@@ -239,6 +242,9 @@ internal sealed class FileDownloadManager
             // 根据文件是否存在及配置的行为来决定是否应继续进行文件下载
             if (!ShouldContinueWithDownload(httpResponseMessage, out var destinationPath))
             {
+                // 处理文件存在且配置为跳过时的操作
+                HandleFileExistAndSkip();
+
                 return;
             }
 
@@ -412,6 +418,11 @@ internal sealed class FileDownloadManager
 
         _httpFileDownloadBuilder.OnTransferFailed.TryInvoke(e);
     }
+
+    /// <summary>
+    ///     处理文件存在且配置为跳过时的操作
+    /// </summary>
+    internal void HandleFileExistAndSkip() => _httpFileDownloadBuilder.OnFileExistAndSkip.TryInvoke();
 
     /// <summary>
     ///     处理文件传输进度变化

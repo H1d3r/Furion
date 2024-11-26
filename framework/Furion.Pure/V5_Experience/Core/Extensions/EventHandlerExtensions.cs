@@ -23,25 +23,42 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Text;
-
-namespace Furion.HttpRemote;
+namespace Furion.Extensions;
 
 /// <summary>
-///     <see cref="IHttpContentProcessor" /> 工厂
+///     <see cref="EventHandler{TEventArgs}" /> 拓展类
 /// </summary>
-public interface IHttpContentProcessorFactory
+internal static class EventHandlerExtensions
 {
     /// <summary>
-    ///     构建 <see cref="HttpContent" /> 实例
+    ///     尝试执行事件处理程序
     /// </summary>
-    /// <param name="rawContent">原始请求内容</param>
-    /// <param name="contentType">内容类型</param>
-    /// <param name="encoding">内容编码</param>
-    /// <param name="processors"><see cref="IHttpContentProcessor" /> 数组</param>
-    /// <returns>
-    ///     <see cref="HttpContent" />
-    /// </returns>
-    HttpContent? Build(object? rawContent, string contentType, Encoding? encoding = null,
-        params IHttpContentProcessor[]? processors);
+    /// <param name="handler">
+    ///     <see cref="EventHandler{TEventArgs}" />
+    /// </param>
+    /// <param name="sender">
+    ///     <see cref="object" />
+    /// </param>
+    /// <param name="args">
+    ///     <typeparamref name="TEventArgs" />
+    /// </param>
+    /// <typeparam name="TEventArgs">事件参数</typeparam>
+    internal static void TryInvoke<TEventArgs>(this EventHandler<TEventArgs>? handler, object? sender, TEventArgs args)
+    {
+        // 空检查
+        if (handler is null)
+        {
+            return;
+        }
+
+        try
+        {
+            handler(sender, args);
+        }
+        catch (Exception e)
+        {
+            // 输出调试事件
+            Debugging.Error(e.Message);
+        }
+    }
 }

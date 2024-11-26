@@ -32,10 +32,10 @@ namespace Furion.HttpRemote;
 /// <summary>
 ///     <see cref="IActionResult" /> 内容转换器
 /// </summary>
-public class IActionResultContentConverter : IHttpContentConverter<IActionResult>
+public class IActionResultContentConverter : HttpContentConverterBase<IActionResult>
 {
     /// <inheritdoc />
-    public virtual IActionResult? Read(HttpResponseMessage httpResponseMessage,
+    public override IActionResult? Read(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default)
     {
         // 处理特定状态码结果
@@ -69,7 +69,9 @@ public class IActionResultContentConverter : IHttpContentConverter<IActionResult
 
                 return new ContentResult
                 {
-                    Content = stringContent, StatusCode = (int)statusCode, ContentType = contentType?.ToString()
+                    Content = stringContent,
+                    StatusCode = (int)statusCode,
+                    ContentType = contentType?.ToString()
                 };
             default:
                 // 获取 ContentDisposition 实例
@@ -94,7 +96,7 @@ public class IActionResultContentConverter : IHttpContentConverter<IActionResult
     }
 
     /// <inheritdoc />
-    public virtual async Task<IActionResult?> ReadAsync(HttpResponseMessage httpResponseMessage,
+    public override async Task<IActionResult?> ReadAsync(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default)
     {
         // 处理特定状态码结果
@@ -127,7 +129,9 @@ public class IActionResultContentConverter : IHttpContentConverter<IActionResult
 
                 return new ContentResult
                 {
-                    Content = stringContent, StatusCode = (int)statusCode, ContentType = contentType?.ToString()
+                    Content = stringContent,
+                    StatusCode = (int)statusCode,
+                    ContentType = contentType?.ToString()
                 };
             default:
                 // 获取 ContentDisposition 实例
@@ -150,16 +154,6 @@ public class IActionResultContentConverter : IHttpContentConverter<IActionResult
                 };
         }
     }
-
-    /// <inheritdoc />
-    public virtual object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default) =>
-        Read(httpResponseMessage, cancellationToken);
-
-    /// <inheritdoc />
-    public virtual async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default) =>
-        await ReadAsync(httpResponseMessage, cancellationToken);
 
     /// <summary>
     ///     处理特定状态码结果

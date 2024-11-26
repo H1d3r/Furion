@@ -65,53 +65,6 @@ internal sealed class HttpContentConverterFactory : IHttpContentConverterFactory
     }
 
     /// <inheritdoc />
-    public IHttpContentConverter<TResult> GetConverter<TResult>(params IHttpContentConverter[]? converters)
-    {
-        // 初始化新的 IHttpContentConverter 字典集合
-        var unionProcessors = new Dictionary<Type, IHttpContentConverter>(_converters);
-
-        // 添加自定义 IHttpContentConverter 数组
-        unionProcessors.TryAdd(converters, value => value.GetType());
-
-        // 查找可以处理目标类型的响应内容转换器
-        var typeConverter = unionProcessors.Values.OfType<IHttpContentConverter<TResult>>().LastOrDefault();
-
-        // 空检查
-        if (typeConverter is not null)
-        {
-            return typeConverter;
-        }
-
-        // 如果未找到，则统一使用 ObjectContentConverter<TResult> 转换器进行处理
-        return _serviceProvider.GetService<IObjectContentConverterFactory>()?.GetConverter<TResult>() ??
-               new ObjectContentConverter<TResult>();
-    }
-
-    /// <inheritdoc />
-    public IHttpContentConverter GetConverter(Type resultType, params IHttpContentConverter[]? converters)
-    {
-        // 初始化新的 IHttpContentConverter 字典集合
-        var unionProcessors = new Dictionary<Type, IHttpContentConverter>(_converters);
-
-        // 添加自定义 IHttpContentConverter 数组
-        unionProcessors.TryAdd(converters, value => value.GetType());
-
-        // 查找可以处理目标类型的响应内容转换器
-        var typeConverter = unionProcessors.Values.OfType(typeof(IHttpContentConverter<>).MakeGenericType(resultType))
-            .Cast<IHttpContentConverter>().LastOrDefault();
-
-        // 空检查
-        if (typeConverter is not null)
-        {
-            return typeConverter;
-        }
-
-        // 如果未找到，则统一使用 ObjectContentConverter 转换器进行处理
-        return _serviceProvider.GetService<IObjectContentConverterFactory>()?.GetConverter(resultType) ??
-               new ObjectContentConverter();
-    }
-
-    /// <inheritdoc />
     public TResult? Read<TResult>(HttpResponseMessage httpResponseMessage, IHttpContentConverter[]? converters = null,
         CancellationToken cancellationToken = default) =>
         GetConverter<TResult>(converters).Read(httpResponseMessage, cancellationToken);
@@ -133,4 +86,53 @@ internal sealed class HttpContentConverterFactory : IHttpContentConverterFactory
         IHttpContentConverter[]? converters = null,
         CancellationToken cancellationToken = default) =>
         await GetConverter(resultType, converters).ReadAsync(resultType, httpResponseMessage, cancellationToken);
+
+    /// <summary>
+    ///     获取 <see cref="IHttpContentConverter{TResult}" /> 实例
+    /// </summary>
+    /// <param name="converters"><see cref="IHttpContentConverter{TResult}" /> 数组</param>
+    /// <typeparam name="TResult">转换的目标类型</typeparam>
+    /// <returns>
+    ///     <see cref="IHttpContentConverter{TResult}" />
+    /// </returns>
+    internal IHttpContentConverter<TResult> GetConverter<TResult>(params IHttpContentConverter[]? converters)
+    {
+        // 初始化新的 IHttpContentConverter 字典集合
+        var unionProcessors = new Dictionary<Type, IHttpContentConverter>(_converters);
+
+        // 添加自定义 IHttpContentConverter 数组
+        unionProcessors.TryAdd(converters, value => value.GetType());
+
+        // 查找可以处理目标类型的响应内容转换器
+        var typeConverter = unionProcessors.Values.OfType<IHttpContentConverter<TResult>>().LastOrDefault();
+
+        // 如果未找到，则调用 IObjectContentConverterFactory 实例的 GetConverter<TResult> 返回
+        return typeConverter ??
+               _serviceProvider.GetRequiredService<IObjectContentConverterFactory>().GetConverter<TResult>();
+    }
+
+    /// <summary>
+    ///     获取 <see cref="IHttpContentConverter" /> 实例
+    /// </summary>
+    /// <param name="resultType">转换的目标类型</param>
+    /// <param name="converters"><see cref="IHttpContentConverter{TResult}" /> 数组</param>
+    /// <returns>
+    ///     <see cref="IHttpContentConverter" />
+    /// </returns>
+    internal IHttpContentConverter GetConverter(Type resultType, params IHttpContentConverter[]? converters)
+    {
+        // 初始化新的 IHttpContentConverter 字典集合
+        var unionProcessors = new Dictionary<Type, IHttpContentConverter>(_converters);
+
+        // 添加自定义 IHttpContentConverter 数组
+        unionProcessors.TryAdd(converters, value => value.GetType());
+
+        // 查找可以处理目标类型的响应内容转换器
+        var typeConverter = unionProcessors.Values.OfType(typeof(IHttpContentConverter<>).MakeGenericType(resultType))
+            .Cast<IHttpContentConverter>().LastOrDefault();
+
+        // 如果未找到，则调用 IObjectContentConverterFactory 实例的 GetConverter 返回
+        return typeConverter ??
+               _serviceProvider.GetRequiredService<IObjectContentConverterFactory>().GetConverter(resultType);
+    }
 }
