@@ -203,9 +203,7 @@ public sealed class HttpMultipartFormDataBuilder
         {
             _partContents.Add(new MultipartFormDataItem(name)
             {
-                ContentType = mediaType,
-                RawContent = rawObject,
-                ContentEncoding = encoding
+                ContentType = mediaType, RawContent = rawObject, ContentEncoding = encoding
             });
 
             return this;
@@ -218,9 +216,7 @@ public sealed class HttpMultipartFormDataBuilder
         _partContents.AddRange(rawObject.ObjectToDictionary()!.Select(u =>
             new MultipartFormDataItem(u.Key.ToCultureString(CultureInfo.InvariantCulture)!)
             {
-                ContentType = MediaTypeNames.Text.Plain,
-                RawContent = u.Value,
-                ContentEncoding = encoding
+                ContentType = MediaTypeNames.Text.Plain, RawContent = u.Value, ContentEncoding = encoding
             }));
 
         return this;
@@ -631,9 +627,7 @@ public sealed class HttpMultipartFormDataBuilder
 
         _partContents.Add(new MultipartFormDataItem(formName)
         {
-            ContentType = mediaType,
-            RawContent = httpContent,
-            ContentEncoding = encoding
+            ContentType = mediaType, RawContent = httpContent, ContentEncoding = encoding
         });
 
         return this;
