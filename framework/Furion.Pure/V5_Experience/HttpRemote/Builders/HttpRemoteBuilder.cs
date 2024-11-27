@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Net.Http.Headers;
@@ -292,6 +293,25 @@ public sealed class HttpRemoteBuilder
         _httpDeclarativeExtractors.Add(configure);
 
         return this;
+    }
+
+    /// <summary>
+    ///     扫描程序集并添加 HTTP 声明式 <see cref="IHttpDeclarativeExtractor" /> 提取器
+    /// </summary>
+    /// <remarks>支持多次调用。</remarks>
+    /// <param name="assemblies"><see cref="Assembly" /> 集合</param>
+    /// <returns>
+    ///     <see cref="HttpRemoteBuilder" />
+    /// </returns>
+    public HttpRemoteBuilder AddHttpDeclarativeExtractorFromAssemblies(params IEnumerable<Assembly?> assemblies)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(assemblies);
+
+        return AddHttpDeclarativeExtractors(() => assemblies.SelectMany(ass =>
+            (ass?.GetExportedTypes() ?? Enumerable.Empty<Type>()).Where(t =>
+                t.HasDefinePublicParameterlessConstructor() && typeof(IHttpDeclarativeExtractor).IsAssignableFrom(t))
+            .Select(t => (IHttpDeclarativeExtractor)Activator.CreateInstance(t)!)));
     }
 
     /// <summary>
