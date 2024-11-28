@@ -27,6 +27,7 @@ using Furion.HttpRemote.Extensions;
 using Furion.Utilities;
 using Microsoft.Extensions.Http.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Net;
 
@@ -39,7 +40,11 @@ namespace Furion.HttpRemote;
 /// <param name="logger">
 ///     <see cref="Logger{T}" />
 /// </param>
-public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : DelegatingHandler
+/// <param name="httpRemoteOptions">
+///     <see cref="IOptions{TOptions}" />
+/// </param>
+public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<HttpRemoteOptions> httpRemoteOptions)
+    : DelegatingHandler
 {
     /// <summary>
     ///     是否启用请求分析工具
@@ -65,7 +70,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
         }
 
         // 记录请求标头
-        LogRequestHeaders(logger, httpRequestMessage);
+        LogRequestHeaders(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage);
 
         // 初始化 Stopwatch 实例并开启计时操作
         var stopwatch = Stopwatch.StartNew();
@@ -80,10 +85,12 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
         stopwatch.Stop();
 
         // 记录常规和响应标头
-        LogResponseHeadersAndSummary(logger, httpResponseMessage, requestDuration);
+        LogResponseHeadersAndSummary(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpResponseMessage,
+            requestDuration);
 
         // 打印 CookieContainer 内容
-        LogCookieContainer(logger, httpRequestMessage, ExtractCookieContainer());
+        LogCookieContainer(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage,
+            ExtractCookieContainer());
 
         return httpResponseMessage;
     }
@@ -99,7 +106,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
         }
 
         // 记录请求标头
-        LogRequestHeaders(logger, httpRequestMessage);
+        LogRequestHeaders(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage);
 
         // 初始化 Stopwatch 实例并开启计时操作
         var stopwatch = Stopwatch.StartNew();
@@ -114,10 +121,12 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
         stopwatch.Stop();
 
         // 记录常规和响应标头
-        LogResponseHeadersAndSummary(logger, httpResponseMessage, requestDuration);
+        LogResponseHeadersAndSummary(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpResponseMessage,
+            requestDuration);
 
         // 打印 CookieContainer 内容
-        LogCookieContainer(logger, httpRequestMessage, ExtractCookieContainer());
+        LogCookieContainer(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage,
+            ExtractCookieContainer());
 
         return httpResponseMessage;
     }
@@ -128,11 +137,12 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
     /// <param name="logger">
     ///     <see cref="ILogger" />
     /// </param>
+    /// <param name="logLevel">日志级别</param>
     /// <param name="request">
     ///     <see cref="HttpRequestMessage" />
     /// </param>
-    internal static void LogRequestHeaders(ILogger logger, HttpRequestMessage request) =>
-        Log(logger, request.ProfilerHeaders());
+    internal static void LogRequestHeaders(ILogger logger, LogLevel logLevel, HttpRequestMessage request) =>
+        Log(logger, logLevel, request.ProfilerHeaders());
 
     /// <summary>
     ///     记录常规和响应标头
@@ -140,13 +150,14 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
     /// <param name="logger">
     ///     <see cref="ILogger" />
     /// </param>
+    /// <param name="logLevel">日志级别</param>
     /// <param name="httpResponseMessage">
     ///     <see cref="HttpResponseMessage" />
     /// </param>
     /// <param name="requestDuration">请求耗时（毫秒）</param>
-    internal static void LogResponseHeadersAndSummary(ILogger logger, HttpResponseMessage httpResponseMessage,
-        long requestDuration) =>
-        Log(logger, httpResponseMessage.ProfilerGeneralAndHeaders(generalCustomKeyValues:
+    internal static void LogResponseHeadersAndSummary(ILogger logger, LogLevel logLevel,
+        HttpResponseMessage httpResponseMessage, long requestDuration) =>
+        Log(logger, logLevel, httpResponseMessage.ProfilerGeneralAndHeaders(generalCustomKeyValues:
             [new KeyValuePair<string, IEnumerable<string>>("Request Duration (ms)", [$"{requestDuration:N2}"])]));
 
     /// <summary>
@@ -155,13 +166,14 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
     /// <param name="logger">
     ///     <see cref="ILogger" />
     /// </param>
+    /// <param name="logLevel">日志级别</param>
     /// <param name="request">
     ///     <see cref="HttpRequestMessage" />
     /// </param>
     /// <param name="cookieContainer">
     ///     <see cref="CookieContainer" />
     /// </param>
-    internal static void LogCookieContainer(ILogger logger, HttpRequestMessage request,
+    internal static void LogCookieContainer(ILogger logger, LogLevel logLevel, HttpRequestMessage request,
         CookieContainer? cookieContainer)
     {
         // 空检查
@@ -180,7 +192,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
         }
 
         // 打印日志
-        Log(logger, StringUtility.FormatKeyValuesSummary(
+        Log(logger, logLevel, StringUtility.FormatKeyValuesSummary(
             cookies.ToDictionary(u => u.Name, u => Enumerable.Empty<string>().Concat([u.Value])),
             "Cookie Container"));
     }
@@ -191,8 +203,9 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
     /// <param name="logger">
     ///     <see cref="ILogger" />
     /// </param>
+    /// <param name="logLevel">日志级别</param>
     /// <param name="message">日志消息</param>
-    internal static void Log(ILogger logger, string? message)
+    internal static void Log(ILogger logger, LogLevel logLevel, string? message)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(logger);
@@ -204,7 +217,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger) : Delegat
         }
 
         // 打印日志
-        logger.LogInformation("{message}", message);
+        logger.Log(logLevel, "{message}", message);
     }
 
     /// <summary>

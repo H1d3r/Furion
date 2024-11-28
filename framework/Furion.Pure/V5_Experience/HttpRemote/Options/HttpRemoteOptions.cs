@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -53,6 +54,12 @@ public sealed class HttpRemoteOptions
     ///     默认文件下载保存目录
     /// </summary>
     public string? DefaultFileDownloadDirectory { get; set; }
+
+    /// <summary>
+    ///     请求分析工具日志级别
+    /// </summary>
+    /// <remarks>默认值为 <see cref="LogLevel.Warning" /></remarks>
+    public LogLevel ProfilerLogLevel { get; set; } = LogLevel.Warning;
 
     /// <summary>
     ///     JSON 序列化配置
