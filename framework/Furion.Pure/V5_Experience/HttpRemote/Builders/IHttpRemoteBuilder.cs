@@ -23,30 +23,60 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="IHttpContentProcessor" /> 工厂
+///     HTTP 远程请求服务构建器
 /// </summary>
-public interface IHttpContentProcessorFactory
+public interface IHttpRemoteBuilder
 {
     /// <summary>
-    ///     <inheritdoc cref="IServiceProvider" />
+    ///     <see cref="IServiceCollection" />
     /// </summary>
-    IServiceProvider ServiceProvider { get; }
+    IServiceCollection Services { get; }
 
     /// <summary>
-    ///     构建 <see cref="HttpContent" /> 实例
+    ///     配置 <see cref="HttpRemoteOptions" /> 实例
     /// </summary>
-    /// <param name="rawContent">原始请求内容</param>
-    /// <param name="contentType">内容类型</param>
-    /// <param name="encoding">内容编码</param>
-    /// <param name="processors"><see cref="IHttpContentProcessor" /> 数组</param>
+    /// <param name="configure">自定义配置委托</param>
     /// <returns>
-    ///     <see cref="HttpContent" />
+    ///     <see cref="IHttpRemoteBuilder" />
     /// </returns>
-    HttpContent? Build(object? rawContent, string contentType, Encoding? encoding = null,
-        params IHttpContentProcessor[]? processors);
+    IHttpRemoteBuilder ConfigureOptions(Action<HttpRemoteOptions> configure);
+}
+
+/// <summary>
+///     <see cref="IHttpRemoteBuilder" /> 默认实现
+/// </summary>
+internal sealed class DefaultHttpRemoteBuilder : IHttpRemoteBuilder
+{
+    /// <summary>
+    ///     <inheritdoc cref="DefaultHttpRemoteBuilder" />
+    /// </summary>
+    /// <param name="services">
+    ///     <see cref="IServiceCollection" />
+    /// </param>
+    public DefaultHttpRemoteBuilder(IServiceCollection services)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(services);
+
+        Services = services;
+    }
+
+    /// <inheritdoc />
+    public IServiceCollection Services { get; }
+
+    /// <inheritdoc />
+    public IHttpRemoteBuilder ConfigureOptions(Action<HttpRemoteOptions> configure)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(configure);
+
+        Services.Configure(configure);
+
+        return this;
+    }
 }

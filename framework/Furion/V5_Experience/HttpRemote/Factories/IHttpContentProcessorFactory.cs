@@ -33,6 +33,11 @@ namespace Furion.HttpRemote;
 public interface IHttpContentProcessorFactory
 {
     /// <summary>
+    ///     <inheritdoc cref="IServiceProvider" />
+    /// </summary>
+    IServiceProvider ServiceProvider { get; }
+
+    /// <summary>
     ///     构建 <see cref="HttpContent" /> 实例
     /// </summary>
     /// <param name="rawContent">原始请求内容</param>

@@ -32,6 +32,9 @@ namespace Furion.HttpRemote;
 public abstract class HttpContentConverterBase<TResult> : IHttpContentConverter<TResult>
 {
     /// <inheritdoc />
+    public IServiceProvider? ServiceProvider { get; set; }
+
+    /// <inheritdoc />
     public abstract TResult? Read(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default);
 

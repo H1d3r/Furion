@@ -24,6 +24,8 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -63,7 +65,9 @@ public class StringContentProcessor : HttpContentProcessorBase
         // 将原始请求内容转换为字符串
         var content = rawContent.GetType().IsBasicType() || rawContent is JsonElement
             ? rawContent.ToCultureString(CultureInfo.InvariantCulture)
-            : JsonSerializer.Serialize(rawContent);
+            : JsonSerializer.Serialize(rawContent,
+                ServiceProvider?.GetRequiredService<IOptions<HttpRemoteOptions>>().Value.JsonSerializerOptions ??
+                HttpRemoteOptions.JsonSerializerOptionsDefault);
 
         // 初始化 StringContent 实例
         var stringContent = new StringContent(content!, encoding,

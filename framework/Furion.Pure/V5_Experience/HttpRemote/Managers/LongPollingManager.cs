@@ -24,6 +24,8 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Threading.Channels;
 
 namespace Furion.HttpRemote;
@@ -73,7 +75,8 @@ internal sealed class LongPollingManager
             : null) as IHttpLongPollingEventHandler;
 
         // 构建 HttpRequestBuilder 实例
-        RequestBuilder = httpLongPollingBuilder.Build(_httpRemoteService.RemoteOptions, configure);
+        RequestBuilder = httpLongPollingBuilder.Build(httpRemoteService.ServiceProvider
+            .GetRequiredService<IOptions<HttpRemoteOptions>>().Value, configure);
     }
 
     /// <summary>

@@ -24,6 +24,8 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading.Channels;
@@ -79,7 +81,8 @@ internal sealed class ServerSentEventsManager
             : null) as IHttpServerSentEventsEventHandler;
 
         // 构建 HttpRequestBuilder 实例
-        RequestBuilder = httpServerSentEventsBuilder.Build(_httpRemoteService.RemoteOptions, configure);
+        RequestBuilder = httpServerSentEventsBuilder.Build(httpRemoteService.ServiceProvider
+            .GetRequiredService<IOptions<HttpRemoteOptions>>().Value, configure);
     }
 
     /// <summary>

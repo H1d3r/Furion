@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
 
 namespace Furion.HttpRemote;
@@ -33,14 +35,21 @@ namespace Furion.HttpRemote;
 public class ObjectContentConverter : IHttpContentConverter
 {
     /// <inheritdoc />
+    public IServiceProvider? ServiceProvider { get; set; }
+
+    /// <inheritdoc />
     public virtual object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
-        httpResponseMessage.Content.ReadFromJsonAsync(resultType, cancellationToken).GetAwaiter().GetResult();
+        httpResponseMessage.Content.ReadFromJsonAsync(resultType,
+            ServiceProvider?.GetRequiredService<IOptions<HttpRemoteOptions>>().Value.JsonSerializerOptions ??
+            HttpRemoteOptions.JsonSerializerOptionsDefault, cancellationToken).GetAwaiter().GetResult();
 
     /// <inheritdoc />
     public virtual async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
-        await httpResponseMessage.Content.ReadFromJsonAsync(resultType, cancellationToken);
+        await httpResponseMessage.Content.ReadFromJsonAsync(resultType,
+            ServiceProvider?.GetRequiredService<IOptions<HttpRemoteOptions>>().Value.JsonSerializerOptions ??
+            HttpRemoteOptions.JsonSerializerOptionsDefault, cancellationToken);
 }
 
 /// <summary>
@@ -52,10 +61,14 @@ public class ObjectContentConverter<TResult> : ObjectContentConverter, IHttpCont
     /// <inheritdoc />
     public virtual TResult? Read(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
-        httpResponseMessage.Content.ReadFromJsonAsync<TResult>(cancellationToken).GetAwaiter().GetResult();
+        httpResponseMessage.Content.ReadFromJsonAsync<TResult>(
+            ServiceProvider?.GetRequiredService<IOptions<HttpRemoteOptions>>().Value.JsonSerializerOptions ??
+            HttpRemoteOptions.JsonSerializerOptionsDefault, cancellationToken).GetAwaiter().GetResult();
 
     /// <inheritdoc />
     public virtual async Task<TResult?> ReadAsync(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
-        await httpResponseMessage.Content.ReadFromJsonAsync<TResult>(cancellationToken);
+        await httpResponseMessage.Content.ReadFromJsonAsync<TResult>(
+            ServiceProvider?.GetRequiredService<IOptions<HttpRemoteOptions>>().Value.JsonSerializerOptions ??
+            HttpRemoteOptions.JsonSerializerOptionsDefault, cancellationToken);
 }

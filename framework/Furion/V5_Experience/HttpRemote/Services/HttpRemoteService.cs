@@ -25,6 +25,7 @@
 
 using Furion.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
@@ -46,6 +47,9 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
 
     /// <inheritdoc cref="IHttpContentProcessorFactory" />
     internal readonly IHttpContentProcessorFactory _httpContentProcessorFactory;
+
+    /// <inheritdoc cref="HttpRemoteOptions" />
+    internal readonly HttpRemoteOptions _httpRemoteOptions;
 
     /// <inheritdoc cref="ILogger{T}" />
     internal readonly ILogger<Logging> _logger;
@@ -69,12 +73,13 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
     ///     <see cref="IHttpContentConverterFactory" />
     /// </param>
     /// <param name="httpRemoteOptions">
-    ///     <see cref="HttpRemoteOptions" />
+    ///     <see cref="IOptions{TOptions}" />
     /// </param>
     public HttpRemoteService(IServiceProvider serviceProvider, ILogger<Logging> logger,
         IHttpClientFactory httpClientFactory,
         IHttpContentProcessorFactory httpContentProcessorFactory,
-        IHttpContentConverterFactory httpContentConverterFactory, HttpRemoteOptions httpRemoteOptions)
+        IHttpContentConverterFactory httpContentConverterFactory,
+        IOptions<HttpRemoteOptions> httpRemoteOptions)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(serviceProvider);
@@ -85,16 +90,13 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         ArgumentNullException.ThrowIfNull(httpRemoteOptions);
 
         ServiceProvider = serviceProvider;
-        RemoteOptions = httpRemoteOptions;
+        _httpRemoteOptions = httpRemoteOptions.Value;
 
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _httpContentProcessorFactory = httpContentProcessorFactory;
         _httpContentConverterFactory = httpContentConverterFactory;
     }
-
-    /// <inheritdoc />
-    public HttpRemoteOptions RemoteOptions { get; }
 
     /// <inheritdoc />
     public IServiceProvider ServiceProvider { get; }
@@ -354,8 +356,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         // 初始化 HttpRemoteResult 实例
         var httpRemoteResult = new HttpRemoteResult<TResult>(httpResponseMessage)
         {
-            Result = result,
-            RequestDuration = requestDuration
+            Result = result, RequestDuration = requestDuration
         };
 
         return httpRemoteResult;
@@ -383,8 +384,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
         // 初始化 HttpRemoteResult 实例
         var httpRemoteResult = new HttpRemoteResult<TResult>(httpResponseMessage)
         {
-            Result = result,
-            RequestDuration = requestDuration
+            Result = result, RequestDuration = requestDuration
         };
 
         return httpRemoteResult;
@@ -435,7 +435,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
 
         // 构建 HttpRequestMessage 实例
         var httpRequestMessage =
-            httpRequestBuilder.Build(RemoteOptions, _httpContentProcessorFactory, httpClient.BaseAddress);
+            httpRequestBuilder.Build(_httpRemoteOptions, _httpContentProcessorFactory, httpClient.BaseAddress);
 
         // 处理发送 HTTP 请求之前
         HandlePreSendRequest(httpRequestBuilder, requestEventHandler, httpRequestMessage);

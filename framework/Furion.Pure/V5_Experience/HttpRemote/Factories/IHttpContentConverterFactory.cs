@@ -31,6 +31,11 @@ namespace Furion.HttpRemote;
 public interface IHttpContentConverterFactory
 {
     /// <summary>
+    ///     <inheritdoc cref="IServiceProvider" />
+    /// </summary>
+    IServiceProvider ServiceProvider { get; }
+
+    /// <summary>
     ///     将 <see cref="HttpResponseMessage" /> 转换为
     ///     <typeparamref name="TResult" />
     ///     实例

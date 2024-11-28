@@ -40,9 +40,9 @@ public static class HttpRemoteServiceCollectionExtensions
     /// </param>
     /// <param name="configure">自定义配置委托</param>
     /// <returns>
-    ///     <see cref="IServiceCollection" />
+    ///     <see cref="IHttpRemoteBuilder" />
     /// </returns>
-    public static IServiceCollection AddHttpRemote(this IServiceCollection services
+    public static IHttpRemoteBuilder AddHttpRemote(this IServiceCollection services
         , Action<HttpRemoteBuilder>? configure = null)
     {
         // 初始化 HTTP 远程请求构建器
@@ -64,9 +64,9 @@ public static class HttpRemoteServiceCollectionExtensions
     ///     <see cref="HttpRemoteBuilder" />
     /// </param>
     /// <returns>
-    ///     <see cref="IServiceCollection" />
+    ///     <see cref="IHttpRemoteBuilder" />
     /// </returns>
-    public static IServiceCollection AddHttpRemote(this IServiceCollection services,
+    public static IHttpRemoteBuilder AddHttpRemote(this IServiceCollection services,
         HttpRemoteBuilder httpRemoteBuilder)
     {
         // 空检查
@@ -75,6 +75,6 @@ public static class HttpRemoteServiceCollectionExtensions
         // 构建模块服务
         httpRemoteBuilder.Build(services);
 
-        return services;
+        return new DefaultHttpRemoteBuilder(services);
     }
 }

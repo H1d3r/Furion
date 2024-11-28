@@ -24,6 +24,8 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Threading.Channels;
 
@@ -74,7 +76,8 @@ internal sealed class FileDownloadManager
             : null) as IHttpFileTransferEventHandler;
 
         // 构建 HttpRequestBuilder 实例
-        RequestBuilder = httpFileDownloadBuilder.Build(_httpRemoteService.RemoteOptions, configure);
+        RequestBuilder = httpFileDownloadBuilder.Build(httpRemoteService.ServiceProvider
+            .GetRequiredService<IOptions<HttpRemoteOptions>>().Value, configure);
     }
 
     /// <summary>

@@ -69,9 +69,7 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
 
                 return new ContentResult
                 {
-                    Content = stringContent,
-                    StatusCode = (int)statusCode,
-                    ContentType = contentType?.ToString()
+                    Content = stringContent, StatusCode = (int)statusCode, ContentType = contentType?.ToString()
                 };
             default:
                 // 获取 ContentDisposition 实例
@@ -129,9 +127,7 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
 
                 return new ContentResult
                 {
-                    Content = stringContent,
-                    StatusCode = (int)statusCode,
-                    ContentType = contentType?.ToString()
+                    Content = stringContent, StatusCode = (int)statusCode, ContentType = contentType?.ToString()
                 };
             default:
                 // 获取 ContentDisposition 实例

@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
 
 namespace Furion.HttpRemote;
@@ -60,7 +62,8 @@ internal sealed class StressTestHarnessManager
         _httpStressTestHarnessBuilder = httpStressTestHarnessBuilder;
 
         // 构建 HttpRequestBuilder 实例
-        RequestBuilder = httpStressTestHarnessBuilder.Build(_httpRemoteService.RemoteOptions, configure);
+        RequestBuilder = httpStressTestHarnessBuilder.Build(httpRemoteService.ServiceProvider
+            .GetRequiredService<IOptions<HttpRemoteOptions>>().Value, configure);
     }
 
     /// <summary>
