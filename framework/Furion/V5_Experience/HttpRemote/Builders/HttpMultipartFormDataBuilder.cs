@@ -192,11 +192,17 @@ public sealed class HttpMultipartFormDataBuilder
     /// <returns>
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
-    public HttpMultipartFormDataBuilder AddObject(object? rawObject, string? name = null,
-        string contentType = "text/plain", Encoding? contentEncoding = null)
+    public HttpMultipartFormDataBuilder AddObject(object? rawObject, string? name = null, string? contentType = null,
+        Encoding? contentEncoding = null)
     {
         // 解析内容类型字符串
-        var mediaType = ParseContentType(contentType, contentEncoding, out var encoding);
+        Encoding? encoding = null;
+        var mediaType = string.IsNullOrWhiteSpace(contentType)
+            ? Constants.TEXT_PLAIN_MIME_TYPE
+            : ParseContentType(contentType, contentEncoding, out encoding);
+
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(mediaType);
 
         // 检查是否配置表单名
         if (!string.IsNullOrWhiteSpace(name))
@@ -237,7 +243,7 @@ public sealed class HttpMultipartFormDataBuilder
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public HttpMultipartFormDataBuilder AddFileFromRemote(string url, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null)
+        string? contentType = null, Encoding? contentEncoding = null)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(url);
@@ -269,7 +275,7 @@ public sealed class HttpMultipartFormDataBuilder
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
     public HttpMultipartFormDataBuilder AddFileFromBase64String(string base64String, string name = "file",
-        string? fileName = null, string contentType = "application/octet-stream", Encoding? contentEncoding = null)
+        string? fileName = null, string? contentType = null, Encoding? contentEncoding = null)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(base64String);
@@ -304,7 +310,7 @@ public sealed class HttpMultipartFormDataBuilder
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
     public HttpMultipartFormDataBuilder AddFileAsStream(string filePath, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null)
+        string? contentType = null, Encoding? contentEncoding = null)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -342,7 +348,7 @@ public sealed class HttpMultipartFormDataBuilder
     /// </returns>
     public HttpMultipartFormDataBuilder AddFileWithProgressAsStream(string filePath,
         Channel<FileTransferProgress> progressChannel, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null)
+        string? contentType = null, Encoding? contentEncoding = null)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -383,7 +389,7 @@ public sealed class HttpMultipartFormDataBuilder
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
     public HttpMultipartFormDataBuilder AddFileAsByteArray(string filePath, string name = "file",
-        string? fileName = null, string contentType = "application/octet-stream", Encoding? contentEncoding = null)
+        string? fileName = null, string? contentType = null, Encoding? contentEncoding = null)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -463,7 +469,7 @@ public sealed class HttpMultipartFormDataBuilder
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
     public HttpMultipartFormDataBuilder AddStream(Stream stream, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null, long? fileSize = null)
+        string? contentType = null, Encoding? contentEncoding = null, long? fileSize = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(stream);
@@ -472,9 +478,17 @@ public sealed class HttpMultipartFormDataBuilder
         // 解析内容类型字符串
         var mediaType = ParseContentType(contentType, contentEncoding, out var encoding);
 
+        // 获取文件 MIME 类型
+        var mimeType = !string.IsNullOrWhiteSpace(mediaType) ? mediaType :
+            string.IsNullOrWhiteSpace(fileName) ? MediaTypeNames.Application.Octet :
+            FileTypeMapper.GetContentType(fileName);
+
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+
         _partContents.Add(new MultipartFormDataItem(name)
         {
-            ContentType = mediaType,
+            ContentType = mimeType,
             RawContent = stream,
             ContentEncoding = encoding,
             FileName = fileName,
@@ -497,7 +511,7 @@ public sealed class HttpMultipartFormDataBuilder
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
     public HttpMultipartFormDataBuilder AddByteArray(byte[] byteArray, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null, long? fileSize = null)
+        string? contentType = null, Encoding? contentEncoding = null, long? fileSize = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(byteArray);
@@ -506,9 +520,17 @@ public sealed class HttpMultipartFormDataBuilder
         // 解析内容类型字符串
         var mediaType = ParseContentType(contentType, contentEncoding, out var encoding);
 
+        // 获取文件 MIME 类型
+        var mimeType = !string.IsNullOrWhiteSpace(mediaType) ? mediaType :
+            string.IsNullOrWhiteSpace(fileName) ? MediaTypeNames.Application.Octet :
+            FileTypeMapper.GetContentType(fileName);
+
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+
         _partContents.Add(new MultipartFormDataItem(name)
         {
-            ContentType = mediaType,
+            ContentType = mimeType,
             RawContent = byteArray,
             ContentEncoding = encoding,
             FileName = fileName,
@@ -607,7 +629,7 @@ public sealed class HttpMultipartFormDataBuilder
         MediaTypeHeaderValue? mediaTypeHeaderValue = null;
 
         // 空检查
-        if (contentType is not null)
+        if (!string.IsNullOrWhiteSpace(contentType))
         {
             mediaType = ParseContentType(contentType, contentEncoding, out encoding);
         }
@@ -618,7 +640,7 @@ public sealed class HttpMultipartFormDataBuilder
         }
 
         // 空检查
-        ArgumentNullException.ThrowIfNull(mediaType);
+        ArgumentException.ThrowIfNullOrWhiteSpace(mediaType);
 
         // 设置或解析内容编码
         encoding = contentEncoding ?? encoding ?? (string.IsNullOrWhiteSpace(mediaTypeHeaderValue?.CharSet)
@@ -738,10 +760,14 @@ public sealed class HttpMultipartFormDataBuilder
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal static string? ParseContentType(string contentType, Encoding? contentEncoding, out Encoding? encoding)
+    internal static string? ParseContentType(string? contentType, Encoding? contentEncoding, out Encoding? encoding)
     {
         // 空检查
-        ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            encoding = null;
+            return null;
+        }
 
         // 解析内容类型字符串
         var mediaTypeHeaderValue = MediaTypeHeaderValue.Parse(contentType);

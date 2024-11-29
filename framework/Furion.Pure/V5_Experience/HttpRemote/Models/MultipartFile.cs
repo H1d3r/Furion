@@ -82,7 +82,7 @@ public sealed class MultipartFile
     ///     <see cref="MultipartFile" />
     /// </returns>
     public static MultipartFile CreateFromByteArray(byte[] byteArray, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null) =>
+        string? contentType = null, Encoding? contentEncoding = null) =>
         new()
         {
             Name = name,
@@ -107,7 +107,7 @@ public sealed class MultipartFile
     ///     <see cref="MultipartFile" />
     /// </returns>
     public static MultipartFile CreateFromStream(Stream stream, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null) =>
+        string? contentType = null, Encoding? contentEncoding = null) =>
         new()
         {
             Name = name,
@@ -130,7 +130,7 @@ public sealed class MultipartFile
     ///     <see cref="MultipartFile" />
     /// </returns>
     public static MultipartFile CreateFromPath(string filePath, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null) =>
+        string? contentType = null, Encoding? contentEncoding = null) =>
         new()
         {
             Name = name,
@@ -154,7 +154,7 @@ public sealed class MultipartFile
     ///     <see cref="MultipartFile" />
     /// </returns>
     public static MultipartFile CreateFromBase64String(string base64String, string name = "file",
-        string? fileName = null, string contentType = "application/octet-stream", Encoding? contentEncoding = null) =>
+        string? fileName = null, string? contentType = null, Encoding? contentEncoding = null) =>
         new()
         {
             Name = name,
@@ -178,7 +178,7 @@ public sealed class MultipartFile
     ///     <see cref="MultipartFile" />
     /// </returns>
     public static MultipartFile CreateFromRemote(string url, string name = "file", string? fileName = null,
-        string contentType = "application/octet-stream", Encoding? contentEncoding = null) =>
+        string? contentType = null, Encoding? contentEncoding = null) =>
         new()
         {
             Name = name,
