@@ -69,8 +69,8 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
             return base.Send(httpRequestMessage, cancellationToken);
         }
 
-        // 记录请求标头
-        LogRequestHeaders(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage);
+        // 记录请求信息
+        LogRequestAsync(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage).GetAwaiter().GetResult();
 
         // 初始化 Stopwatch 实例并开启计时操作
         var stopwatch = Stopwatch.StartNew();
@@ -84,9 +84,9 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         // 停止计时
         stopwatch.Stop();
 
-        // 记录常规和响应标头
-        LogResponseHeadersAndSummary(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpResponseMessage,
-            requestDuration);
+        // 记录响应信息
+        LogResponseAsync(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpResponseMessage, requestDuration)
+            .GetAwaiter().GetResult();
 
         // 打印 CookieContainer 内容
         LogCookieContainer(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage,
@@ -105,8 +105,8 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
             return await base.SendAsync(httpRequestMessage, cancellationToken);
         }
 
-        // 记录请求标头
-        LogRequestHeaders(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage);
+        // 记录请求信息
+        await LogRequestAsync(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage);
 
         // 初始化 Stopwatch 实例并开启计时操作
         var stopwatch = Stopwatch.StartNew();
@@ -120,9 +120,8 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         // 停止计时
         stopwatch.Stop();
 
-        // 记录常规和响应标头
-        LogResponseHeadersAndSummary(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpResponseMessage,
-            requestDuration);
+        // 记录响应信息
+        await LogResponseAsync(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpResponseMessage, requestDuration);
 
         // 打印 CookieContainer 内容
         LogCookieContainer(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage,
@@ -132,7 +131,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     }
 
     /// <summary>
-    ///     记录请求标头
+    ///     记录请求信息
     /// </summary>
     /// <param name="logger">
     ///     <see cref="ILogger" />
@@ -141,11 +140,14 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="request">
     ///     <see cref="HttpRequestMessage" />
     /// </param>
-    internal static void LogRequestHeaders(ILogger logger, LogLevel logLevel, HttpRequestMessage request) =>
+    internal static async Task LogRequestAsync(ILogger logger, LogLevel logLevel, HttpRequestMessage request)
+    {
         Log(logger, logLevel, request.ProfilerHeaders());
+        Log(logger, logLevel, await request.Content.ProfilerAsync());
+    }
 
     /// <summary>
-    ///     记录常规和响应标头
+    ///     记录响应信息
     /// </summary>
     /// <param name="logger">
     ///     <see cref="ILogger" />
@@ -155,10 +157,13 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     ///     <see cref="HttpResponseMessage" />
     /// </param>
     /// <param name="requestDuration">请求耗时（毫秒）</param>
-    internal static void LogResponseHeadersAndSummary(ILogger logger, LogLevel logLevel,
-        HttpResponseMessage httpResponseMessage, long requestDuration) =>
+    internal static async Task LogResponseAsync(ILogger logger, LogLevel logLevel,
+        HttpResponseMessage httpResponseMessage, long requestDuration)
+    {
         Log(logger, logLevel, httpResponseMessage.ProfilerGeneralAndHeaders(generalCustomKeyValues:
             [new KeyValuePair<string, IEnumerable<string>>("Request Duration (ms)", [$"{requestDuration:N2}"])]));
+        Log(logger, logLevel, await httpResponseMessage.Content.ProfilerAsync("Response Body"));
+    }
 
     /// <summary>
     ///     打印 <see cref="CookieContainer" /> 内容
