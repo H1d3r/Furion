@@ -39,7 +39,7 @@ internal sealed class PerformanceOptimizationDeclarativeExtractor : IHttpDeclara
             return;
         }
 
-        // 设置是否启用启用性能优化
+        // 设置是否启用性能优化
         httpRequestBuilder.PerformanceOptimization(performanceOptimizationAttribute.Enabled);
     }
 }
