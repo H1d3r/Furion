@@ -124,8 +124,7 @@ internal sealed class FileDownloadManager
         try
         {
             // 发送 HTTP 远程请求
-            var httpResponseMessage = _httpRemoteService.Send(RequestBuilder,
-                HttpCompletionOption.ResponseHeadersRead,
+            var httpResponseMessage = _httpRemoteService.Send(RequestBuilder, HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
 
             // 根据文件是否存在及配置的行为来决定是否应继续进行文件下载
@@ -239,8 +238,7 @@ internal sealed class FileDownloadManager
         {
             // 发送 HTTP 远程请求
             var httpResponseMessage = await _httpRemoteService.SendAsync(RequestBuilder,
-                HttpCompletionOption.ResponseHeadersRead,
-                cancellationToken);
+                HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
             // 根据文件是否存在及配置的行为来决定是否应继续进行文件下载
             if (!ShouldContinueWithDownload(httpResponseMessage, out var destinationPath))
@@ -256,8 +254,7 @@ internal sealed class FileDownloadManager
                 new FileTransferProgress(destinationPath, httpResponseMessage.Content.Headers.ContentLength ?? -1);
 
             // 初始化 FileStream 实例，使用文件流创建文件，设置写入模式，并允许其他进程同时读取文件
-            fileStream = new FileStream(tempDestinationPath, FileMode.Create, FileAccess.Write,
-                FileShare.Read,
+            fileStream = new FileStream(tempDestinationPath, FileMode.Create, FileAccess.Write, FileShare.Read,
                 bufferSize, true);
 
             // 获取 HTTP 响应体中的内容流
