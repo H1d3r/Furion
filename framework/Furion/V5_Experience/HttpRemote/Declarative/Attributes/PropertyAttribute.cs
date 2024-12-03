@@ -26,30 +26,30 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式 Cookie 特性
+///     HTTP 声明式 <see cref="HttpRequestMessage" /> 请求属性特性
 /// </summary>
 /// <remarks>支持多次指定。</remarks>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface | AttributeTargets.Parameter,
     AllowMultiple = true)]
-public sealed class CookieAttribute : Attribute
+public sealed class PropertyAttribute : Attribute
 {
     /// <summary>
-    ///     <inheritdoc cref="CookieAttribute" />
+    ///     <inheritdoc cref="PropertyAttribute" />
     /// </summary>
     /// <remarks>特性作用于参数时有效。</remarks>
-    public CookieAttribute()
+    public PropertyAttribute()
     {
     }
 
     /// <summary>
-    ///     <inheritdoc cref="CookieAttribute" />
+    ///     <inheritdoc cref="PropertyAttribute" />
     /// </summary>
     /// <remarks>
-    ///     <para>当特性作用于方法或接口时，则表示移除指定 Cookie 操作。</para>
-    ///     <para>当特性作用于参数时，则表示添加 Cookie ，同时设置 Cookie 键为 <c>name</c> 的值。</para>
+    ///     当特性作用于参数时，则表示添加 <see cref="HttpRequestMessage" /> 请求属性，同时设置 <see cref="HttpRequestMessage" /> 请求属性键为
+    ///     <c>name</c> 的值。
     /// </remarks>
-    /// <param name="name">Cookie 键</param>
-    public CookieAttribute(string name)
+    /// <param name="name"><see cref="HttpRequestMessage" /> 请求属性键</param>
+    public PropertyAttribute(string name)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -58,33 +58,25 @@ public sealed class CookieAttribute : Attribute
     }
 
     /// <summary>
-    ///     <inheritdoc cref="CookieAttribute" />
+    ///     <inheritdoc cref="PropertyAttribute" />
     /// </summary>
-    /// <param name="name">Cookie 键</param>
-    /// <param name="value">Cookie 的值</param>
-    public CookieAttribute(string name, object? value)
+    /// <param name="name"><see cref="HttpRequestMessage" /> 请求属性键</param>
+    /// <param name="value"><see cref="HttpRequestMessage" /> 请求属性的值</param>
+    public PropertyAttribute(string name, object? value)
         : this(name) =>
         Value = value;
 
     /// <summary>
-    ///     Cookie 键
+    ///     <see cref="HttpRequestMessage" /> 请求属性键
     /// </summary>
     /// <remarks>该属性优先级低于 <see cref="AliasAs" /> 属性设置的值。</remarks>
     public string? Name { get; set; }
 
     /// <summary>
-    ///     Cookie 的值
+    ///     <see cref="HttpRequestMessage" /> 请求属性的值
     /// </summary>
     /// <remarks>当特性作用于参数时，表示默认值。</remarks>
-    public object? Value
-    {
-        get;
-        set
-        {
-            field = value;
-            HasSetValue = true;
-        }
-    }
+    public object? Value { get; set; }
 
     /// <summary>
     ///     别名
@@ -96,12 +88,14 @@ public sealed class CookieAttribute : Attribute
     public string? AliasAs { get; set; }
 
     /// <summary>
-    ///     是否转义
+    ///     表示是否作为 <see cref="HttpRequestMessage" /> 请求属性的一项
     /// </summary>
-    public bool Escape { get; set; }
-
-    /// <summary>
-    ///     是否设置了值
-    /// </summary>
-    internal bool HasSetValue { get; private set; }
+    /// <remarks>
+    ///     <para>当参数类型为对象类型时有效。</para>
+    ///     <para>
+    ///         该属性值为 <c>true</c> 时作为 <see cref="HttpRequestMessage" /> 请求属性的一项。否则将遍历对象类型的每一个公开属性作为
+    ///         <see cref="HttpRequestMessage" /> 请求属性的项。默认值为：<c>true</c>。
+    ///     </para>
+    /// </remarks>
+    public bool AsItem { get; set; } = true;
 }

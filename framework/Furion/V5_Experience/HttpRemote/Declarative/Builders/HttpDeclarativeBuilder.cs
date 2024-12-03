@@ -56,6 +56,7 @@ public sealed class HttpDeclarativeBuilder
         new(typeof(PathDeclarativeExtractor), new PathDeclarativeExtractor()),
         new(typeof(CookieDeclarativeExtractor), new CookieDeclarativeExtractor()),
         new(typeof(HeaderDeclarativeExtractor), new HeaderDeclarativeExtractor()),
+        new(typeof(PropertyDeclarativeExtractor), new PropertyDeclarativeExtractor()),
         new(typeof(BodyDeclarativeExtractor), new BodyDeclarativeExtractor())
     ]);
 
