@@ -70,7 +70,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         }
 
         // 记录请求信息
-        LogRequestAsync(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage, cancellationToken)
+        LogRequestAsync(logger, httpRemoteOptions.Value, httpRequestMessage, cancellationToken)
             .GetAwaiter().GetResult();
 
         // 初始化 Stopwatch 实例并开启计时操作
@@ -86,12 +86,11 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         stopwatch.Stop();
 
         // 记录响应信息
-        LogResponseAsync(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpResponseMessage, requestDuration,
-            cancellationToken).GetAwaiter().GetResult();
+        LogResponseAsync(logger, httpRemoteOptions.Value, httpResponseMessage, requestDuration, cancellationToken)
+            .GetAwaiter().GetResult();
 
         // 打印 CookieContainer 内容
-        LogCookieContainer(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage,
-            ExtractCookieContainer());
+        LogCookieContainer(logger, httpRemoteOptions.Value, httpRequestMessage, ExtractCookieContainer());
 
         return httpResponseMessage;
     }
@@ -107,7 +106,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         }
 
         // 记录请求信息
-        await LogRequestAsync(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage, cancellationToken);
+        await LogRequestAsync(logger, httpRemoteOptions.Value, httpRequestMessage, cancellationToken);
 
         // 初始化 Stopwatch 实例并开启计时操作
         var stopwatch = Stopwatch.StartNew();
@@ -122,12 +121,11 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         stopwatch.Stop();
 
         // 记录响应信息
-        await LogResponseAsync(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpResponseMessage, requestDuration,
+        await LogResponseAsync(logger, httpRemoteOptions.Value, httpResponseMessage, requestDuration,
             cancellationToken);
 
         // 打印 CookieContainer 内容
-        LogCookieContainer(logger, httpRemoteOptions.Value.ProfilerLogLevel, httpRequestMessage,
-            ExtractCookieContainer());
+        LogCookieContainer(logger, httpRemoteOptions.Value, httpRequestMessage, ExtractCookieContainer());
 
         return httpResponseMessage;
     }
@@ -138,19 +136,20 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="logger">
     ///     <see cref="ILogger" />
     /// </param>
-    /// <param name="logLevel">日志级别</param>
+    /// <param name="remoteOptions">
+    ///     <see cref="HttpRemoteOptions" />
+    /// </param>
     /// <param name="request">
     ///     <see cref="HttpRequestMessage" />
     /// </param>
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
-    internal static async Task LogRequestAsync(ILogger logger, LogLevel logLevel, HttpRequestMessage request,
-        CancellationToken cancellationToken = default)
+    internal static async Task LogRequestAsync(ILogger logger, HttpRemoteOptions remoteOptions,
+        HttpRequestMessage request, CancellationToken cancellationToken = default)
     {
-        Log(logger, logLevel, request.ProfilerHeaders());
-        Log(logger, logLevel,
-            await request.Content.ProfilerAsync(cancellationToken: cancellationToken));
+        Log(logger, remoteOptions, request.ProfilerHeaders());
+        Log(logger, remoteOptions, await request.Content.ProfilerAsync(cancellationToken: cancellationToken));
     }
 
     /// <summary>
@@ -159,7 +158,9 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="logger">
     ///     <see cref="ILogger" />
     /// </param>
-    /// <param name="logLevel">日志级别</param>
+    /// <param name="remoteOptions">
+    ///     <see cref="HttpRemoteOptions" />
+    /// </param>
     /// <param name="httpResponseMessage">
     ///     <see cref="HttpResponseMessage" />
     /// </param>
@@ -167,13 +168,13 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
-    internal static async Task LogResponseAsync(ILogger logger, LogLevel logLevel,
+    internal static async Task LogResponseAsync(ILogger logger, HttpRemoteOptions remoteOptions,
         HttpResponseMessage httpResponseMessage, long requestDuration, CancellationToken cancellationToken = default)
     {
-        Log(logger, logLevel, httpResponseMessage.ProfilerGeneralAndHeaders(generalCustomKeyValues:
-            [new KeyValuePair<string, IEnumerable<string>>("Request Duration (ms)", [$"{requestDuration:N2}"])]));
-        Log(logger, logLevel,
-            await httpResponseMessage.Content.ProfilerAsync("Response Body", cancellationToken));
+        Log(logger, remoteOptions,
+            httpResponseMessage.ProfilerGeneralAndHeaders(generalCustomKeyValues:
+                [new KeyValuePair<string, IEnumerable<string>>("Request Duration (ms)", [$"{requestDuration:N2}"])]));
+        Log(logger, remoteOptions, await httpResponseMessage.Content.ProfilerAsync("Response Body", cancellationToken));
     }
 
     /// <summary>
@@ -182,14 +183,16 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="logger">
     ///     <see cref="ILogger" />
     /// </param>
-    /// <param name="logLevel">日志级别</param>
+    /// <param name="remoteOptions">
+    ///     <see cref="HttpRemoteOptions" />
+    /// </param>
     /// <param name="request">
     ///     <see cref="HttpRequestMessage" />
     /// </param>
     /// <param name="cookieContainer">
     ///     <see cref="CookieContainer" />
     /// </param>
-    internal static void LogCookieContainer(ILogger logger, LogLevel logLevel, HttpRequestMessage request,
+    internal static void LogCookieContainer(ILogger logger, HttpRemoteOptions remoteOptions, HttpRequestMessage request,
         CookieContainer? cookieContainer)
     {
         // 空检查
@@ -208,9 +211,10 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         }
 
         // 打印日志
-        Log(logger, logLevel, StringUtility.FormatKeyValuesSummary(
-            cookies.ToDictionary(u => u.Name, u => Enumerable.Empty<string>().Concat([u.Value])),
-            "Cookie Container"));
+        Log(logger, remoteOptions,
+            StringUtility.FormatKeyValuesSummary(
+                cookies.ToDictionary(u => u.Name, u => Enumerable.Empty<string>().Concat([u.Value])),
+                "Cookie Container"));
     }
 
     /// <summary>
@@ -219,9 +223,11 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="logger">
     ///     <see cref="ILogger" />
     /// </param>
-    /// <param name="logLevel">日志级别</param>
+    /// <param name="remoteOptions">
+    ///     <see cref="HttpRemoteOptions" />
+    /// </param>
     /// <param name="message">日志消息</param>
-    internal static void Log(ILogger logger, LogLevel logLevel, string? message)
+    internal static void Log(ILogger logger, HttpRemoteOptions remoteOptions, string? message)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(logger);
@@ -232,8 +238,15 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
             return;
         }
 
-        // 打印日志
-        logger.Log(logLevel, "{message}", message);
+        // 检查是否配置（注册）了日志程序
+        if (remoteOptions.IsLoggingRegistered)
+        {
+            logger.Log(remoteOptions.ProfilerLogLevel, "{message}", message);
+        }
+        else
+        {
+            Console.WriteLine(message);
+        }
     }
 
     /// <summary>

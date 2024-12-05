@@ -30,6 +30,7 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Json;
 using MediaTypeHeaderValue = System.Net.Http.Headers.MediaTypeHeaderValue;
 
 namespace Furion.HttpRemote;
@@ -203,7 +204,7 @@ public sealed partial class HttpRequestBuilder
         ArgumentNullException.ThrowIfNull(text);
         ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
 
-        return SetContent($"\"{text}\"", contentType, contentEncoding);
+        return SetContent(text.AddQuotes(), contentType, contentEncoding);
     }
 
     /// <summary>
