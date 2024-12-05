@@ -26,7 +26,6 @@
 using Furion.Extensions;
 using Furion.Utilities;
 using System.Net.Http.Headers;
-using System.Net.Mime;
 using System.Threading.Channels;
 
 namespace Furion.HttpRemote;
@@ -359,8 +358,7 @@ public sealed class HttpFileUploadBuilder
 
         // 初始化 HttpRequestBuilder 实例
         var httpRequestBuilder = HttpRequestBuilder.Create(Method, RequestUri, configure).SetMultipartContent(builder =>
-            builder.AddFileWithProgressAsStream(FilePath, progressChannel, Name, FileName,
-                ContentType ?? MediaTypeNames.Application.Octet));
+            builder.AddFileWithProgressAsStream(FilePath, progressChannel, Name, FileName, ContentType));
 
         // 检查是否设置了事件处理程序且该处理程序实现了 IHttpRequestEventHandler 接口，如果有则设置给 httpRequestBuilder
         if (FileTransferEventHandlerType is not null &&
