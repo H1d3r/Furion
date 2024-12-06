@@ -292,12 +292,12 @@ public sealed class HttpMultipartFormDataBuilder
         var newFileName = fileName ?? Helpers.GetFileNameFromUri(new Uri(url, UriKind.Absolute));
 
         // 从互联网 URL 地址中加载流
-        var (fileStream, fileLength) = Helpers.GetStreamFromRemote(url);
+        var fileStream = Helpers.GetStreamFromRemote(url);
 
         // 添加文件流到请求结束时需要释放的集合中
         _httpRequestBuilder.AddDisposable(fileStream);
 
-        return AddStream(fileStream, name, newFileName, contentType, contentEncoding, fileLength);
+        return AddStream(fileStream, name, newFileName, contentType, contentEncoding);
     }
 
     /// <summary>
@@ -334,7 +334,7 @@ public sealed class HttpMultipartFormDataBuilder
                 $"The file size exceeds the maximum allowed size of `{maxFileSizeInBytes.ToSizeUnits("MB"):F2} MB`.");
         }
 
-        return AddByteArray(bytes, name, fileName, contentType, contentEncoding, fileLength);
+        return AddByteArray(bytes, name, fileName, contentType, contentEncoding);
     }
 
     /// <summary>
@@ -370,7 +370,7 @@ public sealed class HttpMultipartFormDataBuilder
         // 添加文件流到请求结束时需要释放的集合中
         _httpRequestBuilder.AddDisposable(fileStream);
 
-        return AddStream(fileStream, name, newFileName, contentType, contentEncoding, fileStream.Length);
+        return AddStream(fileStream, name, newFileName, contentType, contentEncoding);
     }
 
     /// <summary>
@@ -412,8 +412,7 @@ public sealed class HttpMultipartFormDataBuilder
         // 添加文件流到请求结束时需要释放的集合中
         _httpRequestBuilder.AddDisposable(progressFileStream);
 
-        return AddStream(progressFileStream, name, newFileName, contentType, contentEncoding,
-            progressFileStream.Length);
+        return AddStream(progressFileStream, name, newFileName, contentType, contentEncoding);
     }
 
     /// <summary>
@@ -446,7 +445,7 @@ public sealed class HttpMultipartFormDataBuilder
         // 读取文件字节数组
         var bytes = File.ReadAllBytes(filePath);
 
-        return AddByteArray(bytes, name, newFileName, contentType, contentEncoding, bytes.Length);
+        return AddByteArray(bytes, name, newFileName, contentType, contentEncoding);
     }
 
     /// <summary>
@@ -503,12 +502,11 @@ public sealed class HttpMultipartFormDataBuilder
     /// <param name="fileName">文件的名称</param>
     /// <param name="contentType">内容类型</param>
     /// <param name="contentEncoding">内容编码</param>
-    /// <param name="fileSize">文件大小</param>
     /// <returns>
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
     public HttpMultipartFormDataBuilder AddStream(Stream stream, string name = "file", string? fileName = null,
-        string? contentType = null, Encoding? contentEncoding = null, long? fileSize = null)
+        string? contentType = null, Encoding? contentEncoding = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(stream);
@@ -527,11 +525,7 @@ public sealed class HttpMultipartFormDataBuilder
 
         _partContents.Add(new MultipartFormDataItem(name)
         {
-            ContentType = mimeType,
-            RawContent = stream,
-            ContentEncoding = encoding,
-            FileName = fileName,
-            FileSize = fileSize ?? stream.Length
+            ContentType = mimeType, RawContent = stream, ContentEncoding = encoding, FileName = fileName
         });
 
         return this;
@@ -545,12 +539,11 @@ public sealed class HttpMultipartFormDataBuilder
     /// <param name="fileName">文件的名称</param>
     /// <param name="contentType">内容类型</param>
     /// <param name="contentEncoding">内容编码</param>
-    /// <param name="fileSize">文件大小</param>
     /// <returns>
     ///     <see cref="HttpMultipartFormDataBuilder" />
     /// </returns>
     public HttpMultipartFormDataBuilder AddByteArray(byte[] byteArray, string name = "file", string? fileName = null,
-        string? contentType = null, Encoding? contentEncoding = null, long? fileSize = null)
+        string? contentType = null, Encoding? contentEncoding = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(byteArray);
@@ -569,11 +562,7 @@ public sealed class HttpMultipartFormDataBuilder
 
         _partContents.Add(new MultipartFormDataItem(name)
         {
-            ContentType = mimeType,
-            RawContent = byteArray,
-            ContentEncoding = encoding,
-            FileName = fileName,
-            FileSize = fileSize ?? byteArray.Length
+            ContentType = mimeType, RawContent = byteArray, ContentEncoding = encoding, FileName = fileName
         });
 
         return this;
@@ -802,8 +791,7 @@ public sealed class HttpMultipartFormDataBuilder
                 new ContentDispositionHeaderValue(Constants.FORM_DATA_DISPOSITION_TYPE)
                 {
                     Name = multipartFormDataItem.Name.AddQuotes(),
-                    FileName = multipartFormDataItem.FileName.AddQuotes(),
-                    Size = multipartFormDataItem.FileSize
+                    FileName = multipartFormDataItem.FileName.AddQuotes()
                 };
         }
 
