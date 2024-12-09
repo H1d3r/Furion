@@ -29,6 +29,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
@@ -51,6 +52,20 @@ public static class DynamicApiControllerServiceCollectionExtensions
         mvcBuilder.Services.AddDynamicApiControllers();
 
         return mvcBuilder;
+    }
+
+    /// <summary>
+    /// 配置动态 WebAPI
+    /// </summary>
+    /// <remarks>请确保在 <c>AddDynamicApiControllers()</c> 或 <c>Inject()</c> 之前注册。</remarks>
+    /// <param name="services"></param>
+    /// <param name="configure"></param>
+    public static void ConfigureDynamicApiController(this IServiceCollection services, Action<DynamicApiControllerBuilder> configure)
+    {
+        var dynamicApiControllerBuilder = new DynamicApiControllerBuilder();
+        configure?.Invoke(dynamicApiControllerBuilder);
+
+        services.TryAddSingleton(dynamicApiControllerBuilder);
     }
 
     /// <summary>

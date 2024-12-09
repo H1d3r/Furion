@@ -24,6 +24,22 @@ public sealed class Startup : AppStartup
 
         services.AddCorsAccessor();
 
+        //services.ConfigureDynamicApiController(builder =>
+        //{
+        //    builder.ControllerFilter = (controllerModel) =>
+        //    {
+        //        return controllerModel.ControllerType != typeof(PersonService);
+        //    };
+
+        //    builder.ActionConfigure = (actionModel) =>
+        //    {
+        //        if (actionModel.ActionMethod.Name == "Insert")
+        //        {
+        //            actionModel.ApiExplorer.IsVisible = false;
+        //        }
+        //    };
+        //});
+
         services.AddControllersWithViews()
                 // 配置多语言
                 .AddAppLocalization()

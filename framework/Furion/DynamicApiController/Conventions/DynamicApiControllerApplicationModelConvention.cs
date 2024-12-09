@@ -64,6 +64,11 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
     private const string commonTemplatePattern = @"\{(?<p>.+?)\}";
 
     /// <summary>
+    /// 动态 WebAPI 构建器
+    /// </summary>
+    private readonly DynamicApiControllerBuilder _dynamicApiControllerBuilder;
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="services">服务集合</param>
@@ -73,6 +78,8 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
         _dynamicApiControllerSettings = App.GetConfig<DynamicApiControllerSettingsOptions>("DynamicApiControllerSettings", true);
         LoadVerbToHttpMethodsConfigure();
         _nameVersionRegex = new Regex(@"V(?<version>[0-9_]+$)");
+
+        _dynamicApiControllerBuilder = services.FirstOrDefault(u => u.ServiceType == typeof(DynamicApiControllerBuilder))?.ImplementationInstance as DynamicApiControllerBuilder;
     }
 
     /// <summary>
@@ -81,7 +88,12 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
     /// <param name="application">引用模型</param>
     public void Apply(ApplicationModel application)
     {
-        var controllers = application.Controllers.Where(u => Penetrates.IsApiController(u.ControllerType));
+        var controllers = application.Controllers.Where(u =>
+        {
+            return Penetrates.IsApiController(u.ControllerType)
+                && (_dynamicApiControllerBuilder?.ControllerFilter == null || _dynamicApiControllerBuilder.ControllerFilter.Invoke(u));
+        });
+
         foreach (var controller in controllers)
         {
             var controllerType = controller.ControllerType;
@@ -165,6 +177,9 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
             }
 
             ConfigureAction(action, actionApiDescriptionSettings, controllerApiDescriptionSettings, hasApiControllerAttribute);
+
+            // 添加 Action 自定义配置
+            _dynamicApiControllerBuilder?.ActionConfigure?.Invoke(action);
         }
     }
 
