@@ -8,6 +8,7 @@ namespace Furion.Web.Entry.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
+//[NonController]
 public class TestApiController : ControllerBase
 {
     [HttpGet, NonUnify]
