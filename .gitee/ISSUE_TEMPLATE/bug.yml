@@ -167,7 +167,7 @@ body:
   - type: input
     id: demo
     attributes:
-      label: Demo 地址（Git/网盘/SVN）
+      label: Demo 地址（Git/网盘/SVN）| 未提供则视为无效 `Issue`
       description: 请提供复现错误的 Demo 下载
       placeholder: https://gitee.com/your_id/your_test_project.git
     validations:
