@@ -68,7 +68,7 @@ public sealed class HttpMultipartFormDataBuilder
     public string? Boundary { get; set; } = $"--------------------------{DateTime.Now.Ticks:x}";
 
     /// <summary>
-    ///     是否移除默认的 <c>Content-Type</c>
+    ///     是否移除默认的多部分内容的 <c>Content-Type</c>
     /// </summary>
     /// <remarks>默认值为：<c>true</c>。</remarks>
     public bool OmitContentType { get; set; } = true;
@@ -748,7 +748,7 @@ public sealed class HttpMultipartFormDataBuilder
                 continue;
             }
 
-            // 检查是否移除默认的 Content-Type，解决对接 Java 程序时可能出现失败问题
+            // 检查是否移除默认的多部分内容的 Content-Type，解决对接 Java 程序时可能出现失败问题
             if (OmitContentType)
             {
                 httpContent.Headers.ContentType = null;

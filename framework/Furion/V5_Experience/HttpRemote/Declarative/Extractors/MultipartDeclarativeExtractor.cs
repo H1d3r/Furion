@@ -93,7 +93,7 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
         // 设置多部分表单内容的边界
         httpMultipartFormDataBuilder.SetBoundary(multipartFormAttribute.Boundary);
 
-        // 设置是否移除默认的 Content-Type
+        // 设置是否移除默认的多部分内容的 Content-Type
         httpMultipartFormDataBuilder.OmitContentType = multipartFormAttribute.OmitContentType;
     }
 
