@@ -175,6 +175,12 @@ public partial class Crontab
                 }
             }
 
+            // 判断值是否等于 R
+            if (newParser == "R")
+            {
+                return new RandomParser(kind);
+            }
+
             // 判断值是否等于 ?
             if (newParser == "?")
             {
