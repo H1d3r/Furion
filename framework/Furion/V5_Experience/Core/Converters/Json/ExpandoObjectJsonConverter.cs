@@ -28,12 +28,12 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Furion.JsonConverters;
+namespace Furion.Converters.Json;
 
 /// <summary>
 ///     <see cref="ExpandoObject" /> 类型 JSON 序列化转换器
 /// </summary>
-public class ExpandoObjectConverter : JsonConverter<ExpandoObject>
+public sealed class ExpandoObjectJsonConverter : JsonConverter<ExpandoObject>
 {
     /// <inheritdoc />
     public override ExpandoObject? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
