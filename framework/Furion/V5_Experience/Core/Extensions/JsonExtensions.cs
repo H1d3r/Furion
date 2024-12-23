@@ -43,15 +43,16 @@ internal static class JsonExtensions
     /// <param name="jsonNode">
     ///     <see cref="JsonNode" />
     /// </param>
-    /// <param name="options">
+    /// <param name="jsonSerializerOptions">
     ///     <see cref="JsonSerializerOptions" />
     /// </param>
     /// <typeparam name="TResult">转换的目标类型</typeparam>
     /// <returns>
     ///     <typeparamref name="TResult" />
     /// </returns>
-    internal static TResult? As<TResult>(this JsonNode? jsonNode, JsonSerializerOptions? options = null) =>
-        (TResult?)jsonNode.As(typeof(TResult), options);
+    internal static TResult?
+        As<TResult>(this JsonNode? jsonNode, JsonSerializerOptions? jsonSerializerOptions = null) =>
+        (TResult?)jsonNode.As(typeof(TResult), jsonSerializerOptions);
 
     /// <summary>
     ///     将 <see cref="JsonNode" /> 转换为目标类型
@@ -60,13 +61,14 @@ internal static class JsonExtensions
     ///     <see cref="JsonNode" />
     /// </param>
     /// <param name="returnType">转换的目标类型</param>
-    /// <param name="options">
+    /// <param name="jsonSerializerOptions">
     ///     <see cref="JsonSerializerOptions" />
     /// </param>
     /// <returns>
     ///     <see cref="object" />
     /// </returns>
-    internal static object? As(this JsonNode? jsonNode, Type returnType, JsonSerializerOptions? options = null)
+    internal static object? As(this JsonNode? jsonNode, Type returnType,
+        JsonSerializerOptions? jsonSerializerOptions = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(returnType);
@@ -80,14 +82,14 @@ internal static class JsonExtensions
         // 处理目标类型为字符串类型
         if (returnType == typeof(string))
         {
-            return jsonNode.ToJsonString(options);
+            return jsonNode.ToJsonString(jsonSerializerOptions);
         }
 
         // 处理目标类型为 XElement 类型
         if (returnType == typeof(XElement))
         {
             // 初始化 MemoryStream 实例
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonNode.ToJsonString(options)));
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonNode.ToJsonString(jsonSerializerOptions)));
 
             // 使用 JsonReaderWriterFactory 创建 JsonReader 实例用于解析 JSON 数据
             using var jsonReader =
@@ -109,6 +111,72 @@ internal static class JsonExtensions
         }
 
         // 反序列化输出目标类型实例
-        return JsonSerializer.Deserialize(memoryStream.ToArray(), returnType, options);
+        return JsonSerializer.Deserialize(memoryStream.ToArray(), returnType, jsonSerializerOptions);
+    }
+
+    /// <summary>
+    ///     将 <see cref="JsonNode" /> 转换为数值类型的值
+    /// </summary>
+    /// <param name="jsonNode">
+    ///     <see cref="JsonNode" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="object" />
+    /// </returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    internal static object GetNumericValue(this JsonNode jsonNode)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(jsonNode);
+
+        // 定义一个小的误差范围（容差值）
+        const double epsilon = 1e-10;
+
+        // 将 JsonNode 转换为 JsonValue
+        var jsonValue = jsonNode.AsValue();
+
+        // 尝试将 JsonValue 转换为 double 类型
+        if (jsonValue.TryGetValue<double>(out var doubleValue))
+        {
+            // 检查双精度浮点数与四舍五入后的整数值之间的差异是否大于容差值，如果是则认定这是一个真正的浮点数
+            if (Math.Abs(doubleValue - Math.Round(doubleValue)) >= epsilon)
+            {
+                return doubleValue;
+            }
+
+            // 根据数值范围和精度损失情况决定返回 int, long 还是保持原样返回 double
+            switch (doubleValue)
+            {
+                case >= int.MinValue and <= int.MaxValue:
+                    var intValue = (int)doubleValue;
+
+                    if (Math.Abs(intValue - doubleValue) < epsilon)
+                    {
+                        return intValue;
+                    }
+
+                    break;
+                case >= long.MinValue and <= long.MaxValue:
+                    var longValue = (long)doubleValue;
+
+                    if (Math.Abs(longValue - doubleValue) < epsilon)
+                    {
+                        return longValue;
+                    }
+
+                    break;
+            }
+
+            return doubleValue;
+        }
+
+        // 尝试将 JsonValue 转换为 decimal 类型
+        if (jsonValue.TryGetValue<decimal>(out var decimalValue))
+        {
+            return decimalValue;
+        }
+
+        throw new InvalidCastException(
+            $"The value `{jsonValue.ToJsonString()}` cannot be converted to a supported numeric type.");
     }
 }
