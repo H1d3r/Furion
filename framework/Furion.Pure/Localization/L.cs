@@ -92,8 +92,13 @@ public static class L
         // 修复 DateTime 问题
         Penetrates.FixedCultureDateTimeFormat(cultureInfo, App.GetOptions<LocalizationSettingsOptions>()?.DateTimeFormatCulture);
 
+        // 从 RequestLocalizationOptions 获取自定义的 Cookie 名称
+        var cookieName = httpContext.RequestServices.GetService<IOptions<RequestLocalizationOptions>>()?.Value?
+            .RequestCultureProviders?.OfType<CookieRequestCultureProvider>()?.FirstOrDefault()?.CookieName
+            ?? CookieRequestCultureProvider.DefaultCookieName;
+
         httpContext.Response.Cookies.Append(
-            CookieRequestCultureProvider.DefaultCookieName,
+            cookieName,
             CookieRequestCultureProvider.MakeCookieValue(cultureInfo),
             new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
         );
