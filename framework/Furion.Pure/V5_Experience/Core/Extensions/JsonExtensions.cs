@@ -60,18 +60,18 @@ internal static class JsonExtensions
     /// <param name="jsonNode">
     ///     <see cref="JsonNode" />
     /// </param>
-    /// <param name="returnType">转换的目标类型</param>
+    /// <param name="resultType">转换的目标类型</param>
     /// <param name="jsonSerializerOptions">
     ///     <see cref="JsonSerializerOptions" />
     /// </param>
     /// <returns>
     ///     <see cref="object" />
     /// </returns>
-    internal static object? As(this JsonNode? jsonNode, Type returnType,
+    internal static object? As(this JsonNode? jsonNode, Type resultType,
         JsonSerializerOptions? jsonSerializerOptions = null)
     {
         // 空检查
-        ArgumentNullException.ThrowIfNull(returnType);
+        ArgumentNullException.ThrowIfNull(resultType);
 
         // 空检查
         if (jsonNode is null)
@@ -80,13 +80,16 @@ internal static class JsonExtensions
         }
 
         // 处理目标类型为字符串类型
-        if (returnType == typeof(string))
+        if (resultType == typeof(string))
         {
-            return jsonNode.ToJsonString(jsonSerializerOptions);
+            // 处理转换为字符串类型出现双引号包裹问题
+            return jsonNode.GetValueKind() is JsonValueKind.String
+                ? jsonNode.GetValue<string>()
+                : jsonNode.ToJsonString(jsonSerializerOptions);
         }
 
         // 处理目标类型为 XElement 类型
-        if (returnType == typeof(XElement))
+        if (resultType == typeof(XElement))
         {
             // 初始化 MemoryStream 实例
             using var ms = new MemoryStream(Encoding.UTF8.GetBytes(jsonNode.ToJsonString(jsonSerializerOptions)));
@@ -111,7 +114,7 @@ internal static class JsonExtensions
         }
 
         // 反序列化输出目标类型实例
-        return JsonSerializer.Deserialize(memoryStream.ToArray(), returnType, jsonSerializerOptions);
+        return JsonSerializer.Deserialize(memoryStream.ToArray(), resultType, jsonSerializerOptions);
     }
 
     /// <summary>
