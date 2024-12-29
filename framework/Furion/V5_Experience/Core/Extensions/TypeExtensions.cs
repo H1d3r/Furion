@@ -860,7 +860,7 @@ internal static class TypeExtensions
         // 空检查
         if (type is null)
         {
-            return default;
+            return null;
         }
 
         // 检查是否是泛型类型
