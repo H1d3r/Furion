@@ -81,9 +81,14 @@ public class ViewEngineOptions
     /// 默认 Using
     /// </summary>
     public HashSet<string> DefaultUsings { get; set; } = new HashSet<string>()
-        {
-            "System.Linq",
-            "System.Collections",
-            "System.Collections.Generic"
-        };
+    {
+        "System",
+        "System.Linq",
+        "System.Text",
+        "System.IO",
+        "System.Collections",
+        "System.Collections.Generic",
+        "System.Threading",
+        "System.Threading.Tasks"
+    };
 }
