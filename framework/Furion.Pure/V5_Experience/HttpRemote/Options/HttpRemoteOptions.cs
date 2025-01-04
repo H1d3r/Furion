@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -77,6 +78,12 @@ public sealed class HttpRemoteOptions
     ///     JSON 序列化配置
     /// </summary>
     public JsonSerializerOptions JsonSerializerOptions { get; set; } = new(JsonSerializerOptionsDefault);
+
+    /// <summary>
+    ///     <inheritdoc cref="IConfiguration" />
+    /// </summary>
+    /// <remarks>支持作为替换 URL 地址中配置模板参数的提供源。</remarks>
+    public IConfiguration? Configuration { get; set; }
 
     /// <summary>
     ///     自定义 HTTP 声明式 <see cref="IHttpDeclarativeExtractor" /> 集合提供器
