@@ -123,7 +123,8 @@ public sealed partial class Clay
     ///     获取键数组
     /// </summary>
     public object[] Keys =>
-        (IsObject ? EnumerateObject().Select(u => u.Key) : EnumerateArray().Select(u => u.Key)).ToArray();
+        (IsObject ? EnumerateObject().Select(object (u) => u.Key) : EnumerateArray().Select(object (u) => u.Key))
+        .ToArray();
 
     /// <summary>
     ///     获取值数组
@@ -147,7 +148,9 @@ public sealed partial class Clay
     ///     <see cref="IEnumerator{T}" />
     /// </returns>
     public IEnumerator<KeyValuePair<object, dynamic?>> GetEnumerator() =>
-        IsObject ? EnumerateObject().GetEnumerator() : EnumerateArray().GetEnumerator();
+        IsObject
+            ? EnumerateObject().Select(u => new KeyValuePair<object, dynamic?>(u.Key, u.Value)).GetEnumerator()
+            : EnumerateArray().Select(u => new KeyValuePair<object, dynamic?>(u.Key, u.Value)).GetEnumerator();
 
     /// <summary>
     ///     创建空对象类型的 <see cref="Clay" /> 实例
