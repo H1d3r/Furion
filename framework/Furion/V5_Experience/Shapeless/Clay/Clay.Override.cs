@@ -26,7 +26,9 @@
 using Furion.Extensions;
 using System.ComponentModel.DataAnnotations;
 using System.Dynamic;
+using System.Reflection;
 using System.Text.Json;
+using Binder = Microsoft.CSharp.RuntimeBinder.Binder;
 
 namespace Furion.Shapeless;
 
@@ -35,6 +37,24 @@ namespace Furion.Shapeless;
 /// </summary>
 public sealed partial class Clay
 {
+    /// <summary>
+    ///     获取 <see cref="InvokeMemberBinder" /> 类型的 <c>TypeArguments</c> 属性访问器
+    /// </summary>
+    /// <remarks>实际上获取的是内部类型 <c>CSharpInvokeMemberBinder</c> 的 <c>TypeArguments</c> 属性访问器。</remarks>
+    internal static readonly Lazy<Func<object, object?>> _getCSharpInvokeMemberBinderTypeArguments = new(() =>
+    {
+        // 获取内部的 CSharpInvokeMemberBinder 类型
+        var csharpInvokeMemberBinderType =
+            typeof(Binder).Assembly.GetType("Microsoft.CSharp.RuntimeBinder.CSharpInvokeMemberBinder")!;
+
+        // 获取 TypeArguments 属性对象
+        var typeArgumentsProperty =
+            csharpInvokeMemberBinderType.GetProperty("TypeArguments", BindingFlags.Public | BindingFlags.Instance)!;
+
+        // 创建 TypeArguments 属性访问器
+        return csharpInvokeMemberBinderType.CreatePropertyGetter(typeArgumentsProperty);
+    });
+
     /// <inheritdoc />
     public override bool TryGetMember(GetMemberBinder binder, out object? result)
     {
@@ -115,7 +135,7 @@ public sealed partial class Clay
     public override bool TryInvokeMember(InvokeMemberBinder binder, object?[]? args, out object? result)
     {
         // 获取调用方法名称
-        var name = binder.Name;
+        var binderName = binder.Name;
 
         // 获取调用方法的泛型参数数组
         var typeArguments = _getCSharpInvokeMemberBinderTypeArguments.Value.Invoke(binder) as Type[];
@@ -128,15 +148,15 @@ public sealed partial class Clay
                 {
                     // 处理 clay.Prop() 情况
                     case { Length: 0 }:
-                        result = Contains(name);
+                        result = Contains(binderName);
                         return true;
                     // 处理 clay.Prop(Type) 情况
                     case [Type resultType]:
-                        result = FindNode(name).As(resultType, Options.JsonSerializerOptions);
+                        result = FindNode(binderName).As(resultType, Options.JsonSerializerOptions);
                         return true;
                     // 处理 clay.Prop(Type, JsonSerializerOptions) 情况
                     case [Type resultType, JsonSerializerOptions jsonSerializerOptions]:
-                        result = FindNode(name).As(resultType, jsonSerializerOptions);
+                        result = FindNode(binderName).As(resultType, jsonSerializerOptions);
                         return true;
                 }
 
@@ -147,11 +167,11 @@ public sealed partial class Clay
                 {
                     // 处理 clay.Prop<T>() 情况
                     case { Length: 0 }:
-                        result = FindNode(name).As(typeArguments[0], Options.JsonSerializerOptions);
+                        result = FindNode(binderName).As(typeArguments[0], Options.JsonSerializerOptions);
                         return true;
                     // 处理 clay.Prop<T>(JsonSerializerOptions) 情况
                     case [JsonSerializerOptions jsonSerializerOptions]:
-                        result = FindNode(name).As(typeArguments[0], jsonSerializerOptions);
+                        result = FindNode(binderName).As(typeArguments[0], jsonSerializerOptions);
                         return true;
                 }
 

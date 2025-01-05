@@ -26,10 +26,8 @@
 using Furion.Extensions;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Binder = Microsoft.CSharp.RuntimeBinder.Binder;
 
 namespace Furion.Shapeless;
 
@@ -38,24 +36,6 @@ namespace Furion.Shapeless;
 /// </summary>
 public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, object?>>
 {
-    /// <summary>
-    ///     获取 <see cref="InvokeMemberBinder" /> 类型的 <c>TypeArguments</c> 属性访问器
-    /// </summary>
-    /// <remarks>实际上获取的是内部类型 <c>CSharpInvokeMemberBinder</c> 的 <c>TypeArguments</c> 属性访问器。</remarks>
-    internal static readonly Lazy<Func<object, object?>> _getCSharpInvokeMemberBinderTypeArguments = new(() =>
-    {
-        // 获取内部的 CSharpInvokeMemberBinder 类型
-        var csharpInvokeMemberBinderType =
-            typeof(Binder).Assembly.GetType("Microsoft.CSharp.RuntimeBinder.CSharpInvokeMemberBinder")!;
-
-        // 获取 TypeArguments 属性对象
-        var typeArgumentsProperty =
-            csharpInvokeMemberBinderType.GetProperty("TypeArguments", BindingFlags.Public | BindingFlags.Instance)!;
-
-        // 创建 TypeArguments 属性访问器
-        return csharpInvokeMemberBinderType.CreatePropertyGetter(typeArgumentsProperty);
-    });
-
     /// <summary>
     ///     <inheritdoc cref="Clay" />
     /// </summary>
@@ -125,11 +105,25 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         // 空检查
         ArgumentNullException.ThrowIfNull(keyOrIndex);
 
-        return IsObject ? SetNodeInObject(keyOrIndex, value) : SetNodeInArray(keyOrIndex, value);
+        // 触发值变更之前事件
+        OnValueChanging(keyOrIndex);
+
+        // 根据键或索引设置值并获取结果
+        var result = IsObject
+            ? SetNodeInObject(keyOrIndex, value, out var finalIndex)
+            : SetNodeInArray(keyOrIndex, value, out finalIndex);
+
+        // 触发值变更之后事件
+        if (result)
+        {
+            OnValueChanged(finalIndex);
+        }
+
+        return result;
     }
 
     /// <summary>
-    ///     根据键或索引删除值
+    ///     根据键或索引移除值
     /// </summary>
     /// <param name="keyOrIndex">键或索引</param>
     /// <returns>
@@ -140,7 +134,21 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         // 空检查
         ArgumentNullException.ThrowIfNull(keyOrIndex);
 
-        return IsObject ? RemoveNodeFromObject(keyOrIndex) : RemoveNodeFromArray(keyOrIndex);
+        // 触发键或索引移除之前事件
+        OnIndexRemoving(keyOrIndex);
+
+        // 根据键或索引移除值并获取结果
+        var result = IsObject
+            ? RemoveNodeFromObject(keyOrIndex, out var finalIndex)
+            : RemoveNodeFromArray(keyOrIndex, out finalIndex);
+
+        // 触发键或索引移除之后事件
+        if (result)
+        {
+            OnIndexRemoved(finalIndex);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -245,10 +253,11 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
     /// </summary>
     /// <param name="key">键</param>
     /// <param name="value">属性值</param>
+    /// <param name="finalKey">最终设置键</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal bool SetNodeInObject(object key, object? value)
+    internal bool SetNodeInObject(object key, object? value, out object finalKey)
     {
         // 将键转换为字符串类型
         var stringKey = key.ToString()!;
@@ -260,6 +269,7 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         var jsonObject = JsonCanvas.AsObject();
 
         jsonObject[indexKey] = SerializeToNode(value, Options);
+        finalKey = indexKey;
 
         return true;
     }
@@ -269,10 +279,11 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
     /// </summary>
     /// <param name="index">索引</param>
     /// <param name="value">元素值</param>
+    /// <param name="finalIndex">最终设置索引</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal bool SetNodeInArray(object index, object? value)
+    internal bool SetNodeInArray(object index, object? value, out object finalIndex)
     {
         // 检查数组索引合法性
         EnsureLegalArrayIndex(index, out var intIndex);
@@ -299,6 +310,7 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
             // 检查是否需要进行补位操作
             if (!Options.AutoExpandArrayWithNulls)
             {
+                finalIndex = null!;
                 return false;
             }
 
@@ -315,6 +327,7 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
             ThrowIfOutOfRange(intIndex, count);
         }
 
+        finalIndex = intIndex;
         return true;
     }
 
@@ -322,10 +335,11 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
     ///     根据键删除 <see cref="JsonNode" /> 节点
     /// </summary>
     /// <param name="key">键</param>
+    /// <param name="finalKey">最终移除键</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal bool RemoveNodeFromObject(object key)
+    internal bool RemoveNodeFromObject(object key, out object finalKey)
     {
         // 将键转换为字符串类型
         var stringKey = key.ToString()!;
@@ -336,10 +350,11 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         // 将 JsonCanvas 转换为 JsonObject 实例
         var jsonObject = JsonCanvas.AsObject();
 
-        // 检查键是否定义
-        if (jsonObject.ContainsKey(indexKey))
+        // 移除键
+        if (jsonObject.Remove(indexKey))
         {
-            return jsonObject.Remove(indexKey);
+            finalKey = indexKey;
+            return true;
         }
 
         // 检查是否允许访问不存在的属性
@@ -348,6 +363,7 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
             throw new KeyNotFoundException($"The property `{indexKey}` was not found in the Clay.");
         }
 
+        finalKey = null!;
         return false;
     }
 
@@ -355,10 +371,11 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
     ///     根据索引删除 <see cref="JsonNode" /> 节点
     /// </summary>
     /// <param name="index">索引</param>
+    /// <param name="finalIndex">最终移除索引</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal bool RemoveNodeFromArray(object index)
+    internal bool RemoveNodeFromArray(object index, out object finalIndex)
     {
         // 检查数组索引合法性
         EnsureLegalArrayIndex(index, out var intIndex);
@@ -373,6 +390,7 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         if (intIndex < count)
         {
             jsonArray.RemoveAt(intIndex);
+            finalIndex = intIndex;
             return true;
         }
 
@@ -382,6 +400,7 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
             ThrowIfOutOfRange(intIndex, count);
         }
 
+        finalIndex = null!;
         return false;
     }
 
