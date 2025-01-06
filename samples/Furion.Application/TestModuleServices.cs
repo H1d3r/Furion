@@ -1,10 +1,10 @@
 ﻿using Furion.Application.Persons;
 using Furion.AspNetCore;
-using Furion.ClayObject;
 using Furion.DatabaseAccessor.Extensions;
 using Furion.Extensions;
 using Furion.Logging;
 using Furion.Reflection;
+using Furion.Shapeless;
 using Furion.UnifyResult;
 using Furion.ViewEngine;
 using Furion.ViewEngine.Extensions;
@@ -187,17 +187,17 @@ public class TestModuleServices : IDynamicApiController
 
     public dynamic 测试嵌套Clay和序列化()
     {
-        dynamic a1 = Clay.Object(new
+        dynamic a1 = Clay.Parse(new
         {
             Name = "我是第一层"
         });
 
-        dynamic a2 = Clay.Object(new
+        dynamic a2 = Clay.Parse(new
         {
             Name = "我是第二层"
         });
 
-        dynamic a3 = Clay.Object(new object[] { });
+        dynamic a3 = Clay.Parse(new object[] { });
 
         a3[0] = new
         {
@@ -212,7 +212,7 @@ public class TestModuleServices : IDynamicApiController
         a1.Child = a2;
         a1.Entry = a3;
 
-        var str = a1.ToString();
+        var str = a1.ToJsonString();
 
         foreach (var item in a1)
         {
@@ -228,10 +228,10 @@ public class TestModuleServices : IDynamicApiController
 
                 if (clay.IsArray)
                 {
-                    var currentArr = Clay.Object(new dynamic[] { });
+                    var currentArr = Clay.Parse(new dynamic[] { });
                     for (int i = 0; i < value.Length; i++)
                     {
-                        var sss = a1[key][i].ToString();
+                        var sss = a1[key][i].ToJsonString();
                         var vs = $"我是 {key}{i} {sss}";
 
                         if (i == 0)
@@ -242,7 +242,7 @@ public class TestModuleServices : IDynamicApiController
                         else
                         {
                             // 这里是成功的
-                            currentArr[i] = Clay.Object(new
+                            currentArr[i] = Clay.Parse(new
                             {
                                 Name = vs
                             });
@@ -261,10 +261,10 @@ public class TestModuleServices : IDynamicApiController
     public dynamic 测试嵌套Clay和序列化2()
     {
         // 这里是另外一个Arr 子集
-        dynamic a3 = Clay.Object(new object[] { });
+        dynamic a3 = Clay.Parse(new object[] { });
 
         // 创建粘土
-        dynamic a1 = Clay.Object(new
+        dynamic a1 = Clay.Parse(new
         {
             Name = "我是第一层粘土"
         });
@@ -320,7 +320,7 @@ public class TestModuleServices : IDynamicApiController
 
     public dynamic 测试匿名类嵌套Clay()
     {
-        var package = Clay.Object(new
+        var package = Clay.Parse(new
         {
             Name = "我是第一层",
             Age = 20,
@@ -330,7 +330,7 @@ public class TestModuleServices : IDynamicApiController
             }
         });
 
-        var a3 = Clay.Object(new object[] { });
+        var a3 = Clay.Parse(new object[] { });
 
         a3[0] = new
         {
@@ -349,7 +349,7 @@ public class TestModuleServices : IDynamicApiController
             package
         };
 
-        var policy = Clay.Object(new
+        var policy = Clay.Parse(new
         {
             search = new
             {
@@ -430,10 +430,9 @@ public class TestModuleServices : IDynamicApiController
             package = package,
         };
 
-        var clay = Clay.Object(obj);
+        var clay = Clay.Parse(obj);
         var str = clay.ToString();
-        var res1 = clay.Solidify<dynamic>();
-        Dictionary<string, object> dic = clay.ToDictionary();
+        Dictionary<string, object> dic = clay.ToDictionary(u => u.Key.ToString(), u => u.Value);
 
         return dic;
     }
@@ -476,7 +475,7 @@ public class TestModuleServices : IDynamicApiController
     {
         var sql = @"
 @{
-    IEnumerable<dynamic> data = Model.AsEnumerable();
+    IEnumerable<dynamic> data = Model.Values;
     var names = data.Select(u=> u.name);
 
     foreach(var name in names)
@@ -486,17 +485,17 @@ public class TestModuleServices : IDynamicApiController
 }
 
 @{
-    IEnumerable<dynamic> data2 = Model.AsEnumerable();
+    IEnumerable<dynamic> data2 = Model.Values;
     var nameStrings = string.Join(""', '"", data2.Select(u=> u.name));
 
     @:update table set isSync = 1 where name in ('@nameStrings');
 }
 
-@foreach(var item in Model)
+@foreach(var item in Model.Values)
 {
     @:insert into table(member_id, site_id) values(@item.member_id, @item.site_id);
 
-    @foreach(var subItem in item.goods_list)
+    @foreach(var subItem in item.goods_list.Values)
     {
         @:insert into table(order_id, goods_id) values(@subItem.order_id, @subItem.goods_id);
     }
@@ -563,9 +562,12 @@ public class TestModuleServices : IDynamicApiController
                             }
                         ]
                     }]
-                    """);
+                    """, new ClayOptions
+        {
+            AllowMissingProperty = true
+        });
 
-        IEnumerable<dynamic> query = clay.AsEnumerable();
+        IEnumerable<dynamic> query = clay.Values;
 
         var order_nos = query.Select(u => u.order_no).ToList();
 

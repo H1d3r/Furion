@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace Furion.Web.Core;
@@ -45,6 +46,7 @@ public sealed class Startup : AppStartup
                 .AddAppLocalization()
                 .AddJsonOptions(options =>
                 {
+                    options.JsonSerializerOptions.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
                     options.JsonSerializerOptions.Converters.AddDateTimeTypeConverters(localized: true);
                     options.JsonSerializerOptions.Converters.AddClayConverters();
 

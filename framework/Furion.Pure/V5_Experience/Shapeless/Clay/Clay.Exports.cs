@@ -61,9 +61,11 @@ public sealed partial class Clay
         // 初始化 ClayOptions
         Options = options ?? ClayOptions.Default;
 
+        // 创建 JsonNode 选项
+        var (jsonNodeOptions, jsonDocumentOptions) = CreateJsonNodeOptions(Options);
+
         // 创建 JsonObject 实例并指示属性名称是否不区分大小写
-        JsonCanvas = JsonNode.Parse(clayType is ClayType.Object ? "{}" : "[]",
-            new JsonNodeOptions { PropertyNameCaseInsensitive = Options.PropertyNameCaseInsensitive })!;
+        JsonCanvas = JsonNode.Parse(clayType is ClayType.Object ? "{}" : "[]", jsonNodeOptions, jsonDocumentOptions)!;
 
         IsObject = clayType is ClayType.Object;
         IsArray = clayType is ClayType.Array;
@@ -72,21 +74,21 @@ public sealed partial class Clay
     /// <summary>
     ///     字符串索引
     /// </summary>
-    /// <param name="index">索引</param>
-    public object? this[string index]
+    /// <param name="keyOrIndex">键或索引</param>
+    public object? this[string keyOrIndex]
     {
-        get => GetValue(index);
-        set => SetValue(index, value);
+        get => GetValue(keyOrIndex);
+        set => SetValue(keyOrIndex, value);
     }
 
     /// <summary>
     ///     字符索引
     /// </summary>
-    /// <param name="index">索引</param>
-    public object? this[char index]
+    /// <param name="keyOrIndex">键或索引</param>
+    public object? this[char keyOrIndex]
     {
-        get => GetValue(index);
-        set => SetValue(index, value);
+        get => GetValue(keyOrIndex);
+        set => SetValue(keyOrIndex, value);
     }
 
     /// <summary>
@@ -115,31 +117,34 @@ public sealed partial class Clay
     public int Count => IsObject ? JsonCanvas.AsObject().Count : JsonCanvas.AsArray().Count;
 
     /// <summary>
+    ///     元素数量
+    /// </summary>
+    public int Length => Count;
+
+    /// <summary>
     ///     是否为空元素
     /// </summary>
     public bool IsEmpty => Count == 0;
 
     /// <summary>
-    ///     获取键或索引数组
+    ///     获取键或索引集合
     /// </summary>
-    public object[] Indexes =>
-        (IsObject ? EnumerateObject().Select(object (u) => u.Key) : EnumerateArray().Select(object (u) => u.Key))
-        .ToArray();
+    public IEnumerable<object> Indexes => IsObject
+        ? EnumerateObject().Select(object (u) => u.Key)
+        : EnumerateArray().Select(object (u) => u.Key);
 
     /// <summary>
-    ///     获取值数组
+    ///     获取值集合
     /// </summary>
-    public dynamic?[] Values =>
-        (IsObject ? EnumerateObject().Select(u => u.Value) : EnumerateArray().Select(u => u.Value)).ToArray();
+    public IEnumerable<dynamic?> Values => IsObject
+        ? EnumerateObject().Select(u => u.Value)
+        : EnumerateArray().Select(u => u.Value);
 
     // /// <summary>
     // ///     反序列化时没有匹配的属性字典集合
     // /// </summary>
     // [JsonExtensionData]
     // public Dictionary<object, object?> Extensions { get; set; } = new();
-
-    /// <inheritdoc />
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
     ///     返回循环访问元素的枚举数
@@ -183,14 +188,10 @@ public sealed partial class Clay
     /// <param name="options">
     ///     <see cref="ClayOptions" />
     /// </param>
-    /// <param name="jsonDocumentOptions">
-    ///     <see cref="JsonDocumentOptions" />
-    /// </param>
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
-    public static Clay Parse(object? obj, ClayOptions? options = null,
-        JsonDocumentOptions jsonDocumentOptions = default)
+    public static Clay Parse(object? obj, ClayOptions? options = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(obj);
@@ -198,9 +199,8 @@ public sealed partial class Clay
         // 初始化 ClayOptions 实例
         var clayOptions = options ?? ClayOptions.Default;
 
-        // 初始化 JsonNodeOptions 实例
-        var jsonNodeOptions =
-            new JsonNodeOptions { PropertyNameCaseInsensitive = clayOptions.PropertyNameCaseInsensitive };
+        // 创建 JsonNode 选项
+        var (jsonNodeOptions, jsonDocumentOptions) = CreateJsonNodeOptions(clayOptions);
 
         // 将对象转换为 JsonNode 实例
         var jsonNode = obj switch
@@ -223,15 +223,11 @@ public sealed partial class Clay
     /// <param name="options">
     ///     <see cref="ClayOptions" />
     /// </param>
-    /// <param name="jsonDocumentOptions">
-    ///     <see cref="JsonDocumentOptions" />
-    /// </param>
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
-    public static Clay Parse(ref Utf8JsonReader utf8JsonReader, ClayOptions? options = null,
-        JsonDocumentOptions jsonDocumentOptions = default) =>
-        Parse(utf8JsonReader.GetRawText(), options, jsonDocumentOptions);
+    public static Clay Parse(ref Utf8JsonReader utf8JsonReader, ClayOptions? options = null) =>
+        Parse(utf8JsonReader.GetRawText(), options);
 
     /// <summary>
     ///     检查键或索引是否定义
@@ -404,7 +400,7 @@ public sealed partial class Clay
     public Clay DeepClone(ClayOptions? options = null) => new Clay(JsonCanvas.DeepClone()).Rebuilt(options);
 
     /// <summary>
-    ///     删除所有元素
+    ///     删除所有键或索引
     /// </summary>
     public void Clear()
     {

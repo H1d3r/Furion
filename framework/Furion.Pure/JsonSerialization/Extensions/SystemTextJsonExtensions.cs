@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.JsonSerialization;
+using Furion.Shapeless;
 using System.Text.Json.Serialization;
 
 namespace System.Text.Json;
@@ -70,11 +71,11 @@ public static class SystemTextJsonExtensions
     /// 添加 Clay 类型序列化处理
     /// </summary>
     /// <param name="converters"></param>
-    /// <param name="toCamelCaseKey">输出键小写</param>
+    /// <remarks>可通过 <c>JsonSerializerOptions</c> 的 <c>PropertyNamingPolicy = JsonNamingPolicy.CamelCase</c> 配置输出小写。</remarks>
     /// <returns></returns>
-    public static IList<JsonConverter> AddClayConverters(this IList<JsonConverter> converters, bool toCamelCaseKey = true)
+    public static IList<JsonConverter> AddClayConverters(this IList<JsonConverter> converters)
     {
-        converters.Add(new SystemTextJsonClayJsonConverter(toCamelCaseKey));
+        converters.Add(new ClayJsonConverter());
 
         return converters;
     }

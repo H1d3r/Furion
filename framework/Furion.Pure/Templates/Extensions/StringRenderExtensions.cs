@@ -23,7 +23,6 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.ClayObject.Extensions;
 using Furion.Extensions;
 using System.Text.RegularExpressions;
 
@@ -56,7 +55,7 @@ public static class StringRenderExtensions
     {
         if (template == null) return default;
 
-        return template.Render(templateData == null ? default : templateData.ToDictionary(), encode);
+        return template.Render(templateData == null ? default : templateData.ObjectToDictionary().ToDictionary(u => u.Key.ToString(), u => u.Value), encode);
     }
 
     /// <summary>

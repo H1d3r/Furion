@@ -23,8 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.ClayObject;
 using Furion.Extensions;
+using Furion.Shapeless;
 using System.Data;
 using System.Data.Common;
 using System.Reflection;
@@ -58,7 +58,7 @@ internal static class DbHelpers
         if (model is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object) return ConvertToDbParameters((Dictionary<string, object>)jsonElement.ToObject(), dbCommand);
 
         // 处理 Clay 类型
-        if (model is Clay clay) return ConvertToDbParameters((Dictionary<string, object>)clay.ToDictionary(), dbCommand);
+        if (model is Clay clay) return ConvertToDbParameters(clay.ToDictionary(u => u.Key.ToString(), u => u.Value), dbCommand);
 
         // 处理字典类型参数
         if (modelType == typeof(Dictionary<string, object>)) return ConvertToDbParameters((Dictionary<string, object>)model, dbCommand);

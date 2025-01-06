@@ -23,71 +23,21 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-namespace Furion.ClayObject;
+namespace Furion.Shapeless;
 
 /// <summary>
-/// 粘土对象数组类型枚举器实现类
+///     <see cref="Clay" /> 对象事件数据
 /// </summary>
-[SuppressSniffer]
-public sealed class ClayArrayEnumerator : IEnumerator
+public abstract class ClayEventArgs : EventArgs
 {
     /// <summary>
-    /// 粘土对象
+    ///     <inheritdoc cref="ClayEventArgs" />
     /// </summary>
-    public dynamic _clay;
+    /// <param name="keyOrIndex">键或索引</param>
+    internal ClayEventArgs(object keyOrIndex) => KeyOrIndex = keyOrIndex;
 
     /// <summary>
-    /// 当前索引
+    ///     键或索引
     /// </summary>
-    private int position = -1;
-
-    /// <summary>
-    /// 构造函数
-    /// </summary>
-    /// <param name="clay">粘土对象</param>
-    public ClayArrayEnumerator(dynamic clay)
-    {
-        _clay = clay;
-    }
-
-    /// <summary>
-    /// 推进（获取）下一个元素
-    /// </summary>
-    /// <returns></returns>
-    public bool MoveNext()
-    {
-        position++;
-        return (position < _clay.Length);
-    }
-
-    /// <summary>
-    /// 将元素索引恢复初始值
-    /// </summary>
-    public void Reset()
-    {
-        position = -1;
-    }
-
-    /// <summary>
-    /// 当前元素
-    /// </summary>
-    public dynamic Current
-    {
-        get
-        {
-            try
-            {
-                return _clay[position];
-            }
-            catch (IndexOutOfRangeException)
-            {
-                throw new InvalidOperationException();
-            }
-        }
-    }
-
-    /// <summary>
-    /// 当前元素（内部）
-    /// </summary>
-    object IEnumerator.Current => Current;
+    public virtual object KeyOrIndex { get; }
 }

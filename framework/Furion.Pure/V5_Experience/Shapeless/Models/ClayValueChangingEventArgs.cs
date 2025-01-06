@@ -28,16 +28,14 @@ namespace Furion.Shapeless;
 /// <summary>
 ///     值变更之前事件数据
 /// </summary>
-public sealed class ClayValueChangingEventArgs : EventArgs
+public sealed class ClayValueChangingEventArgs : ClayEventArgs
 {
     /// <summary>
     ///     <inheritdoc cref="ClayValueChangingEventArgs" />
     /// </summary>
     /// <param name="keyOrIndex">键或索引</param>
-    internal ClayValueChangingEventArgs(object keyOrIndex) => KeyOrIndex = keyOrIndex;
-
-    /// <summary>
-    ///     键或索引
-    /// </summary>
-    public object KeyOrIndex { get; }
+    internal ClayValueChangingEventArgs(object keyOrIndex)
+        : base(keyOrIndex)
+    {
+    }
 }
