@@ -326,6 +326,9 @@ public sealed partial class TriggerBuilder : Trigger
 
         RuntimeTriggerArgs = runtimeArgs;
 
+        // 解决修改了触发器参数没有更新下一次运行时间问题
+        SetNextRunTime(DateTime.Now.AddSeconds(-1));
+
         return this;
     }
 
