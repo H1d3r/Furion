@@ -247,7 +247,7 @@ public sealed partial class Clay
         // 检查是否是单一对象
         if (IsObject)
         {
-            return JsonCanvas.AsObject().ContainsKey(stringIndex);
+            return ObjectMethods.ContainsKey(stringIndex) || JsonCanvas.AsObject().ContainsKey(stringIndex);
         }
 
         // 尝试将字符串索引转换为整数索引
@@ -391,6 +391,7 @@ public sealed partial class Clay
     /// <summary>
     ///     深度克隆
     /// </summary>
+    /// <remarks>该操作不会复制自定义委托方法。</remarks>
     /// <param name="options">
     ///     <see cref="ClayOptions" />
     /// </param>
@@ -408,6 +409,7 @@ public sealed partial class Clay
         if (IsObject)
         {
             JsonCanvas.AsObject().Clear();
+            ObjectMethods.Clear();
         }
         else
         {

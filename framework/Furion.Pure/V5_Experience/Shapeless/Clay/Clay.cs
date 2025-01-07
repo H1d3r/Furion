@@ -80,6 +80,11 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
     /// <remarks>用于作为 <see cref="Clay" /> 的核心数据容器。</remarks>
     internal JsonNode JsonCanvas { get; private set; }
 
+    /// <summary>
+    ///     单一对象自定义委托字典
+    /// </summary>
+    internal IDictionary<string, Delegate?> ObjectMethods { get; } = new Dictionary<string, Delegate?>();
+
     /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -95,7 +100,9 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         // 空检查
         ArgumentNullException.ThrowIfNull(keyOrIndex);
 
-        return DeserializeNode(FindNode(keyOrIndex), Options);
+        return TryGetDelegate(keyOrIndex, out var @delegate)
+            ? @delegate
+            : DeserializeNode(FindNode(keyOrIndex), Options);
     }
 
     /// <summary>
@@ -186,13 +193,13 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         var stringKey = key.ToString()!;
 
         // 处理嵌套带空传播字符 ? 的索引键
-        var indexKey = ProcessNestedNullPropagationIndexKey(stringKey);
+        var memberName = ProcessNestedNullPropagationIndexKey(stringKey);
 
         // 将 JsonCanvas 转换为 JsonObject 实例
         var jsonObject = JsonCanvas.AsObject();
 
         // 根据键获取 JSON 节点
-        if (jsonObject.TryGetPropertyValue(indexKey, out var jsonNode))
+        if (jsonObject.TryGetPropertyValue(memberName, out var jsonNode))
         {
             return jsonNode;
         }
@@ -200,17 +207,17 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         // 检查是否允许访问不存在的属性
         if (!Options.AllowMissingProperty)
         {
-            throw new KeyNotFoundException($"The property `{indexKey}` was not found in the Clay.");
+            throw new KeyNotFoundException($"The property `{memberName}` was not found in the Clay.");
         }
 
         // 检查是否需要处理嵌套带空传播字符 ? 的索引键
-        if (indexKey == stringKey || !Options.AutoCreateNestedObjects)
+        if (memberName == stringKey || !Options.AutoCreateNestedObjects)
         {
             return null;
         }
 
-        SetValue(indexKey, new Clay(Options));
-        return FindNode(indexKey);
+        SetValue(memberName, new Clay(Options));
+        return FindNode(memberName);
     }
 
     /// <summary>
@@ -269,14 +276,26 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         var stringKey = key.ToString()!;
 
         // 处理嵌套带空传播字符 ? 的索引键
-        var indexKey = ProcessNestedNullPropagationIndexKey(stringKey);
+        var memberName = ProcessNestedNullPropagationIndexKey(stringKey);
 
         // 将 JsonCanvas 转换为 JsonObject 实例
         var jsonObject = JsonCanvas.AsObject();
 
-        jsonObject[indexKey] = SerializeToNode(value, Options);
-        finalKey = indexKey;
+        // 处理值是一个 Delegate 委托类型
+        if (value is Delegate @delegate)
+        {
+            // 移除可能存在的同名属性
+            jsonObject.Remove(memberName);
+            ObjectMethods[memberName] = @delegate;
+        }
+        else
+        {
+            // 移除可能存在的同名委托属性
+            ObjectMethods.Remove(memberName);
+            jsonObject[memberName] = SerializeToNode(value, Options);
+        }
 
+        finalKey = memberName;
         return true;
     }
 
@@ -351,22 +370,22 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         var stringKey = key.ToString()!;
 
         // 处理嵌套带空传播字符 ? 的索引键
-        var indexKey = ProcessNestedNullPropagationIndexKey(stringKey);
+        var memberName = ProcessNestedNullPropagationIndexKey(stringKey);
 
         // 将 JsonCanvas 转换为 JsonObject 实例
         var jsonObject = JsonCanvas.AsObject();
 
         // 移除键
-        if (jsonObject.Remove(indexKey))
+        if (ObjectMethods.Remove(memberName) || jsonObject.Remove(memberName))
         {
-            finalKey = indexKey;
+            finalKey = memberName;
             return true;
         }
 
         // 检查是否允许访问不存在的属性
         if (!Options.AllowMissingProperty)
         {
-            throw new KeyNotFoundException($"The property `{indexKey}` was not found in the Clay.");
+            throw new KeyNotFoundException($"The property `{memberName}` was not found in the Clay.");
         }
 
         finalKey = null!;
@@ -411,6 +430,31 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
     }
 
     /// <summary>
+    ///     尝试根据键获取委托
+    /// </summary>
+    /// <param name="key">键</param>
+    /// <param name="delegate">
+    ///     <see cref="Delegate" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal bool TryGetDelegate(object key, out Delegate? @delegate)
+    {
+        // 检查是否是单一对象
+        if (!IsObject)
+        {
+            @delegate = null;
+            return false;
+        }
+
+        // 处理嵌套带空传播字符 ? 的索引键
+        var memberName = ProcessNestedNullPropagationIndexKey(key.ToString()!);
+
+        return ObjectMethods.TryGetValue(memberName, out @delegate);
+    }
+
+    /// <summary>
     ///     将对象序列化成 <see cref="JsonNode" /> 实例
     /// </summary>
     /// <param name="obj">
@@ -427,6 +471,7 @@ public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<objec
         {
             null => null,
             JsonNode jsonNode => jsonNode.DeepClone(),
+            // 该操作不会复制自定义委托方法
             Clay clay => clay.DeepClone(options).JsonCanvas,
             _ => JsonSerializer.SerializeToNode(obj, options?.JsonSerializerOptions)
         };
