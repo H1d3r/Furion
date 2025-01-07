@@ -182,7 +182,7 @@ public sealed partial class Crontab
     /// 计算距离下一个发生时间相差毫秒数
     /// </summary>
     /// <param name="baseTime">起始时间</param>
-    /// <returns></returns>
+    /// <returns><see cref="double"/></returns>
     public double GetSleepMilliseconds(DateTime baseTime)
     {
         // 采用 DateTimeKind.Unspecified 转换当前时间并忽略毫秒之后部分
@@ -202,7 +202,7 @@ public sealed partial class Crontab
     /// 计算距离下一个发生时间相差时间戳
     /// </summary>
     /// <param name="baseTime">起始时间</param>
-    /// <returns></returns>
+    /// <returns><see cref="TimeSpan"/></returns>
     public TimeSpan GetSleepTimeSpan(DateTime baseTime)
     {
         return TimeSpan.FromMilliseconds(GetSleepMilliseconds(baseTime));
@@ -211,7 +211,7 @@ public sealed partial class Crontab
     /// <summary>
     /// 将 <see cref="Crontab"/> 对象转换成 Cron 表达式字符串
     /// </summary>
-    /// <returns></returns>
+    /// <returns><see cref="string"/></returns>
     public override string ToString()
     {
         var paramList = new List<string>();
