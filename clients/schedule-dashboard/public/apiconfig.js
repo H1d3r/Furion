@@ -11,4 +11,5 @@ window.apiconfig = {
   displayHead: "true",
   defaultExpandAllJobs: "false",
   useUtcTimestamp: "false",
+  title: "Schedule Dashboard",
 };

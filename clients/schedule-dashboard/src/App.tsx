@@ -40,7 +40,7 @@ function App() {
               mode="horizontal"
               defaultSelectedKeys={["Home"]}
               header={{
-                text: "Schedule Dashboard",
+                text: apiconfig.title,
                 logo: (
                   <IconCalendarClock
                     style={{

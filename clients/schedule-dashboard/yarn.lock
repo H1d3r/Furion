@@ -1224,33 +1224,34 @@
   dependencies:
     tslib "^2.0.0"
 
-"@douyinfe/semi-animation-react@2.62.1":
-  version "2.62.1"
-  resolved "https://registry.yarnpkg.com/@douyinfe/semi-animation-react/-/semi-animation-react-2.62.1.tgz#60d6fb88b43401d0b939cd07f10ba715a2638e72"
-  integrity sha512-dRM5p22+skqLV1cKl+IMrUw22coKWqOj54+NgywsMtTOsC0D3XPI7NJ0lB4RzAAiGaAd16VxlW+I5Kuzooxqmw==
+"@douyinfe/semi-animation-react@2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-animation-react/-/semi-animation-react-2.72.3.tgz#e3b232c0fe021e038bbdecc44b2533ebd1677a46"
+  integrity sha512-OfThQVe3rP1v70Y4SSC5dkrLzNy7QkedbqfQvknqKB2onP7lGB6ePc3K3vACBxEKKL6dXzTlMs6XoR5SBD6iyA==
   dependencies:
-    "@douyinfe/semi-animation" "2.62.1"
-    "@douyinfe/semi-animation-styled" "2.62.1"
+    "@douyinfe/semi-animation" "2.72.3"
+    "@douyinfe/semi-animation-styled" "2.72.3"
     classnames "^2.2.6"
 
-"@douyinfe/semi-animation-styled@2.62.1":
-  version "2.62.1"
-  resolved "https://registry.yarnpkg.com/@douyinfe/semi-animation-styled/-/semi-animation-styled-2.62.1.tgz#a9f4c2eb59f2a570c4ee2f232a1a9697fd93e972"
-  integrity sha512-TtHDhih0/GDDi4Y6SS36zX2htK9XXEHBOuk6FhWQncymb/92peOtsaIrabOv/DtpYqa4rt+omttMzUevcfkIPw==
+"@douyinfe/semi-animation-styled@2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-animation-styled/-/semi-animation-styled-2.72.3.tgz#57984a05f688f393e0312b6f2bd96b0f67198dad"
+  integrity sha512-ME6DE8UdBRHf00OCgxoA9jjZef/2c/QWpUy7vtkwUIfwENCanpU61apoLk5jprTLG7y/Zq8Vjm4O5h0eMep1pw==
 
-"@douyinfe/semi-animation@2.62.1":
-  version "2.62.1"
-  resolved "https://registry.yarnpkg.com/@douyinfe/semi-animation/-/semi-animation-2.62.1.tgz#fbe430546d57fc4f31408770b6326f15b9b243dd"
-  integrity sha512-mZCFeLuFyoIMRSw1zBTzm9rxKryOCkdf1RppkuX0J7ptLiOOP7wQ03KabetpRIeKgrvqHXhkopebz9aZt2vkMA==
+"@douyinfe/semi-animation@2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-animation/-/semi-animation-2.72.3.tgz#4213757d2f3ab2a6d22c72475dff870bb61cfb22"
+  integrity sha512-mZcYZHEIdgPN5cm+jZv8YLRWce3i7VrjZsytEue2DR0/EABFGfiMA4o91TanCTz5NrRZY+iNMyLMDeu6CrvQOQ==
   dependencies:
     bezier-easing "^2.1.0"
 
-"@douyinfe/semi-foundation@2.62.1":
-  version "2.62.1"
-  resolved "https://registry.yarnpkg.com/@douyinfe/semi-foundation/-/semi-foundation-2.62.1.tgz#dcd03ad9e5ac71a7ec628c2d46b698cd98ec2853"
-  integrity sha512-Zo5CHEQSPCc4o9wPGsunrR5vyZLaE6HNHiqrkwXycc3mHWwRYh/Z+GvLlev1V1cHaCW/1zZ6i9QdMnBeWZP/1Q==
+"@douyinfe/semi-foundation@2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-foundation/-/semi-foundation-2.72.3.tgz#ef1a21757742dbc6363d4377eab01385e590e88c"
+  integrity sha512-ZOMFVryVldh2vsPj7Gf7mE7kqpCngRiPw5N1Ltm2Qr0NGOpwuRir23PYpdMQAAWQUF1BIe3EPrdxrp+lIV9GDA==
   dependencies:
-    "@douyinfe/semi-animation" "2.62.1"
+    "@douyinfe/semi-animation" "2.72.3"
+    "@douyinfe/semi-json-viewer-core" "2.72.3"
     "@mdx-js/mdx" "^3.0.1"
     async-validator "^3.5.0"
     classnames "^2.2.6"
@@ -1264,43 +1265,51 @@
     remark-gfm "^4.0.0"
     scroll-into-view-if-needed "^2.2.24"
 
-"@douyinfe/semi-icons@2.62.1", "@douyinfe/semi-icons@^2.62.1":
-  version "2.62.1"
-  resolved "https://registry.yarnpkg.com/@douyinfe/semi-icons/-/semi-icons-2.62.1.tgz#26f8fdac434694035030c77b1f06abdf8d37545c"
-  integrity sha512-mwDNe42imzKDmQsVSfikqlilSE/62K0j2TZMvpPuigD3Chu9NoaEWReDzKdYQ2IES7PHBttQ9YJSbb3EtJ1cRw==
+"@douyinfe/semi-icons@2.72.3", "@douyinfe/semi-icons@^2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-icons/-/semi-icons-2.72.3.tgz#eb20c7485f8acec7da4cd20b6472cb80f25bbb1d"
+  integrity sha512-ZsbHin7dJXX4JWpKykqJhH4hlNi9uTHKUi2ylpyMpIl08ROetojkDKj6TcTd9mRMILGpQHCH7hd5uYGo1xb3ew==
   dependencies:
     classnames "^2.2.6"
 
-"@douyinfe/semi-illustrations@2.62.1":
-  version "2.62.1"
-  resolved "https://registry.yarnpkg.com/@douyinfe/semi-illustrations/-/semi-illustrations-2.62.1.tgz#4425481fd4effaf0276f7ac8feecee6403e33d36"
-  integrity sha512-fk737fJ6YnYWoMdTG2RcKDesZAnOzD35v3ZRd+u/qjPoAUiX6YY+R8wu+sh/IvN2hHURH+i+8UOtBxXE6E42xQ==
+"@douyinfe/semi-illustrations@2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-illustrations/-/semi-illustrations-2.72.3.tgz#013f61106f9a88b635f89269d4eef85e1443abfc"
+  integrity sha512-jfsH/4TogOFQ5dWUdm6X6fVLQzGTjBFVHRyiqSrUnLWVuSqQaUtMRJguxEtcFN9D+fjdvG6sToqTHOygQsAp8Q==
 
-"@douyinfe/semi-theme-default@2.61.0":
-  version "2.61.0"
-  resolved "https://registry.yarnpkg.com/@douyinfe/semi-theme-default/-/semi-theme-default-2.61.0.tgz#a7e9bf9534721c12af1d0eeb5d5a2de615896a23"
-  integrity sha512-obn/DOw4vZyKFAlWvZxHTpBLAK9FO9kygTSm2GROgvi+UDB2PPU6l20cuUCsdGUNWJRSqYlTTVZ1tNYIyFZ5Sg==
+"@douyinfe/semi-json-viewer-core@2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-json-viewer-core/-/semi-json-viewer-core-2.72.3.tgz#61df5f53c101a969b378754162800687f8ddba2f"
+  integrity sha512-nzHqlTjS8tyFgfrlAVxCqV4P82JYoUw+bmVs5/05/65vLKLVo5KnDn6VGUfRzFcXJ68d4vMWv5qcrEG/E2aG+Q==
+  dependencies:
+    jsonc-parser "^3.3.1"
 
-"@douyinfe/semi-ui@^2.62.1":
-  version "2.62.1"
-  resolved "https://registry.yarnpkg.com/@douyinfe/semi-ui/-/semi-ui-2.62.1.tgz#cfe5010157d1662fc6a050cd4a8ab5f6d2dd9811"
-  integrity sha512-igNCw3XM56mF00s4vUFY6JrEyga4ZNnR+a3bpQyGLJyEfynmuMCVKpBbFcyDpBI7uYjIogh8REeD/C9nKw/L4Q==
+"@douyinfe/semi-theme-default@2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-theme-default/-/semi-theme-default-2.72.3.tgz#22cb12e283085aa657c851856dd5a0ff8c13c5b2"
+  integrity sha512-qCR5OCztuIWyLhntcj61kXp02dZCKC4H/12p394rGOkpie8E/MkBQMFvVxFPsasuN3MWWdUNefYsERe4cjXuhw==
+
+"@douyinfe/semi-ui@^2.72.3":
+  version "2.72.3"
+  resolved "https://registry.npmmirror.com/@douyinfe/semi-ui/-/semi-ui-2.72.3.tgz#e2e50d735a8c58e2035769d70ee4a7e8e605212b"
+  integrity sha512-7QsusUkzD7gDST3dEPLq1jvaderR8d9RM/Y1h31weZUM1DBVCUIVGDYW6oVFsUKzMAPdeOlTvnFJmPlEL+7k6g==
   dependencies:
     "@dnd-kit/core" "^6.0.8"
     "@dnd-kit/sortable" "^7.0.2"
     "@dnd-kit/utilities" "^3.2.1"
-    "@douyinfe/semi-animation" "2.62.1"
-    "@douyinfe/semi-animation-react" "2.62.1"
-    "@douyinfe/semi-foundation" "2.62.1"
-    "@douyinfe/semi-icons" "2.62.1"
-    "@douyinfe/semi-illustrations" "2.62.1"
-    "@douyinfe/semi-theme-default" "2.61.0"
+    "@douyinfe/semi-animation" "2.72.3"
+    "@douyinfe/semi-animation-react" "2.72.3"
+    "@douyinfe/semi-foundation" "2.72.3"
+    "@douyinfe/semi-icons" "2.72.3"
+    "@douyinfe/semi-illustrations" "2.72.3"
+    "@douyinfe/semi-theme-default" "2.72.3"
     async-validator "^3.5.0"
     classnames "^2.2.6"
     copy-text-to-clipboard "^2.1.1"
     date-fns "^2.29.3"
     date-fns-tz "^1.3.8"
     fast-copy "^3.0.1 "
+    jsonc-parser "^3.3.1"
     lodash "^4.17.21"
     prop-types "^15.7.2"
     react-resizable "^3.0.5"
@@ -3818,10 +3827,10 @@ date-fns@^2.29.3:
   resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.29.3.tgz#27402d2fc67eb442b511b70bbdf98e6411cd68a8"
   integrity sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==
 
-dayjs@^1.11.11:
-  version "1.11.11"
-  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.11.tgz#dfe0e9d54c5f8b68ccf8ca5f72ac603e7e5ed59e"
-  integrity sha512-okzr3f11N6WuqYtZSvm+F776mB41wRZMhKP+hc34YdW+KmtYYK9iqvHSwo2k9FEH3fhGXvOPV6yz2IcSrfRUDg==
+dayjs@^1.11.13:
+  version "1.11.13"
+  resolved "https://registry.npmmirror.com/dayjs/-/dayjs-1.11.13.tgz#92430b0139055c3ebb60150aa13e860a4b5a366c"
+  integrity sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==
 
 debug@2.6.9, debug@^2.6.0, debug@^2.6.9:
   version "2.6.9"
@@ -6432,6 +6441,11 @@ json5@^2.1.2, json5@^2.2.0, json5@^2.2.1:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/json5/-/json5-2.2.2.tgz#64471c5bdcc564c18f7c1d4df2e2297f2457c5ab"
   integrity sha512-46Tk9JiOL2z7ytNQWFLpj99RZkVgeHf87yGQKsIkaPz1qSH9UczKH1rO7K3wgRselo0tYMUNfecYpm/p1vC7tQ==
+
+jsonc-parser@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.npmmirror.com/jsonc-parser/-/jsonc-parser-3.3.1.tgz#f2a524b4f7fd11e3d791e559977ad60b98b798b4"
+  integrity sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==
 
 jsonfile@^6.0.1:
   version "6.1.0"

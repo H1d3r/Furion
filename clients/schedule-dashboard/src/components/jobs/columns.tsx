@@ -79,16 +79,33 @@ const columns: ColumnProps<JobDetail>[] = [
         <>
           <Popover
             content={
-              <div style={style}>
-                {(jobDetail.triggers?.length || 0) === 0 && "暂无作业触发器"}
-                {jobDetail.triggers?.map((t, i) => (
-                  <div key={t.triggerId}>
-                    <Descriptions data={getData(t)} />
-                    {i !== jobDetail.triggers?.length! - 1 && (
-                      <Divider margin="8px" />
-                    )}
-                  </div>
-                ))}
+              <div>
+                {jobDetail.description && (
+                  <>
+                    <div
+                      style={{
+                        padding: "0 8px 10px 8px",
+                        textAlign: "center",
+                        fontWeight: 500,
+                        fontSize: 15,
+                      }}
+                    >
+                      {jobDetail.description}
+                    </div>{" "}
+                    <Divider />
+                  </>
+                )}
+                <div style={style}>
+                  {(jobDetail.triggers?.length || 0) === 0 && "暂无作业触发器"}
+                  {jobDetail.triggers?.map((t, i) => (
+                    <div key={t.triggerId}>
+                      <Descriptions data={getData(t)} />
+                      {i !== jobDetail.triggers?.length! - 1 && (
+                        <Divider margin="8px" />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             }
             position="right"
@@ -232,6 +249,7 @@ const columns: ColumnProps<JobDetail>[] = [
     dataIndex: "lastRunTime",
     width: 200,
     fixed: "right",
+    resize: false,
     render: (text, jobDetail, index) => {
       var lastRunTimes =
         jobDetail.triggers
@@ -256,6 +274,7 @@ const columns: ColumnProps<JobDetail>[] = [
     dataIndex: "nextRunTime",
     width: 200,
     fixed: "right",
+    resize: false,
     render: (text, jobDetail, index) => {
       var nextRunTimes =
         jobDetail.triggers
@@ -284,6 +303,7 @@ const columns: ColumnProps<JobDetail>[] = [
     dataIndex: "operate",
     width: 50,
     fixed: "right",
+    resize: false,
     render: (text, jobDetail, index) => (
       <Operation
         jobid={jobDetail.jobId}

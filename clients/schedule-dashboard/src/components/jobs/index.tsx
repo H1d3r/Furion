@@ -284,6 +284,8 @@ export default function Jobs() {
       onRow={handleRow}
       expandedRowRender={expandRowRender}
       pagination={false}
+      resizable
+      bordered
       expandRowByClick
       expandAllRows={apiconfig.defaultExpandAllJobs === "true"}
       rowExpandable={(jobDetail) =>

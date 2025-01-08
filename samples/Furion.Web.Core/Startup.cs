@@ -126,6 +126,7 @@ public sealed class Startup : AppStartup
             options.AddJob<TestCancelJob>();
 
             options.AddJob<TestCancelJob>();
+            options.AddJob(JobBuilder.Create<TestJob>().SetDescription("测试描述"), Triggers.PeriodHours(2));
         });
 
         // 新版本任务队列
@@ -167,6 +168,7 @@ public sealed class Startup : AppStartup
 
         app.UseScheduleUI(options =>
         {
+            options.Title = "定时任务看板";
         });
 
         app.UseRouting();
