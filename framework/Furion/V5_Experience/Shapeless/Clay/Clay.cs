@@ -34,7 +34,7 @@ namespace Furion.Shapeless;
 /// <summary>
 ///     流变对象
 /// </summary>
-public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, object?>>
+public sealed partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, object?>>, IFormattable
 {
     /// <summary>
     ///     <inheritdoc cref="Clay" />
