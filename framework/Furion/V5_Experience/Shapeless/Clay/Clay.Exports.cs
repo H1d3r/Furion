@@ -168,7 +168,7 @@ public sealed partial class Clay
         }
 
         // 将格式化字符串转换为字符数组
-        var chars = format.ToCharArray();
+        var chars = format.ToUpper().ToCharArray();
 
         // 命名策略不能同时指定
         if (chars.Contains('C') && chars.Contains('P'))
@@ -619,6 +619,16 @@ public sealed partial class Clay
     ///     <see cref="bool" />
     /// </returns>
     public bool TryRemove(object keyOrIndex) => Contains(keyOrIndex) && RemoveValue(keyOrIndex);
+
+    /// <summary>
+    ///     设置为只读模式
+    /// </summary>
+    public void AsReadOnly() => Options.ReadOnly = true;
+
+    /// <summary>
+    ///     设置为可变（默认）模式
+    /// </summary>
+    public void AsMutable() => Options.ReadOnly = false;
 
     /// <summary>
     ///     支持格式化字符串输出
