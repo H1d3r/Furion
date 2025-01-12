@@ -117,9 +117,9 @@ public sealed class ClayOptions
     {
         PropertyNameCaseInsensitive = true,
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
-        // PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         // 解决中文乱码问题
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        AllowTrailingCommas = true
+        AllowTrailingCommas = true,
+        Converters = { new ClayJsonConverter() }
     };
 }

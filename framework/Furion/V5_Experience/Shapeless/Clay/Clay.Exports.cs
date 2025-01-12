@@ -238,10 +238,11 @@ public partial class Clay
     /// <param name="options">
     ///     <see cref="ClayOptions" />
     /// </param>
+    /// <param name="useObjectForDictionaryJson">是否自动将 JSON 字典格式字符串解析为单一对象。默认值为：<c>false</c>。</param>
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
-    public static Clay Parse(object? obj, ClayOptions? options = null)
+    public static Clay Parse(object? obj, ClayOptions? options = null, bool useObjectForDictionaryJson = false)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(obj);
@@ -260,6 +261,14 @@ public partial class Clay
             byte[] utf8JsonBytes => JsonNode.Parse(utf8JsonBytes, jsonNodeOptions, jsonDocumentOptions),
             _ => SerializeToNode(obj, clayOptions)
         };
+
+        // 处理是否将 JSON 字典格式字符串解析为单一对象
+        if (useObjectForDictionaryJson &&
+            TryConvertJsonArrayToDictionaryObject(jsonNode, jsonNodeOptions, jsonDocumentOptions,
+                out var jsonObject))
+        {
+            jsonNode = jsonObject;
+        }
 
         return new Clay(jsonNode, clayOptions);
     }
@@ -409,6 +418,28 @@ public partial class Clay
         ThrowIfMethodCalledOnSingleObject(nameof(Insert));
 
         return SetValue(index, value, true);
+    }
+
+    /// <summary>
+    ///     在指定索引处批量插入项
+    /// </summary>
+    /// <remarks>当 <see cref="IsArray" /> 为 <c>true</c> 时有效。</remarks>
+    /// <param name="index">索引</param>
+    /// <param name="values">值集合</param>
+    /// <exception cref="NotSupportedException"></exception>
+    public void InsertRange(int index, params IEnumerable<object?> values)
+    {
+        // 检查是否是单一对象实例调用
+        ThrowIfMethodCalledOnSingleObject(nameof(InsertRange));
+
+        // 初始化待插入索引位置
+        var currentIndex = index;
+
+        // 逐条在指定索引处插入项
+        foreach (var value in values)
+        {
+            SetValue(currentIndex++, value, true);
+        }
     }
 
     /// <summary>
