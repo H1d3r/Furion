@@ -278,7 +278,7 @@ public partial class Clay
     /// <summary>
     ///     检查标识符是否定义
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
@@ -299,7 +299,7 @@ public partial class Clay
             return ObjectMethods.ContainsKey(propertyName) || JsonCanvas.AsObject().ContainsKey(propertyName);
         }
 
-        // 检查是否是 Range 范围运算符
+        // 检查是否是 Range 实例
         if (identifier is Range)
         {
             throw new NotSupportedException("Checking containment using a System.Range is not supported in the Clay.");
@@ -308,7 +308,7 @@ public partial class Clay
         // 将 JsonCanvas 转换为 JsonArray 实例
         var jsonArray = JsonCanvas.AsArray();
 
-        // 检查是否是 Index 运算符
+        // 检查是否是 Index 实例
         var stringIndex = (identifier is Index idx
             ? idx.IsFromEnd ? jsonArray.Count - idx.Value : idx.Value
             : identifier).ToString();
@@ -326,7 +326,7 @@ public partial class Clay
     ///     检查标识符是否定义
     /// </summary>
     /// <remarks>兼容旧版本粘土对象。</remarks>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
@@ -335,7 +335,7 @@ public partial class Clay
     /// <summary>
     ///     根据标识符获取值
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <returns>
     ///     <see cref="object" />
     /// </returns>
@@ -344,7 +344,7 @@ public partial class Clay
     /// <summary>
     ///     根据标识符获取目标类型的值
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <param name="resultType">转换的目标类型</param>
     /// <param name="jsonSerializerOptions">
     ///     <see cref="JsonSerializerOptions" />
@@ -379,7 +379,7 @@ public partial class Clay
     /// <summary>
     ///     根据标识符获取目标类型的值
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <param name="jsonSerializerOptions">
     ///     <see cref="JsonSerializerOptions" />
     /// </param>
@@ -393,7 +393,7 @@ public partial class Clay
     /// <summary>
     ///     根据标识符查找 <see cref="JsonNode" /> 节点
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <returns>
     ///     <see cref="JsonNode" />
     /// </returns>
@@ -408,7 +408,7 @@ public partial class Clay
     /// <summary>
     ///     根据标识符设置值
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <param name="value">值</param>
     public void Set(object identifier, object? value) => SetValue(identifier, value);
 
@@ -569,7 +569,7 @@ public partial class Clay
     ///     <see cref="Clay" />
     /// </returns>
     public Clay Reverse(ClayOptions? options = null) =>
-        Parse(IsObject ? AsEnumerableObject().Reverse() : Values.Reverse(), options, true);
+        Parse(IsObject ? AsEnumerableObject().Reverse().ToDictionary() : Values.Reverse(), options);
 
     /// <summary>
     ///     截取 <see cref="Clay" /> 并返回新的 <see cref="Clay" />
@@ -592,13 +592,13 @@ public partial class Clay
     /// <summary>
     ///     截取 <see cref="Clay" /> 并返回新的 <see cref="Clay" />
     /// </summary>
-    /// <param name="start">起始位置</param>
-    /// <param name="end">结束位置（不含）</param>
+    /// <param name="start">范围的包含起始索引</param>
+    /// <param name="end">范围的非包含结束索引</param>
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public Clay? Slice(int start, int end)
+    public Clay? Slice(Index start, Index end)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Slice));
@@ -681,7 +681,7 @@ public partial class Clay
     /// <summary>
     ///     根据标识符删除数据
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
@@ -690,12 +690,12 @@ public partial class Clay
     /// <summary>
     ///     根据范围删除数据
     /// </summary>
-    /// <param name="start">起始位置</param>
-    /// <param name="end">结束位置（不含）</param>
+    /// <param name="start">范围的包含起始索引</param>
+    /// <param name="end">范围的非包含结束索引</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    public bool Remove(int start, int end)
+    public bool Remove(Index start, Index end)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Remove));
@@ -707,7 +707,7 @@ public partial class Clay
     ///     根据标识符删除数据
     /// </summary>
     /// <remarks>兼容旧版本粘土对象。</remarks>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
@@ -716,12 +716,12 @@ public partial class Clay
     /// <summary>
     ///     根据范围删除数据
     /// </summary>
-    /// <param name="start">起始位置</param>
-    /// <param name="end">结束位置（不含）</param>
+    /// <param name="start">范围的包含起始索引</param>
+    /// <param name="end">范围的非包含结束索引</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    public bool Delete(int start, int end)
+    public bool Delete(Index start, Index end)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Delete));
@@ -822,7 +822,7 @@ public partial class Clay
     /// <summary>
     ///     尝试根据标识符获取值
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <param name="value">值</param>
     /// <returns>
     ///     <see cref="bool" />
@@ -843,7 +843,7 @@ public partial class Clay
     /// <summary>
     ///     尝试根据标识符获取目标类型的值
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <param name="resultType">转换的目标类型</param>
     /// <param name="value">值</param>
     /// <param name="jsonSerializerOptions">
@@ -869,7 +869,7 @@ public partial class Clay
     /// <summary>
     ///     尝试根据标识符获取目标类型的值
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <param name="value">值</param>
     /// <param name="jsonSerializerOptions">
     ///     <see cref="JsonSerializerOptions" />
@@ -895,7 +895,7 @@ public partial class Clay
     /// <summary>
     ///     尝试根据标识符设置值
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <param name="value">值</param>
     /// <returns>
     ///     <see cref="bool" />
@@ -973,7 +973,7 @@ public partial class Clay
     /// <summary>
     ///     尝试根据标识符删除数据
     /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
@@ -983,12 +983,12 @@ public partial class Clay
     /// <summary>
     ///     尝试根据范围删除数据
     /// </summary>
-    /// <param name="start">起始位置</param>
-    /// <param name="end">结束位置（不含）</param>
+    /// <param name="start">范围的包含起始索引</param>
+    /// <param name="end">范围的非包含结束索引</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    public bool TryRemove(int start, int end)
+    public bool TryRemove(Index start, Index end)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(TryRemove));
@@ -1011,7 +1011,7 @@ public partial class Clay
     ///     尝试根据标识符删除数据
     /// </summary>
     /// <remarks>兼容旧版本粘土对象。</remarks>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或末尾运算符（Index）或范围运算符（Range）</param>
+    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
@@ -1021,12 +1021,12 @@ public partial class Clay
     ///     尝试根据范围删除数据
     /// </summary>
     /// <remarks>兼容旧版本粘土对象。</remarks>
-    /// <param name="start">起始位置</param>
-    /// <param name="end">结束位置（不含）</param>
+    /// <param name="start">范围的包含起始索引</param>
+    /// <param name="end">范围的非包含结束索引</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    public bool TryDelete(int start, int end)
+    public bool TryDelete(Index start, Index end)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(TryDelete));
@@ -1144,7 +1144,7 @@ public partial class Clay
 
         // 初始化升序排序字典
         var sorted =
-            new SortedDictionary<string, JsonNode?>(JsonCanvas.AsObject().ToDictionary(u => u.Key, u => u.Value));
+            new SortedDictionary<string, JsonNode?>(JsonCanvas.AsObject().ToDictionary());
 
         return Parse(sorted, options);
     }
