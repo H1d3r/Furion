@@ -86,31 +86,32 @@ public partial class Clay
     /// <summary>
     ///     <see cref="Range" /> 索引
     /// </summary>
+    /// <remarks>截取 <see cref="Clay" /> 并返回新的 <see cref="Clay" />。</remarks>
     /// <param name="range">
     ///     <see cref="Range" />
     /// </param>
-    public Clay? this[Range range] => this[range as object] as Clay;
+    public Clay this[Range range] => (Clay)this[range as object]!;
 
     /// <summary>
-    ///     是否是单一对象
+    ///     判断是否为单一对象
     /// </summary>
     public bool IsObject { get; }
 
     /// <summary>
-    ///     是否是集合（数组）
+    ///     判断是否为集合或数组
     /// </summary>
     public bool IsArray { get; }
 
     /// <summary>
-    ///     <see cref="ClayType" />
+    ///     获取流变对象的基本类型
     /// </summary>
     public ClayType Type { get; }
 
-    // /// <summary>
-    // ///     反序列化时没有匹配的属性字典集合
-    // /// </summary>
-    // [JsonExtensionData]
-    // public Dictionary<object, object?> Extensions { get; set; } = new();
+    /// <summary>
+    ///     判断是否为只读模式
+    /// </summary>
+    public bool IsReadOnly => Options.ReadOnly;
+
     /// <inheritdoc />
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
@@ -172,7 +173,7 @@ public partial class Clay
     public static Clay EmptyObject(ClayOptions? options = null) => new(options);
 
     /// <summary>
-    ///     创建空的集合/数组
+    ///     创建空的集合或数组
     /// </summary>
     /// <param name="options">
     ///     <see cref="ClayOptions" />
@@ -191,7 +192,7 @@ public partial class Clay
     /// <param name="options">
     ///     <see cref="ClayOptions" />
     /// </param>
-    /// <param name="useObjectForDictionaryJson">是否自动将 JSON 字典格式字符串解析为单一对象。默认值为：<c>false</c>。</param>
+    /// <param name="useObjectForDictionaryJson">是否自动将字典格式的 JSON 字符串解析为单一对象。默认值为：<c>false</c>。</param>
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
@@ -215,9 +216,9 @@ public partial class Clay
             _ => SerializeToNode(obj, clayOptions)
         };
 
-        // 处理是否将 JSON 字典格式字符串解析为单一对象
+        // 处理是否将字典格式的 JSON 字符串解析为单一对象
         if (useObjectForDictionaryJson &&
-            TryConvertJsonArrayToDictionaryObject(jsonNode, jsonNodeOptions, jsonDocumentOptions,
+            TryConvertDictionaryJsonToJsonObject(jsonNode, jsonNodeOptions, jsonDocumentOptions,
                 out var jsonObject))
         {
             jsonNode = jsonObject;
@@ -235,7 +236,7 @@ public partial class Clay
     /// <param name="options">
     ///     <see cref="ClayOptions" />
     /// </param>
-    /// <param name="useObjectForDictionaryJson">是否自动将 JSON 字典格式字符串解析为单一对象。默认值为：<c>false</c>。</param>
+    /// <param name="useObjectForDictionaryJson">是否自动将字典格式的 JSON 字符串解析为单一对象。默认值为：<c>false</c>。</param>
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
@@ -270,7 +271,8 @@ public partial class Clay
         // 检查是否是 Range 实例
         if (identifier is Range)
         {
-            throw new NotSupportedException("Checking containment using a System.Range is not supported in the Clay.");
+            throw new NotSupportedException(
+                $"Checking containment using a System.Range `{identifier}` is not supported in the Clay.");
         }
 
         // 将 JsonCanvas 转换为 JsonArray 实例
@@ -308,6 +310,24 @@ public partial class Clay
     ///     <see cref="object" />
     /// </returns>
     public object? Get(object identifier) => GetValue(identifier);
+
+    /// <summary>
+    ///     截取 <see cref="Clay" /> 并返回新的 <see cref="Clay" />
+    /// </summary>
+    /// <param name="range">
+    ///     <see cref="Range" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="Clay" />
+    /// </returns>
+    /// <exception cref="NotSupportedException"></exception>
+    public Clay Get(Range range)
+    {
+        // 检查是否是单一对象实例调用
+        ThrowIfMethodCalledOnSingleObject($"{nameof(Get)}(Range)");
+
+        return this[range];
+    }
 
     /// <summary>
     ///     根据标识符获取目标类型的值
@@ -386,16 +406,13 @@ public partial class Clay
     /// <remarks>当 <see cref="IsArray" /> 为 <c>true</c> 时有效。</remarks>
     /// <param name="index">索引</param>
     /// <param name="value">值</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
     /// <exception cref="NotSupportedException"></exception>
-    public bool Insert(int index, object? value)
+    public void Insert(int index, object? value)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Insert));
 
-        return SetValue(index, value, true);
+        SetValue(index, value, true);
     }
 
     /// <summary>
@@ -404,16 +421,13 @@ public partial class Clay
     /// <remarks>当 <see cref="IsArray" /> 为 <c>true</c> 时有效。</remarks>
     /// <param name="index">索引</param>
     /// <param name="value">值</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
     /// <exception cref="NotSupportedException"></exception>
-    public bool Insert(Index index, object? value)
+    public void Insert(Index index, object? value)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Insert));
 
-        return Insert(index.IsFromEnd ? JsonCanvas.AsArray().Count - index.Value : index.Value, value);
+        Insert(index.IsFromEnd ? JsonCanvas.AsArray().Count - index.Value : index.Value, value);
     }
 
     /// <summary>
@@ -425,6 +439,9 @@ public partial class Clay
     /// <exception cref="NotSupportedException"></exception>
     public void InsertRange(int index, params object?[] values)
     {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(values);
+
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(InsertRange));
 
@@ -447,6 +464,9 @@ public partial class Clay
     /// <exception cref="NotSupportedException"></exception>
     public void InsertRange(Index index, params object?[] values)
     {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(values);
+
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(InsertRange));
 
@@ -458,16 +478,13 @@ public partial class Clay
     /// </summary>
     /// <remarks>当 <see cref="IsArray" /> 为 <c>true</c> 时有效。</remarks>
     /// <param name="value">值</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
     /// <exception cref="NotSupportedException"></exception>
-    public bool Add(object? value)
+    public void Add(object? value)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Add));
 
-        return SetValue(JsonCanvas.AsArray().Count, value);
+        SetValue(JsonCanvas.AsArray().Count, value);
     }
 
     /// <summary>
@@ -499,16 +516,13 @@ public partial class Clay
     /// </summary>
     /// <remarks>当 <see cref="IsArray" /> 为 <c>true</c> 时有效。</remarks>
     /// <param name="value">值</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
     /// <exception cref="NotSupportedException"></exception>
-    public bool Push(object? value)
+    public void Push(object? value)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Push));
 
-        return SetValue(JsonCanvas.AsArray().Count, value);
+        SetValue(JsonCanvas.AsArray().Count, value);
     }
 
     /// <summary>
@@ -548,8 +562,8 @@ public partial class Clay
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public Clay? Slice(Range range)
+    /// <exception cref="NotSupportedException"></exception>
+    public Clay Slice(Range range)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Slice));
@@ -565,8 +579,8 @@ public partial class Clay
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public Clay? Slice(Index start, Index end)
+    /// <exception cref="NotSupportedException"></exception>
+    public Clay Slice(Index start, Index end)
     {
         // 检查是否是单一对象实例调用
         ThrowIfMethodCalledOnSingleObject(nameof(Slice));
@@ -603,7 +617,7 @@ public partial class Clay
             throw new InvalidOperationException("All Clay objects must be of the same type.");
         }
 
-        // 检查是否是集合（数组）
+        // 检查是否是集合或数组
         if (IsArray)
         {
             return Parse(Values.Concat(clays.SelectMany(u => u.Values)));
@@ -638,6 +652,7 @@ public partial class Clay
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
+    /// <exception cref="NotSupportedException"></exception>
     public bool Remove(Index start, Index end)
     {
         // 检查是否是单一对象实例调用
@@ -664,6 +679,7 @@ public partial class Clay
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
+    /// <exception cref="NotSupportedException"></exception>
     public bool Delete(Index start, Index end)
     {
         // 检查是否是单一对象实例调用
@@ -696,7 +712,7 @@ public partial class Clay
             return AsEnumerableObject();
         }
 
-        // 检查是否是 IEnumerable<KeyValuePair<int, object?>> 类型且是集合/数组
+        // 检查是否是 IEnumerable<KeyValuePair<int, object?>> 类型且是集合或数组
         if (resultType == typeof(IEnumerable<KeyValuePair<int, object?>>) && IsArray)
         {
             return AsEnumerableArray();
@@ -733,6 +749,7 @@ public partial class Clay
     /// <summary>
     ///     清空数据
     /// </summary>
+    /// <exception cref="InvalidOperationException"></exception>
     public void Clear()
     {
         // 确保当前实例不在只读模式下
@@ -761,221 +778,6 @@ public partial class Clay
     /// </param>
     public void WriteTo(Utf8JsonWriter writer, JsonSerializerOptions? jsonSerializerOptions = null) =>
         JsonCanvas.WriteTo(writer, jsonSerializerOptions ?? Options.JsonSerializerOptions);
-
-    /// <summary>
-    ///     尝试根据标识符获取值
-    /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
-    /// <param name="value">值</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public bool TryGet(object identifier, out object? value)
-    {
-        // 检查标识符是否定义
-        if (Contains(identifier))
-        {
-            value = Get(identifier);
-            return true;
-        }
-
-        value = null;
-        return false;
-    }
-
-    /// <summary>
-    ///     尝试根据标识符获取目标类型的值
-    /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
-    /// <param name="resultType">转换的目标类型</param>
-    /// <param name="value">值</param>
-    /// <param name="jsonSerializerOptions">
-    ///     <see cref="JsonSerializerOptions" />
-    /// </param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public bool TryGet(object identifier, Type resultType, out object? value,
-        JsonSerializerOptions? jsonSerializerOptions = null)
-    {
-        // 检查标识符是否定义
-        if (Contains(identifier))
-        {
-            value = Get(identifier, resultType, jsonSerializerOptions);
-            return true;
-        }
-
-        value = null;
-        return false;
-    }
-
-    /// <summary>
-    ///     尝试根据标识符获取目标类型的值
-    /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
-    /// <param name="value">值</param>
-    /// <param name="jsonSerializerOptions">
-    ///     <see cref="JsonSerializerOptions" />
-    /// </param>
-    /// <typeparam name="TResult">转换的目标类型</typeparam>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public bool TryGet<TResult>(object identifier, out TResult? value,
-        JsonSerializerOptions? jsonSerializerOptions = null)
-    {
-        // 检查标识符是否定义
-        if (Contains(identifier))
-        {
-            value = Get<TResult>(identifier, jsonSerializerOptions);
-            return true;
-        }
-
-        value = (TResult?)(object?)null;
-        return false;
-    }
-
-    /// <summary>
-    ///     尝试根据标识符设置值
-    /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
-    /// <param name="value">值</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    /// <exception cref="JsonException"></exception>
-    public bool TrySet(object identifier, object? value)
-    {
-        try
-        {
-            Set(identifier, value);
-            return true;
-        }
-        catch (JsonException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    ///     尝试在指定索引处插入值
-    /// </summary>
-    /// <remarks>当 <see cref="IsArray" /> 为 <c>true</c> 时有效。</remarks>
-    /// <param name="index">索引</param>
-    /// <param name="value">值</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    /// <exception cref="NotSupportedException"></exception>
-    /// <exception cref="JsonException"></exception>
-    public bool TryInsert(int index, object? value)
-    {
-        // 检查是否是单一对象实例调用
-        ThrowIfMethodCalledOnSingleObject(nameof(TryInsert));
-
-        // 检查数组索引合法性
-        EnsureLegalArrayIndex(index, out _);
-
-        try
-        {
-            return Insert(index, value);
-        }
-        catch (JsonException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    ///     尝试在指定索引处插入值
-    /// </summary>
-    /// <remarks>当 <see cref="IsArray" /> 为 <c>true</c> 时有效。</remarks>
-    /// <param name="index">索引</param>
-    /// <param name="value">值</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    /// <exception cref="NotSupportedException"></exception>
-    /// <exception cref="JsonException"></exception>
-    public bool TryInsert(Index index, object? value)
-    {
-        // 检查是否是单一对象实例调用
-        ThrowIfMethodCalledOnSingleObject(nameof(TryInsert));
-
-        return TryInsert(index.IsFromEnd ? JsonCanvas.AsArray().Count - index.Value : index.Value, value);
-    }
-
-    /// <summary>
-    ///     尝试根据标识符删除数据
-    /// </summary>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public bool TryRemove(object identifier) =>
-        (identifier is Range || Contains(identifier)) && RemoveValue(identifier);
-
-    /// <summary>
-    ///     尝试根据范围删除数据
-    /// </summary>
-    /// <param name="start">范围的包含起始索引</param>
-    /// <param name="end">范围的非包含结束索引</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public bool TryRemove(Index start, Index end)
-    {
-        // 检查是否是单一对象实例调用
-        ThrowIfMethodCalledOnSingleObject(nameof(TryRemove));
-
-        try
-        {
-            return Remove(start, end);
-        }
-        catch (JsonException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    ///     尝试根据标识符删除数据
-    /// </summary>
-    /// <remarks>兼容旧版本粘土对象。</remarks>
-    /// <param name="identifier">标识符，可以是键（字符串）或索引（整数）或索引运算符（Index）或范围运算符（Range）</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public bool TryDelete(object identifier) => TryRemove(identifier);
-
-    /// <summary>
-    ///     尝试根据范围删除数据
-    /// </summary>
-    /// <remarks>兼容旧版本粘土对象。</remarks>
-    /// <param name="start">范围的包含起始索引</param>
-    /// <param name="end">范围的非包含结束索引</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public bool TryDelete(Index start, Index end)
-    {
-        // 检查是否是单一对象实例调用
-        ThrowIfMethodCalledOnSingleObject(nameof(TryDelete));
-
-        return TryRemove(start, end);
-    }
 
     /// <summary>
     ///     设置为只读模式
@@ -1080,9 +882,10 @@ public partial class Clay
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
+    /// <exception cref="NotSupportedException"></exception>
     public Clay KSort(ClayOptions? options = null)
     {
-        // 检查是否是集合（数组）实例调用
+        // 检查是否是集合或数组实例调用
         ThrowIfMethodCalledOnArrayCollection(nameof(KSort));
 
         // 初始化升序排序字典
@@ -1101,10 +904,11 @@ public partial class Clay
     /// <returns>
     ///     <see cref="Clay" />
     /// </returns>
+    /// <exception cref="NotSupportedException"></exception>
     // ReSharper disable once InconsistentNaming
     public Clay KRSort(ClayOptions? options = null)
     {
-        // 检查是否是集合（数组）实例调用
+        // 检查是否是集合或数组实例调用
         ThrowIfMethodCalledOnArrayCollection(nameof(KRSort));
 
         // 初始化降序排序字典
@@ -1141,7 +945,7 @@ public partial class Clay
     }
 
     /// <summary>
-    ///     集合/数组
+    ///     集合或数组
     /// </summary>
     public sealed class Array : Clay
     {
