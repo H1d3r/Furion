@@ -73,7 +73,10 @@ public static class NewtonsoftJsonExtensions
     /// <returns></returns>
     public static IList<JsonConverter> AddClayConverters(this IList<JsonConverter> converters, bool toCamelCaseKey = true)
     {
-        converters.Add(new NewtonsoftJsonClayJsonConverter(toCamelCaseKey));
+        if (!converters.OfType<NewtonsoftJsonClayJsonConverter>().Any())
+        {
+            converters.Add(new NewtonsoftJsonClayJsonConverter(toCamelCaseKey));
+        }
 
         return converters;
     }

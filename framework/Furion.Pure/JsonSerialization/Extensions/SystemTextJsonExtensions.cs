@@ -75,7 +75,10 @@ public static class SystemTextJsonExtensions
     /// <returns></returns>
     public static IList<JsonConverter> AddClayConverters(this IList<JsonConverter> converters)
     {
-        converters.Add(new ClayJsonConverter());
+        if (!converters.OfType<ClayJsonConverter>().Any())
+        {
+            converters.Add(new ClayJsonConverter());
+        }
 
         return converters;
     }

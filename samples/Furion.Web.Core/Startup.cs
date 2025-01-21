@@ -1,6 +1,7 @@
 ﻿using Furion.Application;
 using Furion.Localization;
 using Furion.Schedule;
+using Furion.Shapeless;
 using Furion.VirtualFileServer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -52,6 +53,10 @@ public sealed class Startup : AppStartup
 
                     options.JsonSerializerOptions.Converters.AddDateOnlyConverters("yyyy-MM-dd");
                     options.JsonSerializerOptions.Converters.AddTimeOnlyConverters("HH:mm:ss");
+                })
+                .AddClayOptions(options =>
+                {
+                    options.KeyValueJsonToObject = true;
                 })
                 .AddInjectWithUnifyResult()
                 .AddUnifyJsonOptions("special", new JsonSerializerOptions
