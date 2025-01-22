@@ -24,7 +24,6 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
-using System.ComponentModel.DataAnnotations;
 using System.Dynamic;
 using System.Reflection;
 using System.Text.Json;
@@ -210,13 +209,6 @@ public partial class Clay
     {
         // 转换为目标类型
         result = As(binder.Type, Options.JsonSerializerOptions);
-
-        // 检查是否启用转换后执行模型验证
-        if (result is not null && Options.ValidateAfterConversion)
-        {
-            Validator.ValidateObject(result, new ValidationContext(result), true);
-        }
-
         return true;
     }
 
