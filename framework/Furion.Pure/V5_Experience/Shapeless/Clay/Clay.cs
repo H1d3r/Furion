@@ -163,11 +163,9 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
         // 检查键是否是不受支持的类型
         ThrowIfUnsupportedKeyType(key);
 
-        // 将键转换为字符串类型
-        var stringKey = key.ToString()!;
-
         // 处理嵌套带空传播字符 ? 的标识符
-        var identifier = ProcessNestedNullPropagationIdentifier(stringKey);
+        var identifier =
+            ProcessNestedNullPropagationIdentifier(key, Options.AutoCreateNestedObjects, out var isUnchanged);
 
         // 将 JsonCanvas 转换为 JsonObject 实例
         var jsonObject = JsonCanvas.AsObject();
@@ -185,7 +183,7 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
         }
 
         // 检查是否需要处理嵌套带空传播字符 ? 的标识符
-        if (identifier == stringKey || !Options.AutoCreateNestedObjects)
+        if (isUnchanged || !Options.AutoCreateNestedObjects)
         {
             return null;
         }
@@ -218,8 +216,12 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
             ? idx.IsFromEnd ? jsonArray.Count - idx.Value : idx.Value
             : index;
 
+        // 处理嵌套带空传播字符 ? 的标识符
+        var identifier =
+            ProcessNestedNullPropagationIdentifier(arrayIndex, Options.AutoCreateNestedArrays, out var isUnchanged);
+
         // 检查数组索引合法性
-        EnsureLegalArrayIndex(arrayIndex, out var intIndex);
+        EnsureLegalArrayIndex(identifier, out var intIndex);
 
         // 获取 JsonArray 长度
         var count = jsonArray.Count;
@@ -236,8 +238,8 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
             ThrowIfOutOfRange(intIndex, count);
         }
 
-        // 检查是否自动创建嵌套的数组实例
-        if (Options is not { AutoCreateNestedArrays: true, AutoExpandArrayWithNulls: true })
+        // 检查是否需要处理嵌套带空传播字符 ? 的标识符
+        if (isUnchanged || !Options.AutoCreateNestedArrays)
         {
             return null;
         }
@@ -257,11 +259,8 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
         // 检查键是否是不受支持的类型
         ThrowIfUnsupportedKeyType(key);
 
-        // 将键转换为字符串类型
-        var stringKey = key.ToString()!;
-
         // 处理嵌套带空传播字符 ? 的标识符
-        var identifier = ProcessNestedNullPropagationIdentifier(stringKey);
+        var identifier = ProcessNestedNullPropagationIdentifier(key, Options.AutoCreateNestedObjects, out _);
 
         // 将 JsonCanvas 转换为 JsonObject 实例
         var jsonObject = JsonCanvas.AsObject();
@@ -312,8 +311,12 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
             ? idx.IsFromEnd ? jsonArray.Count - idx.Value : idx.Value
             : index;
 
+        // 处理嵌套带空传播字符 ? 的标识符
+        var identifier =
+            ProcessNestedNullPropagationIdentifier(arrayIndex, Options.AutoCreateNestedArrays, out _);
+
         // 检查数组索引合法性
-        EnsureLegalArrayIndex(arrayIndex, out var intIndex);
+        EnsureLegalArrayIndex(identifier, out var intIndex);
 
         // 获取 JsonArray 长度
         var count = jsonArray.Count;
@@ -389,11 +392,8 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
         // 检查键是否是不受支持的类型
         ThrowIfUnsupportedKeyType(key);
 
-        // 将键转换为字符串类型
-        var stringKey = key.ToString()!;
-
         // 处理嵌套带空传播字符 ? 的标识符
-        var identifier = ProcessNestedNullPropagationIdentifier(stringKey);
+        var identifier = ProcessNestedNullPropagationIdentifier(key, Options.AutoCreateNestedObjects, out _);
 
         // 将 JsonCanvas 转换为 JsonObject 实例
         var jsonObject = JsonCanvas.AsObject();
@@ -448,8 +448,12 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
             ? idx.IsFromEnd ? jsonArray.Count - idx.Value : idx.Value
             : index;
 
+        // 处理嵌套带空传播字符 ? 的标识符
+        var identifier =
+            ProcessNestedNullPropagationIdentifier(arrayIndex, Options.AutoCreateNestedArrays, out _);
+
         // 检查数组索引合法性
-        EnsureLegalArrayIndex(arrayIndex, out var intIndex);
+        EnsureLegalArrayIndex(identifier, out var intIndex);
 
         // 获取 JsonArray 长度
         var count = jsonArray.Count;
@@ -520,7 +524,7 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
         }
 
         // 处理嵌套带空传播字符 ? 的标识符
-        var identifier = ProcessNestedNullPropagationIdentifier(key.ToString()!);
+        var identifier = ProcessNestedNullPropagationIdentifier(key, Options.AutoCreateNestedObjects, out _);
 
         return DelegateMap.TryGetValue(identifier, out @delegate);
     }
@@ -573,47 +577,33 @@ public partial class Clay : DynamicObject, IEnumerable<KeyValuePair<object, obje
         };
 
     /// <summary>
-    ///     重建 <see cref="Clay" /> 实例
-    /// </summary>
-    /// <param name="options">
-    ///     <see cref="ClayOptions" />
-    /// </param>
-    /// <returns>
-    ///     <see cref="Clay" />
-    /// </returns>
-    internal Clay Rebuilt(ClayOptions? options = null)
-    {
-        // 初始化 ClayOptions 实例
-        var clayOptions = options ?? ClayOptions.Default;
-
-        // 创建 JsonNode 选项
-        var (jsonNodeOptions, jsonDocumentOptions) = CreateJsonNodeOptions(clayOptions);
-
-        // 处理是否将键值对格式的 JSON 字符串解析为单一对象
-        if (clayOptions.KeyValueJsonToObject &&
-            TryConvertKeyValueJsonToObject(JsonCanvas, jsonNodeOptions, jsonDocumentOptions, out var jsonObject))
-        {
-            JsonCanvas = jsonObject;
-        }
-        else
-        {
-            JsonCanvas = JsonNode.Parse(JsonCanvas.ToJsonString(), jsonNodeOptions, jsonDocumentOptions)!;
-        }
-
-        Options = clayOptions;
-
-        return this;
-    }
-
-    /// <summary>
     ///     处理嵌套带空传播字符 <c>?</c> 的标识符
     /// </summary>
     /// <param name="identifier">标识符</param>
+    /// <param name="enable">是否启用处理</param>
+    /// <param name="isUnchanged">标识符是否未被改变</param>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string ProcessNestedNullPropagationIdentifier(string identifier) =>
-        !Options.AutoCreateNestedObjects ? identifier : identifier.TrimEnd('?');
+    internal static string ProcessNestedNullPropagationIdentifier(object identifier, bool enable, out bool isUnchanged)
+    {
+        // 将标识符转换为字符串类型
+        var stringIdentifier = identifier.ToString()!;
+
+        // 检查是否启用空传播字符 ? 处理
+        if (!enable)
+        {
+            isUnchanged = true;
+            return stringIdentifier;
+        }
+
+        // 尝试移除字符串标识符末尾字符 ?
+        var finalIdentifier = stringIdentifier.TrimEnd('?');
+
+        // 如果没有变化，则表示未修改
+        isUnchanged = stringIdentifier == finalIdentifier;
+        return finalIdentifier;
+    }
 
     /// <summary>
     ///     对数组进行 null 值补位

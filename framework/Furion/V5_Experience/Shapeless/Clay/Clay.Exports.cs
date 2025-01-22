@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -728,7 +729,17 @@ public partial class Clay
             return AsEnumerableArray();
         }
 
-        return Helpers.DeserializeNode(JsonCanvas, resultType, jsonSerializerOptions ?? Options.JsonSerializerOptions);
+        // 将 JsonNode 转换为目标类型
+        var result = Helpers.DeserializeNode(JsonCanvas, resultType,
+            jsonSerializerOptions ?? Options.JsonSerializerOptions);
+
+        // 检查是否启用转换后执行模型验证
+        if (result is not null && Options.ValidateAfterConversion)
+        {
+            Validator.ValidateObject(result, new ValidationContext(result), true);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -936,6 +947,39 @@ public partial class Clay
         }
 
         return Parse(sortedDesc, options);
+    }
+
+    /// <summary>
+    ///     重建 <see cref="Clay" /> 实例
+    /// </summary>
+    /// <param name="options">
+    ///     <see cref="ClayOptions" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="Clay" />
+    /// </returns>
+    public Clay Rebuilt(ClayOptions? options = null)
+    {
+        // 初始化 ClayOptions 实例
+        var clayOptions = options ?? ClayOptions.Default;
+
+        // 创建 JsonNode 选项
+        var (jsonNodeOptions, jsonDocumentOptions) = CreateJsonNodeOptions(clayOptions);
+
+        // 处理是否将键值对格式的 JSON 字符串解析为单一对象
+        if (clayOptions.KeyValueJsonToObject &&
+            TryConvertKeyValueJsonToObject(JsonCanvas, jsonNodeOptions, jsonDocumentOptions, out var jsonObject))
+        {
+            JsonCanvas = jsonObject;
+        }
+        else
+        {
+            JsonCanvas = JsonNode.Parse(JsonCanvas.ToJsonString(), jsonNodeOptions, jsonDocumentOptions)!;
+        }
+
+        Options = clayOptions;
+
+        return this;
     }
 
     /// <summary>
