@@ -41,7 +41,7 @@ public sealed partial class HttpRequestBuilder
     /// <summary>
     ///     请求方式
     /// </summary>
-    public HttpMethod? Method { get; }
+    public HttpMethod? Method { get; private set; }
 
     /// <summary>
     ///     跟踪标识
@@ -226,7 +226,7 @@ public sealed partial class HttpRequestBuilder
     /// <summary>
     ///     用于请求结束时需要释放的对象集合
     /// </summary>
-    internal List<IDisposable>? Disposables { get; private set; }
+    internal HashSet<IDisposable>? Disposables { get; private set; }
 
     /// <summary>
     ///     <see cref="HttpClient" /> 实例管理器
