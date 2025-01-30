@@ -24,11 +24,9 @@
 // ------------------------------------------------------------------------
 
 using Furion;
-using Furion.EventBus;
+using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net.NetworkInformation;
 using System.Reflection;
-using System.Security.Cryptography;
 
 namespace System;
 
@@ -129,40 +127,12 @@ public static class Native
         return windowInstance;
     }
 
-    private static readonly object _portLock = new();
-
     /// <summary>
     /// 获取一个空闲端口
     /// </summary>
     /// <returns></returns>
     public static int GetIdlePort()
     {
-        const int fromPort = 10000;
-        const int toPort = 65535;
-
-        do
-        {
-            lock (_portLock)
-            {
-                var randomPort = RandomNumberGenerator.GetInt32(fromPort, toPort + 1);
-                if (!IsPortInUse(randomPort))
-                {
-                    return randomPort;
-                }
-            }
-
-            // 减少 CPU 资源消耗
-            Thread.Sleep(10);
-        } while (true);
-    }
-
-    /// <summary>
-    /// 检查端口是否被占用
-    /// </summary>
-    /// <param name="port"></param>
-    /// <returns></returns>
-    private static bool IsPortInUse(int port)
-    {
-        return IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Any(p => p.Port == port);
+        return NetworkUtility.FindAvailableTcpPort();
     }
 }
