@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Schedule;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -95,11 +96,14 @@ public static class ScheduleServiceCollectionExtensions
         // 注册空日志服务
         services.AddLogging();
 
+        // 检查是否配置（注册）了日志程序
+        var isLoggingRegistered = services.Any(u => u.ServiceType == typeof(ILoggerProvider));
+
         // 注册作业调度器日志服务
         services.AddSingleton<IScheduleLogger>(serviceProvider =>
         {
             var scheduleLogger = ActivatorUtilities.CreateInstance<ScheduleLogger>(serviceProvider
-                , scheduleOptionsBuilder.LogEnabled);
+                , scheduleOptionsBuilder.LogEnabled, isLoggingRegistered);
 
             return scheduleLogger;
         });
