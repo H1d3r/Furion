@@ -105,6 +105,9 @@ public class EnumSchemaFilter : ISchemaFilter
                 model.Type = "string";
                 model.Format = null;
             }
+
+            // 修复因启用 gen.UseAllOfToExtendReferenceSchemas() 配置导致枚举 Schema 生成冗余的 allOf 引用，进而产生重复的下拉数据问题
+            model.AllOf = null;
         }
     }
 }
