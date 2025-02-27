@@ -575,7 +575,8 @@ public sealed partial class HttpRequestBuilder
     ///     <see cref="HttpLongPollingBuilder" />
     /// </returns>
     public static HttpLongPollingBuilder LongPolling(HttpMethod httpMethod, Uri? requestUri,
-        Func<HttpResponseMessage, Task> onDataReceived, Action<HttpLongPollingBuilder>? configure = null)
+        Func<HttpResponseMessage, CancellationToken, Task> onDataReceived,
+        Action<HttpLongPollingBuilder>? configure = null)
     {
         // 初始化 HttpLongPollingBuilder 实例
         var httpLongPollingBuilder =
@@ -596,7 +597,8 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpLongPollingBuilder" />
     /// </returns>
-    public static HttpLongPollingBuilder LongPolling(Uri? requestUri, Func<HttpResponseMessage, Task> onDataReceived,
+    public static HttpLongPollingBuilder LongPolling(Uri? requestUri,
+        Func<HttpResponseMessage, CancellationToken, Task> onDataReceived,
         Action<HttpLongPollingBuilder>? configure = null) =>
         LongPolling(HttpMethod.Get, requestUri, onDataReceived, configure);
 
@@ -609,7 +611,8 @@ public sealed partial class HttpRequestBuilder
     /// <returns>
     ///     <see cref="HttpLongPollingBuilder" />
     /// </returns>
-    public static HttpLongPollingBuilder LongPolling(string? requestUri, Func<HttpResponseMessage, Task> onDataReceived,
+    public static HttpLongPollingBuilder LongPolling(string? requestUri,
+        Func<HttpResponseMessage, CancellationToken, Task> onDataReceived,
         Action<HttpLongPollingBuilder>? configure = null) =>
         LongPolling(HttpMethod.Get,
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute),

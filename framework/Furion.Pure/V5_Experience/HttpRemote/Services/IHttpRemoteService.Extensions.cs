@@ -332,7 +332,7 @@ public partial interface IHttpRemoteService
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
-    void LongPolling(string? requestUri, Func<HttpResponseMessage, Task> onDataReceived,
+    void LongPolling(string? requestUri, Func<HttpResponseMessage, CancellationToken, Task> onDataReceived,
         Action<HttpLongPollingBuilder>? configure = null, Action<HttpRequestBuilder>? requestConfigure = null,
         CancellationToken cancellationToken = default);
 
@@ -349,7 +349,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Task" />
     /// </returns>
-    Task LongPollingAsync(string? requestUri, Func<HttpResponseMessage, Task> onDataReceived,
+    Task LongPollingAsync(string? requestUri, Func<HttpResponseMessage, CancellationToken, Task> onDataReceived,
         Action<HttpLongPollingBuilder>? configure = null, Action<HttpRequestBuilder>? requestConfigure = null,
         CancellationToken cancellationToken = default);
 
