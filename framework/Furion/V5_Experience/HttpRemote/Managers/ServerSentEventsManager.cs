@@ -45,11 +45,6 @@ internal sealed class ServerSentEventsManager
     internal readonly HttpServerSentEventsBuilder _httpServerSentEventsBuilder;
 
     /// <summary>
-    ///     事件消息传输的通道
-    /// </summary>
-    internal readonly Channel<ServerSentEventsData> _messageChannel;
-
-    /// <summary>
     ///     <inheritdoc cref="ServerSentEventsManager" />
     /// </summary>
     /// <param name="httpRemoteService">
@@ -71,9 +66,6 @@ internal sealed class ServerSentEventsManager
         _httpServerSentEventsBuilder = httpServerSentEventsBuilder;
         CurrentRetryInterval = httpServerSentEventsBuilder.DefaultRetryInterval;
         CurrentRetries = 0;
-
-        // 初始化事件消息传输的通道
-        _messageChannel = Channel.CreateUnbounded<ServerSentEventsData>();
 
         // 解析 IHttpServerSentEventsEventHandler 事件处理程序
         ServerSentEventsEventHandler = (httpServerSentEventsBuilder.ServerSentEventsEventHandlerType is not null
@@ -114,17 +106,14 @@ internal sealed class ServerSentEventsManager
     /// <exception cref="InvalidOperationException"></exception>
     internal void Start(CancellationToken cancellationToken = default)
     {
-        // 创建关联的取消标识
-        using var messageCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // 初始化事件消息传输的通道
+        var messageChannel = Channel.CreateUnbounded<ServerSentEventsData>();
 
         // 初始化接收事件消息任务
-        var receiveDataTask = ReceiveDataAsync(messageCancellationTokenSource.Token);
+        var receiveDataTask = ReceiveDataAsync(messageChannel, cancellationToken);
 
         // 处理与事件源的连接打开
         HandleOpen();
-
-        // 声明取消接收标识
-        var isCancelled = false;
 
         try
         {
@@ -136,13 +125,13 @@ internal sealed class ServerSentEventsManager
             using var contentStream = httpResponseMessage.Content.ReadAsStream(cancellationToken);
 
             // 初始化 StreamReader 实例
-            using var reader = new StreamReader(contentStream, Encoding.UTF8);
+            using var streamReader = new StreamReader(contentStream, Encoding.UTF8);
 
             // 声明 ServerSentEventsData 变量
             ServerSentEventsData? serverSentEventsData = null;
 
             // 循环读取数据直到取消请求或读取完毕
-            while (!cancellationToken.IsCancellationRequested && reader.ReadLine() is { } line)
+            while (!cancellationToken.IsCancellationRequested && streamReader.ReadLine() is { } line)
             {
                 // 尝试解析事件消息行文本
                 if (!TryParseEventLine(line, ref serverSentEventsData))
@@ -160,7 +149,7 @@ internal sealed class ServerSentEventsManager
                 CurrentRetries = 0;
 
                 // 发送事件数据到通道
-                _messageChannel.Writer.TryWrite(serverSentEventsData);
+                messageChannel.Writer.TryWrite(serverSentEventsData);
 
                 // 重置 ServerSentEventsData 实例，等待下一个事件
                 serverSentEventsData = null;
@@ -169,9 +158,6 @@ internal sealed class ServerSentEventsManager
         // 任务被取消
         catch (Exception e) when (cancellationToken.IsCancellationRequested || e is OperationCanceledException)
         {
-            // 标识客户端中止事件消息接收
-            isCancelled = true;
-
             throw;
         }
         catch (Exception e)
@@ -194,14 +180,10 @@ internal sealed class ServerSentEventsManager
         }
         finally
         {
-            if (isCancelled)
-            {
-                // 关闭通道
-                _messageChannel.Writer.Complete();
-            }
+            // 关闭通道
+            messageChannel.Writer.Complete();
 
             // 等待接收事件消息任务完成
-            messageCancellationTokenSource.Cancel();
             receiveDataTask.Wait(cancellationToken);
 
             // 释放资源集合
@@ -218,17 +200,14 @@ internal sealed class ServerSentEventsManager
     /// <exception cref="InvalidOperationException"></exception>
     internal async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        // 创建关联的取消标识
-        using var messageCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        // 初始化事件消息传输的通道
+        var messageChannel = Channel.CreateUnbounded<ServerSentEventsData>();
 
         // 初始化接收事件消息任务
-        var receiveDataTask = ReceiveDataAsync(messageCancellationTokenSource.Token);
+        var receiveDataTask = ReceiveDataAsync(messageChannel, cancellationToken);
 
         // 处理与事件源的连接打开
         HandleOpen();
-
-        // 声明取消接收标识
-        var isCancelled = false;
 
         try
         {
@@ -240,14 +219,14 @@ internal sealed class ServerSentEventsManager
             await using var contentStream = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
 
             // 初始化 StreamReader 实例
-            using var reader = new StreamReader(contentStream, Encoding.UTF8);
+            using var streamReader = new StreamReader(contentStream, Encoding.UTF8);
 
             // 声明 ServerSentEventsData 变量
             ServerSentEventsData? serverSentEventsData = null;
 
             // 循环读取数据直到取消请求或读取完毕
             while (!cancellationToken.IsCancellationRequested &&
-                   await reader.ReadLineAsync(cancellationToken) is { } line)
+                   await streamReader.ReadLineAsync(cancellationToken) is { } line)
             {
                 // 尝试解析事件消息行文本
                 if (!TryParseEventLine(line, ref serverSentEventsData))
@@ -265,7 +244,7 @@ internal sealed class ServerSentEventsManager
                 CurrentRetries = 0;
 
                 // 发送事件数据到通道
-                await _messageChannel.Writer.WriteAsync(serverSentEventsData, cancellationToken);
+                await messageChannel.Writer.WriteAsync(serverSentEventsData, cancellationToken);
 
                 // 重置 ServerSentEventsData 实例，等待下一个事件
                 serverSentEventsData = null;
@@ -274,9 +253,6 @@ internal sealed class ServerSentEventsManager
         // 任务被取消
         catch (Exception e) when (cancellationToken.IsCancellationRequested || e is OperationCanceledException)
         {
-            // 标识客户端中止事件消息接收
-            isCancelled = true;
-
             throw;
         }
         catch (Exception e)
@@ -299,14 +275,10 @@ internal sealed class ServerSentEventsManager
         }
         finally
         {
-            if (isCancelled)
-            {
-                // 关闭通道
-                _messageChannel.Writer.Complete();
-            }
+            // 关闭通道
+            messageChannel.Writer.Complete();
 
             // 等待接收事件消息任务完成
-            await messageCancellationTokenSource.CancelAsync();
             await receiveDataTask;
 
             // 释放资源集合
@@ -370,7 +342,7 @@ internal sealed class ServerSentEventsManager
     /// <summary>
     ///     尝试解析事件消息行文本
     /// </summary>
-    /// <param name="line"></param>
+    /// <param name="line">消息行文本</param>
     /// <param name="serverSentEventsData">
     ///     <see cref="ServerSentEventsData" />
     /// </param>
@@ -424,8 +396,8 @@ internal sealed class ServerSentEventsManager
                 break;
             // 所有其他的字段名都会被忽略
             default:
-                serverSentEventsData = null;
-                return false;
+                // 保持数据不变
+                return true;
         }
 
         return true;
@@ -434,11 +406,16 @@ internal sealed class ServerSentEventsManager
     /// <summary>
     ///     接收事件消息任务
     /// </summary>
+    /// <param name="messageChannel">事件消息传输的通道</param>
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
-    internal async Task ReceiveDataAsync(CancellationToken cancellationToken)
+    internal async Task ReceiveDataAsync(Channel<ServerSentEventsData> messageChannel,
+        CancellationToken cancellationToken)
     {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(messageChannel);
+
         // 空检查
         if (_httpServerSentEventsBuilder.OnMessage is null && ServerSentEventsEventHandler is null)
         {
@@ -448,27 +425,13 @@ internal sealed class ServerSentEventsManager
         try
         {
             // 从事件消息传输的通道中读取所有的事件消息
-            await foreach (var serverSentEventsData in _messageChannel.Reader.ReadAllAsync(cancellationToken))
+            await foreach (var serverSentEventsData in messageChannel.Reader.ReadAllAsync(cancellationToken))
             {
-                try
-                {
-                    // 处理服务器发送的事件消息
-                    await HandleMessageReceivedAsync(serverSentEventsData, cancellationToken);
-                }
-                // 捕获当通道关闭或操作被取消时的异常
-                catch (Exception e) when (cancellationToken.IsCancellationRequested ||
-                                          e is ChannelClosedException or OperationCanceledException)
-                {
-                    // 处理服务器发送的事件消息
-                    await HandleMessageReceivedAsync(serverSentEventsData, cancellationToken);
+                // 如果请求了取消，则抛出 OperationCanceledException
+                cancellationToken.ThrowIfCancellationRequested();
 
-                    break;
-                }
-                catch (Exception e)
-                {
-                    // 输出调试事件
-                    Debugging.Error(e.Message);
-                }
+                // 处理服务器发送的事件消息
+                await HandleMessageReceivedAsync(serverSentEventsData, cancellationToken);
             }
         }
         catch (Exception e) when (cancellationToken.IsCancellationRequested || e is OperationCanceledException)
