@@ -41,7 +41,7 @@ public sealed class HttpFileDownloadBuilder
         // 空检查
         ArgumentNullException.ThrowIfNull(httpMethod);
 
-        Method = httpMethod;
+        HttpMethod = httpMethod;
         RequestUri = requestUri;
     }
 
@@ -53,7 +53,7 @@ public sealed class HttpFileDownloadBuilder
     /// <summary>
     ///     请求方式
     /// </summary>
-    public HttpMethod Method { get; }
+    public HttpMethod HttpMethod { get; }
 
     /// <summary>
     ///     用于传输操作的缓冲区大小
@@ -338,7 +338,7 @@ public sealed class HttpFileDownloadBuilder
         ArgumentException.ThrowIfNullOrWhiteSpace(DestinationPath);
 
         // 初始化 HttpRequestBuilder 实例；如果请求失败，则应抛出异常。
-        var httpRequestBuilder = HttpRequestBuilder.Create(Method, RequestUri, configure).PerformanceOptimization()
+        var httpRequestBuilder = HttpRequestBuilder.Create(HttpMethod, RequestUri, configure).PerformanceOptimization()
             .EnsureSuccessStatusCode();
 
         // 检查是否设置了事件处理程序且该处理程序实现了 IHttpRequestEventHandler 接口，如果有则设置给 httpRequestBuilder
