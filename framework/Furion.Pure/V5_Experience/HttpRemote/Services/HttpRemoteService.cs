@@ -26,6 +26,7 @@
 using Furion.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
@@ -474,7 +475,7 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
 
             // 初始化当前重定向次数和原始请求方法
             var redirections = 0;
-            var originalHttpMethod = httpRequestBuilder.Method!;
+            var originalHttpMethod = httpRequestBuilder.HttpMethod!;
 
             // 处理请求重定向
             while (Helpers.DetermineRedirectMethod(httpResponseMessage.StatusCode, originalHttpMethod,
@@ -737,10 +738,8 @@ internal sealed partial class HttpRemoteService : IHttpRemoteService
             return;
         }
 
-        // User-Agent 默认格式为：程序集名称/程序集版本号
-        httpClient.DefaultRequestHeaders.UserAgent.Add(typeof(HttpRemoteService).Assembly.ConvertTo(ass =>
-            new ProductInfoHeaderValue(ass.GetName().Name!,
-                ass.GetVersion()?.ToString() ?? Constants.UNKNOWN_USER_AGENT_VERSION)));
+        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(HeaderNames.UserAgent,
+            Constants.USER_AGENT_OF_BROWSER);
     }
 
     /// <summary>
