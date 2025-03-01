@@ -432,7 +432,7 @@ public class TestModuleServices : IDynamicApiController
 
         var clay = Clay.Parse(obj);
         var str = clay.ToString();
-        Dictionary<string, object> dic = clay.ToDictionary(u => u.Key.ToString(), u => u.Value);
+        Dictionary<string, object> dic = clay.AsEnumerateObject().ToDictionary(u => u.Key.ToString(), u => u.Value);
 
         return dic;
     }
@@ -475,8 +475,7 @@ public class TestModuleServices : IDynamicApiController
     {
         var sql = @"
 @{
-    IEnumerable<dynamic> data = Model.Values;
-    var names = data.Select(u=> u.name);
+    var names = ((IEnumerable<dynamic>)Model).Select(u=> u.name);
 
     foreach(var name in names)
     {
@@ -485,13 +484,12 @@ public class TestModuleServices : IDynamicApiController
 }
 
 @{
-    IEnumerable<dynamic> data2 = Model.Values;
-    var nameStrings = string.Join(""', '"", data2.Select(u=> u.name));
+    var nameStrings = string.Join(""', '"", ((IEnumerable<dynamic>)Model).Select(u=> u.name));
 
     @:update table set isSync = 1 where name in ('@nameStrings');
 }
 
-@foreach(var item in Model.Values)
+@foreach(var item in Model)
 {
     @:insert into table(member_id, site_id) values(@item.member_id, @item.site_id);
 

@@ -58,7 +58,7 @@ internal static class DbHelpers
         if (model is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object) return ConvertToDbParameters((Dictionary<string, object>)jsonElement.ToObject(), dbCommand);
 
         // 处理 Clay 类型
-        if (model is Clay clay) return ConvertToDbParameters(clay.ToDictionary(u => u.Key.ToString(), u => u.Value), dbCommand);
+        if (model is Clay clay) return ConvertToDbParameters(clay.AsEnumerateObject().ToDictionary(u => u.Key, u => u.Value), dbCommand);
 
         // 处理字典类型参数
         if (modelType == typeof(Dictionary<string, object>)) return ConvertToDbParameters((Dictionary<string, object>)model, dbCommand);
