@@ -44,19 +44,19 @@ public static class L
     /// <summary>
     /// String 多语言
     /// </summary>
-    public static IStringLocalizer? Text => App.GetService<IStringLocalizerFactory>(App.RootServices)?.Create();
+    public static IStringLocalizer Text => App.GetService<IStringLocalizerFactory>(App.RootServices)?.Create();
 
     /// <summary>
     /// Html 多语言
     /// </summary>
-    public static IHtmlLocalizer? Html => App.GetService<IHtmlLocalizerFactory>(App.RootServices)?.Create();
+    public static IHtmlLocalizer Html => App.GetService<IHtmlLocalizerFactory>(App.RootServices)?.Create();
 
     /// <summary>
     /// String 多语言
     /// </summary>
     /// <typeparam name="T">特定类型</typeparam>
     /// <remarks><see cref="IStringLocalizer{T}"/></remarks>
-    public static IStringLocalizer<T>? TextOf<T>()
+    public static IStringLocalizer<T> TextOf<T>()
     {
         return App.GetService<IStringLocalizer<T>>(App.RootServices);
     }
@@ -66,7 +66,7 @@ public static class L
     /// </summary>
     /// <typeparam name="T">特定类型</typeparam>
     /// <remarks><see cref="IHtmlLocalizer{T}"/></remarks>
-    public static IHtmlLocalizer<T>? HtmlOf<T>()
+    public static IHtmlLocalizer<T> HtmlOf<T>()
     {
         return App.GetService<IHtmlLocalizer<T>>(App.RootServices);
     }
