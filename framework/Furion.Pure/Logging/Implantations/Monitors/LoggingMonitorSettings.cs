@@ -25,6 +25,7 @@
 
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
@@ -130,7 +131,7 @@ public sealed class LoggingMonitorSettings
     internal static Func<FilterContext, bool> InternalWriteFilter { get; set; }
 
     /// <summary>
-    /// 配置日志更多功能
+    /// 配置日志更多功能（外部调用）
     /// </summary>
     /// <param name="configure"></param>
     public void ConfigureLogger(Action<ILogger, LogContext, FilterContext> configure)
@@ -156,4 +157,10 @@ public sealed class LoggingMonitorSettings
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         SkipValidation = true
     };
+
+    /// <summary>
+    /// 格式化提供器
+    /// </summary>
+    /// <remarks></remarks>
+    public IFormatProvider? FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 }

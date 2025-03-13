@@ -25,6 +25,7 @@
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using System.Globalization;
 
 namespace Furion.Logging;
 
@@ -83,4 +84,10 @@ public sealed class ConsoleFormatterExtendOptions : ConsoleFormatterOptions
     /// 日志消息内容转换（如脱敏处理）
     /// </summary>
     public Func<string, string> MessageProcess { get; set; }
+
+    /// <summary>
+    /// 格式化提供器
+    /// </summary>
+    /// <remarks></remarks>
+    public IFormatProvider? FormatProvider { get; set; } = CultureInfo.InvariantCulture;
 }
