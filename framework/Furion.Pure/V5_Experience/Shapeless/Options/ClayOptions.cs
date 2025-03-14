@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Converters.Json;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -130,7 +131,12 @@ public sealed class ClayOptions
         // 解决中文乱码问题
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         AllowTrailingCommas = true,
-        Converters = { new ClayJsonConverter() }
+        Converters =
+        {
+            new ClayJsonConverter(),
+            new DateTimeConverterUsingDateTimeParseAsFallback(),
+            new DateTimeOffsetConverterUsingDateTimeOffsetParseAsFallback()
+        }
     };
 
     /// <summary>
