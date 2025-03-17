@@ -271,7 +271,10 @@ internal static class InternalApp
             "runtimeconfig.dev.json",
             "runtimeconfig.prod.json",
             "runtimeconfig.json",
-            "staticwebassets.runtime.json"
+            "staticwebassets.runtime.json",
+            "nuget.dgspec.json",
+            "project.assets.json",
+            "MvcTestingAppManifest.json"
         };
 
     /// <summary>
