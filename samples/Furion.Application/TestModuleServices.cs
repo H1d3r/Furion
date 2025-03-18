@@ -655,6 +655,15 @@ public class TestModuleServices : IDynamicApiController
     {
         return KSortEncryption.Compare(body);
     }
+
+    public void 测试Gzip解压压缩()
+    {
+        var bytes = GzipEncryption.Compress("Furion");
+        var originText = GzipEncryption.Decompress(bytes);
+
+        var base64String = GzipEncryption.CompressToBase64("Furion");
+        var originText2 = GzipEncryption.DecompressFromBase64(base64String);
+    }
 }
 
 

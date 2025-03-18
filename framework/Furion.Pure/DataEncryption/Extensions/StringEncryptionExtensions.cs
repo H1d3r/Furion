@@ -257,4 +257,44 @@ public static class StringEncryptionExtensions
     {
         return PBKDF2Encryption.Compare(text, hash, saltSize, iterationCount, derivedKeyLength);
     }
+
+    /// <summary>
+    /// Gzip 压缩字符串并返回字节数组
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public static byte[] ToGzipCompress(this string text)
+    {
+        return GzipEncryption.Compress(text);
+    }
+
+    /// <summary>
+    /// Gzip 从字节数组解压
+    /// </summary>
+    /// <param name="bytes"></param>
+    /// <returns></returns>
+    public static string ToGzipDecompress(this byte[] bytes)
+    {
+        return GzipEncryption.Decompress(bytes);
+    }
+
+    /// <summary>
+    /// Gzip 压缩字符串并返回 Base64 字符串
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public static string ToGzipCompressToBase64(this string text)
+    {
+        return GzipEncryption.CompressToBase64(text);
+    }
+
+    /// <summary>
+    /// Gzip 从 Base64 字符串解压
+    /// </summary>
+    /// <param name="base64String"></param>
+    /// <returns></returns>
+    public static string ToGzipDecompressFromBase64(this string base64String)
+    {
+        return GzipEncryption.DecompressFromBase64(base64String);
+    }
 }
