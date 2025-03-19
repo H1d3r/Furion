@@ -33,6 +33,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -233,7 +234,7 @@ public static class SpecificationDocumentBuilder
     internal static void Build(SwaggerOptions swaggerOptions, Action<SwaggerOptions> configure = null)
     {
         // 生成V2版本
-        swaggerOptions.SerializeAsV2 = _specificationDocumentSettings.FormatAsV2 == true;
+        swaggerOptions.OpenApiVersion = _specificationDocumentSettings.FormatAsV2 == true ? OpenApiSpecVersion.OpenApi2_0 : OpenApiSpecVersion.OpenApi3_0;
 
         // 判断是否启用 Server
         if (_specificationDocumentSettings.HideServers != true)
