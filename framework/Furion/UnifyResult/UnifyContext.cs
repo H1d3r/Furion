@@ -38,6 +38,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Furion.UnifyResult;
@@ -279,7 +280,8 @@ public static class UnifyContext
               || method.GetRealReturnType().HasImplementedRawGeneric(unityMetadata.ResultType)
               || method.CustomAttributes.Any(x => typeof(NonUnifyAttribute).IsAssignableFrom(x.AttributeType) || typeof(ProducesResponseTypeAttribute).IsAssignableFrom(x.AttributeType) || typeof(IApiResponseMetadataProvider).IsAssignableFrom(x.AttributeType))
               || method.ReflectedType.IsDefined(typeof(NonUnifyAttribute), true)
-              || method.DeclaringType.Assembly.GetName().Name.StartsWith("Microsoft.AspNetCore.OData");
+              || method.DeclaringType.Assembly.GetName().Name.StartsWith("Microsoft.AspNetCore.OData")
+              || method.ReturnType.IsGenericType && method.ReturnType.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>);
 
         if (!isWebRequest)
         {
@@ -309,7 +311,8 @@ public static class UnifyContext
                         !method.CustomAttributes.Any(x => typeof(ProducesResponseTypeAttribute).IsAssignableFrom(x.AttributeType) || typeof(IApiResponseMetadataProvider).IsAssignableFrom(x.AttributeType))
                         && method.ReflectedType.IsDefined(typeof(NonUnifyAttribute), true)
                     )
-                || method.DeclaringType.Assembly.GetName().Name.StartsWith("Microsoft.AspNetCore.OData");
+                || method.DeclaringType.Assembly.GetName().Name.StartsWith("Microsoft.AspNetCore.OData")
+                || method.ReturnType.IsGenericType && method.ReturnType.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>);
 
         unifyResult = isSkip ? null : App.RootServices.GetService(unityMetadata.ProviderType) as IUnifyResultProvider;
         return unifyResult == null || isSkip;
