@@ -1,5 +1,4 @@
-﻿using Furion.Application.Persons;
-using Furion.AspNetCore;
+﻿using Furion.AspNetCore;
 using Furion.DatabaseAccessor.Extensions;
 using Furion.Extensions;
 using Furion.Logging;
@@ -663,6 +662,23 @@ public class TestModuleServices : IDynamicApiController
 
         var base64String = GzipEncryption.CompressToBase64("Furion");
         var originText2 = GzipEncryption.DecompressFromBase64(base64String);
+    }
+
+    [HttpGet]
+    public async IAsyncEnumerable<string> TrackProgress([FromQuery] string email, [FromQuery] int pdfmId)
+    {
+        var i = 0;
+        while (i < 10)
+        {
+            i++;
+
+            if (i == 5)
+            {
+                throw new Exception("出异常了");
+            }
+
+            yield return "abc";
+        }
     }
 }
 
