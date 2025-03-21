@@ -15,6 +15,7 @@ using Swashbuckle.AspNetCore.Swagger;
 using System.ComponentModel;
 using System.Data;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 
 namespace Furion.Application;
@@ -679,6 +680,13 @@ public class TestModuleServices : IDynamicApiController
 
             yield return "abc";
         }
+    }
+
+    [HttpGet]
+    public void 测试AES解密()
+    {
+        var result = AESEncryption.Decrypt("D/5Cb4n+1DOf3IjxvH705QEZ9ah9NWQm7v413EhTC1X1DFGuzE2oqvA+WAMICi8hQOxE11B5/X5jhP3dueu4ZSPetvgFhR1O6PJcoW5RlWSjYtqsX1xBVvMnkEZbZAaxzZ8qx5ml+uc1PGq33kHfYXO/lBoWwNLGrEea5mPo0pbUls9O4mKv7lck4596YHdPArys90oUarBIU15PlCZoU2GrcJ1orLlhGPNNfWG2T5tqYE3eLF8646+faz9SBAlosetxPdc6FyEw9YRfugp/XTnS+m14sdbgNFH77FMAvE2ZmKuXoV2uPUPVxHwTzoj/Zr80vJaScXdY41D8ITMKdJRvWMRwwJxlijuotXM0ZH4BoYbVj7T2xTm7tLZ8XHUoRsidxsf5+Kc45LTtDYQSDGC/v1PYuZ9wyhv4T0sNij+GM39dxf0/BrINxwx+jSOGInWPX29SCYQp7WtSO2UfhQ=="
+            , "VZBMmVDQtbpD7KE5cpk/dw==", Encoding.UTF8.GetBytes("CVRUkfJD6IcLG6F9"));
     }
 }
 

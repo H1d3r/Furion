@@ -105,20 +105,28 @@ public class AESEncryption
         // 如果是 ECB 模式，不需要 IV
         if (mode != CipherMode.ECB)
         {
-            var bVector = new byte[16];
-            var cipher = new byte[fullCipher.Length - bVector.Length];
+            byte[] cipher;
+            if (iv == null)
+            {
+                iv = new byte[16];
+                cipher = new byte[fullCipher.Length - iv.Length];
 
-            Unsafe.CopyBlock(ref bVector[0], ref fullCipher[0], (uint)bVector.Length);
-            Unsafe.CopyBlock(ref cipher[0], ref fullCipher[bVector.Length], (uint)(fullCipher.Length - bVector.Length));
+                Unsafe.CopyBlock(ref iv[0], ref fullCipher[0], (uint)iv.Length);
+                Unsafe.CopyBlock(ref cipher[0], ref fullCipher[iv.Length], (uint)(fullCipher.Length - iv.Length));
+            }
+            else
+            {
+                cipher = fullCipher;
+            }
 
-            aesAlg.IV = iv ?? bVector;
+            aesAlg.IV = iv;
             fullCipher = cipher;
         }
 
         using var decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
         using var msDecrypt = new MemoryStream(fullCipher);
         using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
-        using var srDecrypt = new StreamReader(csDecrypt);
+        using var srDecrypt = new StreamReader(csDecrypt, Encoding.UTF8);
 
         return srDecrypt.ReadToEnd();
     }
