@@ -23,44 +23,28 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Buffers;
-using System.Text;
+using Furion.Extensions;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace Furion.Extensions;
+namespace Furion.Converters.Json;
 
 /// <summary>
-///     <see cref="Utf8JsonReader" /> 拓展类
+///     <see cref="string" /> JSON 序列化转换器
 /// </summary>
-internal static class Utf8JsonReaderExtensions
+/// <remarks>解决 Number 类型和 Boolean 类型转 String 类型时异常。</remarks>
+public sealed class StringJsonConverter : JsonConverter<string>
 {
-    /// <summary>
-    ///     获取 JSON 原始输入数据
-    /// </summary>
-    /// <param name="reader">
-    ///     <see cref="Utf8JsonReader" />
-    /// </param>
-    /// <returns>
-    ///     <see cref="string" />
-    /// </returns>
-    internal static string GetRawText(this ref Utf8JsonReader reader)
-    {
-        // 将 Utf8JsonReader 转换为 JsonDocument
-        using var jsonDocument = JsonDocument.ParseValue(ref reader);
+    /// <inheritdoc />
+    public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+        reader.TokenType switch
+        {
+            JsonTokenType.True or JsonTokenType.False => reader.GetBoolean().ToString(),
+            JsonTokenType.Number => reader.ConvertRawValueToString(),
+            _ => reader.GetString()
+        };
 
-        return jsonDocument.RootElement.Clone().GetRawText();
-    }
-
-    /// <summary>
-    ///     从 <see cref="Utf8JsonReader" /> 中提取原始值，并将其转换为字符串
-    /// </summary>
-    /// <remarks>支持处理各种类型的原始值（例如数字、布尔值等）。</remarks>
-    /// <param name="reader">
-    ///     <see cref="Utf8JsonReader" />
-    /// </param>
-    /// <returns>
-    ///     <see cref="string" />
-    /// </returns>
-    internal static string ConvertRawValueToString(this Utf8JsonReader reader) =>
-        Encoding.UTF8.GetString(reader.HasValueSequence ? reader.ValueSequence.ToArray() : reader.ValueSpan);
+    /// <inheritdoc />
+    public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(value);
 }
