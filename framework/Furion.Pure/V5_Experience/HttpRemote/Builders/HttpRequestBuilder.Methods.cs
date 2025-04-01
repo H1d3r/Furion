@@ -1350,6 +1350,17 @@ public sealed partial class HttpRequestBuilder
     }
 
     /// <summary>
+    ///     设置请求来源地址
+    /// </summary>
+    /// <remarks>设置此配置后，将在单次请求标头中添加 <c>Referer</c> 标头。</remarks>
+    /// <param name="referer">请求来源地址，当设置为 <c>"{BASE_ADDRESS}"</c> 时将替换为基地址</param>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder SetReferer(string? referer) =>
+        WithHeader(HeaderNames.Referer, referer, replace: true);
+
+    /// <summary>
     ///     设置模拟浏览器环境
     /// </summary>
     /// <remarks>设置此配置后，将在单次请求标头中添加主流浏览器的 <c>User-Agent</c> 值。</remarks>
