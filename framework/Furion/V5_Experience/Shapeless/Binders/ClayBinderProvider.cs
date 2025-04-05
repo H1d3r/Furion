@@ -23,8 +23,11 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using System.Runtime.CompilerServices;
 
 namespace Furion.Shapeless;
 
@@ -39,6 +42,15 @@ internal sealed class ClayBinderProvider : IModelBinderProvider
         // 空检查
         ArgumentNullException.ThrowIfNull(context);
 
-        return context.Metadata.ModelType == typeof(Clay) ? new BinderTypeModelBinder(typeof(ClayBinder)) : null;
+        // 获取模型类型和参数特性列表
+        var modelType = context.Metadata.ModelType;
+        var parameterAttributes = (context.Metadata as DefaultModelMetadata)?.Attributes.ParameterAttributes;
+
+        return modelType == typeof(Clay) ||
+               // 确保参数类型为 dynamic 且贴有 [Clay] 特性
+               (modelType == typeof(object) && parameterAttributes?.OfType<ClayAttribute>().Any() == true &&
+                parameterAttributes.OfType<DynamicAttribute>().Any())
+            ? new BinderTypeModelBinder(typeof(ClayBinder))
+            : null;
     }
 }
