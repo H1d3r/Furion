@@ -62,7 +62,7 @@ public class AESEncryption
         using var encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
         using var msEncrypt = new MemoryStream();
         using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-        using (var swEncrypt = new StreamWriter(csEncrypt))
+        using (var swEncrypt = new StreamWriter(csEncrypt, Encoding.UTF8))
         {
             swEncrypt.Write(text);
         }
