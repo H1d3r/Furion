@@ -223,7 +223,7 @@ public static class UnifyContext
         if (context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor) return null;
 
         // 获取序列化配置
-        var unifySerializerSettingAttribute = actionDescriptor.MethodInfo.GetFoundAttribute<UnifySerializerSettingAttribute>(true);
+        var unifySerializerSettingAttribute = actionDescriptor.MethodInfo.GetFoundAttribute<UnifySerializerSettingAttribute>(true, true);
         if (unifySerializerSettingAttribute == null || string.IsNullOrWhiteSpace(unifySerializerSettingAttribute.Name)) return null;
 
         // 解析全局配置
@@ -455,7 +455,7 @@ public static class UnifyContext
     {
         if (method == default) return default;
 
-        var unityProviderAttribute = method.GetFoundAttribute<UnifyProviderAttribute>(true);
+        var unityProviderAttribute = method.GetFoundAttribute<UnifyProviderAttribute>(true, true);
 
         // 获取元数据
         var isExists = UnifyProviders.TryGetValue(unityProviderAttribute?.Name ?? string.Empty, out var metadata);
