@@ -7,7 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Furion.Tools.CommandLine" Version="4.9.7.39" />
+		<PackageReference Include="Furion.Tools.CommandLine" Version="4.9.7.40" />
 	</ItemGroup>
 
 </Project>
