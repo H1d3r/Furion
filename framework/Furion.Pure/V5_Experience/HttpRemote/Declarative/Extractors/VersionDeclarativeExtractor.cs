@@ -23,30 +23,23 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Net.WebSockets;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     WebSocket 接收的二进制消息的结果类
+///     HTTP 声明式 <see cref="VersionAttribute" /> 特性提取器
 /// </summary>
-public sealed class WebSocketBinaryReceiveResult : WebSocketReceiveResult
+internal sealed class VersionDeclarativeExtractor : IHttpDeclarativeExtractor
 {
     /// <inheritdoc />
-    public WebSocketBinaryReceiveResult(int count, bool endOfMessage)
-        : base(count, WebSocketMessageType.Binary, endOfMessage)
+    public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
     {
-    }
+        // 检查方法或接口是否贴有 [Version] 特性
+        if (!context.IsMethodDefined<VersionAttribute>(out var versionAttribute, true))
+        {
+            return;
+        }
 
-    /// <inheritdoc />
-    public WebSocketBinaryReceiveResult(int count, bool endOfMessage, WebSocketCloseStatus? closeStatus,
-        string? closeStatusDescription)
-        : base(count, WebSocketMessageType.Binary, endOfMessage, closeStatus, closeStatusDescription)
-    {
+        // 设置 HTTP 版本
+        httpRequestBuilder.SetVersion(versionAttribute.Version);
     }
-
-    /// <summary>
-    ///     二进制消息
-    /// </summary>
-    public byte[] Message { get; internal init; } = null!;
 }

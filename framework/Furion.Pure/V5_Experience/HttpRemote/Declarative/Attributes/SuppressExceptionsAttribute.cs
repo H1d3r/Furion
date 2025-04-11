@@ -23,30 +23,37 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Net.WebSockets;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     WebSocket 接收的二进制消息的结果类
+///     HTTP 声明式异常抑制特性
 /// </summary>
-public sealed class WebSocketBinaryReceiveResult : WebSocketReceiveResult
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
+public sealed class SuppressExceptionsAttribute : Attribute
 {
-    /// <inheritdoc />
-    public WebSocketBinaryReceiveResult(int count, bool endOfMessage)
-        : base(count, WebSocketMessageType.Binary, endOfMessage)
-    {
-    }
-
-    /// <inheritdoc />
-    public WebSocketBinaryReceiveResult(int count, bool endOfMessage, WebSocketCloseStatus? closeStatus,
-        string? closeStatusDescription)
-        : base(count, WebSocketMessageType.Binary, endOfMessage, closeStatus, closeStatusDescription)
+    /// <summary>
+    ///     <inheritdoc cref="SuppressExceptionsAttribute" />
+    /// </summary>
+    /// <remarks>抑制所有异常。</remarks>
+    public SuppressExceptionsAttribute()
+        : this(true)
     {
     }
 
     /// <summary>
-    ///     二进制消息
+    ///     <inheritdoc cref="SuppressExceptionsAttribute" />
     /// </summary>
-    public byte[] Message { get; internal init; } = null!;
+    /// <param name="enabled">是否启用异常抑制。当设置为 <c>false</c> 时，将禁用异常抑制机制。</param>
+    public SuppressExceptionsAttribute(bool enabled) => Types = enabled ? [typeof(Exception)] : [];
+
+    /// <summary>
+    ///     <inheritdoc cref="SuppressExceptionsAttribute" />
+    /// </summary>
+    /// <param name="types">异常抑制类型集合</param>
+    public SuppressExceptionsAttribute(params Type[] types) => Types = types;
+
+    /// <summary>
+    ///     异常抑制类型集合
+    /// </summary>
+    public Type[] Types { get; set; }
 }
