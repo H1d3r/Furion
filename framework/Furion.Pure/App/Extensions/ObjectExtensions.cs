@@ -487,12 +487,13 @@ public static class ObsoleteObjectExtensions
     /// <typeparam name="TAttribute"></typeparam>
     /// <param name="method"></param>
     /// <param name="inherit"></param>
+    /// <param name="searchFromReflectedType">searchFromRuntimeType</param>
     /// <returns></returns>
-    internal static TAttribute GetFoundAttribute<TAttribute>(this MethodInfo method, bool inherit)
+    internal static TAttribute GetFoundAttribute<TAttribute>(this MethodInfo method, bool inherit, bool searchFromReflectedType = false)
         where TAttribute : Attribute
     {
         // 获取方法所在类型
-        var declaringType = method.DeclaringType;
+        var declaringType = !searchFromReflectedType ? method.DeclaringType : method.ReflectedType;   // 解决嵌套继承问题
 
         var attributeType = typeof(TAttribute);
 
