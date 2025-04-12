@@ -26,20 +26,19 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式 <see cref="VersionAttribute" /> 特性提取器
+///     HTTP 声明式 HTTP 版本特性
 /// </summary>
-internal sealed class VersionDeclarativeExtractor : IHttpDeclarativeExtractor
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
+public sealed class HttpVersionAttribute : Attribute
 {
-    /// <inheritdoc />
-    public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
-    {
-        // 检查方法或接口是否贴有 [Version] 特性
-        if (!context.IsMethodDefined<VersionAttribute>(out var versionAttribute, true))
-        {
-            return;
-        }
+    /// <summary>
+    ///     <inheritdoc cref="HttpVersionAttribute" />
+    /// </summary>
+    /// <param name="version">HTTP 版本</param>
+    public HttpVersionAttribute(string? version) => Version = version;
 
-        // 设置 HTTP 版本
-        httpRequestBuilder.SetVersion(versionAttribute.Version);
-    }
+    /// <summary>
+    ///     HTTP 版本
+    /// </summary>
+    public string? Version { get; set; }
 }
