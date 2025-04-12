@@ -43,10 +43,11 @@ public class AESEncryption
     /// <param name="iv">偏移量</param>
     /// <param name="mode">模式</param>
     /// <param name="padding">填充</param>
+    /// <param name="isBase64"></param>
     /// <returns></returns>
-    public static string Encrypt(string text, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7)
+    public static string Encrypt(string text, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7, bool isBase64 = false)
     {
-        var bKey = Encoding.UTF8.GetBytes(skey);
+        var bKey = !isBase64 ? Encoding.UTF8.GetBytes(skey) : Convert.FromBase64String(skey);
 
         using var aesAlg = Aes.Create();
         aesAlg.Key = bKey;
@@ -90,12 +91,13 @@ public class AESEncryption
     /// <param name="iv">偏移量</param>
     /// <param name="mode">模式</param>
     /// <param name="padding">填充</param>
+    /// <param name="isBase64"></param>
     /// <returns></returns>
-    public static string Decrypt(string hash, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7)
+    public static string Decrypt(string hash, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7, bool isBase64 = false)
     {
         var fullCipher = Convert.FromBase64String(hash);
 
-        var bKey = Encoding.UTF8.GetBytes(skey);
+        var bKey = !isBase64 ? Encoding.UTF8.GetBytes(skey) : Convert.FromBase64String(skey);
 
         using var aesAlg = Aes.Create();
         aesAlg.Key = bKey;
@@ -139,12 +141,13 @@ public class AESEncryption
     /// <param name="iv">偏移量</param>
     /// <param name="mode">模式</param>
     /// <param name="padding">填充</param>
+    /// <param name="isBase64"></param>
     /// <returns>加密后的字节数组</returns>
-    public static byte[] Encrypt(byte[] bytes, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7)
+    public static byte[] Encrypt(byte[] bytes, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7, bool isBase64 = false)
     {
         // 确保密钥长度为 128 位、192 位或 256 位
         var bKey = new byte[32]; // 256 位密钥
-        var keyBytes = Encoding.UTF8.GetBytes(skey);
+        var keyBytes = !isBase64 ? Encoding.UTF8.GetBytes(skey) : Convert.FromBase64String(skey);
         Array.Copy(keyBytes, bKey, Math.Min(keyBytes.Length, bKey.Length));
 
         // 如果是 ECB 模式，不需要 IV
@@ -198,12 +201,13 @@ public class AESEncryption
     /// <param name="iv">偏移量</param>
     /// <param name="mode">模式</param>
     /// <param name="padding">填充</param>
+    /// <param name="isBase64"></param>
     /// <returns></returns>
-    public static byte[] Decrypt(byte[] bytes, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7)
+    public static byte[] Decrypt(byte[] bytes, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7, bool isBase64 = false)
     {
         // 确保密钥长度为 128 位、192 位或 256 位
         var bKey = new byte[32]; // 256 位密钥
-        var keyBytes = Encoding.UTF8.GetBytes(skey);
+        var keyBytes = !isBase64 ? Encoding.UTF8.GetBytes(skey) : Convert.FromBase64String(skey);
         Array.Copy(keyBytes, bKey, Math.Min(keyBytes.Length, bKey.Length));
 
         // 如果是 ECB 模式，不需要 IV
