@@ -304,12 +304,12 @@ public class TestModuleServices : IDynamicApiController
 
         // 加密
         var originBytes = File.ReadAllBytes("image.png"); // 读取源文件内容
-        var encryptBytes = AESEncryption.Encrypt(originBytes, "123456");
+        var encryptBytes = AESEncryption.Encrypt(originBytes, "1234567890abcdef");
         encryptBytes.CopyToSave("image.加密.png");
 
         // 解密
         var encryptBytes2 = File.ReadAllBytes("image.加密.png"); // 读取加密文件内容
-        var originBytes2 = AESEncryption.Decrypt(encryptBytes2, "123456");
+        var originBytes2 = AESEncryption.Decrypt(encryptBytes2, "1234567890abcdef");
         originBytes2.CopyToSave("image.真实.png");
     }
 
@@ -696,6 +696,24 @@ public class TestModuleServices : IDynamicApiController
             , "a+hBnkTwrIupbKa2QqhwkELR6oA4d5ZEmmSZeJG7uG4=", Convert.FromBase64String("VX43rWyrTkcGWJrpunYtFg=="), isBase64: true);
 
         return result;
+    }
+
+    public IActionResult AesTest3(string plainText)
+    {
+        var encryptedText = AESEncryption.Encrypt(
+            plainText,
+            "a+hBnkTwrIupbKa2QqhwkELR6oA4d5ZEmmSZeJG7uG4=",
+            Convert.FromBase64String("VX43rWyrTkcGWJrpunYtFg=="),
+            isBase64: true
+        );
+
+        var result = AESEncryption.Decrypt(
+            encryptedText,
+            "a+hBnkTwrIupbKa2QqhwkELR6oA4d5ZEmmSZeJG7uG4=",
+            Convert.FromBase64String("VX43rWyrTkcGWJrpunYtFg=="),
+            isBase64: true
+        );
+        return new JsonResult(result);
     }
 }
 
