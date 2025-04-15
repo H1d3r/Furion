@@ -120,6 +120,24 @@ public partial class Clay
     public bool IsReadOnly => Options.ReadOnly;
 
     /// <inheritdoc />
+    public bool Equals(Clay? other)
+    {
+        // 检查是否是相同的实例
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        // 空检查及基础类型检查
+        if (other is null || Type != other.Type)
+        {
+            return false;
+        }
+
+        return IsObject ? AreObjectEqual(this, other) : AreArrayEqual(this, other);
+    }
+
+    /// <inheritdoc />
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
         // 空检查
@@ -362,6 +380,37 @@ public partial class Clay
     ///     <see cref="bool" />
     /// </returns>
     public bool IsDefined(object identifier) => Contains(identifier);
+
+    /// <summary>
+    ///     检查属性（键）是否定义
+    /// </summary>
+    /// <param name="propertyName">属性名（键）</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    public bool HasProperty(string propertyName)
+    {
+        // 检查是否是集合或数组实例调用
+        ThrowIfMethodCalledOnArrayCollection(nameof(HasProperty));
+
+        return Contains(propertyName);
+    }
+
+    /// <summary>
+    ///     获取集合或数组中指定项（元素）的索引
+    /// </summary>
+    /// <param name="value">项（元素）</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    public int IndexOf(object? value)
+    {
+        // 检查是否是单一对象实例调用
+        ThrowIfMethodCalledOnSingleObject(nameof(IndexOf));
+
+        return Values.Select((item, index) => new { item, index }).FirstOrDefault(x => object.Equals(x.item, value))
+            ?.index ?? -1;
+    }
 
     /// <summary>
     ///     根据标识符获取值
@@ -1129,7 +1178,7 @@ public partial class Clay
 
         // 初始化升序排序字典
         var sorted =
-            new SortedDictionary<string, JsonNode?>(JsonCanvas.AsObject().ToDictionary());
+            new SortedDictionary<string, JsonNode?>(JsonCanvas.AsObject().ToDictionary(), StringComparer.Ordinal);
 
         return Parse(sorted, options);
     }
@@ -1153,7 +1202,7 @@ public partial class Clay
         // 初始化降序排序字典
         var sortedDesc =
             new SortedDictionary<string, JsonNode?>(Comparer<string>.Create((x, y) =>
-                string.Compare(y, x, StringComparison.InvariantCulture)));
+                string.Compare(y, x, StringComparison.Ordinal)));
 
         // 将 JsonCanvas 转换为 JsonObject 实例
         var jsonObject = JsonCanvas.AsObject();
@@ -1252,6 +1301,38 @@ public partial class Clay
         {
             return false;
         }
+    }
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj) => ReferenceEquals(this, obj) || Equals(obj as Clay);
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+
+        if (IsObject)
+        {
+            // 预处理键值对（排序）
+            var sortedEntries = AsEnumerateObject().OrderBy(kvp => kvp.Key, StringComparer.Ordinal);
+
+            foreach (var (key, value) in sortedEntries)
+            {
+                // 递归计算键和值的哈希码
+                hash.Add(key?.GetHashCode() ?? 0);
+                hash.Add(value?.GetHashCode() ?? 0);
+            }
+        }
+        else
+        {
+            foreach (var value in AsEnumerateArray())
+            {
+                // 递归计算元素的哈希码
+                hash.Add(value?.GetHashCode() ?? 0);
+            }
+        }
+
+        return hash.ToHashCode();
     }
 
     /// <summary>
