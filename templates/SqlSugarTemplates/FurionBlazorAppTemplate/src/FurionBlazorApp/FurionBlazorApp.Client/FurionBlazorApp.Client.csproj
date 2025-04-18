@@ -24,4 +24,8 @@
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.0" />
 	</ItemGroup>
 
+  <ItemGroup Condition="'$(net10)' == 'True' ">
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0-preview.3.25172.1" />
+	</ItemGroup>
+
 </Project>

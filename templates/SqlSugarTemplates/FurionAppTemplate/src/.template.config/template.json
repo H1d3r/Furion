@@ -32,10 +32,14 @@
         {
           "choice": "net9",
           "description": ".NET9 脚手架"
+        },
+        {
+          "choice": "net10",
+          "description": ".NET10 脚手架"
         }
       ],
       "defaultValue": "net9",
-      "description": "选择要创建的 .NET8-9 脚手架"
+      "description": "选择要创建的 .NET8-10 脚手架"
     },
     "net8": {
       "type": "computed",
@@ -44,6 +48,10 @@
     "net9": {
       "type": "computed",
       "value": "(framework == \"net9\")"
+    },
+    "net10": {
+      "type": "computed",
+      "value": "(framework == \"net10\")"
     }
   }
 }
