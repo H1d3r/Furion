@@ -28,6 +28,13 @@
 		</PackageReference>
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(net10)' == 'True' ">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0-preview.3.25171.6">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\FurionMvc.Web.Core\FurionMvc.Web.Core.csproj" />
 	</ItemGroup>
