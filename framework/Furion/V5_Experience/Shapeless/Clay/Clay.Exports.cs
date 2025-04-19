@@ -1314,6 +1314,34 @@ public partial class Clay
     /// <inheritdoc />
     public override bool Equals(object? obj) => ReferenceEquals(this, obj) || Equals(obj as Clay);
 
+    /// <summary>
+    ///     重载 == 运算符
+    /// </summary>
+    /// <param name="left">
+    ///     <see cref="Clay" />
+    /// </param>
+    /// <param name="right">
+    ///     <see cref="Clay" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    public static bool operator ==(Clay? left, Clay? right) => Equals(left, right);
+
+    /// <summary>
+    ///     重载 != 运算符
+    /// </summary>
+    /// <param name="left">
+    ///     <see cref="Clay" />
+    /// </param>
+    /// <param name="right">
+    ///     <see cref="Clay" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    public static bool operator !=(Clay? left, Clay? right) => !(left == right);
+
     /// <inheritdoc />
     public override int GetHashCode()
     {
@@ -1324,6 +1352,7 @@ public partial class Clay
             // 预处理键值对（排序）
             var sortedEntries = AsEnumerateObject().OrderBy(kvp => kvp.Key, StringComparer.Ordinal);
 
+            // 遍历键值对集合
             foreach (var (key, value) in sortedEntries)
             {
                 // 递归计算键和值的哈希码
@@ -1333,6 +1362,7 @@ public partial class Clay
         }
         else
         {
+            // 遍历集合或数组集合
             foreach (var value in AsEnumerateArray())
             {
                 // 递归计算元素的哈希码
