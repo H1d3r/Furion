@@ -26,27 +26,29 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Furion.Converters.Json;
+namespace Furion.Shapeless;
 
 /// <summary>
-///     <see cref="DateTime" /> JSON 序列化转换器
+///     <see cref="object" /> 转 <see cref="Clay" /> JSON 序列化转换器
 /// </summary>
-/// <remarks>在不符合 <c>ISO 8601-1:2019</c> 格式的 <see cref="DateTime" /> 时间使用 <c>DateTime.Parse</c> 作为回退。</remarks>
-public sealed class DateTimeConverterUsingDateTimeParseAsFallback : JsonConverter<DateTime>
+public sealed class ObjectToClayJsonConverter : JsonConverter<object>
 {
     /// <inheritdoc />
-    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override object? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        // 尝试获取 ISO 8601-1:2019 格式时间
-        if (!reader.TryGetDateTime(out var value))
+        // 将 Utf8JsonReader 转换为 JsonElement
+        var jsonElement = JsonElement.ParseValue(ref reader);
+
+        // 检查 JSON 是否是对象或数组类型
+        if (jsonElement.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
         {
-            value = DateTime.Parse(reader.GetString()!);
+            return Clay.Parse(jsonElement.ToString(), new ClayOptions { JsonSerializerOptions = options });
         }
 
-        return value;
+        return jsonElement;
     }
 
     /// <inheritdoc />
-    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options) =>
+    public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options) =>
         JsonSerializer.Serialize(writer, value, value.GetType(), options);
 }
