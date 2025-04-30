@@ -38,6 +38,15 @@ public abstract class EntityNotKey : EntityNotKey<MasterDbContextLocator>
     public EntityNotKey(string name) : base(name)
     {
     }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
+    {
+    }
 }
 
 /// <summary>
@@ -53,6 +62,15 @@ public abstract class EntityNotKey<TDbContextLocator1> : PrivateEntityNotKey
     /// </summary>
     /// <param name="name">数据库中定义名</param>
     public EntityNotKey(string name) : base(name)
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
     {
     }
 }
@@ -71,6 +89,15 @@ public abstract class EntityNotKey<TDbContextLocator1, TDbContextLocator2> : Pri
     /// </summary>
     /// <param name="name">数据库中定义名</param>
     public EntityNotKey(string name) : base(name)
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
     {
     }
 }
@@ -94,6 +121,15 @@ public abstract class EntityNotKey<TDbContextLocator1, TDbContextLocator2, TDbCo
     public EntityNotKey(string name) : base(name)
     {
     }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
+    {
+    }
 }
 
 /// <summary>
@@ -115,6 +151,15 @@ public abstract class EntityNotKey<TDbContextLocator1, TDbContextLocator2, TDbCo
     /// </summary>
     /// <param name="name">数据库中定义名</param>
     public EntityNotKey(string name) : base(name)
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
     {
     }
 }
@@ -142,6 +187,15 @@ public abstract class EntityNotKey<TDbContextLocator1, TDbContextLocator2, TDbCo
     public EntityNotKey(string name) : base(name)
     {
     }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
+    {
+    }
 }
 
 /// <summary>
@@ -167,6 +221,15 @@ public abstract class EntityNotKey<TDbContextLocator1, TDbContextLocator2, TDbCo
     /// </summary>
     /// <param name="name">数据库中定义名</param>
     public EntityNotKey(string name) : base(name)
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
     {
     }
 }
@@ -198,6 +261,15 @@ public abstract class EntityNotKey<TDbContextLocator1, TDbContextLocator2, TDbCo
     public EntityNotKey(string name) : base(name)
     {
     }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
+    {
+    }
 }
 
 /// <summary>
@@ -227,6 +299,15 @@ public abstract class EntityNotKey<TDbContextLocator1, TDbContextLocator2, TDbCo
     /// </summary>
     /// <param name="name">数据库中定义名</param>
     public EntityNotKey(string name) : base(name)
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="name">数据库中定义名</param>
+    /// <param name="schema"></param>
+    public EntityNotKey(string name, string schema) : base(name, schema)
     {
     }
 }
