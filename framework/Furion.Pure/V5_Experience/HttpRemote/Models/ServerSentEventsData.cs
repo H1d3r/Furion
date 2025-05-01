@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Collections.ObjectModel;
 using System.Text;
 
 namespace Furion.HttpRemote;
@@ -33,6 +34,11 @@ namespace Furion.HttpRemote;
 /// <remarks>参考文献：https://developer.mozilla.org/zh-CN/docs/Web/API/Server-sent_events/Using_server-sent_events#%E5%AD%97%E6%AE%B5。</remarks>
 public sealed class ServerSentEventsData
 {
+    /// <summary>
+    ///     用于存储自定义的字段数据
+    /// </summary>
+    internal readonly List<KeyValuePair<string, string>> _customFields;
+
     /// <summary>
     ///     消息数据构建器
     /// </summary>
@@ -46,7 +52,11 @@ public sealed class ServerSentEventsData
     /// <summary>
     ///     <inheritdoc cref="ServerSentEventsData" />
     /// </summary>
-    internal ServerSentEventsData() => _dataBuffer = new StringBuilder();
+    internal ServerSentEventsData()
+    {
+        _dataBuffer = new StringBuilder();
+        _customFields = [];
+    }
 
     /// <summary>
     ///     事件类型
@@ -76,6 +86,12 @@ public sealed class ServerSentEventsData
     public int Retry { get; internal set; }
 
     /// <summary>
+    ///     自定义的字段数据
+    /// </summary>
+    public IReadOnlyCollection<KeyValuePair<string, string>> CustomFields =>
+        new ReadOnlyCollection<KeyValuePair<string, string>>(_customFields);
+
+    /// <summary>
     ///     追加消息数据
     /// </summary>
     /// <param name="value">消息数据</param>
@@ -84,4 +100,12 @@ public sealed class ServerSentEventsData
         _dataBuffer.Append(value);
         _cachedData = null;
     }
+
+    /// <summary>
+    ///     追加自定义字段数据
+    /// </summary>
+    /// <param name="name">字段名</param>
+    /// <param name="value">字段数据</param>
+    internal void AddCustomField(string name, string value) =>
+        _customFields.Add(new KeyValuePair<string, string>(name, value));
 }
