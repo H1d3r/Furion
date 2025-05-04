@@ -111,6 +111,7 @@ public static class HttpRemoteClient
 
             // 释放服务提供器
             ReleaseServiceProvider();
+
             _isDisposed = true;
         }
     }
