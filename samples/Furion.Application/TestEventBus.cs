@@ -18,7 +18,7 @@ public class TestEventBus : IDynamicApiController, IDisposable
 
     void Subscribe(object sender, EventHandlerEventArgs args)
     {
-        Console.WriteLine($"事件 {args.Source.EventId} 执行结果：{args.Status}，异常：{args.Exception}");
+        Console.WriteLine($"事件 {args.Source.EventId} 执行状态：{args.Status}，异常：{args.Exception}, 执行结果：{args.Result}");
     }
 
     // 发布 ToDo:Create 消息
@@ -94,6 +94,7 @@ public class ToDoEventSubscriber : IEventSubscriber, ISingleton
     {
         var todo = context.Source;
         _logger.LogInformation("创建一个 ToDo：{Name}", context.GetPayload<string>());
+        context.SetResult("这是结果");
         await Task.CompletedTask;
     }
 

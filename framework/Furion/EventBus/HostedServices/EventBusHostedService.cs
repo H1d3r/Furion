@@ -316,7 +316,10 @@ internal sealed class EventBusHostedService : BackgroundService
                     }
 
                     // 触发事件处理程序事件
-                    _eventPublisher.InvokeEvents(new(eventSource, true));
+                    _eventPublisher.InvokeEvents(new(eventSource, true)
+                    {
+                        Result = eventHandlerExecutingContext.Result
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -338,7 +341,8 @@ internal sealed class EventBusHostedService : BackgroundService
                     // 触发事件处理程序事件
                     _eventPublisher.InvokeEvents(new(eventSource, false)
                     {
-                        Exception = ex
+                        Exception = ex,
+                        Result = eventHandlerExecutingContext.Result
                     });
                 }
                 finally
