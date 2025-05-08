@@ -88,7 +88,7 @@ public abstract class EventHandlerContext
         }
         else if (rawPayload is JsonElement jsonElement)
         {
-            return JsonSerializer.Deserialize<T>(jsonElement.GetRawText(), new JsonSerializerOptions
+            return JsonSerializer.Deserialize<T>(jsonElement.GetRawText(), new JsonSerializerOptions(JsonSerializerOptions.Default)
             {
                 PropertyNameCaseInsensitive = true
             });
