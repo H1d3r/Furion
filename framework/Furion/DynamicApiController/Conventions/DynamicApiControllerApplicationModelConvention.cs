@@ -590,7 +590,7 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
                 && (!parameterType.IsRichPrimitive() || hasFormAttribute)) continue;
 
             // 处理基元数组数组类型，还有全局配置参数问题
-            if (_dynamicApiControllerSettings?.UrlParameterization == true || parameterType.IsArray)
+            if (!hasFormAttribute && (_dynamicApiControllerSettings?.UrlParameterization == true || parameterType.IsArray))
             {
                 parameterModel.BindingInfo = BindingInfo.GetBindingInfo(new[] { new FromQueryAttribute() });
                 continue;
