@@ -90,9 +90,14 @@ public static class DbProvider
     public const string Dm = "DM.Microsoft.EntityFrameworkCore";
 
     /// <summary>
-    /// 人大金仓 提供器程序集
+    /// 人大金仓 提供器程序集（Oralce 或 PostgreSQL）
     /// </summary>
     public const string Kdbndp = "Kdbndp.EntityFrameworkCore.KingbaseES";
+
+    /// <summary>
+    /// 人大金仓 提供器程序集（SqlServer）
+    /// </summary>
+    public const string Kdbndp_SqlServer = "Kdbndp.EntityFrameworkCore.SqlServer";
 
     /// <summary>
     /// 不支持存储过程的数据库
