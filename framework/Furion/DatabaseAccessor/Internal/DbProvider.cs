@@ -85,9 +85,14 @@ public static class DbProvider
     public const string Firebird = "FirebirdSql.EntityFrameworkCore.Firebird";
 
     /// <summary>
-    /// Dm 提供器程序集
+    /// 达梦数据库 提供器程序集
     /// </summary>
     public const string Dm = "DM.Microsoft.EntityFrameworkCore";
+
+    /// <summary>
+    /// 人大金仓 提供器程序集
+    /// </summary>
+    public const string Kdbndp = "Kdbndp.EntityFrameworkCore.KingbaseES";
 
     /// <summary>
     /// 不支持存储过程的数据库

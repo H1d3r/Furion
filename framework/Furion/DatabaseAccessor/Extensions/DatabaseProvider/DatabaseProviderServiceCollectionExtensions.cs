@@ -360,6 +360,7 @@ public static class DatabaseProviderServiceCollectionExtensions
                 DbProvider.Oracle => "OracleDbContextOptionsExtensions",
                 DbProvider.Firebird => "FbDbContextOptionsBuilderExtensions",
                 DbProvider.Dm => "DmDbContextOptionsExtensions",
+                DbProvider.Kdbndp => "KdbndpDbContextOptionsBuilderExtensions",
                 _ => null
             };
 
@@ -379,6 +380,7 @@ public static class DatabaseProviderServiceCollectionExtensions
                 DbProvider.Oracle => $"Use{nameof(DbProvider.Oracle)}",
                 DbProvider.Firebird => $"Use{nameof(DbProvider.Firebird)}",
                 DbProvider.Dm => $"Use{nameof(DbProvider.Dm)}",
+                DbProvider.Kdbndp => $"Use{nameof(DbProvider.Kdbndp)}",
                 _ => null
             };
 
