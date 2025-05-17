@@ -2,18 +2,23 @@ import {
   IconArrowUp,
   IconCalendarClock,
   IconClock,
+  IconExit,
   IconHelpCircle,
   IconMoon,
   IconSun,
 } from "@douyinfe/semi-icons";
 import { BackTop, Button, Layout, Nav, Tag, Tooltip } from "@douyinfe/semi-ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Jobs from "./components/jobs";
 import apiconfig from "./components/jobs/apiconfig";
+import { useAuth } from "./auth";
+import { useNavigate } from "react-router-dom";
 
 function App() {
   const { Header, Content } = Layout;
   const [mode, setMode] = useState("light");
+  let auth = useAuth();
+  let navigate = useNavigate();
 
   const switchMode = () => {
     const body = document.body;
@@ -25,6 +30,17 @@ function App() {
       setMode("dark");
     }
   };
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", function (event) {
+      if (auth.user) {
+        const message = "您确定要离开此页面吗？您的更改可能不会被保存。";
+        event.returnValue = message;
+
+        return message;
+      }
+    });
+  }, []);
 
   return (
     <Layout
@@ -99,6 +115,17 @@ function App() {
                       marginRight: "12px",
                     }}
                     onClick={() => window.open("https://furion.net/docs/job")}
+                  />
+                </Tooltip>
+                <Tooltip content={"退出登录"}>
+                  <Button
+                    theme="borderless"
+                    icon={<IconExit size="large" />}
+                    style={{
+                      color: "var(--semi-color-text-2)",
+                      marginRight: "12px",
+                    }}
+                    onClick={() => auth.signout(() => navigate("/"))}
                   />
                 </Tooltip>
               </Nav.Footer>

@@ -15,7 +15,7 @@ import {
 } from "@douyinfe/semi-ui";
 import Paragraph from "@douyinfe/semi-ui/lib/es/typography/paragraph";
 import { useEffect, useState } from "react";
-import useFetch from "use-http/dist/cjs/useFetch";
+import useFetch from "use-http";
 import { Trigger, TriggerTimeline } from "../../types";
 import { dayFromNow, dayTime } from "../../utils";
 import apiconfig from "./apiconfig";

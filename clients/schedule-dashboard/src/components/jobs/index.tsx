@@ -20,7 +20,7 @@ import {
   OnRow,
 } from "@douyinfe/semi-ui/lib/es/table/interface";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import useFetch from "use-http/dist/cjs/useFetch";
+import useFetch from "use-http";
 import { JobDetail, Scheduler } from "../../types";
 import apiconfig from "./apiconfig";
 import columns from "./columns";

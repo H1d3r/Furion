@@ -21,7 +21,7 @@ import { Data } from "@douyinfe/semi-ui/lib/es/descriptions";
 import { ColumnProps } from "@douyinfe/semi-ui/lib/es/table/interface";
 import Paragraph from "@douyinfe/semi-ui/lib/es/typography/paragraph";
 import useFetch from "use-http";
-import { JobDetail, Trigger } from "../../types";
+import { JobDetail, Trigger, Scheduler } from "../../types";
 import {
   dayFromNow,
   dayTime,
@@ -138,6 +138,13 @@ const columns: ColumnProps<JobDetail>[] = [
                   color: "#999",
                 }}
               />
+            </Tooltip>
+          )}
+          {jobDetail.temporary === true && (
+            <Tooltip content="执行完毕后自动删除">
+              <Tag size="small" shape="circle" color="amber">
+                临时
+              </Tag>
             </Tooltip>
           )}
         </>
