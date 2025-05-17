@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.AspNetCore.Http;
+
 namespace Furion.Schedule;
 
 /// <summary>
@@ -77,7 +79,7 @@ public sealed class ScheduleUIOptions
     /// <summary>
     /// 登录逻辑
     /// </summary>
-    public Func<string, string, Task<bool>> LoginHandle { get; set; } = (username, password) =>
+    public Func<string, string, HttpContext, Task<bool>> LoginHandle { get; set; } = (username, password, httpContext) =>
     {
         return Task.FromResult(username == "schedule" && string.IsNullOrWhiteSpace(password));
     };

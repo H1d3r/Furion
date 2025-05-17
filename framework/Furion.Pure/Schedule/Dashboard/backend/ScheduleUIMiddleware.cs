@@ -336,7 +336,7 @@ public sealed class ScheduleUIMiddleware
                 try
                 {
                     // 调用自定义验证逻辑
-                    if (Options.LoginHandle is not null && await Options.LoginHandle(username, password))
+                    if (Options.LoginHandle is not null && await Options.LoginHandle(username, password, context))
                     {
                         context.Response.StatusCode = StatusCodes.Status200OK;
                         await context.Response.WriteAsync("OK");

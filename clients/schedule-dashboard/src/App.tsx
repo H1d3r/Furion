@@ -31,17 +31,6 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    window.addEventListener("beforeunload", function (event) {
-      if (auth.user) {
-        const message = "您确定要离开此页面吗？您的更改可能不会被保存。";
-        event.returnValue = message;
-
-        return message;
-      }
-    });
-  }, []);
-
   return (
     <Layout
       style={{
