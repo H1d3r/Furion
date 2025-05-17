@@ -53,4 +53,8 @@ export declare interface JobDetail {
    * 刷新时间
    */
   refreshDate?: Date | null;
+  /**
+   * 是否是临时作业
+   */
+  temporary?: boolean;
 }

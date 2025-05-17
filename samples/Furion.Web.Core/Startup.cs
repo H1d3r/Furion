@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Furion.Web.Core;
 
@@ -132,6 +133,8 @@ public sealed class Startup : AppStartup
 
             options.AddJob<TestCancelJob>();
             options.AddJob(JobBuilder.Create<TestJob>().SetDescription("测试描述"), Triggers.PeriodHours(2));
+
+            options.AddJob<TestJob>(builder => builder.SetTemporary(), Triggers.PeriodMinutes(1));
         });
 
         // 新版本任务队列
@@ -174,6 +177,10 @@ public sealed class Startup : AppStartup
         app.UseScheduleUI(options =>
         {
             options.Title = "定时任务看板";
+            options.LoginHandle = async (username, password) =>
+            {
+                return await Task.FromResult(username == "furion" && string.IsNullOrWhiteSpace(password));
+            };
         });
 
         app.UseRouting();

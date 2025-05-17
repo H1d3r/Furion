@@ -73,4 +73,12 @@ public sealed class ScheduleUIOptions
     /// 是否默认展开所有作业
     /// </summary>
     public bool DefaultExpandAllJobs { get; set; } = false;
+
+    /// <summary>
+    /// 登录逻辑
+    /// </summary>
+    public Func<string, string, Task<bool>> LoginHandle { get; set; } = (username, password) =>
+    {
+        return Task.FromResult(username == "schedule" && string.IsNullOrWhiteSpace(password));
+    };
 }
