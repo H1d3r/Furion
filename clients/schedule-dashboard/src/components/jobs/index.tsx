@@ -25,6 +25,7 @@ import { JobDetail, Scheduler } from "../../types";
 import apiconfig from "./apiconfig";
 import columns from "./columns";
 import RenderValue from "./render-value";
+import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 
 const style = {
   boxShadow: "var(--semi-shadow-elevated)",
@@ -191,6 +192,16 @@ export default function Jobs() {
                 ) : (
                   <span></span>
                 )}
+                <FlipClockCountdown
+                  to={(expandData[10] as any).ovalue}
+                  labels={["天", "时", "分", "秒"]}
+                  labelStyle={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                  }}
+                  digitBlockStyle={{ width: 20, height: 30, fontSize: 15 }}
+                  hideOnComplete={false}
+                />
                 <Dropdown
                   render={
                     <Dropdown.Menu>

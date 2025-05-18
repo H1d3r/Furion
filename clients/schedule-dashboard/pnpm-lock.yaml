@@ -14,6 +14,9 @@ importers:
       '@douyinfe/semi-ui':
         specifier: ^2.79.0
         version: 2.79.0(acorn@8.14.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@leenguyen/react-flip-clock-countdown':
+        specifier: ^1.6.1
+        version: 1.6.1(react@18.3.1)
       '@testing-library/jest-dom':
         specifier: ^5.16.5
         version: 5.17.0
@@ -1073,6 +1076,12 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
+
+  '@leenguyen/react-flip-clock-countdown@1.6.1':
+    resolution: {integrity: sha512-4ZgUuFu+3TVH8sQgSFwrePUUTKrVXVjjYTyzrpPQu0ig4N1qZ3deK0s0Y1L4HFd8xuItRcS4SVR0MK5GS3j4Rw==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      react: '>= 16.13.0'
 
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
@@ -7474,6 +7483,11 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  '@leenguyen/react-flip-clock-countdown@1.6.1(react@18.3.1)':
+    dependencies:
+      clsx: 1.2.1
+      react: 18.3.1
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
