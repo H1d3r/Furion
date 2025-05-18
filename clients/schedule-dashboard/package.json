@@ -6,6 +6,7 @@
   "dependencies": {
     "@douyinfe/semi-icons": "^2.79.0",
     "@douyinfe/semi-ui": "^2.79.0",
+    "@leenguyen/react-flip-clock-countdown": "^1.6.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",

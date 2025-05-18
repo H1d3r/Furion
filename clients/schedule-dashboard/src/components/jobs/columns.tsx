@@ -31,6 +31,7 @@ import {
 import apiconfig from "./apiconfig";
 import RenderValue from "./render-value";
 import StatusText from "./state-text";
+import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 
 const style = {
   padding: "10px",
@@ -99,9 +100,27 @@ const columns: ColumnProps<JobDetail>[] = [
                   {(jobDetail.triggers?.length || 0) === 0 && "暂无作业触发器"}
                   {jobDetail.triggers?.map((t, i) => (
                     <div key={t.triggerId}>
+                      <div
+                        style={{ display: "flex", justifyContent: "center" }}
+                      >
+                        <FlipClockCountdown
+                          to={t.nextRunTime!}
+                          labels={["天", "时", "分", "秒"]}
+                          labelStyle={{
+                            fontSize: 12,
+                            fontWeight: 500,
+                          }}
+                          digitBlockStyle={{
+                            width: 20,
+                            height: 30,
+                            fontSize: 15,
+                          }}
+                          hideOnComplete={false}
+                        />
+                      </div>
                       <Descriptions data={getData(t)} />
                       {i !== jobDetail.triggers?.length! - 1 && (
-                        <Divider margin="8px" />
+                        <Divider margin="8px" style={{ marginBottom: 16 }} />
                       )}
                     </div>
                   ))}
