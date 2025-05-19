@@ -138,6 +138,9 @@ const columns: ColumnProps<JobDetail>[] = [
             >
               {text}
             </Paragraph>
+            <Typography.Text type="secondary" style={{ marginLeft: 5 }}>
+              ({jobDetail.triggers?.length || 0})
+            </Typography.Text>
           </Popover>
           {(jobDetail.triggers?.length || 0) > 0 &&
             jobDetail.triggers?.filter((u) => u.status === 3).length ===
