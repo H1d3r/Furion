@@ -26,6 +26,7 @@
 using Furion.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Net.Http.Headers;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Mime;
@@ -82,7 +83,7 @@ public sealed partial class HttpRequestBuilder
         ArgumentNullException.ThrowIfNull(HttpMethod);
 
         // 构建最终的请求地址
-        var finalRequestUri = BuildFinalRequestUri(clientBaseAddress, httpRemoteOptions.Configuration);
+        var finalRequestUri = BuildFinalRequestUri(clientBaseAddress, httpRemoteOptions);
 
         // 初始化 HttpRequestMessage 实例
         var httpRequestMessage = new HttpRequestMessage(HttpMethod, finalRequestUri);
@@ -121,18 +122,19 @@ public sealed partial class HttpRequestBuilder
     ///     构建最终的请求地址
     /// </summary>
     /// <param name="clientBaseAddress">客户端基地址</param>
-    /// <param name="configuration">
-    ///     <see cref="IConfiguration" />
+    /// <param name="httpRemoteOptions">
+    ///     <see cref="HttpRemoteOptions" />
     /// </param>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string BuildFinalRequestUri(Uri? clientBaseAddress, IConfiguration? configuration)
+    internal string BuildFinalRequestUri(Uri? clientBaseAddress, HttpRemoteOptions httpRemoteOptions)
     {
         // 替换路径或配置参数，处理非标准 HTTP URI 的应用场景（如 {url}），此时需优先解决路径或配置参数问题
         var processedRequestUri = RequestUri is null or { OriginalString: null }
             ? RequestUri
-            : new Uri(ReplacePlaceholders(RequestUri.OriginalString, configuration), UriKind.RelativeOrAbsolute);
+            : new Uri(ReplacePlaceholders(RequestUri.OriginalString, httpRemoteOptions.Configuration),
+                UriKind.RelativeOrAbsolute);
 
         // 初始化带局部 BaseAddress 的请求地址
         var requestUriWithBaseAddress = BaseAddress is null
@@ -158,13 +160,13 @@ public sealed partial class HttpRequestBuilder
         AppendPathSegments(uriBuilder);
 
         // 追加查询参数
-        AppendQueryParameters(uriBuilder);
+        AppendQueryParameters(uriBuilder, httpRemoteOptions.UrlParameterFormatter);
 
         // 追加片段标识符
         AppendFragment(uriBuilder);
 
         // 替换路径或配置参数
-        var finalRequestUri = ReplacePlaceholders(uriBuilder.Uri.ToString(), configuration);
+        var finalRequestUri = ReplacePlaceholders(uriBuilder.Uri.ToString(), httpRemoteOptions.Configuration);
 
         return finalRequestUri;
     }
@@ -223,7 +225,10 @@ public sealed partial class HttpRequestBuilder
     /// <param name="uriBuilder">
     ///     <see cref="UriBuilder" />
     /// </param>
-    internal void AppendQueryParameters(UriBuilder uriBuilder)
+    /// <param name="formatter">
+    ///     <see cref="IUrlParameterFormatter" />
+    /// </param>
+    internal void AppendQueryParameters(UriBuilder uriBuilder, IUrlParameterFormatter? formatter)
     {
         // 空检查
         if ((QueryParameters is null || QueryParameters.Count == 0) &&
@@ -235,11 +240,19 @@ public sealed partial class HttpRequestBuilder
         // 解析 URL 中的查询字符串为键值对列表
         var queryParameters = uriBuilder.Query.ParseFormatKeyValueString(['&'], '?');
 
+        // 初始化 URL 参数格式化委托
+        Func<object?, UrlFormattingContext, string?> format = formatter is not null
+            ? formatter.Format
+            : (value, _) => value?.ToCultureString(CultureInfo.InvariantCulture);
+
+        // 初始化 URL 参数格式化上下文
+        var urlFormattingContext = new UrlFormattingContext();
+
         // 追加查询参数
         foreach (var (key, values) in QueryParameters.ConcatIgnoreNull([]))
         {
             queryParameters.AddRange(values.Select(value =>
-                new KeyValuePair<string, string?>(key, value)));
+                new KeyValuePair<string, string?>(key, format(value, urlFormattingContext))));
         }
 
         // 构建最终的查询参数
@@ -466,7 +479,7 @@ public sealed partial class HttpRequestBuilder
         }
 
         httpRequestMessage.Headers.TryAddWithoutValidation(HeaderNames.Cookie,
-            string.Join("; ", Cookies.Select(u => $"{u.Key}={u.Value.EscapeDataString(true)}")));
+            string.Join("; ", Cookies.Select(u => $"{u.Key}={u.Value?.EscapeDataString(true)}")));
     }
 
     /// <summary>
