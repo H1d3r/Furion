@@ -715,6 +715,14 @@ public class TestModuleServices : IDynamicApiController
         );
         return new JsonResult(result);
     }
+
+    public IActionResult 测试AES的ECB加密()
+    {
+        var hash = AESEncryption.Encrypt("{\"x\":155,\"y\":5}", "GSjMjXQkRHIDH3m0", mode: System.Security.Cryptography.CipherMode.ECB);
+        var data = AESEncryption.Decrypt("7wpip9V5Zxc0lK8fQJ82mA==", "GSjMjXQkRHIDH3m0", mode: System.Security.Cryptography.CipherMode.ECB);
+
+        return new JsonResult(hash + "------" + data);
+    }
 }
 
 
