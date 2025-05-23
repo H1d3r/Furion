@@ -60,27 +60,24 @@ public class AESEncryption
             if (iv != null && iv.Length != 16) throw new ArgumentException("The IV length must be 16 bytes.");
         }
 
-        using var encryptor = aesAlg.CreateEncryptor();
-        using var msEncrypt = new MemoryStream();
-        using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
-        using (var swEncrypt = new StreamWriter(csEncrypt, Encoding.UTF8))
+        byte[] cipherBytes;
+        using (var encryptor = aesAlg.CreateEncryptor())
         {
-            swEncrypt.Write(text);
+            var plainBytes = Encoding.UTF8.GetBytes(text);
+            cipherBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
         }
-
-        var encryptedContent = msEncrypt.ToArray();
 
         // 仅在未提供 IV 时拼接 IV
         if (mode != CipherMode.ECB && iv == null)
         {
-            var result = new byte[aesAlg.IV.Length + encryptedContent.Length];
+            var result = new byte[aesAlg.IV.Length + cipherBytes.Length];
             Buffer.BlockCopy(aesAlg.IV, 0, result, 0, aesAlg.IV.Length);
-            Buffer.BlockCopy(encryptedContent, 0, result, aesAlg.IV.Length, encryptedContent.Length);
+            Buffer.BlockCopy(cipherBytes, 0, result, aesAlg.IV.Length, cipherBytes.Length);
             return Convert.ToBase64String(result);
         }
 
         // 如果是 ECB 模式，直接返回密文的 Base64 编码
-        return Convert.ToBase64String(encryptedContent);
+        return Convert.ToBase64String(cipherBytes);
     }
 
     /// <summary>
@@ -125,11 +122,26 @@ public class AESEncryption
         }
 
         using var decryptor = aesAlg.CreateDecryptor();
-        using var msDecrypt = new MemoryStream(fullCipher);
-        using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
-        using var srDecrypt = new StreamReader(csDecrypt, Encoding.UTF8);
+        var plainBytes = decryptor.TransformFinalBlock(fullCipher, 0, fullCipher.Length);
 
-        return srDecrypt.ReadToEnd();
+        // 手动移除 PKCS7 填充
+        int padCount = plainBytes[^1];
+        if (padCount > 0 && padCount <= 16)
+        {
+            var validPadding = true;
+            for (var i = 1; i <= padCount; i++)
+            {
+                if (plainBytes[^i] != padCount)
+                {
+                    validPadding = false;
+                    break;
+                }
+            }
+            if (validPadding)
+                Array.Resize(ref plainBytes, plainBytes.Length - padCount);
+        }
+
+        return Encoding.UTF8.GetString(plainBytes);
     }
 
     /// <summary>
@@ -144,7 +156,6 @@ public class AESEncryption
     /// <returns>加密后的字节数组</returns>
     public static byte[] Encrypt(byte[] bytes, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7, bool isBase64 = false)
     {
-        // 验证密钥长度
         var bKey = !isBase64 ? Encoding.UTF8.GetBytes(skey) : Convert.FromBase64String(skey);
         if (bKey.Length != 16 && bKey.Length != 24 && bKey.Length != 32) throw new ArgumentException("The key length must be 16, 24, or 32 bytes.");
 
@@ -155,29 +166,23 @@ public class AESEncryption
 
         if (mode != CipherMode.ECB)
         {
-            aesAlg.IV = iv ?? GenerateRandomIV();
+            aesAlg.IV = iv ?? (mode == CipherMode.CBC ? GenerateRandomIV() : throw new ArgumentException("IV is required for CBC mode."));
             if (aesAlg.IV.Length != 16) throw new ArgumentException("The IV length must be 16 bytes.");
         }
 
-        using var memoryStream = new MemoryStream();
-        using (var cryptoStream = new CryptoStream(memoryStream, aesAlg.CreateEncryptor(), CryptoStreamMode.Write))
+        byte[] cipherBytes;
+        using (var encryptor = aesAlg.CreateEncryptor())
         {
-            cryptoStream.Write(bytes, 0, bytes.Length);
-            cryptoStream.FlushFinalBlock();
+            cipherBytes = encryptor.TransformFinalBlock(bytes, 0, bytes.Length);
         }
 
-        var encryptedContent = memoryStream.ToArray();
+        if (mode == CipherMode.ECB)
+            return cipherBytes;
 
-        // 仅在未提供 IV 时拼接 IV
-        if (mode != CipherMode.ECB && iv == null)
-        {
-            var result = new byte[aesAlg.IV.Length + encryptedContent.Length];
-            Buffer.BlockCopy(aesAlg.IV, 0, result, 0, aesAlg.IV.Length);
-            Buffer.BlockCopy(encryptedContent, 0, result, aesAlg.IV.Length, encryptedContent.Length);
-            return result;
-        }
-
-        return encryptedContent;
+        var result = new byte[aesAlg.IV.Length + cipherBytes.Length];
+        Buffer.BlockCopy(aesAlg.IV, 0, result, 0, aesAlg.IV.Length);
+        Buffer.BlockCopy(cipherBytes, 0, result, aesAlg.IV.Length, cipherBytes.Length);
+        return result;
     }
 
     /// <summary>
@@ -192,7 +197,6 @@ public class AESEncryption
     /// <returns></returns>
     public static byte[] Decrypt(byte[] bytes, string skey, byte[] iv = null, CipherMode mode = CipherMode.CBC, PaddingMode padding = PaddingMode.PKCS7, bool isBase64 = false)
     {
-        // 验证密钥长度
         var bKey = !isBase64 ? Encoding.UTF8.GetBytes(skey) : Convert.FromBase64String(skey);
         if (bKey.Length != 16 && bKey.Length != 24 && bKey.Length != 32) throw new ArgumentException("The key length must be 16, 24, or 32 bytes.");
 
@@ -201,28 +205,48 @@ public class AESEncryption
         aesAlg.Mode = mode;
         aesAlg.Padding = padding;
 
+        byte[] cipherBytes;
         if (mode != CipherMode.ECB)
         {
             if (iv == null)
             {
-                // 提取IV
                 if (bytes.Length < 16) throw new ArgumentException("The ciphertext length is insufficient to extract the IV.");
-                iv = bytes.Take(16).ToArray();
-                bytes = bytes.Skip(16).ToArray();
+                iv = [.. bytes.Take(16)];
+                cipherBytes = [.. bytes.Skip(16)];
             }
             else
             {
                 if (iv.Length != 16) throw new ArgumentException("The IV length must be 16 bytes.");
+                cipherBytes = bytes;
             }
             aesAlg.IV = iv;
         }
+        else
+        {
+            cipherBytes = bytes;
+        }
 
-        using var memoryStream = new MemoryStream(bytes);
-        using var cryptoStream = new CryptoStream(memoryStream, aesAlg.CreateDecryptor(), CryptoStreamMode.Read);
-        using var originalStream = new MemoryStream();
+        using var decryptor = aesAlg.CreateDecryptor();
+        var plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
 
-        cryptoStream.CopyTo(originalStream);
-        return originalStream.ToArray();
+        // 手动移除 PKCS7 填充
+        int padCount = plainBytes[^1];
+        if (padCount > 0 && padCount <= 16)
+        {
+            var validPadding = true;
+            for (var i = 1; i <= padCount; i++)
+            {
+                if (plainBytes[^i] != padCount)
+                {
+                    validPadding = false;
+                    break;
+                }
+            }
+            if (validPadding)
+                Array.Resize(ref plainBytes, plainBytes.Length - padCount);
+        }
+
+        return plainBytes;
     }
 
     /// <summary>
