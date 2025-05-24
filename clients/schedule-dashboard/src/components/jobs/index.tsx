@@ -13,6 +13,7 @@ import {
   Table,
   Toast,
   Tooltip,
+  Typography,
 } from "@douyinfe/semi-ui";
 import { Data } from "@douyinfe/semi-ui/lib/es/descriptions";
 import {
@@ -287,25 +288,42 @@ export default function Jobs() {
     }
   };
 
+  var invalidJobCount = data.filter(
+    (u) => (u.triggers?.length || 0) === 0
+  ).length;
+
   return (
-    <Table
-      rowKey="jobId"
-      columns={columns}
-      dataSource={data}
-      onRow={handleRow}
-      expandedRowRender={expandRowRender}
-      pagination={false}
-      resizable
-      bordered
-      expandRowByClick
-      expandAllRows={apiconfig.defaultExpandAllJobs === "true"}
-      rowExpandable={(jobDetail) =>
-        !!(
-          jobDetail?.jobId &&
-          jobs.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)?.triggers
-            ?.length !== 0
-        )
-      }
-    />
+    <>
+      <Table
+        rowKey="jobId"
+        columns={columns}
+        dataSource={data}
+        onRow={handleRow}
+        expandedRowRender={expandRowRender}
+        pagination={false}
+        resizable
+        bordered
+        expandRowByClick
+        expandAllRows={apiconfig.defaultExpandAllJobs === "true"}
+        rowExpandable={(jobDetail) =>
+          !!(
+            jobDetail?.jobId &&
+            jobs.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)?.triggers
+              ?.length !== 0
+          )
+        }
+      />
+      <Typography.Paragraph type="secondary" style={{ padding: 10 }}>
+        共有 <b>{data.length}</b> 项作业任务
+        {invalidJobCount > 0 ? (
+          <>
+            ， 其中 <b>{invalidJobCount}</b> 项未设置触发器
+          </>
+        ) : (
+          <></>
+        )}
+        。
+      </Typography.Paragraph>
+    </>
   );
 }

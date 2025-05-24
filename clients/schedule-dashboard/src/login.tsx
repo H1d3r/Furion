@@ -1,15 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth";
 import styles from "./login.module.css";
-import {
-  Button,
-  Checkbox,
-  Form,
-  Input,
-  Space,
-  Toast,
-  Typography,
-} from "@douyinfe/semi-ui";
+import { Button, Input, Space, Toast, Typography } from "@douyinfe/semi-ui";
 import apiconfig from "./components/jobs/apiconfig";
 import useFetch from "use-http";
 
