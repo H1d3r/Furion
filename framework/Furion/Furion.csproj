@@ -33,4 +33,11 @@
 		<ProjectReference Include="$(ProjectDir)..\Furion.Extras.DependencyModel.CodeAnalysis\Furion.Extras.DependencyModel.CodeAnalysis.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Content Include="readme.txt">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</Content>
+	</ItemGroup>
+
 </Project>
