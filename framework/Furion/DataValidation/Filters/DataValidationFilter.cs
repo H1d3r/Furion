@@ -212,9 +212,6 @@ public sealed class DataValidationFilter : IAsyncActionFilter, IOrderedFilter
             finalContext.Result = unifyResult.OnValidateFailed(context, validationMetadata);
         }
 
-        // 打印验证失败信息
-        App.PrintToMiniProfiler("validation", "Failed", $"Validation Failed:\r\n\r\n{validationMetadata.Message}", true);
-
         return true;
     }
 }

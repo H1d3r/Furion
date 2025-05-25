@@ -9,14 +9,12 @@
 	<ItemGroup>
 		<None Remove="FriendlyException\Assets\error.html" />
 		<None Remove="Schedule\Dashboard\frontend\**\*" />
-		<None Remove="SpecificationDocument\Assets\index-mini-profiler.html" />
 		<None Remove="SpecificationDocument\Assets\index.html" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<EmbeddedResource Include="FriendlyException\Assets\error.html" />
 		<EmbeddedResource Include="Schedule\Dashboard\frontend\**\*" />
-		<EmbeddedResource Include="SpecificationDocument\Assets\index-mini-profiler.html" />
 		<EmbeddedResource Include="SpecificationDocument\Assets\index.html" />
 	</ItemGroup>
 
@@ -25,7 +23,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MiniProfiler.AspNetCore.Mvc" Version="4.5.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.2" />
 	</ItemGroup>
 

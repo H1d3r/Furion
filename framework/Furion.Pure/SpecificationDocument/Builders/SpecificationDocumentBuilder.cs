@@ -631,15 +631,15 @@ public static class SpecificationDocumentBuilder
         var thisType = typeof(SpecificationDocumentBuilder);
         var thisAssembly = thisType.Assembly;
 
-        // 判断是否启用 MiniProfile
-        var customIndex = $"{Reflect.GetAssemblyName(thisAssembly)}{thisType.Namespace.Replace(nameof(Furion), string.Empty)}.Assets.{(_appSettings.InjectMiniProfiler != true ? "index" : "index-mini-profiler")}.html";
+        // 获取自定义 Swagger 页面
+        var customIndex = $"{Reflect.GetAssemblyName(thisAssembly)}{thisType.Namespace.Replace(nameof(Furion), string.Empty)}.Assets.index.html";
         swaggerUIOptions.IndexStream = () =>
         {
             StringBuilder htmlBuilder;
             // 自定义首页模板参数
             var indexArguments = new Dictionary<string, string>
             {
-                {"%(VirtualPath)", _appSettings.VirtualPath }    // 解决二级虚拟目录 MiniProfiler 丢失问题
+                {"%(VirtualPath)", _appSettings.VirtualPath }
             };
 
             // 读取文件内容
