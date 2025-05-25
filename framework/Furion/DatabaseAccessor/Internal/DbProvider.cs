@@ -204,12 +204,7 @@ public static class DbProvider
     /// </summary>
     public static List<IInterceptor> GetDefaultInterceptors()
     {
-        return new List<IInterceptor>
-            {
-                new SqlConnectionProfilerInterceptor(),
-                new SqlCommandProfilerInterceptor(),
-                new DbContextSaveChangesInterceptor()
-            };
+        return new List<IInterceptor> { new DbContextSaveChangesInterceptor() };
     }
 
     /// <summary>
