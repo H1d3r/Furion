@@ -199,6 +199,7 @@ export default function Jobs() {
                   labelStyle={{
                     fontSize: 12,
                     fontWeight: 500,
+                    color: "#1c1f23cc",
                   }}
                   digitBlockStyle={{ width: 20, height: 30, fontSize: 15 }}
                   hideOnComplete={false}

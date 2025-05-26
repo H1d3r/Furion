@@ -17,7 +17,7 @@ import Paragraph from "@douyinfe/semi-ui/lib/es/typography/paragraph";
 import { useEffect, useState } from "react";
 import useFetch from "use-http";
 import { Trigger, TriggerTimeline } from "../../types";
-import { dayFromNow, dayTime } from "../../utils";
+import { dayFromNow, dayTime, formatDuration } from "../../utils";
 import apiconfig from "./apiconfig";
 import StatusText from "./state-text";
 
@@ -195,9 +195,11 @@ export default function RenderValue(props: {
      */
     preview = (
       <>
-        <Tag color="lime" type="light">
-          {value}ms
-        </Tag>
+        <Tooltip content={<>{value}ms</>}>
+          <Tag color="lime" type="light">
+            {formatDuration(Number(value))}
+          </Tag>
+        </Tooltip>
       </>
     );
   } else if (
@@ -360,9 +362,14 @@ function LogPanel(props: {
               {timeline.numberOfRuns}
             </Tag>{" "}
             次运行，耗时{" "}
-            <Tag color="lime" type="light">
-              {timeline.elapsedTime}ms
-            </Tag>{" "}
+            <Tooltip
+              content={<>{timeline.elapsedTime}ms</>}
+              zIndex={10000000001}
+            >
+              <Tag color="lime" type="light">
+                {formatDuration(timeline.elapsedTime!)}
+              </Tag>
+            </Tooltip>{" "}
             {timeline.mode === 1 && (
               <Tag color="yellow" type="solid">
                 手动
