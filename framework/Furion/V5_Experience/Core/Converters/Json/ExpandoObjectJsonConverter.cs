@@ -33,7 +33,7 @@ namespace Furion.Converters.Json;
 /// <summary>
 ///     <see cref="ExpandoObject" /> 类型 JSON 序列化转换器
 /// </summary>
-public sealed class ExpandoObjectJsonConverter : JsonConverter<ExpandoObject>
+public class ExpandoObjectJsonConverter : JsonConverter<ExpandoObject>
 {
     /// <inheritdoc />
     public override ExpandoObject? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>

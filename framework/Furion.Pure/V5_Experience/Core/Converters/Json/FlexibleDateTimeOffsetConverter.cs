@@ -23,24 +23,51 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace Furion.Converters.Json;
 
 /// <summary>
 ///     <see cref="DateTimeOffset" /> JSON 序列化转换器
 /// </summary>
-/// <remarks>在不符合 <c>ISO 8601-1:2019</c> 格式的 <see cref="DateTimeOffset" /> 时间使用 <c>DateTimeOffset.Parse</c> 作为回退。</remarks>
-public sealed class DateTimeOffsetConverterUsingDateTimeOffsetParseAsFallback : JsonConverter<DateTimeOffset>
+public partial class FlexibleDateTimeOffsetConverter : JsonConverter<DateTimeOffset>
 {
+    private static readonly DateTimeOffset s_epoch = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly Regex s_regex = Regex();
+
     /// <inheritdoc />
     public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        // 尝试获取 ISO 8601-1:2019 格式时间
-        if (!reader.TryGetDateTimeOffset(out var value))
+        var formatted = reader.GetString()!;
+        var match = s_regex.Match(formatted);
+
+        // 尝试获取 Unix epoch 日期格式
+        // 参考文献：https://learn.microsoft.com/zh-cn/dotnet/standard/datetime/system-text-json-support#use-unix-epoch-date-format
+        if (match.Success &&
+            long.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture,
+                out var unixTime) &&
+            int.TryParse(match.Groups[3].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var hours) &&
+            int.TryParse(match.Groups[4].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minutes))
         {
-            value = DateTimeOffset.Parse(reader.GetString()!);
+            var sign = match.Groups[2].Value[0] == '+' ? 1 : -1;
+            TimeSpan utcOffset = new(hours * sign, minutes * sign, 0);
+
+            return s_epoch.AddMilliseconds(unixTime).ToOffset(utcOffset);
+        }
+
+        // 尝试获取日期
+        if (reader.TryGetDateTimeOffset(out var value))
+        {
+            return value;
+        }
+
+        // 尝试获取 ISO 8601-1:2019 日期格式
+        if (!DateTimeOffset.TryParse(formatted, out value))
+        {
+            throw new JsonException();
         }
 
         return value;
@@ -49,4 +76,7 @@ public sealed class DateTimeOffsetConverterUsingDateTimeOffsetParseAsFallback : 
     /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options) =>
         JsonSerializer.Serialize(writer, value);
+
+    [GeneratedRegex(@"^/Date\(([+-]*\d+)([+-])(\d{2})(\d{2})\)/$", RegexOptions.CultureInvariant)]
+    private static partial Regex Regex();
 }
