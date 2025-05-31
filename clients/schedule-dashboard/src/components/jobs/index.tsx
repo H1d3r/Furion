@@ -2,6 +2,7 @@ import {
   IconDelete,
   IconMore,
   IconPlayCircle,
+  IconSearch,
   IconStop,
   IconVigoLogo,
 } from "@douyinfe/semi-icons";
@@ -9,8 +10,11 @@ import {
   Descriptions,
   Divider,
   Dropdown,
+  Input,
   Popconfirm,
+  Space,
   Table,
+  Tag,
   Toast,
   Tooltip,
   Typography,
@@ -20,7 +24,13 @@ import {
   ExpandedRowRender,
   OnRow,
 } from "@douyinfe/semi-ui/lib/es/table/interface";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import useFetch from "use-http";
 import { JobDetail, Scheduler } from "../../types";
 import apiconfig from "./apiconfig";
@@ -37,11 +47,48 @@ const style = {
   width: "350px",
 };
 
+function getOValueByData(key: string, expandData: Data[]) {
+  var item = expandData.find((u) => u.key === key) as any;
+  return item?.ovalue || null;
+}
+
 export default function Jobs() {
   /**
    * 作业状态
    */
   const [jobs, setJobs] = useState<Scheduler[]>([]);
+  const [words, setWords] = useState<string>();
+  const deferredWords = useDeferredValue(words);
+
+  const jobList = useMemo(() => {
+    if (!deferredWords || deferredWords.trim().length === 0) {
+      return jobs;
+    }
+
+    const trimWords = deferredWords.trim();
+
+    return jobs.filter(
+      (u) =>
+        (u.jobDetail?.jobId ?? "").indexOf(trimWords) > -1 ||
+        (u.jobDetail?.groupName ?? "").indexOf(trimWords) > -1 ||
+        (u.jobDetail?.description ?? "").indexOf(trimWords) > -1 ||
+        (u.jobDetail?.jobType ?? "").indexOf(trimWords) > -1 ||
+        (u.jobDetail?.assemblyName ?? "").indexOf(trimWords) > -1 ||
+        (u.jobDetail?.properties ?? "").indexOf(trimWords) > -1 ||
+        (u.jobDetail?.concurrent === true ? "并行" : "串行").indexOf(
+          trimWords
+        ) > -1 ||
+        // ==== 触发器搜索
+        (u.triggers || []).findIndex(
+          (t) =>
+            (t.triggerId ?? "").indexOf(trimWords) > -1 ||
+            (t.description ?? "").indexOf(trimWords) > -1 ||
+            (t.triggerType ?? "").indexOf(trimWords) > -1 ||
+            (t.assemblyName ?? "").indexOf(trimWords) > -1 ||
+            (t.args ?? "").indexOf(trimWords) > -1
+        ) > -1
+    );
+  }, [jobs, deferredWords]);
 
   /**
    * 初始化请求配置
@@ -91,9 +138,9 @@ export default function Jobs() {
    */
   const data: JobDetail[] = useMemo(() => {
     const jobDetails: JobDetail[] = [];
-    if (!jobs || jobs.length === 0) return jobDetails;
+    if (!jobList || jobList.length === 0) return jobDetails;
 
-    for (const scheduler of jobs) {
+    for (const scheduler of jobList) {
       let jobDetail = scheduler.jobDetail!;
       jobDetail.triggers = scheduler.triggers;
       jobDetail.refreshDate = new Date();
@@ -109,7 +156,7 @@ export default function Jobs() {
     }
 
     return jobDetails;
-  }, [jobs]);
+  }, [jobList]);
 
   useEffect(() => {
     loadJobs();
@@ -131,7 +178,9 @@ export default function Jobs() {
   const expandRowRender: ExpandedRowRender<JobDetail> = useCallback(
     (jobDetail, index) => {
       // 查找作业计划
-      var scheduler = jobs.find((u) => u.jobDetail?.jobId === jobDetail?.jobId);
+      var scheduler = jobList.find(
+        (u) => u.jobDetail?.jobId === jobDetail?.jobId
+      );
       if (!scheduler) return <></>;
 
       // 构建触发器列表
@@ -161,9 +210,9 @@ export default function Jobs() {
             <div
               style={style}
               key={
-                (expandData[0] as any).ovalue!.toString() +
+                getOValueByData("TriggerId", expandData).toString() +
                 "_" +
-                (expandData[1] as any).ovalue!.toString() +
+                getOValueByData("JobId", expandData).toString() +
                 index
               }
             >
@@ -176,15 +225,15 @@ export default function Jobs() {
                   justifyContent: "space-between",
                 }}
               >
-                {Number((expandData[6] as any).ovalue) === 3 ? (
+                {Number(getOValueByData("Status", expandData)) === 3 ? (
                   <Tooltip content="启动">
                     <IconPlayCircle
                       style={{ color: "red", cursor: "pointer" }}
                       size="large"
                       onClick={() =>
                         callAction(
-                          (expandData[1] as any).ovalue!.toString(),
-                          (expandData[0] as any).ovalue!.toString(),
+                          getOValueByData("JobId", expandData).toString(),
+                          getOValueByData("TriggerId", expandData).toString(),
                           "start"
                         )
                       }
@@ -194,7 +243,7 @@ export default function Jobs() {
                   <span></span>
                 )}
                 <FlipClockCountdown
-                  to={(expandData[10] as any).ovalue}
+                  to={getOValueByData("NextRunTime", expandData)}
                   labels={["天", "时", "分", "秒"]}
                   labelStyle={{
                     fontSize: 12,
@@ -210,8 +259,8 @@ export default function Jobs() {
                       <Dropdown.Item
                         onClick={() =>
                           callAction(
-                            (expandData[1] as any).ovalue!.toString(),
-                            (expandData[0] as any).ovalue!.toString(),
+                            getOValueByData("JobId", expandData).toString(),
+                            getOValueByData("TriggerId", expandData).toString(),
                             "start"
                           )
                         }
@@ -221,8 +270,8 @@ export default function Jobs() {
                       <Dropdown.Item
                         onClick={() =>
                           callAction(
-                            (expandData[1] as any).ovalue!.toString(),
-                            (expandData[0] as any).ovalue!.toString(),
+                            getOValueByData("JobId", expandData).toString(),
+                            getOValueByData("TriggerId", expandData).toString(),
                             "pause"
                           )
                         }
@@ -233,14 +282,20 @@ export default function Jobs() {
                         <Popconfirm
                           zIndex={10000000}
                           title={
-                            "确定删除当前作业触发器 [" +
-                            (expandData[0] as any).ovalue!.toString() +
-                            "] 吗？"
+                            "确定要删除当前触发器 [" +
+                            getOValueByData(
+                              "TriggerId",
+                              expandData
+                            ).toString() +
+                            "]？"
                           }
                           onConfirm={() =>
                             callAction(
-                              (expandData[1] as any).ovalue!.toString(),
-                              (expandData[0] as any).ovalue!.toString(),
+                              getOValueByData("JobId", expandData).toString(),
+                              getOValueByData(
+                                "TriggerId",
+                                expandData
+                              ).toString(),
                               "remove"
                             )
                           }
@@ -251,13 +306,13 @@ export default function Jobs() {
                       <Dropdown.Item
                         onClick={() =>
                           callAction(
-                            (expandData[1] as any).ovalue!.toString(),
-                            (expandData[0] as any).ovalue!.toString(),
+                            getOValueByData("JobId", expandData).toString(),
+                            getOValueByData("TriggerId", expandData).toString(),
                             "run"
                           )
                         }
                       >
-                        <IconVigoLogo size="extra-large" /> 立即执行
+                        <IconVigoLogo size="extra-large" /> 手动执行
                       </Dropdown.Item>
                     </Dropdown.Menu>
                   }
@@ -273,7 +328,7 @@ export default function Jobs() {
         </div>
       );
     },
-    [jobs]
+    [jobList]
   );
 
   const handleRow: OnRow<JobDetail> = (jobDetail, index) => {
@@ -294,7 +349,15 @@ export default function Jobs() {
   ).length;
 
   return (
-    <>
+    <div>
+      <Input
+        prefix={<IconSearch />}
+        showClear
+        placeholder="搜索关键字..."
+        value={words}
+        onChange={(val) => setWords(val)}
+        autoFocus
+      />
       <Table
         rowKey="jobId"
         columns={columns}
@@ -309,8 +372,8 @@ export default function Jobs() {
         rowExpandable={(jobDetail) =>
           !!(
             jobDetail?.jobId &&
-            jobs.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)?.triggers
-              ?.length !== 0
+            jobList.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)
+              ?.triggers?.length !== 0
           )
         }
       />
@@ -325,6 +388,6 @@ export default function Jobs() {
         )}
         。
       </Typography.Paragraph>
-    </>
+    </div>
   );
 }
