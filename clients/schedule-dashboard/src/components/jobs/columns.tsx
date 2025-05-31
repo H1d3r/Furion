@@ -97,7 +97,7 @@ const columns: ColumnProps<JobDetail>[] = [
                   </>
                 )}
                 <div style={style}>
-                  {(jobDetail.triggers?.length || 0) === 0 && "暂无作业触发器"}
+                  {(jobDetail.triggers?.length || 0) === 0 && "暂无触发器"}
                   {jobDetail.triggers?.map((t, i) => (
                     <div key={t.triggerId}>
                       <div
@@ -210,7 +210,7 @@ const columns: ColumnProps<JobDetail>[] = [
     width: 120,
     render: (text, jobDetail, index) => {
       return jobDetail.concurrent === true ? (
-        <Tooltip content={"默认执行方式，不会等待上一次任务完成"}>
+        <Tooltip content={"任务会按触发顺序立即执行，不会等待前一个任务完成。"}>
           <Tag color="red" type="light">
             并行
           </Tag>
@@ -218,7 +218,7 @@ const columns: ColumnProps<JobDetail>[] = [
       ) : (
         <Tooltip
           content={
-            "如果上一次任务未完成，则进入阻塞状态，并在下一次触发时间尝试执行"
+            "若前一个任务尚未完成，则当前任务将进入阻塞状态，并在下一个触发时间点尝试执行。"
           }
         >
           <Tag color="red" type="solid">
@@ -405,7 +405,7 @@ function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
           <Dropdown.Item>
             <Popconfirm
               zIndex={10000000}
-              title={"确定删除当前作业 [" + jobid + "] 吗？"}
+              title={"确定要删除当前作业 [" + jobid + "]？"}
               onConfirm={() => callAction("remove")}
             >
               <IconDelete size="small" /> &nbsp;删除
@@ -416,7 +416,7 @@ function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
             onClick={() => callAction("run")}
             disabled={!hasTrigger}
           >
-            <IconVigoLogo size="extra-large" /> 立即执行
+            <IconVigoLogo size="extra-large" /> 手动执行
           </Dropdown.Item>
         </Dropdown.Menu>
       }
