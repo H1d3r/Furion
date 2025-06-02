@@ -104,7 +104,7 @@ const columns: ColumnProps<JobDetail>[] = [
                         style={{ display: "flex", justifyContent: "center" }}
                       >
                         <FlipClockCountdown
-                          to={t.nextRunTime!}
+                          to={t.nextRunTime || null!}
                           labels={["天", "时", "分", "秒"]}
                           labelStyle={{
                             fontSize: 12,
