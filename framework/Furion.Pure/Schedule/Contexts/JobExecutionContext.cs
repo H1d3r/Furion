@@ -129,7 +129,7 @@ public abstract class JobExecutionContext
     /// 获取作业执行过程中传递的数据
     /// </summary>
     /// <typeparam name="T">目标类型</typeparam>
-    /// <returns><typeparamref name="T"/></returns>
+    /// <returns><see cref="IEnumerable{T}"/></returns>
     public IEnumerable<T> GetItems<T>()
     {
         return Items.Values.OfType<T>();
