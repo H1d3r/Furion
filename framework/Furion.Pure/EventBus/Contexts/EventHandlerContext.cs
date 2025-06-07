@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Shapeless;
 using System.Reflection;
 using System.Text.Json;
 
@@ -92,6 +93,11 @@ public abstract class EventHandlerContext
             {
                 PropertyNameCaseInsensitive = true
             });
+        }
+        // 临时解决方案（不应依赖 Clay）
+        else if (typeof(T) == typeof(Clay))
+        {
+            return (T)(object)Clay.Parse(Source.Payload);
         }
         else
         {
