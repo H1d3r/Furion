@@ -216,6 +216,12 @@ internal sealed class EventBusHostedService : BackgroundService
         // 从事件存储器中读取一条
         var eventSource = await _eventSourceStorer.ReadAsync(stoppingToken);
 
+        // 空检查
+        if (eventSource is null)
+        {
+            return;
+        }
+
         // 处理动态新增/删除事件订阅器
         if (eventSource is EventSubscribeOperateSource subscribeOperateSource)
         {

@@ -177,9 +177,16 @@ internal sealed partial class TaskQueue : ITaskQueue
     /// <returns><see cref="ValueTask"/></returns>
     public async ValueTask<TaskWrapper> DequeueAsync(CancellationToken cancellationToken)
     {
-        // 读取管道队列
-        var taskWrapper = await _queue.Reader.ReadAsync(cancellationToken);
-        return taskWrapper;
+        try
+        {
+            // 读取管道队列
+            return await _queue.Reader.ReadAsync(cancellationToken);
+        }
+        // 正常取消，服务停止时触发
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
     }
 
     /// <summary>
