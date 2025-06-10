@@ -26,7 +26,7 @@
 	</ItemGroup>
 
   <ItemGroup Condition="'$(net10)' == 'True' ">
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0-preview.4.25258.110" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.0-preview.5.25277.114" />
 	</ItemGroup>
 
 </Project>
