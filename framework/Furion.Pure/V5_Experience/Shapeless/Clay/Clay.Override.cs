@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Furion.Shapeless.Extensions;
 using System.Dynamic;
 using System.Reflection;
 using System.Text.Json;
@@ -172,6 +173,9 @@ public partial class Clay
         // 获取调用方法的泛型参数数组
         var typeArguments = _getCSharpInvokeMemberBinderTypeArguments.Value.Invoke(binder) as Type[];
 
+        // 标识符是否等于 ToClay
+        var isIdentifierEqualToToClay = identifier == nameof(ShapelessExtensions.ToClay);
+
         // 处理类型转换操作
         switch (typeArguments)
         {
@@ -179,6 +183,19 @@ public partial class Clay
             case { Length: 0 }:
                 switch (args)
                 {
+                    // 处理 ToClay() 拓展方法情况
+                    case { Length: 0 } when isIdentifierEqualToToClay:
+                    case [null] when isIdentifierEqualToToClay:
+                        result = this;
+                        return true;
+                    // 处理 ToClay(ClayOptions) 拓展方法情况
+                    case [ClayOptions clayOptions] when isIdentifierEqualToToClay:
+                        result = Rebuilt(clayOptions);
+                        return true;
+                    // 处理 ToClay(Action<ClayOptions>) 拓展方法情况
+                    case [Action<ClayOptions> configure] when isIdentifierEqualToToClay:
+                        result = Rebuilt(configure);
+                        return true;
                     // 处理 clay.Prop() 情况
                     case { Length: 0 }:
                         result = Contains(identifier);
