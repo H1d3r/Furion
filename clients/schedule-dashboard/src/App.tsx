@@ -130,12 +130,7 @@ function App() {
           backgroundColor: "var(--semi-color-bg-0)",
         }}
       >
-        <div
-          style={{
-            borderRadius: "10px",
-            border: "1px solid var(--semi-color-border)",
-          }}
-        >
+        <div>
           <Jobs />
         </div>
         <BackTop />
