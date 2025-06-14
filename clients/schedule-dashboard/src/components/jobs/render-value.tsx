@@ -1,18 +1,5 @@
-import {
-  IconActivity,
-  IconCalendarClock,
-  IconUploadError,
-} from "@douyinfe/semi-icons";
-import {
-  Button,
-  Modal,
-  Popover,
-  Tag,
-  TextArea,
-  Timeline,
-  Tooltip,
-  Typography,
-} from "@douyinfe/semi-ui";
+import { IconCalendarClock } from "@douyinfe/semi-icons";
+import { Button, Modal, Tag, Tooltip, Typography } from "@douyinfe/semi-ui";
 import Paragraph from "@douyinfe/semi-ui/lib/es/typography/paragraph";
 import { useEffect, useState } from "react";
 import useFetch from "use-http";
@@ -20,6 +7,7 @@ import { Trigger, TriggerTimeline } from "../../types";
 import { dayFromNow, dayTime, formatDuration } from "../../utils";
 import apiconfig from "./apiconfig";
 import StatusText from "./state-text";
+import Timelines from "./timelines";
 
 /**
  * 渲染触发器属性值
@@ -295,117 +283,7 @@ function LogPanel(props: {
       zIndex={10000000000}
       width={850}
     >
-      <Timeline mode="center">
-        {timelines.map((timeline, i) => (
-          <Timeline.Item
-            key={i}
-            time={
-              <div style={{ display: "inline-flex" }}>
-                {timeline.nextRunTime ? (
-                  <div style={{ display: "inline-block" }}>
-                    <Tag
-                      color={"light-green"}
-                      type={i === 0 ? "solid" : "light"}
-                    >
-                      {dayTime(timeline.nextRunTime).format(
-                        "YYYY/MM/DD HH:mm:ss"
-                      )}
-                      ({dayFromNow(timeline.nextRunTime)})
-                    </Tag>
-                    <div>NextRunTime</div>
-                  </div>
-                ) : (
-                  <StatusText value={Number(timeline.status)} />
-                )}
-                <span style={{ padding: "0 3px" }}>{"<"}-</span>
-                <div style={{ display: "inline-block" }}>
-                  <Tag color="grey" type="light">
-                    {dayTime(timeline.lastRunTime).format(
-                      "YYYY/MM/DD HH:mm:ss"
-                    )}
-                    ({dayFromNow(timeline.lastRunTime)})
-                  </Tag>
-                  <div>LastRunTime</div>
-                </div>
-              </div>
-            }
-            dot={
-              i === 0 ? <IconActivity style={{ color: "green" }} /> : undefined
-            }
-            extra={
-              <>
-                <span>
-                  {trigger.triggerType || ""}: {trigger.args || ""}
-                </span>
-                {timeline.result && (
-                  <div>
-                    <Typography.Paragraph
-                      ellipsis={{
-                        rows: 2,
-                        expandable: true,
-                        expandText: "展开",
-                        collapsible: true,
-                        collapseText: "折叠",
-                      }}
-                      style={{ width: 200 }}
-                      copyable
-                    >
-                      {timeline.result}
-                    </Typography.Paragraph>
-                  </div>
-                )}
-              </>
-            }
-          >
-            第{" "}
-            <Tag color="green" type="light">
-              {timeline.numberOfRuns}
-            </Tag>{" "}
-            次运行，耗时{" "}
-            <Tooltip
-              content={<>{timeline.elapsedTime}ms</>}
-              zIndex={10000000001}
-            >
-              <Tag color="lime" type="light">
-                {formatDuration(timeline.elapsedTime!)}
-              </Tag>
-            </Tooltip>{" "}
-            {timeline.mode === 1 && (
-              <Tag color="yellow" type="solid">
-                手动
-              </Tag>
-            )}
-            {timeline.exception && (
-              <Popover
-                showArrow
-                content={
-                  <div
-                    className="exception-box"
-                    style={{
-                      padding: 10,
-                      width: 400,
-                    }}
-                  >
-                    <TextArea value={timeline.exception} rows={10} />
-                  </div>
-                }
-                trigger="click"
-                zIndex={10000000002}
-              >
-                <IconUploadError
-                  style={{
-                    position: "relative",
-                    color: "red",
-                    top: 4,
-                    cursor: "pointer",
-                    marginLeft: 5,
-                  }}
-                />
-              </Popover>
-            )}
-          </Timeline.Item>
-        ))}
-      </Timeline>
+      <Timelines trigger={trigger} timelines={timelines} />
     </Modal>
   );
 }

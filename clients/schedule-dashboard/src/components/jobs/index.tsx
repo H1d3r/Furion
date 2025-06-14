@@ -4,6 +4,7 @@ import {
   IconPlayCircle,
   IconSearch,
   IconStop,
+  IconUploadError,
   IconVigoLogo,
 } from "@douyinfe/semi-icons";
 import {
@@ -12,9 +13,11 @@ import {
   Dropdown,
   Input,
   Popconfirm,
+  Popover,
   Space,
   Table,
   Tag,
+  TextArea,
   Toast,
   Tooltip,
   Typography,
@@ -32,11 +35,12 @@ import {
   useState,
 } from "react";
 import useFetch from "use-http";
-import { JobDetail, Scheduler } from "../../types";
+import { JobDetail, Scheduler, TriggerTimeline } from "../../types";
 import apiconfig from "./apiconfig";
 import columns from "./columns";
 import RenderValue from "./render-value";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
+import { dayFromNow, dayTime, formatDuration } from "../../utils";
 
 const style = {
   boxShadow: "var(--semi-shadow-elevated)",
@@ -59,6 +63,7 @@ export default function Jobs() {
   const [jobs, setJobs] = useState<Scheduler[]>([]);
   const [words, setWords] = useState<string>();
   const deferredWords = useDeferredValue(words);
+  const [allTimelines, setAllTimelines] = useState<TriggerTimeline[]>([]);
 
   const jobList = useMemo(() => {
     if (!deferredWords || deferredWords.trim().length === 0) {
@@ -78,6 +83,8 @@ export default function Jobs() {
         (u.jobDetail?.concurrent === true ? "并行" : "串行").indexOf(
           trimWords
         ) > -1 ||
+        (u.jobDetail?.temporary === true ? "临时" : "").indexOf(trimWords) >
+          -1 ||
         // ==== 触发器搜索
         (u.triggers || []).findIndex(
           (t) =>
@@ -101,6 +108,14 @@ export default function Jobs() {
   const loadJobs = async () => {
     const data = await post("/get-jobs");
     if (response.ok) setJobs((s) => data);
+  };
+
+  /**
+   * 获取内存中所有运行记录
+   */
+  const loadAllTimelines = async () => {
+    const data = await post("/timelines-log");
+    if (response.ok) setAllTimelines((s) => data);
   };
 
   /**
@@ -160,11 +175,13 @@ export default function Jobs() {
 
   useEffect(() => {
     loadJobs();
+    loadAllTimelines();
 
     var eventSource = new EventSource(apiconfig.hostAddress + "/check-change");
 
     eventSource.onmessage = function (e) {
       loadJobs();
+      loadAllTimelines();
     };
 
     return () => {
@@ -349,45 +366,149 @@ export default function Jobs() {
   ).length;
 
   return (
-    <div>
-      <Input
-        prefix={<IconSearch />}
-        showClear
-        placeholder="搜索关键字..."
-        value={words}
-        onChange={(val) => setWords(val)}
-        autoFocus
-      />
-      <Table
-        rowKey="jobId"
-        columns={columns}
-        dataSource={data}
-        onRow={handleRow}
-        expandedRowRender={expandRowRender}
-        pagination={false}
-        resizable
-        bordered
-        expandRowByClick
-        expandAllRows={apiconfig.defaultExpandAllJobs === "true"}
-        rowExpandable={(jobDetail) =>
-          !!(
-            jobDetail?.jobId &&
-            jobList.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)
-              ?.triggers?.length !== 0
-          )
-        }
-      />
-      <Typography.Paragraph type="secondary" style={{ padding: 10 }}>
-        共有 <b>{data.length}</b> 项作业任务
-        {invalidJobCount > 0 ? (
-          <>
-            ， 其中 <b>{invalidJobCount}</b> 项未设置触发器
-          </>
-        ) : (
-          <></>
-        )}
-        。
-      </Typography.Paragraph>
-    </div>
+    <>
+      <div
+        style={{
+          border: "1px solid var(--semi-color-border)",
+          borderRadius: "10px",
+        }}
+      >
+        <Input
+          prefix={<IconSearch />}
+          showClear
+          placeholder="搜索关键字..."
+          value={words}
+          onChange={(val) => setWords(val)}
+          autoFocus
+        />
+        <Table
+          rowKey="jobId"
+          columns={columns}
+          dataSource={data}
+          onRow={handleRow}
+          expandedRowRender={expandRowRender}
+          pagination={false}
+          resizable
+          bordered
+          expandRowByClick
+          expandAllRows={apiconfig.defaultExpandAllJobs === "true"}
+          rowExpandable={(jobDetail) =>
+            !!(
+              jobDetail?.jobId &&
+              jobList.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)
+                ?.triggers?.length !== 0
+            )
+          }
+        />
+        <Typography.Paragraph type="secondary" style={{ padding: 10 }}>
+          {(words?.trim().length || 0) > 0 ? (
+            <>
+              搜索 "<b>{words?.trim()}</b>" 共 <b>{jobList.length}</b> 项结果。
+            </>
+          ) : (
+            <>
+              共有 <b>{data.length}</b> 项作业任务
+              {invalidJobCount > 0 ? (
+                <>
+                  ， 其中 <b>{invalidJobCount}</b> 项未设置触发器
+                </>
+              ) : (
+                <></>
+              )}
+              。
+            </>
+          )}
+        </Typography.Paragraph>
+      </div>
+      {(words?.trim().length || 0) === 0 && (
+        <div>
+          <Typography.Title heading={5} style={{ margin: "24px 0 16px 0" }}>
+            # 运行记录
+          </Typography.Title>
+          <div style={{}}>
+            {allTimelines.map((timeline, i) => (
+              <div
+                key={timeline.jobId! + timeline.triggerId! + i}
+                style={{ marginBottom: 8, fontSize: 14 }}
+              >
+                <Tag size="large" color="green" type="light">
+                  {timeline.jobId}
+                </Tag>{" "}
+                <Tag size="large" color="green" type="light">
+                  {timeline.triggerId}
+                </Tag>{" "}
+                <Tag color="grey" type="light">
+                  {dayTime(timeline.lastRunTime).format("YYYY/MM/DD HH:mm:ss")}(
+                  {dayFromNow(timeline.lastRunTime)})
+                </Tag>{" "}
+                第{" "}
+                <Tag color="green" type="light">
+                  {timeline.numberOfRuns}
+                </Tag>{" "}
+                次运行，耗时{" "}
+                <Tooltip
+                  content={<>{timeline.elapsedTime}ms</>}
+                  zIndex={10000000001}
+                >
+                  <Tag color="lime" type="light">
+                    {formatDuration(timeline.elapsedTime!)}
+                  </Tag>
+                </Tooltip>{" "}
+                {timeline.mode === 1 && (
+                  <Tag color="yellow" type="solid">
+                    手动
+                  </Tag>
+                )}
+                {timeline.exception && (
+                  <Popover
+                    showArrow
+                    content={
+                      <div
+                        className="exception-box"
+                        style={{
+                          padding: 10,
+                          width: 400,
+                        }}
+                      >
+                        <TextArea value={timeline.exception} rows={10} />
+                      </div>
+                    }
+                    trigger="click"
+                    zIndex={10000000002}
+                  >
+                    <IconUploadError
+                      style={{
+                        position: "relative",
+                        color: "red",
+                        top: 4,
+                        cursor: "pointer",
+                        marginLeft: 5,
+                      }}
+                    />
+                  </Popover>
+                )}
+                {timeline.result && (
+                  <div>
+                    <Typography.Paragraph
+                      ellipsis={{
+                        rows: 2,
+                        expandable: true,
+                        expandText: "展开",
+                        collapsible: true,
+                        collapseText: "折叠",
+                      }}
+                      style={{ width: 200 }}
+                      copyable
+                    >
+                      {timeline.result}
+                    </Typography.Paragraph>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
