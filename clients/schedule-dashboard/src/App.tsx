@@ -10,7 +10,7 @@ import {
 import { BackTop, Button, Layout, Nav, Tag, Tooltip } from "@douyinfe/semi-ui";
 import { useState } from "react";
 import Jobs from "./components/jobs";
-import apiconfig from "./components/jobs/apiconfig";
+import apiconfig from "./apiconfig";
 import { useAuth } from "./auth";
 import { useNavigate } from "react-router-dom";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";

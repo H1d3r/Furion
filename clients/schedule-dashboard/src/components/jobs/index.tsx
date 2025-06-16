@@ -36,7 +36,7 @@ import {
 } from "react";
 import useFetch from "use-http";
 import { JobDetail, Scheduler, TriggerTimeline } from "../../types";
-import apiconfig from "./apiconfig";
+import apiconfig from "../../apiconfig";
 import columns from "./columns";
 import RenderValue from "./render-value";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";

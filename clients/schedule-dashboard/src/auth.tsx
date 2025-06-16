@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import apiconfig from "./components/jobs/apiconfig";
+import apiconfig from "./apiconfig";
 
 /**
  * 登录服务逻辑
@@ -27,7 +27,9 @@ let AuthContext = React.createContext<AuthContextType>(null!);
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const initialUser = () => {
-    const storedUser = sessionStorage.getItem(apiconfig.loginSessionKey);
+    const storedUser = sessionStorage.getItem(
+      apiconfig.loginConfig.sessionKey
+    );
     return storedUser ? JSON.parse(storedUser) : null;
   };
 
@@ -37,7 +39,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     return loginService.signin(() => {
       setUser(newUser);
       sessionStorage.setItem(
-        apiconfig.loginSessionKey,
+        apiconfig.loginConfig.sessionKey,
         JSON.stringify(newUser)
       );
       callback();
@@ -47,7 +49,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   let signout = (callback: VoidFunction) => {
     return loginService.signout(() => {
       setUser(null);
-      sessionStorage.removeItem(apiconfig.loginSessionKey);
+      sessionStorage.removeItem(apiconfig.loginConfig.sessionKey);
       callback();
     });
   };

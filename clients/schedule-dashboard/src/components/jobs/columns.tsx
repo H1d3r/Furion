@@ -28,7 +28,7 @@ import {
   findMaxUtcTimeString,
   findMinUtcTimeString,
 } from "../../utils";
-import apiconfig from "./apiconfig";
+import apiconfig from "../../apiconfig";
 import RenderValue from "./render-value";
 import StatusText from "./state-text";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";

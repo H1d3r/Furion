@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import useFetch from "use-http";
 import { Trigger, TriggerTimeline } from "../../types";
 import { dayFromNow, dayTime, formatDuration } from "../../utils";
-import apiconfig from "./apiconfig";
+import apiconfig from "../../apiconfig";
 import StatusText from "./state-text";
 import Timelines from "./timelines";
 
