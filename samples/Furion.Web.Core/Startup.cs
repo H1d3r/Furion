@@ -177,7 +177,11 @@ public sealed class Startup : AppStartup
         app.UseScheduleUI(options =>
         {
             options.Title = "定时任务看板";
-            options.LoginHandle = async (username, password, httpContext) =>
+
+            options.LoginConfig.DefaultUsername = "furion";
+            options.LoginConfig.DefaultPassword = "";
+
+            options.LoginConfig.OnLoging = async (username, password, httpContext) =>
             {
                 return await Task.FromResult(username == "furion" && string.IsNullOrWhiteSpace(password));
             };

@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/zh-cn";
 import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
-import apiconfig from "./components/jobs/apiconfig";
+import apiconfig from "./apiconfig";
 
 dayjs.extend(relativeTime);
 dayjs.extend(utc);

@@ -2,8 +2,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth";
 import styles from "./login.module.css";
 import { Button, Input, Space, Toast, Typography } from "@douyinfe/semi-ui";
-import apiconfig from "./components/jobs/apiconfig";
 import useFetch from "use-http";
+import apiconfig from "./apiconfig";
 
 export default function Login() {
   /**
@@ -58,19 +58,6 @@ export default function Login() {
     await loginHandle(username?.trim(), password?.trim());
   }
 
-  // return (
-  //   <div>
-  //     <p>You must log in to view the page at {from}</p>
-
-  //     <form onSubmit={handleSubmit}>
-  //       <label>
-  //         Username: <input name="username" type="text" />
-  //       </label>{" "}
-  //       <button type="submit">Login</button>
-  //     </form>
-  //   </div>
-  // );
-
   return (
     <div className={styles.main}>
       <div className={styles.login}>
@@ -88,6 +75,7 @@ export default function Login() {
                 placeholder="输入用户名"
                 style={{ width: 300 }}
                 className={styles.formField}
+                defaultValue={apiconfig.loginConfig?.defaultUsername || ""}
               />
             </Space>
             <Space vertical align="start">
@@ -97,6 +85,7 @@ export default function Login() {
                 placeholder="输入密码"
                 style={{ width: 300 }}
                 className={styles.formField}
+                defaultValue={apiconfig.loginConfig?.defaultPassword || ""}
               />
             </Space>
             <Button theme="solid" className={styles.button} htmlType="submit">
