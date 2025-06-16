@@ -14,7 +14,7 @@ window.apiconfig = {
   title: "Schedule Dashboard",
   loginConfig: {
     sessionKey: "schedule_session_key",
-    defaultUsername: "schedule",
+    defaultUsername: "",
     defaultPassword: "",
   },
 };
