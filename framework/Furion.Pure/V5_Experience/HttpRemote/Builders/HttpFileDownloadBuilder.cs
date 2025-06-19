@@ -338,7 +338,7 @@ public sealed class HttpFileDownloadBuilder
         ArgumentException.ThrowIfNullOrWhiteSpace(DestinationPath);
 
         // 初始化 HttpRequestBuilder 实例；如果请求失败，则应抛出异常。
-        var httpRequestBuilder = HttpRequestBuilder.Create(HttpMethod, RequestUri, configure).PerformanceOptimization()
+        var httpRequestBuilder = HttpRequestBuilder.Create(HttpMethod, RequestUri).PerformanceOptimization()
             .EnsureSuccessStatusCode();
 
         // 检查是否设置了事件处理程序且该处理程序实现了 IHttpRequestEventHandler 接口，如果有则设置给 httpRequestBuilder
@@ -347,6 +347,9 @@ public sealed class HttpFileDownloadBuilder
         {
             httpRequestBuilder.SetEventHandler(FileTransferEventHandlerType);
         }
+
+        // 调用自定义配置委托
+        configure?.Invoke(httpRequestBuilder);
 
         return httpRequestBuilder;
     }
