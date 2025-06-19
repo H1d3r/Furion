@@ -4,8 +4,8 @@
   "homepage": "__schedule__",
   "private": true,
   "dependencies": {
-    "@douyinfe/semi-icons": "^2.80.0",
-    "@douyinfe/semi-ui": "^2.80.0",
+    "@douyinfe/semi-icons": "^2.81.0",
+    "@douyinfe/semi-ui": "^2.81.0",
     "@leenguyen/react-flip-clock-countdown": "^1.6.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
