@@ -82,6 +82,7 @@ public class TestModuleServices : IDynamicApiController
     }
 
     [LoggingMonitor(ContractResolver = ContractResolverTypes.CamelCase)]
+    [NonAction]
     public DataTable 测试监听日志属性序列化规则()
     {
         var d = "select * from person".SqlQuery();
