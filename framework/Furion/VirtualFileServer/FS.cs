@@ -107,6 +107,7 @@ public static class FS
         fileExtensionProvider.Mappings[".bcmap"] = "application/octet-stream";
         fileExtensionProvider.Mappings[".properties"] = "application/octet-stream";
         fileExtensionProvider.Mappings[".m3u8"] = "application/x-mpegURL";
+        fileExtensionProvider.Mappings[".ofd"] = "application/ofd";
         return fileExtensionProvider;
     }
 }
