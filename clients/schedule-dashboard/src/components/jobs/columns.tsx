@@ -21,7 +21,7 @@ import { Data } from "@douyinfe/semi-ui/lib/es/descriptions";
 import { ColumnProps } from "@douyinfe/semi-ui/lib/es/table/interface";
 import Paragraph from "@douyinfe/semi-ui/lib/es/typography/paragraph";
 import useFetch from "use-http";
-import { JobDetail, Trigger, Scheduler } from "../../types";
+import { JobDetail, Trigger } from "../../types";
 import {
   dayFromNow,
   dayTime,
@@ -73,7 +73,7 @@ const columns: ColumnProps<JobDetail>[] = [
   {
     title: "JobId",
     dataIndex: "jobId",
-    width: 300,
+    width: 250,
     fixed: true,
     render: (text, jobDetail, index) => {
       return (
@@ -273,6 +273,9 @@ const columns: ColumnProps<JobDetail>[] = [
     title: "UpdatedTime",
     dataIndex: "updatedTime",
     width: 180,
+    render: (text, jobDetail, index) => {
+      return text ? dayTime(text).format("YYYY/MM/DD HH:mm:ss") : "";
+    },
   },
   {
     title: "LastRunTime",

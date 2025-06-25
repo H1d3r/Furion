@@ -1,11 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
 import App from "./App";
 import apiconfig from "./apiconfig";
 import "./index.css";
 import Login from "./login";
 import { AuthProvider, RequireAuth } from "./auth";
+import { BrowserRouter, Route, Routes } from "react-router";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

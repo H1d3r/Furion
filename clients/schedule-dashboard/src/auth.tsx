@@ -1,6 +1,6 @@
 import React from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import apiconfig from "./apiconfig";
+import { Navigate, useLocation, useNavigate } from "react-router";
 
 /**
  * 登录服务逻辑
@@ -27,9 +27,7 @@ let AuthContext = React.createContext<AuthContextType>(null!);
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const initialUser = () => {
-    const storedUser = sessionStorage.getItem(
-      apiconfig.loginConfig.sessionKey
-    );
+    const storedUser = sessionStorage.getItem(apiconfig.loginConfig.sessionKey);
     return storedUser ? JSON.parse(storedUser) : null;
   };
 
