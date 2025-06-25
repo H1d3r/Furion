@@ -12,8 +12,8 @@ import { useState } from "react";
 import Jobs from "./components/jobs";
 import apiconfig from "./apiconfig";
 import { useAuth } from "./auth";
-import { useNavigate } from "react-router-dom";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
+import { useNavigate } from "react-router";
 
 function App() {
   const { Header, Content } = Layout;
@@ -131,7 +131,7 @@ function App() {
         }}
       >
         <div>
-          <Jobs />
+          <Jobs mode={mode} />
         </div>
         <BackTop />
         <BackTop

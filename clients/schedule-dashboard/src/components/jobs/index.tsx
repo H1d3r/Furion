@@ -41,6 +41,8 @@ import columns from "./columns";
 import RenderValue from "./render-value";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import { dayFromNow, dayTime, formatDuration } from "../../utils";
+import styles from "./index.module.css";
+import clsx from "clsx";
 
 const style = {
   boxShadow: "var(--semi-shadow-elevated)",
@@ -56,7 +58,7 @@ function getOValueByData(key: string, expandData: Data[]) {
   return item?.ovalue || null;
 }
 
-export default function Jobs() {
+export default function Jobs({ mode }: { mode: string }) {
   /**
    * 作业状态
    */
@@ -430,6 +432,10 @@ export default function Jobs() {
               <div
                 key={timeline.jobId! + timeline.triggerId! + i}
                 style={{ marginBottom: 8, fontSize: 14 }}
+                className={clsx(
+                  styles.timelineItem,
+                  mode === "dark" && styles.dark
+                )}
               >
                 <Tag size="large" color="green" type="light">
                   {timeline.jobId}
