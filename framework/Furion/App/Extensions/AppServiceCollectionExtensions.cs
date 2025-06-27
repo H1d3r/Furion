@@ -187,7 +187,10 @@ public static class AppServiceCollectionExtensions
     public static IServiceCollection AddAppHostedService(this IServiceCollection services)
     {
         // 获取所有 BackgroundService 类型，排除泛型主机
-        var backgroundServiceTypes = App.EffectiveTypes.Where(u => !u.IsAbstract && !u.IsInterface && typeof(IHostedService).IsAssignableFrom(u) && u.Name != "GenericWebHostService");
+        var backgroundServiceTypes = App.EffectiveTypes.Where(u => !u.IsAbstract && !u.IsInterface && !u.IsGenericType
+                    && typeof(IHostedService).IsAssignableFrom(u) && u.Name != "GenericWebHostService"
+                    && !services.Any(c => c.ServiceType == typeof(IHostedService) && c.ImplementationType != u));
+
         var addHostServiceMethod = typeof(ServiceCollectionHostedServiceExtensions).GetMethods(BindingFlags.Static | BindingFlags.Public)
                             .Where(u => u.Name.Equals("AddHostedService") && u.IsGenericMethod && u.GetParameters().Length == 1)
                             .FirstOrDefault();
