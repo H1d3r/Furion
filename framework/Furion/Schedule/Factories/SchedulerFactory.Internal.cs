@@ -34,7 +34,7 @@ namespace Furion.Schedule;
 internal sealed partial class SchedulerFactory : ISchedulerFactory
 {
     /// <summary>
-    /// 取消作业调度器并发锁
+    /// 取消作业调度器休眠状态并发锁
     /// </summary>
     private readonly object _lock = new();
 
