@@ -214,6 +214,81 @@ public static class App
     }
 
     /// <summary>
+    /// 根据键获取请求生存周期的服务
+    /// </summary>
+    /// <typeparam name="TService"></typeparam>
+    /// <param name="key"></param>
+    /// <param name="serviceProvider"></param>
+    /// <returns></returns>
+    public static TService GetKeyedService<TService>(object? key, IServiceProvider serviceProvider = default)
+        where TService : class
+    {
+        return (serviceProvider ?? GetServiceProvider(typeof(TService))).GetKeyedService<TService>(key);
+    }
+
+    /// <summary>
+    /// 根据键获取请求生存周期的服务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="type"></param>
+    /// <param name="serviceProvider"></param>
+    /// <returns></returns>
+    public static object GetKeyedService(object? key, Type type, IServiceProvider serviceProvider = default)
+    {
+        return (serviceProvider ?? GetServiceProvider(type)).GetKeyedServices(type, key).FirstOrDefault();
+    }
+
+    /// <summary>
+    /// 根据键获取请求生存周期的服务
+    /// </summary>
+    /// <typeparam name="TService"></typeparam>
+    /// <param name="key"></param>
+    /// <param name="serviceProvider"></param>
+    /// <returns></returns>
+    public static TService GetRequiredKeyedService<TService>(object? key, IServiceProvider serviceProvider = default)
+        where TService : class
+    {
+        return (serviceProvider ?? GetServiceProvider(typeof(TService))).GetRequiredKeyedService<TService>(key);
+    }
+
+    /// <summary>
+    /// 根据键获取请求生存周期的服务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="type"></param>
+    /// <param name="serviceProvider"></param>
+    /// <returns></returns>
+    public static object GetRequiredKeyedService(object? key, Type type, IServiceProvider serviceProvider = default)
+    {
+        return (serviceProvider ?? GetServiceProvider(type)).GetRequiredKeyedService(type, key);
+    }
+
+    /// <summary>
+    /// 根据键获取请求生存周期的服务
+    /// </summary>
+    /// <typeparam name="TService"></typeparam>
+    /// <param name="key"></param>
+    /// <param name="serviceProvider"></param>
+    /// <returns></returns>
+    public static IEnumerable<TService> GetKeyedServices<TService>(object? key, IServiceProvider serviceProvider = default)
+        where TService : class
+    {
+        return (serviceProvider ?? GetServiceProvider(typeof(TService))).GetKeyedServices<TService>(key);
+    }
+
+    /// <summary>
+    /// 根据键获取请求生存周期的服务
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="type"></param>
+    /// <param name="serviceProvider"></param>
+    /// <returns></returns>
+    public static IEnumerable<object> GetKeyedServices(object? key, Type type, IServiceProvider serviceProvider = default)
+    {
+        return (serviceProvider ?? GetServiceProvider(type)).GetKeyedServices(type, key);
+    }
+
+    /// <summary>
     /// 获取配置
     /// </summary>
     /// <typeparam name="TOptions">强类型选项类</typeparam>
