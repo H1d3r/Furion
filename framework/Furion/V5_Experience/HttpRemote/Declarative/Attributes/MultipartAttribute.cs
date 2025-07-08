@@ -29,7 +29,7 @@ namespace Furion.HttpRemote;
 ///     HTTP 声明式多部分表单项内容特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Parameter)]
-public sealed class MultipartAttribute : Attribute
+public class MultipartAttribute : Attribute
 {
     /// <summary>
     ///     <inheritdoc cref="MultipartAttribute" />
