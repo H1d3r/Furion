@@ -49,10 +49,8 @@ internal sealed class StressTestHarnessManager
     /// <param name="httpStressTestHarnessBuilder">
     ///     <see cref="HttpStressTestHarnessBuilder" />
     /// </param>
-    /// <param name="configure">自定义配置委托</param>
     internal StressTestHarnessManager(IHttpRemoteService httpRemoteService,
-        HttpStressTestHarnessBuilder httpStressTestHarnessBuilder,
-        Action<HttpRequestBuilder>? configure = null)
+        HttpStressTestHarnessBuilder httpStressTestHarnessBuilder)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(httpRemoteService);
@@ -63,7 +61,7 @@ internal sealed class StressTestHarnessManager
 
         // 构建 HttpRequestBuilder 实例
         RequestBuilder = httpStressTestHarnessBuilder.Build(httpRemoteService.ServiceProvider
-            .GetRequiredService<IOptions<HttpRemoteOptions>>().Value, configure);
+            .GetRequiredService<IOptions<HttpRemoteOptions>>().Value);
     }
 
     /// <summary>
