@@ -96,7 +96,7 @@ function AddXmlCommentsToProperties($content, $commentsDictionary) {
     return $modifiedContent
 }
 
-$FurTools = "Furion Tools v4.9.7.97";
+$FurTools = "Furion Tools v4.9.7.98";
 
 # 输出信息
 $copyright = @"
