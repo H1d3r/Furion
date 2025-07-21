@@ -257,7 +257,7 @@ public class JWTEncryption
         // 返回新的 Token
         httpContext.Response.Headers[accessTokenKey] = accessToken;
         // 返回新的 刷新Token
-        var refreshAccessToken = GenerateRefreshToken(accessToken, refreshTokenExpiredTime); ;
+        var refreshAccessToken = GenerateRefreshToken(accessToken, refreshTokenExpiredTime);
         httpContext.Response.Headers[xAccessTokenKey] = refreshAccessToken;
 
         // 调用刷新后回调函数
