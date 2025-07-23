@@ -25,6 +25,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Furion.Schedule;
 
@@ -79,7 +80,8 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
     /// GC 垃圾回收间隔
     /// </summary>
     /// <remarks>单位毫秒</remarks>
-    private const int GC_COLLECT_INTERVAL_MILLISECONDS = 3000;
+    private static readonly TimeSpan GC_INTERVAL = TimeSpan.FromMilliseconds(5000);
+    private static Stopwatch _lastGcStopwatch = Stopwatch.StartNew();
 
     /// <summary>
     /// 作业计划集合
@@ -304,7 +306,9 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
             {
                 _logger.LogError(ex, ex.Message);
             }
-
+        }
+        finally
+        {
             // 重新初始化作业调度器取消休眠 Token
             CreateCancellationTokenSource();
         }
@@ -421,14 +425,16 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
     /// <remarks>避免频繁 GC 回收</remarks>
     public void GCCollect()
     {
-        var nowTime = DateTime.UtcNow;
-        if ((LastGCCollectTime == null || (nowTime - LastGCCollectTime.Value).TotalMilliseconds > GC_COLLECT_INTERVAL_MILLISECONDS))
+        if (_lastGcStopwatch.Elapsed >= GC_INTERVAL)
         {
-            LastGCCollectTime = nowTime;
+            _lastGcStopwatch.Restart();
 
-            // 通知 GC 垃圾回收器立即回收
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+            // 通知 GC 垃圾回收器立即回收，使用 Task.Run 避免阻塞当前线程
+            Task.Run(() =>
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            });
         }
     }
 
