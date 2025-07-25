@@ -70,6 +70,11 @@ public sealed class AppSettingsOptions : IConfigurableOptions<AppSettingsOptions
     public string VirtualPath { get; set; }
 
     /// <summary>
+    /// JSON 文件扫描配置
+    /// </summary>
+    public JsonFileScanner JsonFileScanner { get; set; }
+
+    /// <summary>
     /// 后期配置
     /// </summary>
     /// <param name="options"></param>
@@ -84,4 +89,21 @@ public sealed class AppSettingsOptions : IConfigurableOptions<AppSettingsOptions
         options.SupportPackageNamePrefixs ??= Array.Empty<string>();
         options.VirtualPath ??= string.Empty;
     }
+}
+
+/// <summary>
+/// JSON 文件扫描配置
+/// </summary>
+/// <remarks>修复 docker 中挂载大文件数据卷导致启动缓慢的问题。</remarks>
+public class JsonFileScanner
+{
+    /// <summary>
+    /// 是否可选
+    /// </summary>
+    public bool Optional { get; set; } = true;
+
+    /// <summary>
+    /// 是否改变的时候重载
+    /// </summary>
+    public bool ReloadOnChange { get; set; } = true;
 }
