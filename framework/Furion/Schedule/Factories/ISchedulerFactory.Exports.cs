@@ -647,7 +647,7 @@ public partial interface ISchedulerFactory : IDisposable
     void CollateAll(string group = default);
 
     /// <summary>
-    /// 立即执行作业
+    /// 手动执行作业
     /// </summary>
     /// <param name="jobId">作业 Id</param>
     /// <param name="scheduler">作业计划</param>
@@ -656,13 +656,13 @@ public partial interface ISchedulerFactory : IDisposable
     ScheduleResult TryRunJob(string jobId, out IScheduler scheduler, string triggerId = null);
 
     /// <summary>
-    /// 立即执行作业
+    /// 手动执行作业
     /// </summary>
     /// <param name="jobIds">作业 Id 集合</param>
     void RunJob(params string[] jobIds);
 
     /// <summary>
-    /// 立即执行作业
+    /// 手动执行作业
     /// </summary>
     /// <param name="scheduler">作业计划</param>
     /// <param name="triggerId">作业触发器 Id</param>
@@ -670,7 +670,7 @@ public partial interface ISchedulerFactory : IDisposable
     ScheduleResult TryRunJob(IScheduler scheduler, string triggerId = null);
 
     /// <summary>
-    /// 立即执行作业
+    /// 手动执行作业
     /// </summary>
     /// <param name="schedulers">作业计划集合</param>
     void RunJob(params IScheduler[] schedulers);
