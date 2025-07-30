@@ -58,7 +58,7 @@ public static class HostBuilderExtensions
 
         hostBuilder.UseSetting(WebHostDefaults.HostingStartupAssembliesKey, combineAssembliesName);
 
-        // 实现假的 Starup，解决泛型主机启动问题
+        // 实现假的 Startup，解决泛型主机启动问题
         hostBuilder.UseStartup<FakeStartup>();
         return hostBuilder;
     }
