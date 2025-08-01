@@ -27,6 +27,7 @@ using Furion;
 using Furion.DataValidation;
 using Furion.Extensions;
 using Furion.FriendlyException;
+using Furion.JsonSerialization;
 using Furion.Logging;
 using Furion.Templates;
 using Furion.UnifyResult;
@@ -661,6 +662,10 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
 
             // 解决粘土对象 序列化问题
             jsonSerializerSettings.Converters.AddClayConverters();
+
+            // 解决 JsonObject 和 JsonArray 序列化问题
+            jsonSerializerSettings.Converters.Add(new NewtonsoftJsonJsonObjectJsonConverter());
+            jsonSerializerSettings.Converters.Add(new NewtonsoftJsonJsonArrayJsonConverter());
 
             // 解决 DateTimeOffset 序列化/反序列化问题
             if (obj is DateTimeOffset)
