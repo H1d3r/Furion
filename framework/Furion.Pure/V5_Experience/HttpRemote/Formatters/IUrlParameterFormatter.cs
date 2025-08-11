@@ -40,5 +40,5 @@ public interface IUrlParameterFormatter
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? Format(object? value, UrlFormattingContext context);
+    string? Format(object? value, UrlFormattingContext context);
 }

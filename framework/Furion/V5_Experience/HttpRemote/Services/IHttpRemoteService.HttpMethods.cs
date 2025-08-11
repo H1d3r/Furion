@@ -235,7 +235,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? GetAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    string? GetAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -249,7 +249,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? GetAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Stream? GetAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -263,7 +263,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? GetAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    byte[]? GetAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -280,7 +280,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? GetAsString(string? requestUri, HttpCompletionOption completionOption,
+    string? GetAsString(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -297,7 +297,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? GetAsStream(string? requestUri, HttpCompletionOption completionOption,
+    Stream? GetAsStream(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -314,7 +314,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? GetAsByteArray(string? requestUri, HttpCompletionOption completionOption,
+    byte[]? GetAsByteArray(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -328,7 +328,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> GetAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<string?> GetAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -342,7 +342,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> GetAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<Stream?> GetAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -356,7 +356,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> GetAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<byte[]?> GetAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -373,7 +373,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> GetAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<string?> GetAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -390,7 +390,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> GetAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<Stream?> GetAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -407,7 +407,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> GetAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<byte[]?> GetAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -615,7 +615,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? PutAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    string? PutAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -629,7 +629,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? PutAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Stream? PutAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -643,7 +643,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? PutAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    byte[]? PutAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -660,7 +660,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? PutAsString(string? requestUri, HttpCompletionOption completionOption,
+    string? PutAsString(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -677,7 +677,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? PutAsStream(string? requestUri, HttpCompletionOption completionOption,
+    Stream? PutAsStream(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -694,7 +694,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? PutAsByteArray(string? requestUri, HttpCompletionOption completionOption,
+    byte[]? PutAsByteArray(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -708,7 +708,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> PutAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<string?> PutAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -722,7 +722,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> PutAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<Stream?> PutAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -736,7 +736,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> PutAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<byte[]?> PutAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -753,7 +753,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> PutAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<string?> PutAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -770,7 +770,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> PutAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<Stream?> PutAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -787,7 +787,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> PutAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<byte[]?> PutAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -996,7 +996,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? PostAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    string? PostAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1010,7 +1010,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? PostAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Stream? PostAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1024,7 +1024,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? PostAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    byte[]? PostAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1041,7 +1041,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? PostAsString(string? requestUri, HttpCompletionOption completionOption,
+    string? PostAsString(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1058,7 +1058,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? PostAsStream(string? requestUri, HttpCompletionOption completionOption,
+    Stream? PostAsStream(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1075,7 +1075,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? PostAsByteArray(string? requestUri, HttpCompletionOption completionOption,
+    byte[]? PostAsByteArray(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1089,7 +1089,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> PostAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<string?> PostAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1103,7 +1103,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> PostAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<Stream?> PostAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1117,7 +1117,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> PostAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<byte[]?> PostAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1134,7 +1134,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> PostAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<string?> PostAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1151,7 +1151,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> PostAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<Stream?> PostAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1168,7 +1168,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> PostAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<byte[]?> PostAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1377,7 +1377,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? DeleteAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    string? DeleteAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1391,7 +1391,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? DeleteAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Stream? DeleteAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1405,7 +1405,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? DeleteAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    byte[]? DeleteAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1422,7 +1422,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? DeleteAsString(string? requestUri, HttpCompletionOption completionOption,
+    string? DeleteAsString(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1439,7 +1439,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? DeleteAsStream(string? requestUri, HttpCompletionOption completionOption,
+    Stream? DeleteAsStream(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1456,7 +1456,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? DeleteAsByteArray(string? requestUri, HttpCompletionOption completionOption,
+    byte[]? DeleteAsByteArray(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1470,7 +1470,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> DeleteAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<string?> DeleteAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1484,7 +1484,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> DeleteAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<Stream?> DeleteAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1498,7 +1498,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> DeleteAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<byte[]?> DeleteAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1515,7 +1515,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> DeleteAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<string?> DeleteAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1532,7 +1532,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> DeleteAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<Stream?> DeleteAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1549,7 +1549,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> DeleteAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<byte[]?> DeleteAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1758,7 +1758,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? HeadAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    string? HeadAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1772,7 +1772,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? HeadAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Stream? HeadAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1786,7 +1786,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? HeadAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    byte[]? HeadAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1803,7 +1803,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? HeadAsString(string? requestUri, HttpCompletionOption completionOption,
+    string? HeadAsString(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1820,7 +1820,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? HeadAsStream(string? requestUri, HttpCompletionOption completionOption,
+    Stream? HeadAsStream(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1837,7 +1837,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? HeadAsByteArray(string? requestUri, HttpCompletionOption completionOption,
+    byte[]? HeadAsByteArray(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1851,7 +1851,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> HeadAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<string?> HeadAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1865,7 +1865,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> HeadAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<Stream?> HeadAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1879,7 +1879,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> HeadAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<byte[]?> HeadAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1896,7 +1896,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> HeadAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<string?> HeadAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1913,7 +1913,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> HeadAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<Stream?> HeadAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1930,7 +1930,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> HeadAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<byte[]?> HeadAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2139,7 +2139,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? OptionsAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    string? OptionsAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2153,7 +2153,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? OptionsAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Stream? OptionsAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2167,7 +2167,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? OptionsAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    byte[]? OptionsAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2184,7 +2184,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? OptionsAsString(string? requestUri, HttpCompletionOption completionOption,
+    string? OptionsAsString(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2201,7 +2201,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? OptionsAsStream(string? requestUri, HttpCompletionOption completionOption,
+    Stream? OptionsAsStream(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2218,7 +2218,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? OptionsAsByteArray(string? requestUri, HttpCompletionOption completionOption,
+    byte[]? OptionsAsByteArray(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2232,7 +2232,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> OptionsAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<string?> OptionsAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2246,7 +2246,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> OptionsAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<Stream?> OptionsAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2260,7 +2260,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> OptionsAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<byte[]?> OptionsAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2277,7 +2277,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> OptionsAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<string?> OptionsAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2294,7 +2294,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> OptionsAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<Stream?> OptionsAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2311,7 +2311,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> OptionsAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<byte[]?> OptionsAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2520,7 +2520,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? TraceAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    string? TraceAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2534,7 +2534,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? TraceAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Stream? TraceAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2548,7 +2548,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? TraceAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    byte[]? TraceAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2565,7 +2565,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? TraceAsString(string? requestUri, HttpCompletionOption completionOption,
+    string? TraceAsString(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2582,7 +2582,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? TraceAsStream(string? requestUri, HttpCompletionOption completionOption,
+    Stream? TraceAsStream(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2599,7 +2599,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? TraceAsByteArray(string? requestUri, HttpCompletionOption completionOption,
+    byte[]? TraceAsByteArray(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2613,7 +2613,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> TraceAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<string?> TraceAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2627,7 +2627,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> TraceAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<Stream?> TraceAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2641,7 +2641,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> TraceAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<byte[]?> TraceAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2658,7 +2658,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> TraceAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<string?> TraceAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2675,7 +2675,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> TraceAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<Stream?> TraceAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2692,7 +2692,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> TraceAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<byte[]?> TraceAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2901,7 +2901,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? PatchAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    string? PatchAsString(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2915,7 +2915,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? PatchAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Stream? PatchAsStream(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2929,7 +2929,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? PatchAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    byte[]? PatchAsByteArray(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2946,7 +2946,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public string? PatchAsString(string? requestUri, HttpCompletionOption completionOption,
+    string? PatchAsString(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2963,7 +2963,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Stream? PatchAsStream(string? requestUri, HttpCompletionOption completionOption,
+    Stream? PatchAsStream(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2980,7 +2980,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public byte[]? PatchAsByteArray(string? requestUri, HttpCompletionOption completionOption,
+    byte[]? PatchAsByteArray(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -2994,7 +2994,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> PatchAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<string?> PatchAsStringAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -3008,7 +3008,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> PatchAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<Stream?> PatchAsStreamAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -3022,7 +3022,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> PatchAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
+    Task<byte[]?> PatchAsByteArrayAsync(string? requestUri, Action<HttpRequestBuilder>? configure = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -3039,7 +3039,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public Task<string?> PatchAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<string?> PatchAsStringAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -3056,7 +3056,7 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <see cref="Stream" />
     /// </returns>
-    public Task<Stream?> PatchAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<Stream?> PatchAsStreamAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -3073,6 +3073,6 @@ public partial interface IHttpRemoteService
     /// <returns>
     ///     <c>byte[]</c>
     /// </returns>
-    public Task<byte[]?> PatchAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
+    Task<byte[]?> PatchAsByteArrayAsync(string? requestUri, HttpCompletionOption completionOption,
         Action<HttpRequestBuilder>? configure = null, CancellationToken cancellationToken = default);
 }
