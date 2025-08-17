@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Text.Json;
@@ -34,6 +35,7 @@ namespace Furion.Shapeless;
 /// <summary>
 ///     流变对象
 /// </summary>
+[DebuggerDisplay("{DebuggerToString(),nq}")]
 public partial class Clay : DynamicObject, IEnumerable<object?>, IFormattable, IEquatable<Clay>
 {
     /// <summary>
@@ -889,4 +891,12 @@ public partial class Clay : DynamicObject, IEnumerable<object?>, IFormattable, I
                     $"Accessing or setting properties using System.Range `{key}` is not supported in the Clay.");
         }
     }
+
+    /// <summary>
+    ///     告知调试器如何显示内容
+    /// </summary>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    private string DebuggerToString() => ToJsonString();
 }
