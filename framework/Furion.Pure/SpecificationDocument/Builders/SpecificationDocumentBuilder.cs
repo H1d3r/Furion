@@ -668,7 +668,9 @@ public static class SpecificationDocumentBuilder
             {
                 [nameof(SpecificationLoginInfo.Enabled)] = additionals.Enabled || (App.HostEnvironment.IsProduction() && additionals.EnableOnProduction),
                 [nameof(SpecificationLoginInfo.CheckUrl)] = additionals.CheckUrl,
-                [nameof(SpecificationLoginInfo.SubmitUrl)] = additionals.SubmitUrl
+                [nameof(SpecificationLoginInfo.SubmitUrl)] = additionals.SubmitUrl,
+                [nameof(SpecificationLoginInfo.DefaultUsername)] = additionals.DefaultUsername,
+                [nameof(SpecificationLoginInfo.DefaultPassword)] = additionals.DefaultPassword
             });
         }
     }

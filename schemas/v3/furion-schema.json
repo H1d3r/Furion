@@ -2638,6 +2638,14 @@
                 "type": "boolean",
                 "description": "是否生产环境自动开启",
                 "default": false
+              },
+              "DefaultUsername": {
+                "type": "string",
+                "description": "默认用户名"
+              },
+              "DefaultPassword": {
+                "type": "string",
+                "description": "默认密码"
               }
             }
           },
