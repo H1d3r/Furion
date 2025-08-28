@@ -87,7 +87,7 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
                         string.IsNullOrWhiteSpace(fileDownloadName)
                             ? fileDownloadName
                             // 使用 UTF-8 解码文件的名称
-                            : Uri.UnescapeDataString(fileDownloadName),
+                            : Uri.UnescapeDataString(fileDownloadName).Trim('"'),
                     LastModified = contentHeaders.LastModified?.UtcDateTime
                 };
         }
@@ -145,7 +145,7 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
                         string.IsNullOrWhiteSpace(fileDownloadName)
                             ? fileDownloadName
                             // 使用 UTF-8 解码文件的名称
-                            : Uri.UnescapeDataString(fileDownloadName),
+                            : Uri.UnescapeDataString(fileDownloadName).Trim('"'),
                     LastModified = contentHeaders.LastModified?.UtcDateTime
                 };
         }
