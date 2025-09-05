@@ -76,11 +76,22 @@ public class JWTEncryption
     /// <returns></returns>
     public static string Encrypt(string issuerSigningKey, IDictionary<string, object> payload, string algorithm = SecurityAlgorithms.HmacSha256)
     {
+        string stringPayload;
+
         // 处理 JwtPayload 序列化不一致问题
-        var stringPayload = payload is JwtPayload jwtPayload ? jwtPayload.SerializeToJson() : JsonSerializer.Serialize(payload, new JsonSerializerOptions
+        if (payload is JwtPayload jwtPayload)
         {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        });
+            stringPayload = jwtPayload.SerializeToJson();
+        }
+        else
+        {
+            var (Payload, _) = CombinePayload(payload);
+            stringPayload = JsonSerializer.Serialize(Payload, new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+        }
+
         return Encrypt(issuerSigningKey, stringPayload, algorithm);
     }
 
