@@ -74,7 +74,16 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
         if (wordsOfCached == null)
         {
             var entryAssembly = Reflect.GetEntryAssembly();
-            var embedFileNameOfResource = $"{Reflect.GetAssemblyName(entryAssembly)}.{_embedFileName}";
+
+            /*
+             * 查找脱敏词汇数据的嵌入资源文件。
+             * 由于程序集名称可在 .csproj 文件中通过 <AssemblyName> 自定义，
+             * 故采用模糊匹配方式查找。请确保资源文件名具有唯一性，避免歧义。
+             * 
+             * var embedFileNameOfResource = $"{Reflect.GetAssemblyName(entryAssembly)}.{_embedFileName}";
+             */
+            var embedFileNameOfResource = entryAssembly.GetManifestResourceNames()
+                .FirstOrDefault(n => n.EndsWith(_embedFileName, StringComparison.OrdinalIgnoreCase));
 
             // 解析嵌入式文件流
             byte[] buffer;
