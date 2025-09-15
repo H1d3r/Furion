@@ -29,6 +29,7 @@ using Microsoft.Net.Http.Headers;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Reflection;
 using System.Text;
 using MediaTypeHeaderValue = System.Net.Http.Headers.MediaTypeHeaderValue;
 
@@ -1690,6 +1691,30 @@ public sealed partial class HttpRequestBuilder
         }
 
         return this;
+    }
+
+    /// <summary>
+    ///     克隆并返回新的 <see cref="HttpRequestBuilder" /> 实例
+    /// </summary>
+    /// <returns>
+    ///     <see cref="HttpRequestBuilder" />
+    /// </returns>
+    public HttpRequestBuilder Clone()
+    {
+        // 获取 HttpRequestBuilder 类型的所有实例属性
+        var properties = GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                                                 BindingFlags.DeclaredOnly);
+
+        // 初始化新的 HttpRequestBuilder 实例
+        var httpRequestBuilder = new HttpRequestBuilder(HttpMethod!, RequestUri);
+
+        // 遍历所有属性并设置给 httpRequestBuilder 实例
+        foreach (var property in properties)
+        {
+            property.SetValue(httpRequestBuilder, property.GetValue(this));
+        }
+
+        return httpRequestBuilder;
     }
 
     /// <summary>
