@@ -221,8 +221,12 @@ public static class AppServiceCollectionExtensions
         // 注册全局依赖注入
         services.AddDependencyInjection();
 
-        // 注册全局 Startup 扫描
-        services.AddStartups();
+        // 检查是否禁用了 AppStartup 扫描（满足某些特殊场景，早期未考虑到，折中处理）
+        if (!(App.Settings.DisableAppStartupScan == true || (AppContext.TryGetSwitch(nameof(AppSettingsOptions.DisableAppStartupScan), out var isEnabled) && isEnabled)))
+        {
+            // 注册全局 Startup 扫描
+            services.AddStartups();
+        }
 
         // 添加对象映射
         services.AddObjectMapper();

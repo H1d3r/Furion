@@ -1877,6 +1877,11 @@
               "default": true
             }
           }
+        },
+        "DisableAppStartupScan": {
+          "type": "boolean",
+          "description": "是否禁用 AppStartup 自动扫描",
+          "default": false
         }
       },
       "CorsAccessorSettings": {
