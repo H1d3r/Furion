@@ -26,6 +26,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Net.Mime;
+using System.Text;
 
 namespace Furion.HttpRemote;
 
@@ -87,7 +88,8 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
                         string.IsNullOrWhiteSpace(fileDownloadName)
                             ? fileDownloadName
                             // 使用 UTF-8 解码文件的名称
-                            : Uri.UnescapeDataString(fileDownloadName).Trim('"'),
+                            : Encoding.UTF8.GetString(Encoding.GetEncoding("ISO-8859-1").GetBytes(fileDownloadName))
+                                .Trim('"'),
                     LastModified = contentHeaders.LastModified?.UtcDateTime
                 };
         }
@@ -145,7 +147,8 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
                         string.IsNullOrWhiteSpace(fileDownloadName)
                             ? fileDownloadName
                             // 使用 UTF-8 解码文件的名称
-                            : Uri.UnescapeDataString(fileDownloadName).Trim('"'),
+                            : Encoding.UTF8.GetString(Encoding.GetEncoding("ISO-8859-1").GetBytes(fileDownloadName))
+                                .Trim('"'),
                     LastModified = contentHeaders.LastModified?.UtcDateTime
                 };
         }
