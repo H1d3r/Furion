@@ -267,7 +267,7 @@ export default function Jobs({ mode }: { mode: string }) {
                   labelStyle={{
                     fontSize: 12,
                     fontWeight: 500,
-                    color: "#1c1f23cc",
+                    color: "var(--semi-color-text-0)",
                   }}
                   digitBlockStyle={{ width: 20, height: 30, fontSize: 15 }}
                   hideOnComplete={false}
@@ -427,7 +427,7 @@ export default function Jobs({ mode }: { mode: string }) {
           <Typography.Title heading={5} style={{ margin: "24px 0 16px 0" }}>
             # 运行记录
           </Typography.Title>
-          <div style={{}}>
+          <div style={{ color: "var(--semi-color-text-0)" }}>
             {allTimelines.map((timeline, i) => (
               <div
                 key={timeline.jobId! + timeline.triggerId! + i}
