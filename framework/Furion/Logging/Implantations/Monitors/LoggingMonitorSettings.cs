@@ -109,6 +109,11 @@ public sealed class LoggingMonitorSettings
     public Func<FilterContext, bool> WriteFilter { get; set; }
 
     /// <summary>
+    /// 自定义日志条目筛选器
+    /// </summary>
+    public Func<string, bool> ItemFilter { get; set; }
+
+    /// <summary>
     /// 是否 Mvc Filter 方式注册
     /// </summary>
     /// <remarks>解决过去 Mvc Filter 全局注册的问题</remarks>
@@ -129,6 +134,12 @@ public sealed class LoggingMonitorSettings
     /// 自定义日志筛选器
     /// </summary>
     internal static Func<FilterContext, bool> InternalWriteFilter { get; set; }
+
+    /// <summary>
+    /// 日志条目过滤
+    /// </summary>
+    /// <remarks>返回 false 隐藏</remarks>
+    internal static Func<string, bool> InternalItemFilter { get; set; }
 
     /// <summary>
     /// 配置日志更多功能（外部调用）
