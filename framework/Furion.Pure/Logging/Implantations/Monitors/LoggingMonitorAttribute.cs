@@ -1126,7 +1126,7 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
         monitorItems.AddRange(GenerateExcetpionInfomationTemplate(writer, exception, isValidationException));
 
         // 生成最终模板
-        var monitorMessage = TP.Wrapper(Title, displayName, monitorItems.ToArray());
+        var monitorMessage = TP.Wrapper(Title, displayName, monitorItems.ToArray(), LoggingMonitorSettings.InternalItemFilter);
 
         // 创建日志记录器
         var logger = httpContext.RequestServices.GetRequiredService<ILogger<LoggingMonitor>>();

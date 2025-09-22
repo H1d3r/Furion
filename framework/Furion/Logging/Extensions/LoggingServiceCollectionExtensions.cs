@@ -69,6 +69,7 @@ public static class LoggingServiceCollectionExtensions
 
         // 配置日志过滤器
         LoggingMonitorSettings.InternalWriteFilter = settings.WriteFilter;
+        LoggingMonitorSettings.InternalItemFilter = settings.ItemFilter;
 
         // 如果配置 GlobalEnabled = false 且 IncludeOfMethods 和 ExcludeOfMethods 都为空，则不注册服务
         if (settings.GlobalEnabled == false
