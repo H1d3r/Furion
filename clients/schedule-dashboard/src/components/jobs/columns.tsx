@@ -109,7 +109,7 @@ const columns: ColumnProps<JobDetail>[] = [
                           labelStyle={{
                             fontSize: 12,
                             fontWeight: 500,
-                            color: "#1c1f23cc",
+                            color: "var(--semi-color-text-0)",
                           }}
                           digitBlockStyle={{
                             width: 20,
