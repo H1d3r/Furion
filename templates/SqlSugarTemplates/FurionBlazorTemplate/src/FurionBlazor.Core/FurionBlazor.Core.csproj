@@ -13,7 +13,7 @@
 	<ItemGroup>
 		<PackageReference Include="Furion.Extras.ObjectMapper.Mapster" Version="4.9.7.127" />
 		<PackageReference Include="Furion.Pure" Version="4.9.7.127" />
-		<PackageReference Include="SqlSugarCore" Version="5.1.4.202" />
+		<PackageReference Include="SqlSugarCore" Version="5.1.4.205" />
 	</ItemGroup>
 
 </Project>
