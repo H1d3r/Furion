@@ -38,8 +38,9 @@ public sealed class FileTransferResult
     public bool IsSuccess { get; internal set; }
 
     /// <summary>
-    ///     文件传输 URL
+    ///     文件传输地址
     /// </summary>
+    /// <remarks>文件下载时，为下载地址；文件上传时，为上传地址。</remarks>
     public Uri? RequestUri { get; internal set; }
 
     /// <summary>
@@ -62,5 +63,5 @@ public sealed class FileTransferResult
     /// <summary>
     ///     响应状态码
     /// </summary>
-    public HttpStatusCode StatusCode { get; internal set; }
+    public HttpStatusCode? StatusCode { get; internal set; }
 }
