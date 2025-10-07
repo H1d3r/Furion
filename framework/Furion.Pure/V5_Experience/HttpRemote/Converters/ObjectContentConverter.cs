@@ -23,19 +23,17 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
-using System.Net.Mime;
 using System.Text.Json;
-using System.Xml.Serialization;
 
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="ObjectContentConverter{TResult}" /> 默认基类
+///     对象内容转换器
 /// </summary>
+/// <remarks>默认作为 JSON 对象内容转换器。</remarks>
 public class ObjectContentConverter : IHttpContentConverter
 {
     /// <inheritdoc />
@@ -43,35 +41,16 @@ public class ObjectContentConverter : IHttpContentConverter
 
     /// <inheritdoc />
     public virtual object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default)
-    {
-        // 检查 HTTP 响应的内容类型是否为 XML 媒体类型
-        if (!HasXmlContentType(httpResponseMessage))
-        {
-            return httpResponseMessage.Content
-                .ReadFromJsonAsync(resultType, GetJsonSerializerOptions(httpResponseMessage), cancellationToken)
-                .GetAwaiter().GetResult();
-        }
-
-        // 将 XML 字符串反序列化为转换的目标类型
-        return DeserializeXml(resultType,
-            httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult());
-    }
+        CancellationToken cancellationToken = default) =>
+        httpResponseMessage.Content
+            .ReadFromJsonAsync(resultType, GetJsonSerializerOptions(httpResponseMessage), cancellationToken)
+            .GetAwaiter().GetResult();
 
     /// <inheritdoc />
     public virtual async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default)
-    {
-        // 检查 HTTP 响应的内容类型是否为 XML 媒体类型
-        if (!HasXmlContentType(httpResponseMessage))
-        {
-            return await httpResponseMessage.Content.ReadFromJsonAsync(resultType,
-                GetJsonSerializerOptions(httpResponseMessage), cancellationToken);
-        }
-
-        // 将 XML 字符串反序列化为转换的目标类型
-        return DeserializeXml(resultType, await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken));
-    }
+        CancellationToken cancellationToken = default) =>
+        await httpResponseMessage.Content.ReadFromJsonAsync(resultType,
+            GetJsonSerializerOptions(httpResponseMessage), cancellationToken);
 
     /// <summary>
     ///     获取 JSON 序列化选项实例
@@ -102,88 +81,22 @@ public class ObjectContentConverter : IHttpContentConverter
                ServiceProvider?.GetRequiredService<IOptions<HttpRemoteOptions>>().Value.JsonSerializerOptions ??
                HttpRemoteOptions.JsonSerializerOptionsDefault;
     }
-
-    /// <summary>
-    ///     检查 HTTP 响应的内容类型是否为 XML 媒体类型
-    /// </summary>
-    /// <param name="httpResponseMessage">
-    ///     <see cref="HttpResponseMessage" />
-    /// </param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    protected virtual bool HasXmlContentType(HttpResponseMessage httpResponseMessage) =>
-        httpResponseMessage.Content.Headers.ContentType?.MediaType.IsIn(
-            [MediaTypeNames.Application.Xml, MediaTypeNames.Application.XmlPatch, MediaTypeNames.Text.Xml],
-            StringComparer.OrdinalIgnoreCase) == true;
-
-    /// <summary>
-    ///     将 XML 字符串反序列化为转换的目标类型
-    /// </summary>
-    /// <param name="resultType">转换的目标类型</param>
-    /// <param name="xmlString">XML 字符串</param>
-    /// <returns>
-    ///     <see cref="object" />
-    /// </returns>
-    protected virtual object? DeserializeXml(Type resultType, string xmlString)
-    {
-        // 初始化 XmlSerializer 实例
-        var xmlSerializer = new XmlSerializer(resultType);
-
-        // 初始化 StringReader 实例
-        using var stringReader = new StringReader(xmlString);
-
-        // XML 反序列化为对象
-        return xmlSerializer.Deserialize(stringReader);
-    }
-
-    /// <summary>
-    ///     将 XML 字符串反序列化为 <typeparamref name="TResult" /> 类型
-    /// </summary>
-    /// <param name="xmlString">XML 字符串</param>
-    /// <typeparam name="TResult">转换的目标类型</typeparam>
-    /// <returns>
-    ///     <typeparamref name="TResult" />
-    /// </returns>
-    protected virtual TResult? DeserializeXml<TResult>(string xmlString) =>
-        (TResult?)DeserializeXml(typeof(TResult), xmlString);
 }
 
-/// <summary>
-///     对象转换器
-/// </summary>
+/// <inheritdoc cref="ObjectContentConverter" />
 /// <typeparam name="TResult">转换的目标类型</typeparam>
 public class ObjectContentConverter<TResult> : ObjectContentConverter, IHttpContentConverter<TResult>
 {
     /// <inheritdoc />
     public virtual TResult? Read(HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default)
-    {
-        // 检查 HTTP 响应的内容类型是否为 XML 媒体类型
-        if (!HasXmlContentType(httpResponseMessage))
-        {
-            return httpResponseMessage.Content
-                .ReadFromJsonAsync<TResult>(GetJsonSerializerOptions(httpResponseMessage), cancellationToken)
-                .GetAwaiter().GetResult();
-        }
-
-        // 将 XML 字符串反序列化为转换的目标类型
-        return DeserializeXml<TResult>(httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).GetAwaiter()
-            .GetResult());
-    }
+        CancellationToken cancellationToken = default) =>
+        httpResponseMessage.Content
+            .ReadFromJsonAsync<TResult>(GetJsonSerializerOptions(httpResponseMessage), cancellationToken)
+            .GetAwaiter().GetResult();
 
     /// <inheritdoc />
     public virtual async Task<TResult?> ReadAsync(HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default)
-    {
-        // 检查 HTTP 响应的内容类型是否为 XML 媒体类型
-        if (!HasXmlContentType(httpResponseMessage))
-        {
-            return await httpResponseMessage.Content.ReadFromJsonAsync<TResult>(
-                GetJsonSerializerOptions(httpResponseMessage), cancellationToken);
-        }
-
-        // 将 XML 字符串反序列化为转换的目标类型
-        return DeserializeXml<TResult>(await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken));
-    }
+        CancellationToken cancellationToken = default) =>
+        await httpResponseMessage.Content.ReadFromJsonAsync<TResult>(
+            GetJsonSerializerOptions(httpResponseMessage), cancellationToken);
 }
