@@ -23,14 +23,34 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.HttpRemote.Extensions;
+
 namespace Furion.HttpRemote;
 
 /// <inheritdoc cref="IObjectContentConverterFactory" />
 internal sealed class ObjectContentConverterFactory : IObjectContentConverterFactory
 {
     /// <inheritdoc />
-    public ObjectContentConverter<TResult> GetConverter<TResult>() => new();
+    public IHttpContentConverter<TResult> GetConverter<TResult>(HttpResponseMessage httpResponseMessage)
+    {
+        // 检查 HTTP 响应的内容类型是否为 XML 媒体类型
+        if (httpResponseMessage.IsXmlContent())
+        {
+            return new XmlObjectContentConverter<TResult>();
+        }
+
+        return new ObjectContentConverter<TResult>();
+    }
 
     /// <inheritdoc />
-    public ObjectContentConverter GetConverter(Type resultType) => new();
+    public IHttpContentConverter GetConverter(Type resultType, HttpResponseMessage httpResponseMessage)
+    {
+        // 检查 HTTP 响应的内容类型是否为 XML 媒体类型
+        if (httpResponseMessage.IsXmlContent())
+        {
+            return new XmlObjectContentConverter();
+        }
+
+        return new ObjectContentConverter();
+    }
 }

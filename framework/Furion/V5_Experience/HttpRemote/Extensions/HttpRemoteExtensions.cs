@@ -30,6 +30,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Net.Http.Headers;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
+using System.Net.Mime;
 using System.Text;
 using System.Text.RegularExpressions;
 using StringWithQualityHeaderValue = System.Net.Http.Headers.StringWithQualityHeaderValue;
@@ -437,6 +438,20 @@ public static partial class HttpRemoteExtensions
 
         return true;
     }
+
+    /// <summary>
+    ///     检查 HTTP 响应的内容类型是否为 XML 媒体类型
+    /// </summary>
+    /// <param name="httpResponseMessage">
+    ///     <see cref="HttpResponseMessage" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    public static bool IsXmlContent(this HttpResponseMessage httpResponseMessage) =>
+        httpResponseMessage.Content.Headers.ContentType?.MediaType.IsIn(
+            [MediaTypeNames.Application.Xml, MediaTypeNames.Application.XmlPatch, MediaTypeNames.Text.Xml],
+            StringComparer.OrdinalIgnoreCase) == true;
 
     /// <summary>
     ///     获取主机环境名
