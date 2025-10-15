@@ -65,12 +65,7 @@ public partial class FlexibleDateTimeOffsetConverter : JsonConverter<DateTimeOff
         }
 
         // 尝试获取 ISO 8601-1:2019 日期格式
-        if (!DateTimeOffset.TryParse(formatted, out value))
-        {
-            throw new JsonException();
-        }
-
-        return value;
+        return !DateTimeOffset.TryParse(formatted, out value) ? throw new JsonException() : value;
     }
 
     /// <inheritdoc />
