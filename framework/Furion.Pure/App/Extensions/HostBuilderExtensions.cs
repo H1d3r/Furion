@@ -68,7 +68,7 @@ public static class HostBuilderExtensions
     /// <param name="hostBuilder">Web主机构建器</param>
     /// <param name="autoRegisterBackgroundService"></param>
     /// <returns>IWebHostBuilder</returns>
-    public static IWebHostBuilder Inject(this IWebHostBuilder hostBuilder, bool autoRegisterBackgroundService = true)
+    public static IWebHostBuilder Inject(this IWebHostBuilder hostBuilder, bool autoRegisterBackgroundService)
     {
         return hostBuilder.Inject((_, options) =>
         {
@@ -99,7 +99,7 @@ public static class HostBuilderExtensions
     /// <param name="hostBuilder">泛型主机注入构建器</param>
     /// <param name="autoRegisterBackgroundService"></param>
     /// <returns>IHostBuilder</returns>
-    public static IHostBuilder Inject(this IHostBuilder hostBuilder, bool autoRegisterBackgroundService = true)
+    public static IHostBuilder Inject(this IHostBuilder hostBuilder, bool autoRegisterBackgroundService)
     {
         return hostBuilder.Inject((_, options) =>
         {
