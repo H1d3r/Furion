@@ -13,7 +13,8 @@ body:
       label: 版本号
       description: 请选择项目使用的 Furion 版本？
       options:
-        - 4.9.7.131 (最新)
+        - 4.9.7.132 (最新)
+        - 4.9.7.131
         - 4.9.7.130
         - 4.9.7.129
         - 4.9.7.128
@@ -196,4 +197,10 @@ body:
       label: 友好承诺
       options:
         - label: 我承诺将本着相互尊重、理解和友善的态度进行交流，共同维护好 Furion 来之不易的良好的社区氛围。
+          required: true
+  - type: checkboxes
+    attributes:
+      label: 提交前请确认
+      options:
+        - label: 我已附上可复现问题的最小化代码示例或在线 Demo 链接。**请注意：未提供复现 Demo 的 `Issue` 可能无法得到回复或会被关闭。**
           required: true
