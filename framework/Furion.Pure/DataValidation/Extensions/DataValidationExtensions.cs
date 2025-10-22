@@ -41,10 +41,22 @@ public static class DataValidationExtensions
     /// </summary>
     /// <param name="obj">对象实例</param>
     /// <param name="validateAllProperties">是否验证所有属性</param>
+    /// <param name="serviceProvider">服务提供器</param>
     /// <returns>验证结果</returns>
-    public static DataValidationResult TryValidate(this object obj, bool validateAllProperties = true)
+    public static DataValidationResult TryValidate(this object obj, bool validateAllProperties = true, IServiceProvider serviceProvider = null)
     {
-        return DataValidator.TryValidateObject(obj, validateAllProperties);
+        return DataValidator.TryValidateObject(obj, validateAllProperties, serviceProvider);
+    }
+
+    /// <summary>
+    /// 拓展方法，验证类类型对象
+    /// </summary>
+    /// <param name="obj">对象实例</param>
+    /// <param name="serviceProvider">服务提供器</param>
+    /// <returns>验证结果</returns>
+    public static DataValidationResult TryValidate(this object obj, IServiceProvider serviceProvider)
+    {
+        return DataValidator.TryValidateObject(obj, true, serviceProvider);
     }
 
     /// <summary>
@@ -55,7 +67,19 @@ public static class DataValidationExtensions
     /// <returns></returns>
     public static DataValidationResult TryValidate(this object value, params ValidationAttribute[] validationAttributes)
     {
-        return DataValidator.TryValidateValue(value, validationAttributes);
+        return DataValidator.TryValidateValue(value, null, validationAttributes);
+    }
+
+    /// <summary>
+    /// 拓展方法，验证单个值
+    /// </summary>
+    /// <param name="value">单个值</param>
+    /// <param name="validationAttributes">验证特性</param>
+    /// <param name="serviceProvider">服务提供器</param>
+    /// <returns></returns>
+    public static DataValidationResult TryValidate(this object value, IServiceProvider serviceProvider, params ValidationAttribute[] validationAttributes)
+    {
+        return DataValidator.TryValidateValue(value, serviceProvider, validationAttributes);
     }
 
     /// <summary>
@@ -86,9 +110,10 @@ public static class DataValidationExtensions
     /// </summary>
     /// <param name="obj">对象实例</param>
     /// <param name="validateAllProperties">是否验证所有属性</param>
-    public static void Validate(this object obj, bool validateAllProperties = true)
+    /// <param name="serviceProvider">服务提供器</param>
+    public static void Validate(this object obj, bool validateAllProperties = true, IServiceProvider serviceProvider = null)
     {
-        DataValidator.TryValidateObject(obj, validateAllProperties).ThrowValidateFailedModel();
+        DataValidator.TryValidateObject(obj, validateAllProperties, serviceProvider).ThrowValidateFailedModel();
     }
 
     /// <summary>
@@ -98,7 +123,18 @@ public static class DataValidationExtensions
     /// <param name="validationAttributes">验证特性</param>
     public static void Validate(this object value, params ValidationAttribute[] validationAttributes)
     {
-        DataValidator.TryValidateValue(value, validationAttributes).ThrowValidateFailedModel();
+        DataValidator.TryValidateValue(value, null, validationAttributes).ThrowValidateFailedModel();
+    }
+
+    /// <summary>
+    /// 拓展方法，验证单个值
+    /// </summary>
+    /// <param name="value">单个值</param>
+    /// <param name="validationAttributes">验证特性</param>
+    /// <param name="serviceProvider">服务提供器</param>
+    public static void Validate(this object value, IServiceProvider serviceProvider, params ValidationAttribute[] validationAttributes)
+    {
+        DataValidator.TryValidateValue(value, serviceProvider, validationAttributes).ThrowValidateFailedModel();
     }
 
     /// <summary>
