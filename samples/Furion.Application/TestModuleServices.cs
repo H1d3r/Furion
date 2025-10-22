@@ -724,6 +724,12 @@ public class TestModuleServices : IDynamicApiController
 
         return new JsonResult(hash + "------" + data);
     }
+
+    [NonValidation]
+    public void 测试手动验证脱敏(SensitiveModel model, [FromServices] IServiceProvider services)
+    {
+        var val = model.TryValidate(services);
+    }
 }
 
 
@@ -829,4 +835,11 @@ public class TestDefaultValue
 
     ///<example>"[]"</example>
     public List<string> List1 { get; set; }
+}
+
+
+public class SensitiveModel
+{
+    [SensitiveDetection]
+    public string Text { get; set; }
 }
