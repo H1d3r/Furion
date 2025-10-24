@@ -37,7 +37,7 @@ public sealed class DynamicApiControllerBuilder
     /// 提供生成控制器过滤器
     /// </summary>
     /// <remarks>返回 <c>true</c> 将生成控制器，否则跳过。</remarks>
-    public Func<ControllerModel, bool> ControllerFilter { get; set; }
+    public Func<Type, bool> ControllerFilter { get; set; }
 
     /// <summary>
     /// 添加 Action 自定义配置
