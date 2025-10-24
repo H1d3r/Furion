@@ -65,7 +65,9 @@ public static class DynamicApiControllerServiceCollectionExtensions
         var dynamicApiControllerBuilder = new DynamicApiControllerBuilder();
         configure?.Invoke(dynamicApiControllerBuilder);
 
-        services.TryAddSingleton(dynamicApiControllerBuilder);
+        // 解决特定需求
+        Penetrates.ControllerFilter = dynamicApiControllerBuilder.ControllerFilter;
+        Penetrates.ActionConfigure = dynamicApiControllerBuilder.ActionConfigure;
     }
 
     /// <summary>
