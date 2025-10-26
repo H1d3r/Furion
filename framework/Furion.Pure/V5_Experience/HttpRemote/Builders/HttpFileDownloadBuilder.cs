@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Extensions;
+
 namespace Furion.HttpRemote;
 
 /// <summary>
@@ -31,6 +33,11 @@ namespace Furion.HttpRemote;
 /// <remarks>使用 <c>HttpRequestBuilder.DownloadFile(requestUri, destinationPath)</c> 静态方法创建。</remarks>
 public sealed class HttpFileDownloadBuilder
 {
+    /// <summary>
+    ///     <see cref="HttpRequestBuilder" /> 配置委托
+    /// </summary>
+    internal Action<HttpRequestBuilder>? _requestConfigure;
+
     /// <summary>
     ///     <inheritdoc cref="HttpFileDownloadBuilder" />
     /// </summary>
@@ -116,11 +123,6 @@ public sealed class HttpFileDownloadBuilder
     ///     实现 <see cref="IHttpFileTransferEventHandler" /> 的类型
     /// </summary>
     internal Type? FileTransferEventHandlerType { get; private set; }
-
-    /// <summary>
-    ///     <see cref="HttpRequestBuilder" /> 配置委托
-    /// </summary>
-    internal Action<HttpRequestBuilder>? RequestConfigure { get; private set; }
 
     /// <summary>
     ///     设置用于传输操作的缓冲区大小
@@ -365,26 +367,7 @@ public sealed class HttpFileDownloadBuilder
     /// </returns>
     public HttpFileDownloadBuilder WithRequest(Action<HttpRequestBuilder> configure)
     {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(configure);
-
-        // 如果 RequestConfigure 未设置则直接赋值
-        if (RequestConfigure is null)
-        {
-            RequestConfigure = configure;
-        }
-        // 否则创建级联调用委托
-        else
-        {
-            // 复制一个新的委托避免死循环
-            var originalRequestConfigure = RequestConfigure;
-
-            RequestConfigure = httpRequestBuilder =>
-            {
-                originalRequestConfigure.Invoke(httpRequestBuilder);
-                configure.Invoke(httpRequestBuilder);
-            };
-        }
+        configure.Combine(ref _requestConfigure);
 
         return this;
     }
@@ -448,7 +431,7 @@ public sealed class HttpFileDownloadBuilder
         }
 
         // 调用自定义配置委托
-        RequestConfigure?.Invoke(httpRequestBuilder);
+        _requestConfigure?.Invoke(httpRequestBuilder);
 
         return httpRequestBuilder;
     }
