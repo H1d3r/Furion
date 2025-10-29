@@ -38,7 +38,7 @@ using StringWithQualityHeaderValue = System.Net.Http.Headers.StringWithQualityHe
 namespace Furion.HttpRemote.Extensions;
 
 /// <summary>
-///     HTTP 远程服务拓展类
+///     HTTP 远程服务模块拓展类
 /// </summary>
 public static partial class HttpRemoteExtensions
 {
