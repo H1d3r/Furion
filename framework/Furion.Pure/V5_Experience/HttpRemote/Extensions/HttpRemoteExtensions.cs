@@ -32,6 +32,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using StringWithQualityHeaderValue = System.Net.Http.Headers.StringWithQualityHeaderValue;
 
@@ -452,6 +453,21 @@ public static partial class HttpRemoteExtensions
         httpResponseMessage.Content.Headers.ContentType?.MediaType.IsIn(
             [MediaTypeNames.Application.Xml, MediaTypeNames.Application.XmlPatch, MediaTypeNames.Text.Xml],
             StringComparer.OrdinalIgnoreCase) == true;
+
+    /// <summary>
+    ///     将对象转换为 JSON 字符串
+    /// </summary>
+    /// <param name="obj">
+    ///     <see cref="object" />
+    /// </param>
+    /// <param name="jsonSerializerOptions">
+    ///     <see cref="JsonSerializerOptions" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    public static string ToJsonString(this object? obj, JsonSerializerOptions? jsonSerializerOptions = null) =>
+        JsonSerializer.Serialize(obj, jsonSerializerOptions ?? HttpRemoteOptions.JsonSerializerOptionsDefault);
 
     /// <summary>
     ///     获取主机环境名
