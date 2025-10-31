@@ -111,7 +111,7 @@ public static class TP
     /// <returns><see cref="string"/></returns>
     public static string Wrapper(string title, string description, params string[] items)
     {
-        return Wrapper(title, description, null);
+        return Wrapper(title, description, items, null);
     }
 
     /// <summary>
