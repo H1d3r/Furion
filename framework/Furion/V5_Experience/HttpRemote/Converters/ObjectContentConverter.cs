@@ -23,8 +23,6 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -43,17 +41,17 @@ public class ObjectContentConverter : IHttpContentConverter
     public virtual object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
         httpResponseMessage.Content
-            .ReadFromJsonAsync(resultType, GetJsonSerializerOptions(httpResponseMessage), cancellationToken)
+            .ReadFromJsonAsync(resultType, ResolveJsonSerializerOptions(httpResponseMessage), cancellationToken)
             .GetAwaiter().GetResult();
 
     /// <inheritdoc />
     public virtual async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
         await httpResponseMessage.Content.ReadFromJsonAsync(resultType,
-            GetJsonSerializerOptions(httpResponseMessage), cancellationToken);
+            ResolveJsonSerializerOptions(httpResponseMessage), cancellationToken);
 
     /// <summary>
-    ///     获取 JSON 序列化选项实例
+    ///     根据 HTTP 响应消息和服务提供器，解析出最终生效的 <see cref="JsonSerializerOptions" /> 实例
     /// </summary>
     /// <param name="httpResponseMessage">
     ///     <see cref="HttpResponseMessage" />
@@ -61,25 +59,13 @@ public class ObjectContentConverter : IHttpContentConverter
     /// <returns>
     ///     <see cref="JsonSerializerOptions" />
     /// </returns>
-    protected virtual JsonSerializerOptions GetJsonSerializerOptions(HttpResponseMessage httpResponseMessage)
+    protected virtual JsonSerializerOptions ResolveJsonSerializerOptions(HttpResponseMessage httpResponseMessage)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(httpResponseMessage);
 
-        // 获取 HttpClient 实例的配置名称
-        if (httpResponseMessage.RequestMessage?.Options.TryGetValue(
-                new HttpRequestOptionsKey<string>(Constants.HTTP_CLIENT_NAME), out var httpClientName) != true)
-        {
-            httpClientName = string.Empty;
-        }
-
-        // 获取 HttpClientOptions 实例
-        var httpClientOptions = ServiceProvider?.GetService<IOptionsMonitor<HttpClientOptions>>()?.Get(httpClientName);
-
-        // 优先级：指定名称的 HttpClientOptions -> HttpRemoteOptions -> 默认值
-        return (httpClientOptions?.IsDefault != false ? null : httpClientOptions.JsonSerializerOptions) ??
-               ServiceProvider?.GetRequiredService<IOptions<HttpRemoteOptions>>().Value.JsonSerializerOptions ??
-               HttpRemoteOptions.JsonSerializerOptionsDefault;
+        // 根据 HTTP 响应消息和服务提供器，解析出最终生效的 JsonSerializerOptions 实例
+        return HttpRemoteUtility.ResolveJsonSerializerOptions(httpResponseMessage, ServiceProvider);
     }
 }
 
@@ -91,12 +77,12 @@ public class ObjectContentConverter<TResult> : ObjectContentConverter, IHttpCont
     public virtual TResult? Read(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
         httpResponseMessage.Content
-            .ReadFromJsonAsync<TResult>(GetJsonSerializerOptions(httpResponseMessage), cancellationToken)
+            .ReadFromJsonAsync<TResult>(ResolveJsonSerializerOptions(httpResponseMessage), cancellationToken)
             .GetAwaiter().GetResult();
 
     /// <inheritdoc />
     public virtual async Task<TResult?> ReadAsync(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
         await httpResponseMessage.Content.ReadFromJsonAsync<TResult>(
-            GetJsonSerializerOptions(httpResponseMessage), cancellationToken);
+            ResolveJsonSerializerOptions(httpResponseMessage), cancellationToken);
 }
