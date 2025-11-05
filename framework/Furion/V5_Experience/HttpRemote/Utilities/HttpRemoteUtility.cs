@@ -23,11 +23,14 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 
 namespace Furion.HttpRemote;
 
@@ -105,6 +108,37 @@ public static class HttpRemoteUtility
     public static ValueTask<Stream> UnspecifiedConnectCallback(SocketsHttpConnectionContext context,
         CancellationToken cancellationToken) =>
         IPAddressConnectCallback(AddressFamily.Unspecified, context, cancellationToken);
+
+    /// <summary>
+    ///     根据 HTTP 响应消息和服务提供器，解析出最终生效的 <see cref="JsonSerializerOptions" /> 实例
+    /// </summary>
+    /// <param name="httpResponseMessage">
+    ///     <see cref="HttpResponseMessage" />
+    /// </param>
+    /// <param name="serviceProvider">
+    ///     <see cref="IServiceProvider" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="JsonSerializerOptions" />
+    /// </returns>
+    public static JsonSerializerOptions ResolveJsonSerializerOptions(HttpResponseMessage? httpResponseMessage,
+        IServiceProvider? serviceProvider)
+    {
+        // 获取 HttpClient 实例的配置名称
+        if (httpResponseMessage?.RequestMessage?.Options.TryGetValue(
+                new HttpRequestOptionsKey<string>(Constants.HTTP_CLIENT_NAME), out var httpClientName) != true)
+        {
+            httpClientName = string.Empty;
+        }
+
+        // 获取 HttpClientOptions 实例
+        var httpClientOptions = serviceProvider?.GetService<IOptionsMonitor<HttpClientOptions>>()?.Get(httpClientName);
+
+        // 优先级：指定名称的 HttpClientOptions -> HttpRemoteOptions -> 默认值
+        return (httpClientOptions?.IsDefault != false ? null : httpClientOptions.JsonSerializerOptions) ??
+               serviceProvider?.GetService<IOptions<HttpRemoteOptions>>()?.Value.JsonSerializerOptions ??
+               HttpRemoteOptions.JsonSerializerOptionsDefault;
+    }
 
     /// <summary>
     ///     获取使用指定 IP 地址类型连接到服务器的回调
