@@ -90,7 +90,7 @@ public static class DbProvider
     public const string Dm = "DM.Microsoft.EntityFrameworkCore";
 
     /// <summary>
-    /// 人大金仓 提供器程序集（Oralce 或 PostgreSQL）
+    /// 人大金仓 提供器程序集（Oralce 或 PostgreSQL 或 SqlServer 最新版包）
     /// </summary>
     public const string Kdbndp = "Kdbndp.EntityFrameworkCore.KingbaseES";
 

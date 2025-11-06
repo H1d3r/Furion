@@ -48,6 +48,6 @@ public class UrlParameterFormatter : IUrlParameterFormatter
             _ => value
         };
 
-        return resolvedValue?.ToCultureString(CultureInfo.InvariantCulture);
+        return resolvedValue?.ToInvariantCultureString();
     }
 }
