@@ -26,7 +26,7 @@
 namespace Furion.DependencyInjection;
 
 /// <summary>
-/// 作用域服务注册依赖
+/// 范围服务注册依赖
 /// </summary>
 public interface IScoped : IPrivateDependency
 {
