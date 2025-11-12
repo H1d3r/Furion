@@ -590,7 +590,10 @@ public static class SpecificationDocumentBuilder
 
             foreach (var securityDefinition in _specificationDocumentSettings.SecurityDefinitions)
             {
-                openApiSecurityRequirement.Add(new OpenApiSecuritySchemeReference(securityDefinition.Id, document), securityDefinition.Requirement.Accesses);
+                // Id 必须定义
+                if (string.IsNullOrWhiteSpace(securityDefinition.Id)) continue;
+
+                openApiSecurityRequirement.Add(new OpenApiSecuritySchemeReference(securityDefinition.Id, document), securityDefinition.Requirement.Accesses ?? []);
             }
 
             return openApiSecurityRequirement;
