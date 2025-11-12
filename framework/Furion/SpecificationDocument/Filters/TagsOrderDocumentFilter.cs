@@ -24,7 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.DynamicApiController;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Furion.SpecificationDocument;
@@ -50,6 +50,6 @@ public class TagsOrderDocumentFilter : IDocumentFilter
             {
                 Name = c.Value.Item1,
                 Description = swaggerDoc.Tags.FirstOrDefault(m => m.Name == c.Key)?.Description
-            }).ToList();
+            }).ToHashSet();
     }
 }

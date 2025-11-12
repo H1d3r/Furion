@@ -34,7 +34,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
-using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -234,7 +233,7 @@ public static class SpecificationDocumentBuilder
     internal static void Build(SwaggerOptions swaggerOptions, Action<SwaggerOptions> configure = null)
     {
         // 生成V2版本
-        swaggerOptions.OpenApiVersion = _specificationDocumentSettings.FormatAsV2 == true ? OpenApiSpecVersion.OpenApi2_0 : OpenApiSpecVersion.OpenApi3_0;
+        swaggerOptions.OpenApiVersion = _specificationDocumentSettings.FormatAsV2 == true ? OpenApiSpecVersion.OpenApi2_0 : OpenApiSpecVersion.OpenApi3_1;
 
         // 判断是否启用 Server
         if (_specificationDocumentSettings.HideServers != true)
@@ -572,8 +571,6 @@ public static class SpecificationDocumentBuilder
         // 判断是否启用了授权
         if (_specificationDocumentSettings.EnableAuthorized != true || _specificationDocumentSettings.SecurityDefinitions.Length == 0) return;
 
-        var openApiSecurityRequirement = new OpenApiSecurityRequirement();
-
         // 生成安全定义
         foreach (var securityDefinition in _specificationDocumentSettings.SecurityDefinitions)
         {
@@ -584,23 +581,20 @@ public static class SpecificationDocumentBuilder
             // 添加安全定义
             var openApiSecurityScheme = securityDefinition as OpenApiSecurityScheme;
             swaggerGenOptions.AddSecurityDefinition(securityDefinition.Id, openApiSecurityScheme);
-
-            // 添加安全需求
-            var securityRequirement = securityDefinition.Requirement;
-
-            // C# 9.0 模式匹配新语法
-            if (securityRequirement is { Scheme.Reference: not null })
-            {
-                securityRequirement.Scheme.Reference.Id ??= securityDefinition.Id;
-                openApiSecurityRequirement.Add(securityRequirement.Scheme, securityRequirement.Accesses);
-            }
         }
 
         // 添加安全需求
-        if (openApiSecurityRequirement.Count > 0)
+        swaggerGenOptions.AddSecurityRequirement(document =>
         {
-            swaggerGenOptions.AddSecurityRequirement(openApiSecurityRequirement);
-        }
+            var openApiSecurityRequirement = new OpenApiSecurityRequirement();
+
+            foreach (var securityDefinition in _specificationDocumentSettings.SecurityDefinitions)
+            {
+                openApiSecurityRequirement.Add(new OpenApiSecuritySchemeReference(securityDefinition.Id, document), securityDefinition.Requirement.Accesses);
+            }
+
+            return openApiSecurityRequirement;
+        });
     }
 
     /// <summary>
