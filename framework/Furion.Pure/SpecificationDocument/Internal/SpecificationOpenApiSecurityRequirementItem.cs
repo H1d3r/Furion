@@ -23,7 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 namespace Furion.SpecificationDocument;
 
@@ -38,7 +38,7 @@ public sealed class SpecificationOpenApiSecurityRequirementItem
     /// </summary>
     public SpecificationOpenApiSecurityRequirementItem()
     {
-        Accesses = System.Array.Empty<string>();
+        Accesses = [];
     }
 
     /// <summary>
@@ -49,5 +49,5 @@ public sealed class SpecificationOpenApiSecurityRequirementItem
     /// <summary>
     /// 权限
     /// </summary>
-    public string[] Accesses { get; set; }
+    public List<string> Accesses { get; set; }
 }

@@ -28,5 +28,10 @@
             <remarks>和 <see cref="M:Furion.Web.Entry.SingleFilePublish.IncludeAssemblies"/> 可同时配置</remarks>
             <returns></returns>
         </member>
+        <member name="T:Program">
+            <summary>
+            Auto-generated public partial Program class for top-level statement apps.
+            </summary>
+        </member>
     </members>
 </doc>

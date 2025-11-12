@@ -136,13 +136,6 @@
             <div id="login-error"></div>
         </div>
     </div>
-    <!-- Workaround for https://github.com/swagger-api/swagger-editor/issues/1371 -->
-    <script>
-        if (window.navigator.userAgent.indexOf("Edge") > -1) {
-            console.log("Removing native Edge fetch in favor of swagger-ui's polyfill")
-            window.fetch = undefined;
-        }
-    </script>
 
     <script src="%(ScriptBundlePath)" charset="utf-8"></script>
     <script src="%(ScriptPresetsPath)" charset="utf-8"></script>
@@ -383,7 +376,7 @@
 
             // End Swagger UI call region
 
-            window.ui = ui
+            window.ui = ui;
         }
 
         window.onload = function () {

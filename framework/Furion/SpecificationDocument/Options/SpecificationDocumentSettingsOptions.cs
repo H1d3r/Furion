@@ -26,7 +26,7 @@
 using Furion.ConfigurableOptions;
 using Furion.Reflection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
 namespace Furion.SpecificationDocument;
@@ -183,15 +183,16 @@ public sealed class SpecificationDocumentSettingsOptions : IConfigurableOptions<
                         In= ParameterLocation.Header,
                         Requirement=new SpecificationOpenApiSecurityRequirementItem
                         {
-                            Scheme=new OpenApiSecurityScheme
-                            {
-                                Reference=new OpenApiReference
-                                {
-                                    Id="Bearer",
-                                    Type= ReferenceType.SecurityScheme
-                                }
-                            },
-                            Accesses=Array.Empty<string>()
+                            // 2025.11.12 Swashbuckle.AspNetCore 10.0.0 版本后不再支持 Scheme.Reference 配置
+                            //Scheme=new OpenApiSecurityScheme
+                            //{
+                            //    Reference=new OpenApiReference
+                            //    {
+                            //        Id="Bearer",
+                            //        Type= ReferenceType.SecurityScheme
+                            //    }
+                            //},
+                            Accesses=[]
                         }
                     }
             };

@@ -23,7 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Furion.SpecificationDocument;
@@ -38,15 +38,18 @@ public class AnySchemaFilter : ISchemaFilter
     /// <summary>
     /// 实现过滤器方法
     /// </summary>
-    /// <param name="model"></param>
+    /// <param name="schema"></param>
     /// <param name="context"></param>
-    public void Apply(OpenApiSchema model, SchemaFilterContext context)
+    public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
-        var type = context.Type;
-
-        if (type == typeof(object))
+        if (schema is OpenApiSchema concrete)
         {
-            model.AdditionalPropertiesAllowed = false;
+            var type = context.Type;
+
+            if (type == typeof(object))
+            {
+                concrete.AdditionalPropertiesAllowed = false;
+            }
         }
     }
 }
