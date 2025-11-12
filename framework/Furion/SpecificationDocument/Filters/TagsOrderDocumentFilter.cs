@@ -49,7 +49,7 @@ public class TagsOrderDocumentFilter : IDocumentFilter
             .Select(c => new OpenApiTag
             {
                 Name = c.Value.Item1,
-                Description = swaggerDoc.Tags.FirstOrDefault(m => m.Name == c.Key)?.Description
+                Description = swaggerDoc.Tags?.FirstOrDefault(m => m.Name == c.Key)?.Description
             }).ToHashSet();
     }
 }
