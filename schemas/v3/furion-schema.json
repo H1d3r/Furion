@@ -2219,6 +2219,11 @@
             "description": "格式化为V2版本",
             "default": false
           },
+          "LatestVersion": {
+            "type": "boolean",
+            "description": "是否采用最新版本，优先级小于 FormatAsV2",
+            "default": false
+          },
           "RoutePrefix": {
             "type": "string",
             "description": "配置规范化文档地址",
