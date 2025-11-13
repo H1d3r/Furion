@@ -233,7 +233,11 @@ public static class SpecificationDocumentBuilder
     internal static void Build(SwaggerOptions swaggerOptions, Action<SwaggerOptions> configure = null)
     {
         // 生成V2版本
-        swaggerOptions.OpenApiVersion = _specificationDocumentSettings.FormatAsV2 == true ? OpenApiSpecVersion.OpenApi2_0 : OpenApiSpecVersion.OpenApi3_1;
+        swaggerOptions.OpenApiVersion = _specificationDocumentSettings.FormatAsV2 == true
+            ? OpenApiSpecVersion.OpenApi2_0
+            : _specificationDocumentSettings.LatestVersion == true
+                ? OpenApiSpecVersion.OpenApi3_1
+                : OpenApiSpecVersion.OpenApi3_0;
 
         // 判断是否启用 Server
         if (_specificationDocumentSettings.HideServers != true)
