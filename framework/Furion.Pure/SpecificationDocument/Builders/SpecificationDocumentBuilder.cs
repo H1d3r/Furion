@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 // 版权信息
 // 版权归百小僧及百签科技（广东）有限公司所有。
 // 所有权利保留。
@@ -593,7 +593,7 @@ public static class SpecificationDocumentBuilder
                 // Id 必须定义
                 if (string.IsNullOrWhiteSpace(securityDefinition.Id)) continue;
 
-                openApiSecurityRequirement.Add(new OpenApiSecuritySchemeReference(securityDefinition.Id, document), securityDefinition.Requirement.Accesses ?? []);
+                openApiSecurityRequirement.Add(new OpenApiSecuritySchemeReference(securityDefinition.Id, document), securityDefinition.Requirement?.Accesses ?? []);
             }
 
             return openApiSecurityRequirement;
