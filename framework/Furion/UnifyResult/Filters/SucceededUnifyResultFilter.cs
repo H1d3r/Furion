@@ -120,16 +120,16 @@ public class SucceededUnifyResultFilter : IAsyncActionFilter, IOrderedFilter
         if (UnifyContext.CheckSucceededNonUnify(actionDescriptor.MethodInfo, out var unifyResult))
         {
             // 处理禁用规范化处理但配置了 JSON 序列化情况
-            var extractedValue = actionExecutedContext.Result switch
+            var (extractedValue, serializerSettings, isTargetType) = actionExecutedContext.Result switch
             {
-                ObjectResult objectResult => objectResult.Value,
-                JsonResult jsonResult => jsonResult.Value,
-                _ => null
+                ObjectResult objectResult => (objectResult.Value, UnifyContext.GetSerializerSettings(context), true),
+                JsonResult jsonResult => (jsonResult.Value, jsonResult.SerializerSettings ?? UnifyContext.GetSerializerSettings(context), true),
+                _ => (null, null, false) // 不是目标类型
             };
 
-            if (actionExecutedContext.Result is ObjectResult or JsonResult)
+            if (isTargetType)
             {
-                actionExecutedContext.Result = new JsonResult(extractedValue, UnifyContext.GetSerializerSettings(context));
+                actionExecutedContext.Result = new JsonResult(extractedValue, serializerSettings);
             }
 
             return;
