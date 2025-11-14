@@ -124,7 +124,7 @@ public class SucceededUnifyResultFilter : IAsyncActionFilter, IOrderedFilter
             {
                 ObjectResult objectResult => (objectResult.Value, UnifyContext.GetSerializerSettings(context), true),
                 JsonResult jsonResult => (jsonResult.Value, jsonResult.SerializerSettings ?? UnifyContext.GetSerializerSettings(context), true),
-                _ => (null, null, false) // 不是目标类型
+                _ => (null, null, false)
             };
 
             if (isTargetType)
