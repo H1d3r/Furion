@@ -190,7 +190,8 @@ public sealed class DataValidationFilter : IAsyncActionFilter, IOrderedFilter
                     // 返回 JsonResult
                     finalContext.Result = new JsonResult(validationMetadata.ValidationResult)
                     {
-                        StatusCode = StatusCodes.Status400BadRequest
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        SerializerSettings = UnifyContext.GetSerializerSettings(context)
                     };
                 }
             }
