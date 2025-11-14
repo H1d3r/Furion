@@ -67,6 +67,11 @@ public sealed class Startup : AppStartup
 
         services.AddUnifyProvider<SpeciallyResultProvider>("specially");
 
+        services.AddUnifyJsonOptions("specially", new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null
+        });
+
         services.AddHttpRemote();
 
         services.AddEventBus(options =>

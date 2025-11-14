@@ -127,6 +127,7 @@ public sealed class FriendlyExceptionFilter : IAsyncExceptionFilter
                     context.Result = new JsonResult(exceptionMetadata.Errors)
                     {
                         StatusCode = exceptionMetadata.StatusCode,
+                        SerializerSettings = UnifyContext.GetSerializerSettings(context)
                     };
                 }
                 else
