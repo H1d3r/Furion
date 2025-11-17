@@ -14,6 +14,13 @@
 		<PublishReadyToRunComposite>true</PublishReadyToRunComposite>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(net10)' == 'True' ">
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
+		<PublishReadyToRunComposite>true</PublishReadyToRunComposite>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\FurionBlazorApi.Web.Core\FurionBlazorApi.Web.Core.csproj" />
 	</ItemGroup>
