@@ -12,6 +12,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
+  <PropertyGroup Condition="'$(net10)' == 'True' ">
+		<TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\FurionBlazorApp.Application\FurionBlazorApp.Application.csproj" />
     <ProjectReference Include="..\FurionBlazorApp.Client\FurionBlazorApp.Client.csproj" />

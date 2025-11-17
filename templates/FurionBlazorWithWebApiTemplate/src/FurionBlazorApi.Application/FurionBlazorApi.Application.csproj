@@ -14,6 +14,13 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(net10)' == 'True' ">
+		<TargetFramework>net10.0</TargetFramework>
+		<NoWarn>1701;1702;1591</NoWarn>
+		<DocumentationFile>FurionBlazorApi.Application.xml</DocumentationFile>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<None Remove="applicationsettings.json" />
 		<None Remove="FurionBlazorApi.Application.xml" />
