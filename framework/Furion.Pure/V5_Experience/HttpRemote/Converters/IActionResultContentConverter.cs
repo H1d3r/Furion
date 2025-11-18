@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Mime;
 
@@ -38,10 +39,10 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
     public override IActionResult? Read(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default)
     {
-        // 处理特定状态码结果
-        if (TryGetStatusCodeResult(httpResponseMessage, out var statusCode, out var statusCodeResult))
+        // 尝试为无内容响应生成对应的 IActionResult
+        if (TryGetEmptyContentResult(httpResponseMessage, out var statusCode, out var emptyContentResult))
         {
-            return statusCodeResult;
+            return emptyContentResult;
         }
 
         // 获取响应内容标头
@@ -50,9 +51,6 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
         // 获取内容类型
         var contentType = contentHeaders.ContentType;
         var mediaType = contentType?.MediaType;
-
-        // 空检查
-        ArgumentNullException.ThrowIfNull(mediaType);
 
         switch (mediaType)
         {
@@ -63,6 +61,7 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
             case MediaTypeNames.Text.Xml:
             case MediaTypeNames.Text.Html:
             case MediaTypeNames.Text.Plain:
+            case MediaTypeNames.Application.Soap:
                 // 读取字符串内容
                 var stringContent = httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).GetAwaiter()
                     .GetResult();
@@ -75,7 +74,7 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
                 // 读取流内容
                 var streamContent = httpResponseMessage.Content.ReadAsStream(cancellationToken);
 
-                return new FileStreamResult(streamContent, contentType!.ToString())
+                return new FileStreamResult(streamContent, contentType?.ToString() ?? MediaTypeNames.Application.Octet)
                 {
                     // 尝试从响应标头 Content-Disposition 中解析文件名
                     FileDownloadName = Helpers.ExtractFileNameFromContentDisposition(contentHeaders.ContentDisposition),
@@ -88,10 +87,10 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
     public override async Task<IActionResult?> ReadAsync(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default)
     {
-        // 处理特定状态码结果
-        if (TryGetStatusCodeResult(httpResponseMessage, out var statusCode, out var statusCodeResult))
+        // 尝试为无内容响应生成对应的 IActionResult
+        if (TryGetEmptyContentResult(httpResponseMessage, out var statusCode, out var emptyContentResult))
         {
-            return statusCodeResult;
+            return emptyContentResult;
         }
 
         // 获取响应内容标头
@@ -100,9 +99,6 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
         // 获取内容类型
         var contentType = contentHeaders.ContentType;
         var mediaType = contentType?.MediaType;
-
-        // 空检查
-        ArgumentNullException.ThrowIfNull(mediaType);
 
         switch (mediaType)
         {
@@ -113,6 +109,7 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
             case MediaTypeNames.Text.Xml:
             case MediaTypeNames.Text.Html:
             case MediaTypeNames.Text.Plain:
+            case MediaTypeNames.Application.Soap:
                 // 读取字符串内容
                 var stringContent = await httpResponseMessage.Content.ReadAsStringAsync(cancellationToken);
 
@@ -124,7 +121,7 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
                 // 读取流内容
                 var streamContent = await httpResponseMessage.Content.ReadAsStreamAsync(cancellationToken);
 
-                return new FileStreamResult(streamContent, contentType!.ToString())
+                return new FileStreamResult(streamContent, contentType?.ToString() ?? MediaTypeNames.Application.Octet)
                 {
                     // 尝试从响应标头 Content-Disposition 中解析文件名
                     FileDownloadName = Helpers.ExtractFileNameFromContentDisposition(contentHeaders.ContentDisposition),
@@ -134,36 +131,44 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
     }
 
     /// <summary>
-    ///     处理特定状态码结果
+    ///     尝试为无内容响应生成对应的 <see cref="IActionResult" />
     /// </summary>
     /// <param name="httpResponseMessage">
     ///     <see cref="HttpResponseMessage" />
     /// </param>
     /// <param name="statusCode">HTTP 状态码</param>
-    /// <param name="statusCodeResult">
+    /// <param name="emptyContentResult">
     ///     <see cref="IActionResult" />
     /// </param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal static bool TryGetStatusCodeResult(HttpResponseMessage httpResponseMessage, out HttpStatusCode statusCode,
-        out IActionResult? statusCodeResult)
+    internal static bool TryGetEmptyContentResult(HttpResponseMessage httpResponseMessage,
+        out HttpStatusCode statusCode, [NotNullWhen(true)] out IActionResult? emptyContentResult)
     {
         // 获取状态码
         statusCode = httpResponseMessage.StatusCode;
 
-        statusCodeResult = statusCode switch
+        emptyContentResult = statusCode switch
         {
+            // 无响应体的状态码
             HttpStatusCode.NoContent => new NoContentResult(),
-            HttpStatusCode.BadRequest => new BadRequestResult(),
-            HttpStatusCode.Unauthorized => new UnauthorizedResult(),
-            HttpStatusCode.NotFound => new NotFoundResult(),
-            HttpStatusCode.Conflict => new ConflictResult(),
-            HttpStatusCode.UnsupportedMediaType => new UnsupportedMediaTypeResult(),
-            HttpStatusCode.UnprocessableEntity => new UnprocessableEntityResult(),
+            HttpStatusCode.ResetContent => new StatusCodeResult((int)HttpStatusCode.ResetContent),
+            // 304 特殊处理：返回空内容但必须保留 ETag/Last-Modified 等验证头
+            HttpStatusCode.NotModified => new StatusCodeResult((int)HttpStatusCode.NotModified),
+            HttpStatusCode.SwitchingProtocols => new StatusCodeResult((int)HttpStatusCode.SwitchingProtocols),
+            HttpStatusCode.Processing => new StatusCodeResult((int)HttpStatusCode.Processing),
+
+            // 可能存在响应体的状态码。这里不应该处理，因为它们通常包含错误详情
+            // HttpStatusCode.BadRequest => new BadRequestResult(),
+            // HttpStatusCode.Unauthorized => new UnauthorizedResult(),
+            // HttpStatusCode.NotFound => new NotFoundResult(),
+            // HttpStatusCode.Conflict => new ConflictResult(),
+            // HttpStatusCode.UnsupportedMediaType => new UnsupportedMediaTypeResult(),
+            // HttpStatusCode.UnprocessableEntity => new UnprocessableEntityResult(),
             _ => null
         };
 
-        return statusCodeResult is not null;
+        return emptyContentResult is not null;
     }
 }
