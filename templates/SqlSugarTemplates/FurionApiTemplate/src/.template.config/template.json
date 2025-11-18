@@ -39,6 +39,7 @@
           "description": ".NET10 脚手架"
         }
       ],
+      "replaces": "$(framework)",
       "defaultValue": "net10.0",
       "description": "选择要创建的 .NET8-10 脚手架"
     },
