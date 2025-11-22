@@ -56,7 +56,7 @@ internal static class Penetrates
         };
 
         // 创建组件依赖链
-        CreateDependLinkList(componentType, ref dependLinkList, ref componentContextLinkList);
+        CreateDependLinkList(componentType, ref dependLinkList, ref componentContextLinkList, options);
 
         return componentContextLinkList;
     }
@@ -67,101 +67,210 @@ internal static class Penetrates
     /// <param name="componentType">组件类型</param>
     /// <param name="dependLinkList">依赖链表</param>
     /// <param name="componentContextLinkList">组件上下文链表</param>
+    /// <param name="options">组件参数</param>
     /// <exception cref="InvalidOperationException"></exception>
-    internal static void CreateDependLinkList(Type componentType, ref List<Type> dependLinkList, ref List<ComponentContext> componentContextLinkList)
+    internal static void CreateDependLinkList(Type componentType, ref List<Type> dependLinkList, ref List<ComponentContext> componentContextLinkList, object options = default)
     {
-        // 获取 [DependsOn] 特性
-        var dependsOnAttribute = componentType.GetCustomAttribute<DependsOnAttribute>(true);
+        // 检查空值
+        if (componentType == null) return;
 
-        // 获取依赖组件列表
-        var dependComponents = dependsOnAttribute?.DependComponents?.Distinct()?.ToArray() ?? Array.Empty<Type>();
+        // 获取根组件上下文
+        var rootComponentContext = componentContextLinkList.FirstOrDefault(u => u.IsRoot);
 
-        // 获取链接组件列表
-        var linkComponents = dependsOnAttribute?.LinkComponents?.Distinct()?.ToArray() ?? Array.Empty<Type>();
+        // 使用内部状态跟踪依赖解析
+        var resolutionState = new ComponentResolutionState(dependLinkList, componentContextLinkList, rootComponentContext);
 
-        // 检查自引用
-        if (dependComponents.Contains(componentType) || linkComponents.Contains(componentType))
+        // 递归解析依赖关系
+        ResolveComponentDependencies(componentType, ref resolutionState, options);
+    }
+
+    /// <summary>
+    /// 组件依赖解析状态
+    /// </summary>
+    private class ComponentResolutionState
+    {
+        public ComponentResolutionState(List<Type> dependLinkList, List<ComponentContext> componentContextLinkList, ComponentContext rootContext)
         {
-            throw new InvalidOperationException("A component cannot reference itself.");
+            DependLinkList = dependLinkList;
+            ComponentContextLinkList = componentContextLinkList;
+            RootContext = rootContext;
+            ProcessedComponents = new HashSet<Type>(dependLinkList);
+            CurrentPath = new Stack<Type>();
         }
 
-        // 找出当前组件的序号
-        var index = dependLinkList.IndexOf(componentType);
+        public List<Type> DependLinkList { get; }
+        public List<ComponentContext> ComponentContextLinkList { get; }
+        public ComponentContext RootContext { get; }
+        public HashSet<Type> ProcessedComponents { get; }
+        public Stack<Type> CurrentPath { get; }
 
-        // 获取根组件上下文并设置依赖
-        var rootComponentContext = componentContextLinkList.First(u => u.IsRoot);
-
-        // 设置当前组件依赖
-        var calledContext = index > -1 ? componentContextLinkList[index] : rootComponentContext;
-        calledContext.DependComponents = dependComponents;
-        calledContext.LinkComponents = linkComponents;
-
-        // 处理链接组件
-        if (index == -1)
+        /// <summary>
+        /// 获取组件在依赖链中的索引
+        /// </summary>
+        public int GetIndexOf(Type componentType)
         {
-            index = dependLinkList.Count;
-
-            // 将链接的依赖的组件插入链表指定位置中
-            dependLinkList.Add(componentType);
-
-            // 记录组件上下文调用链
-            componentContextLinkList.Add(new ComponentContext
-            {
-                CalledContext = calledContext,
-                RootContext = rootComponentContext,
-                ComponentType = componentType,
-                DependComponents = dependComponents,
-                LinkComponents = linkComponents
-            });
+            return DependLinkList.IndexOf(componentType);
         }
 
-        // 遍历当前组件依赖的组件集合
-        foreach (var dependComponent in dependComponents)
+        /// <summary>
+        /// 获取组件上下文
+        /// </summary>
+        public ComponentContext GetComponentContext(Type componentType)
         {
-            // 如果还未插入组件链，则插入
-            if (!dependLinkList.Contains(dependComponent))
+            var index = GetIndexOf(componentType);
+            if (index > -1) return ComponentContextLinkList[index];
+            return RootContext;
+        }
+
+        /// <summary>
+        /// 添加新组件到依赖链
+        /// </summary>
+        public void AddComponent(Type componentType, Type parentType, bool isDependency)
+        {
+            var parentIndex = GetIndexOf(parentType);
+            var parentContext = GetComponentContext(parentType);
+
+            // 创建新组件上下文
+            var newContext = new ComponentContext
             {
-                // 将被依赖的组件插入链表指定位置中
-                dependLinkList.Insert(index, dependComponent);
+                CalledContext = parentContext,
+                RootContext = RootContext,
+                ComponentType = componentType
+            };
 
-                // 记录组件上下文调用链
-                componentContextLinkList.Insert(index, new ComponentContext
-                {
-                    CalledContext = calledContext,
-                    RootContext = rootComponentContext,
-                    ComponentType = dependComponent,
-                    DependComponents = dependComponents,
-                    LinkComponents = linkComponents
-                });
-
-                // 递增序号
-                index++;
+            if (isDependency)
+            {
+                // 依赖组件：插入在父组件之前
+                DependLinkList.Insert(parentIndex, componentType);
+                ComponentContextLinkList.Insert(parentIndex, newContext);
             }
-            // 处理组件循环引用情况
             else
             {
-                if (dependLinkList.IndexOf(dependComponent) > index)
+                // 链接组件：添加到末尾（保持原始逻辑）
+                if (!DependLinkList.Contains(componentType))
                 {
-                    throw new InvalidOperationException("There is a circular reference problem between components.");
+                    DependLinkList.Add(componentType);
+                    ComponentContextLinkList.Add(newContext);
                 }
             }
 
-            // 进行下一层依赖递归链查找
-            CreateDependLinkList(dependComponent, ref dependLinkList, ref componentContextLinkList);
+            ProcessedComponents.Add(componentType);
+        }
+    }
+
+    /// <summary>
+    /// 递归解析组件依赖
+    /// </summary>
+    private static void ResolveComponentDependencies(Type componentType, ref ComponentResolutionState state, object options)
+    {
+        if (componentType == null) return;
+
+        // 检查循环依赖
+        if (state.CurrentPath.Contains(componentType))
+        {
+            var path = string.Join(" -> ", state.CurrentPath.Reverse().Append(componentType).Select(t => t.Name));
+            throw new InvalidOperationException($"Circular dependency detected: {path}");
         }
 
-        if (linkComponents == null || linkComponents.Length == 0) return;
-
-        // 遍历链接组件
-        foreach (var linkComponent in linkComponents)
+        state.CurrentPath.Push(componentType);
+        try
         {
-            // 不能链接根节点
-            if (linkComponent == rootComponentContext.ComponentType)
+            // 获取 [DependsOn] 特性
+            var dependsOnAttribute = componentType.GetCustomAttribute<DependsOnAttribute>(true);
+
+            // 获取依赖组件列表
+            var dependComponents = dependsOnAttribute?.DependComponents?.Distinct()?.Where(c => c != null)?.ToArray() ?? Array.Empty<Type>();
+
+            // 获取链接组件列表
+            var linkComponents = dependsOnAttribute?.LinkComponents?.Distinct()?.Where(c => c != null)?.ToArray() ?? Array.Empty<Type>();
+
+            // 检查自引用
+            if (dependComponents.Contains(componentType) || linkComponents.Contains(componentType))
             {
-                throw new InvalidOperationException("There is a circular reference problem between components.");
+                throw new InvalidOperationException($"Component {componentType.Name} cannot reference itself.");
             }
 
-            CreateDependLinkList(linkComponent, ref dependLinkList, ref componentContextLinkList);
+            // 找出当前组件的序号
+            var index = state.GetIndexOf(componentType);
+            var calledContext = index > -1 ? state.ComponentContextLinkList[index] : state.RootContext;
+
+            // 设置当前组件依赖
+            calledContext.DependComponents = dependComponents;
+            calledContext.LinkComponents = linkComponents;
+
+            // 处理依赖组件
+            for (int i = 0; i < dependComponents.Length; i++)
+            {
+                var dependComponent = dependComponents[i];
+                if (dependComponent == null) continue;
+
+                // 检查循环依赖
+                if (state.CurrentPath.Contains(dependComponent))
+                {
+                    throw new InvalidOperationException($"Circular dependency detected between {componentType.Name} and {dependComponent.Name}");
+                }
+
+                // 如果组件尚未处理
+                if (!state.ProcessedComponents.Contains(dependComponent))
+                {
+                    state.AddComponent(dependComponent, componentType, true);
+
+                    // 为新组件设置属性
+                    var newContextIndex = state.GetIndexOf(dependComponent);
+                    state.ComponentContextLinkList[newContextIndex].SetProperty(dependComponent, options);
+                }
+                else
+                {
+                    // 检查是否出现后向依赖（可能导致循环）
+                    if (state.GetIndexOf(dependComponent) > state.GetIndexOf(componentType))
+                    {
+                        throw new InvalidOperationException($"Circular reference detected between {componentType.Name} and {dependComponent.Name}");
+                    }
+                }
+
+                // 递归处理依赖
+                ResolveComponentDependencies(dependComponent, ref state, options);
+            }
+
+            // 保持原始的链接组件处理逻辑
+            if (linkComponents == null || linkComponents.Length == 0) return;
+
+            foreach (var linkComponent in linkComponents)
+            {
+                if (linkComponent == null) continue;
+
+                // 不能链接到根节点
+                if (linkComponent == state.RootContext.ComponentType)
+                {
+                    throw new InvalidOperationException($"Component {componentType.Name} cannot link to root component.");
+                }
+
+                // 检查循环依赖
+                if (state.CurrentPath.Contains(linkComponent))
+                {
+                    throw new InvalidOperationException($"Circular dependency detected in links between {componentType.Name} and {linkComponent.Name}");
+                }
+
+                // 保持原始逻辑：只是递归处理链接组件
+                if (!state.ProcessedComponents.Contains(linkComponent))
+                {
+                    state.AddComponent(linkComponent, componentType, false);
+
+                    // 为新组件设置属性
+                    var newContextIndex = state.GetIndexOf(linkComponent);
+                    if (newContextIndex > -1)
+                    {
+                        state.ComponentContextLinkList[newContextIndex].SetProperty(linkComponent, options);
+                    }
+                }
+
+                // 递归处理链接
+                ResolveComponentDependencies(linkComponent, ref state, options);
+            }
+        }
+        finally
+        {
+            state.CurrentPath.Pop();
         }
     }
 }
