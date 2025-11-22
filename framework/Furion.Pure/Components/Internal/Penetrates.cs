@@ -146,7 +146,7 @@ internal static class Penetrates
             }
             else
             {
-                // 链接组件：添加到末尾（保持原始逻辑）
+                // 链接组件：添加到末尾
                 if (!DependLinkList.Contains(componentType))
                 {
                     DependLinkList.Add(componentType);
@@ -199,7 +199,7 @@ internal static class Penetrates
             calledContext.LinkComponents = linkComponents;
 
             // 处理依赖组件
-            for (int i = 0; i < dependComponents.Length; i++)
+            for (var i = 0; i < dependComponents.Length; i++)
             {
                 var dependComponent = dependComponents[i];
                 if (dependComponent == null) continue;
@@ -232,7 +232,7 @@ internal static class Penetrates
                 ResolveComponentDependencies(dependComponent, ref state, options);
             }
 
-            // 保持原始的链接组件处理逻辑
+            // 链接组件处理逻辑
             if (linkComponents == null || linkComponents.Length == 0) return;
 
             foreach (var linkComponent in linkComponents)
@@ -251,7 +251,7 @@ internal static class Penetrates
                     throw new InvalidOperationException($"Circular dependency detected in links between {componentType.Name} and {linkComponent.Name}");
                 }
 
-                // 保持原始逻辑：只是递归处理链接组件
+                // 递归处理链接组件
                 if (!state.ProcessedComponents.Contains(linkComponent))
                 {
                     state.AddComponent(linkComponent, componentType, false);
