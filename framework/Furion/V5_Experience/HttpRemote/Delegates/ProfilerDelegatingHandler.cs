@@ -38,12 +38,12 @@ namespace Furion.HttpRemote;
 /// </summary>
 /// <remarks>参考文献：https://learn.microsoft.com/zh-cn/aspnet/core/fundamentals/http-requests?view=aspnetcore-8.0#outgoing-request-middleware</remarks>
 /// <param name="logger">
-///     <see cref="Logger{T}" />
+///     <see cref="IHttpRemoteLogger" />
 /// </param>
 /// <param name="httpRemoteOptions">
 ///     <see cref="IOptions{TOptions}" />
 /// </param>
-public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<HttpRemoteOptions> httpRemoteOptions)
+public sealed class ProfilerDelegatingHandler(IHttpRemoteLogger logger, IOptions<HttpRemoteOptions> httpRemoteOptions)
     : DelegatingHandler
 {
     /// <summary>
@@ -134,7 +134,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     ///     记录请求信息
     /// </summary>
     /// <param name="logger">
-    ///     <see cref="ILogger" />
+    ///     <see cref="IHttpRemoteLogger" />
     /// </param>
     /// <param name="remoteOptions">
     ///     <see cref="HttpRemoteOptions" />
@@ -148,7 +148,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
-    internal static async Task LogRequestAsync(ILogger logger, HttpRemoteOptions remoteOptions,
+    internal static async Task LogRequestAsync(IHttpRemoteLogger logger, HttpRemoteOptions remoteOptions,
         HttpRequestMessage request, HttpRemoteAnalyzer? httpRemoteAnalyzer = null,
         CancellationToken cancellationToken = default)
     {
@@ -161,7 +161,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     ///     记录响应信息
     /// </summary>
     /// <param name="logger">
-    ///     <see cref="ILogger" />
+    ///     <see cref="IHttpRemoteLogger" />
     /// </param>
     /// <param name="remoteOptions">
     ///     <see cref="HttpRemoteOptions" />
@@ -176,12 +176,11 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
-    internal static async Task LogResponseAsync(ILogger logger, HttpRemoteOptions remoteOptions,
+    internal static async Task LogResponseAsync(IHttpRemoteLogger logger, HttpRemoteOptions remoteOptions,
         HttpResponseMessage httpResponseMessage, long requestDuration, HttpRemoteAnalyzer? httpRemoteAnalyzer = null,
         CancellationToken cancellationToken = default)
     {
-        Log(logger, remoteOptions,
-            httpResponseMessage.ProfilerGeneralAndHeaders(generalCustomKeyValues:
+        Log(logger, remoteOptions, httpResponseMessage.ProfilerGeneralAndHeaders(generalCustomKeyValues:
                 [new KeyValuePair<string, IEnumerable<string>>("Request Duration (ms)", [$"{requestDuration:N2}"])]),
             httpRemoteAnalyzer);
         Log(logger, remoteOptions, await httpResponseMessage.Content.ProfilerAsync("Response Body", cancellationToken),
@@ -192,7 +191,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     ///     打印 <see cref="CookieContainer" /> 内容
     /// </summary>
     /// <param name="logger">
-    ///     <see cref="ILogger" />
+    ///     <see cref="IHttpRemoteLogger" />
     /// </param>
     /// <param name="remoteOptions">
     ///     <see cref="HttpRemoteOptions" />
@@ -206,8 +205,8 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="httpRemoteAnalyzer">
     ///     <see cref="HttpRemoteAnalyzer" />
     /// </param>
-    internal static void LogCookieContainer(ILogger logger, HttpRemoteOptions remoteOptions, HttpRequestMessage request,
-        CookieContainer? cookieContainer, HttpRemoteAnalyzer? httpRemoteAnalyzer = null)
+    internal static void LogCookieContainer(IHttpRemoteLogger logger, HttpRemoteOptions remoteOptions,
+        HttpRequestMessage request, CookieContainer? cookieContainer, HttpRemoteAnalyzer? httpRemoteAnalyzer = null)
     {
         // 空检查
         if (request.RequestUri is null || cookieContainer is null)
@@ -225,17 +224,16 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         }
 
         // 打印日志
-        Log(logger, remoteOptions,
-            StringUtility.FormatKeyValuesSummary(
-                cookies.ToDictionary(u => u.Name, u => Enumerable.Empty<string>().Concat([u.Value])),
-                "Cookie Container"), httpRemoteAnalyzer);
+        Log(logger, remoteOptions, StringUtility.FormatKeyValuesSummary(
+            cookies.ToDictionary(u => u.Name, u => Enumerable.Empty<string>().Concat([u.Value])),
+            "Cookie Container"), httpRemoteAnalyzer);
     }
 
     /// <summary>
     ///     打印日志
     /// </summary>
     /// <param name="logger">
-    ///     <see cref="ILogger" />
+    ///     <see cref="IHttpRemoteLogger" />
     /// </param>
     /// <param name="remoteOptions">
     ///     <see cref="HttpRemoteOptions" />
@@ -244,7 +242,7 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
     /// <param name="httpRemoteAnalyzer">
     ///     <see cref="HttpRemoteAnalyzer" />
     /// </param>
-    internal static void Log(ILogger logger, HttpRemoteOptions remoteOptions, string? message,
+    internal static void Log(IHttpRemoteLogger logger, HttpRemoteOptions remoteOptions, string? message,
         HttpRemoteAnalyzer? httpRemoteAnalyzer = null)
     {
         // 空检查
@@ -259,15 +257,8 @@ public sealed class ProfilerDelegatingHandler(ILogger<Logging> logger, IOptions<
         // 追加分析数据
         httpRemoteAnalyzer?.AppendData(message);
 
-        // 检查是否配置（注册）了日志程序
-        if (remoteOptions.IsLoggingRegistered)
-        {
-            logger.Log(remoteOptions.ProfilerLogLevel, "{message}", message);
-        }
-        else
-        {
-            Console.WriteLine(message);
-        }
+        // 记录日志
+        logger.Log(remoteOptions.ProfilerLogLevel, null, message);
     }
 
     /// <summary>
