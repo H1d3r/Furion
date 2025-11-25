@@ -23,7 +23,6 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +30,6 @@ using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Reflection;
-using System.Web;
 
 namespace Furion.Shapeless;
 
@@ -89,9 +87,7 @@ internal sealed class ClayBinder(IOptions<ClayOptions> options) : IModelBinder
 
         return string.IsNullOrEmpty(json)
             ? (false, null)
-            : (true,
-                Clay.Parse(isFormUrlEncoded ? HttpUtility.UrlDecode(json).ParseFormatKeyValueString(['&'], '?') : json,
-                    options));
+            : (true, Clay.Parse(json, options));
     }
 
     /// <summary>
