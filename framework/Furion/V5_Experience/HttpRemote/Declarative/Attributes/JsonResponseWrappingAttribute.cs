@@ -23,30 +23,30 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.Extensions.Options;
-using System.Text.Json;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="HttpClient" /> 配置选项
+///     HTTP 声明式启用 JSON 响应反序列化包装器
 /// </summary>
-public sealed class HttpClientOptions
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
+public sealed class JsonResponseWrappingAttribute : Attribute
 {
     /// <summary>
-    ///     JSON 序列化配置
+    ///     <inheritdoc cref="JsonResponseWrappingAttribute" />
     /// </summary>
-    public JsonSerializerOptions JsonSerializerOptions { get; set; } =
-        new(HttpRemoteOptions.JsonSerializerOptionsDefault);
+    public JsonResponseWrappingAttribute()
+        : this(true)
+    {
+    }
 
     /// <summary>
-    ///     标识选项是否配置为默认值（未配置）
+    ///     <inheritdoc cref="JsonResponseWrappingAttribute" />
     /// </summary>
-    /// <remarks>用于避免通过 <see cref="IOptionsSnapshot{TOptions}" /> 获取选项时无法确定是否已配置该选项。默认值为：<c>true</c>。</remarks>
-    internal bool IsDefault { get; set; } = true;
+    /// <param name="enabled">是否启用</param>
+    public JsonResponseWrappingAttribute(bool enabled) => Enabled = enabled;
 
     /// <summary>
-    ///     指定 JSON 响应反序列化包装器
+    ///     是否启用
     /// </summary>
-    public JsonResponseWrapper? JsonResponseWrapper { get; set; }
+    public bool Enabled { get; set; }
 }
