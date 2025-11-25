@@ -30,7 +30,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
-using System.Text.RegularExpressions;
 using ContentDispositionHeaderValue = System.Net.Http.Headers.ContentDispositionHeaderValue;
 
 namespace Furion.HttpRemote;
@@ -153,21 +152,6 @@ internal static partial class Helpers
         ArgumentException.ThrowIfNullOrWhiteSpace(httpMethod);
 
         return HttpMethod.Parse(httpMethod);
-    }
-
-    /// <summary>
-    ///     验证字符串是否是 <c>application/x-www-form-urlencoded</c> 格式
-    /// </summary>
-    /// <param name="output">字符串</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    internal static bool IsFormUrlEncodedFormat(string output)
-    {
-        // 空检查
-        ArgumentException.ThrowIfNullOrWhiteSpace(output);
-
-        return FormUrlEncodedFormatRegex().IsMatch(output);
     }
 
     /// <summary>
@@ -298,14 +282,4 @@ internal static partial class Helpers
 
         return null;
     }
-
-    /// <summary>
-    ///     <c>application/x-www-form-urlencoded</c> 格式正则表达式
-    /// </summary>
-    /// <returns>
-    ///     <see cref="Regex" />
-    /// </returns>
-    [GeneratedRegex(
-        @"^(?:(?:[a-zA-Z0-9-._~]+|%(?:[0-9A-Fa-f]{2}))+=(?:[a-zA-Z0-9-._~]*|%(?:[0-9A-Fa-f]{2}))+)(?:&(?:[a-zA-Z0-9-._~]+|%(?:[0-9A-Fa-f]{2}))+=(?:[a-zA-Z0-9-._~]*|%(?:[0-9A-Fa-f]{2}))+)*$")]
-    private static partial Regex FormUrlEncodedFormatRegex();
 }
