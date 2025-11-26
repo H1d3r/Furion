@@ -48,5 +48,11 @@ public sealed class HttpClientOptions
     /// <summary>
     ///     指定 JSON 响应反序列化包装器
     /// </summary>
+    /// <remarks>使用时需明确调用 <see cref="HttpRequestBuilder.JsonResponseWrapping()" />。</remarks>
     public JsonResponseWrapper? JsonResponseWrapper { get; set; }
+
+    /// <summary>
+    ///     是否全局启用 JSON 响应反序列化包装器
+    /// </summary>
+    public bool? UseJsonResponseWrapping { get; set; }
 }
