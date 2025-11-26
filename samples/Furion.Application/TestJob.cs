@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace Furion.Application;
 
 //[Period(10000)]
+[DateTime("2024-12-31 23:59:59")]
 public class TestJob : IJob, IDisposable
 {
     private readonly ILogger<TestJob> _logger;
