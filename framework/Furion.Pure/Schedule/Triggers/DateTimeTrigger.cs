@@ -51,14 +51,18 @@ public class DateTimeTrigger : Trigger
     /// <returns><see cref="DateTime"/></returns>
     public override DateTime? GetNextOccurrence(DateTime startAt)
     {
-        if (startAt > TriggerTime)
+        // 获取配置的触发时间基准时间
+        var nextRunTime = Penetrates.GetStandardDateTime(TriggerTime);
+
+        // 处理当前时间大于触发时间基准时间
+        if (startAt > nextRunTime)
         {
             // 归档
             Status = TriggerStatus.Archived;
             return null;
         }
 
-        return TriggerTime;
+        return nextRunTime;
     }
 
     /// <summary>
