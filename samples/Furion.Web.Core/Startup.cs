@@ -140,6 +140,8 @@ public sealed class Startup : AppStartup
             options.AddJob(JobBuilder.Create<TestJob>().SetDescription("测试描述"), Triggers.PeriodHours(2));
 
             options.AddJob<TestJob>(builder => builder.SetTemporary(), Triggers.PeriodMinutes(1));
+
+            options.AddJob<TestJob>(u => u.SetIncludeAnnotations(true), Triggers.DateTime("2025-11-26 13:20:20"));
         });
 
         // 新版本任务队列

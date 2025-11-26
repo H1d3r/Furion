@@ -23,45 +23,26 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.TimeCrontab;
-
 namespace Furion.Schedule;
 
 /// <summary>
-/// Cron 表达式作业触发器
+/// 指定具体时间触发的一次性作业触发器
 /// </summary>
-[SuppressSniffer]
-public class CronTrigger : Trigger
+public class DateTimeTrigger : Trigger
 {
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="schedule">Cron 表达式</param>
-    /// <param name="args">动态参数类型，支持 <see cref="int"/>，<see cref="CronStringFormat"/> 和 object[]</param>
-    public CronTrigger(string schedule, object args)
+    /// <param name="triggerTime">触发时间</param>
+    public DateTimeTrigger(string triggerTime)
     {
-        // 处理 int/long 转 CronStringFormat
-        if (args is int or long)
-        {
-            Crontab = Crontab.Parse(schedule, (CronStringFormat)int.Parse(args.ToString()));
-        }
-        // 处理 CronStringFormat
-        else if (args is CronStringFormat format)
-        {
-            Crontab = Crontab.Parse(schedule, format);
-        }
-        // 处理 Macro At
-        else if (args is object[] fields)
-        {
-            Crontab = Crontab.ParseAt(schedule, fields);
-        }
-        else throw new NotImplementedException();
+        TriggerTime = Convert.ToDateTime(triggerTime);
     }
 
     /// <summary>
-    /// <see cref="Crontab"/> 对象
+    /// 触发时间
     /// </summary>
-    private Crontab Crontab { get; }
+    public DateTime TriggerTime { get; }
 
     /// <summary>
     /// 计算下一个触发时间
@@ -70,7 +51,14 @@ public class CronTrigger : Trigger
     /// <returns><see cref="DateTime"/></returns>
     public override DateTime? GetNextOccurrence(DateTime startAt)
     {
-        return Crontab.GetNextOccurrence(startAt);
+        if (startAt > TriggerTime)
+        {
+            // 归档
+            Status = TriggerStatus.Archived;
+            return null;
+        }
+
+        return TriggerTime;
     }
 
     /// <summary>
@@ -79,6 +67,6 @@ public class CronTrigger : Trigger
     /// <returns><see cref="string"/></returns>
     public override string ToString()
     {
-        return $"<{JobId} {TriggerId}> {Crontab}{(string.IsNullOrWhiteSpace(Description) ? string.Empty : $" {Description.GetMaxLengthString()}")} {NumberOfRuns}ts";
+        return $"<{JobId} {TriggerId}> {TriggerTime:yyyy-MM-dd HH:mm:ss} {(string.IsNullOrWhiteSpace(Description) ? string.Empty : $" {Description.GetMaxLengthString()}")} {NumberOfRuns}ts";
     }
 }

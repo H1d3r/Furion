@@ -350,4 +350,24 @@ public static class Triggers
     {
         return Cron("@workday");
     }
+
+    /// <summary>
+    /// 创建指定具体时间触发的一次性作业触发器
+    /// </summary>
+    /// <param name="triggerTime">触发时间</param>
+    /// <returns><see cref="TriggerBuilder"/></returns>
+    public static TriggerBuilder DateTime(DateTime triggerTime)
+    {
+        return TriggerBuilder.DateTime(triggerTime);
+    }
+
+    /// <summary>
+    /// 创建指定具体时间触发的一次性作业触发器
+    /// </summary>
+    /// <param name="triggerTime">触发时间</param>
+    /// <returns><see cref="TriggerBuilder"/></returns>
+    public static TriggerBuilder DateTime(string triggerTime)
+    {
+        return TriggerBuilder.DateTime(triggerTime);
+    }
 }
