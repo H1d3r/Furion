@@ -80,6 +80,18 @@ public sealed partial class PropertyValidator<T, TProperty> : FluentValidatorBas
     /// </remarks>
     internal bool? SuppressAnnotationValidation { get; private set; }
 
+    /// <summary>
+    ///     验证条件
+    /// </summary>
+    /// <remarks>当条件满足时才进行验证。</remarks>
+    internal Func<T, TProperty?, bool>? WhenCondition { get; private set; }
+
+    /// <summary>
+    ///     逆向验证条件
+    /// </summary>
+    /// <remarks>当条件不满足时才进行验证。</remarks>
+    internal Func<T, TProperty?, bool>? UnlessCondition { get; private set; }
+
     /// <inheritdoc />
     public bool IsValid(T? instance, params string?[]? ruleSets)
     {
@@ -204,6 +216,78 @@ public sealed partial class PropertyValidator<T, TProperty> : FluentValidatorBas
     }
 
     /// <summary>
+    ///     设置验证条件
+    /// </summary>
+    /// <remarks>当条件满足时才验证。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> When(Func<TProperty?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        WhenCondition = (_, p) => condition(p);
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置逆向验证条件
+    /// </summary>
+    /// <remarks>当条件不满足时才验证。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> Unless(Func<TProperty?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        UnlessCondition = (_, p) => condition(p);
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置验证条件
+    /// </summary>
+    /// <remarks>当条件满足时才验证。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> When(Func<T, TProperty?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        WhenCondition = condition;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置逆向验证条件
+    /// </summary>
+    /// <remarks>当条件不满足时才验证。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> Unless(Func<T, TProperty?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        UnlessCondition = condition;
+
+        return this;
+    }
+
+    /// <summary>
     ///     检查是否应该对该属性执行验证
     /// </summary>
     /// <param name="instance">对象</param>
@@ -223,14 +307,14 @@ public sealed partial class PropertyValidator<T, TProperty> : FluentValidatorBas
         }
 
         // 检查正向条件（When）
-        if (WhenCondition is not null && !WhenCondition(instance))
+        if (WhenCondition is not null && !WhenCondition(instance, GetValue(instance)))
         {
             return false;
         }
 
         // 检查逆向条件（Unless）
         // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (UnlessCondition is not null && UnlessCondition(instance))
+        if (UnlessCondition is not null && UnlessCondition(instance, GetValue(instance)))
         {
             return false;
         }

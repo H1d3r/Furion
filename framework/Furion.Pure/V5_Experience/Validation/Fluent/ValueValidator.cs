@@ -45,6 +45,18 @@ public partial class ValueValidator<T> : FluentValidatorBase<T, ValueValidator<T
     }
 
     /// <summary>
+    ///     验证条件
+    /// </summary>
+    /// <remarks>当条件满足时才进行验证。</remarks>
+    internal Func<T, bool>? WhenCondition { get; private set; }
+
+    /// <summary>
+    ///     逆向验证条件
+    /// </summary>
+    /// <remarks>当条件不满足时才进行验证。</remarks>
+    internal Func<T, bool>? UnlessCondition { get; private set; }
+
+    /// <summary>
     ///     检查对象合法性
     /// </summary>
     /// <param name="value">对象</param>
@@ -95,6 +107,42 @@ public partial class ValueValidator<T> : FluentValidatorBase<T, ValueValidator<T
         {
             validator.Validate(value, displayName);
         }
+    }
+
+    /// <summary>
+    ///     设置验证条件
+    /// </summary>
+    /// <remarks>当条件满足时才验证。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="ValueValidator{T}" />
+    /// </returns>
+    public ValueValidator<T> When(Func<T, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        WhenCondition = condition;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置逆向验证条件
+    /// </summary>
+    /// <remarks>当条件不满足时才验证。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="ValueValidator{T}" />
+    /// </returns>
+    public ValueValidator<T> Unless(Func<T, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        UnlessCondition = condition;
+
+        return this;
     }
 
     /// <summary>

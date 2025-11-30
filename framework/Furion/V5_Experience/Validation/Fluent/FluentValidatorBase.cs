@@ -83,18 +83,6 @@ public abstract class FluentValidatorBase<T, TSelf>
     internal List<ValidatorBase> Validators { get; }
 
     /// <summary>
-    ///     验证条件
-    /// </summary>
-    /// <remarks>当条件满足时才进行验证。</remarks>
-    internal Func<T, bool>? WhenCondition { get; private set; }
-
-    /// <summary>
-    ///     逆向验证条件
-    /// </summary>
-    /// <remarks>当条件不满足时才进行验证。</remarks>
-    internal Func<T, bool>? UnlessCondition { get; private set; }
-
-    /// <summary>
     ///     批量添加添加验证器
     /// </summary>
     /// <param name="validators">验证器集合</param>
@@ -162,42 +150,6 @@ public abstract class FluentValidatorBase<T, TSelf>
 
         // 记录最新添加的验证器实例
         _lastAddedValidator = validator;
-
-        return This;
-    }
-
-    /// <summary>
-    ///     设置验证条件
-    /// </summary>
-    /// <remarks>当条件满足时才验证。</remarks>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public TSelf When(Func<T, bool> condition)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        WhenCondition = condition;
-
-        return This;
-    }
-
-    /// <summary>
-    ///     设置逆向验证条件
-    /// </summary>
-    /// <remarks>当条件不满足时才验证。</remarks>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public TSelf Unless(Func<T, bool> condition)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        UnlessCondition = condition;
 
         return This;
     }
