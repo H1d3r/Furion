@@ -306,6 +306,16 @@ public abstract class FluentValidatorBase<T, TSelf>
         AddValidator(new CompositeValidator(validators) { Mode = mode });
 
     /// <summary>
+    ///     添加条件验证器
+    /// </summary>
+    /// <param name="buildConditions">条件构建器配置委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public TSelf Conditional(Action<ConditionBuilder<T?>> buildConditions) =>
+        AddValidator(new ConditionalValidator<T?>(buildConditions));
+
+    /// <summary>
     ///     添加 <see cref="System.DateOnly" /> 验证器
     /// </summary>
     /// <param name="formats">允许的日期格式（如 "yyyy-MM-dd"）</param>
@@ -517,6 +527,25 @@ public abstract class FluentValidatorBase<T, TSelf>
     public TSelf Min(IComparable minimum) => AddValidator(new MinValidator(minimum));
 
     /// <summary>
+    ///     添加自定义条件不成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public TSelf MustUnless(Func<T?, bool> condition) =>
+        AddValidator(new MustUnlessValidator<T>(condition));
+
+    /// <summary>
+    ///     添加自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public TSelf Must(Func<T?, bool> condition) => AddValidator(new MustValidator<T>(condition));
+
+    /// <summary>
     ///     添加非空白字符串验证器
     /// </summary>
     /// <returns>
@@ -573,6 +602,15 @@ public abstract class FluentValidatorBase<T, TSelf>
     ///     <typeparamref name="TSelf" />
     /// </returns>
     public TSelf PostalCode() => AddValidator(new PostalCodeValidator());
+
+    /// <summary>
+    ///     添加自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public TSelf Predicate(Func<T?, bool> condition) => AddValidator(new PredicateValidator<T>(condition));
 
     /// <summary>
     ///     添加指定数值范围约束验证器
