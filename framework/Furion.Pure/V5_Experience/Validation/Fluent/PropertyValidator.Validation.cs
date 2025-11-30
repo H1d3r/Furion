@@ -76,16 +76,6 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Conditional(Action<ConditionBuilder<TProperty?>> buildConditions) =>
-        AddValidator(new ConditionalValidator<TProperty?>(buildConditions));
-
-    /// <summary>
-    ///     添加条件验证器
-    /// </summary>
-    /// <param name="buildConditions">条件构建器配置委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
     public PropertyValidator<T, TProperty> Conditional(Action<T, ConditionBuilder<TProperty?>> buildConditions)
     {
         // 空检查
@@ -177,16 +167,6 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> MustUnless(Func<TProperty?, bool> condition) =>
-        AddValidator(new MustUnlessValidator<TProperty>(condition));
-
-    /// <summary>
-    ///     添加自定义条件不成立时委托验证器
-    /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
     public PropertyValidator<T, TProperty> MustUnless(Func<T, TProperty?, bool> condition)
     {
         // 空检查
@@ -195,16 +175,6 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
         return ValidatorProxy<MustUnlessValidator<TProperty>>(instance =>
             [new Func<TProperty?, bool>(u => condition(instance, u))]);
     }
-
-    /// <summary>
-    ///     添加自定义条件成立时委托验证器
-    /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> Must(Func<TProperty?, bool> condition) =>
-        AddValidator(new MustValidator<TProperty>(condition));
 
     /// <summary>
     ///     添加自定义条件成立时委托验证器
@@ -236,16 +206,6 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
 
         return ValidatorProxy<NotEqualToValidator>(instance => [compareValueAccessor(instance)]);
     }
-
-    /// <summary>
-    ///     添加自定义条件成立时委托验证器
-    /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> Predicate(Func<TProperty?, bool> condition) =>
-        AddValidator(new PredicateValidator<TProperty>(condition));
 
     /// <summary>
     ///     添加自定义条件成立时委托验证器

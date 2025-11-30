@@ -33,7 +33,8 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
-public sealed partial class PropertyValidator<T, TProperty> : FluentValidatorBase<T, PropertyValidator<T, TProperty>>,
+public sealed partial class PropertyValidator<T, TProperty> :
+    FluentValidatorBase<TProperty, PropertyValidator<T, TProperty>>,
     IObjectValidator<T>
     where T : class
 {
