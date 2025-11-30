@@ -33,7 +33,8 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
-public sealed partial class PropertyValidator<T, TProperty> : IObjectValidator<T>
+public sealed partial class PropertyValidator<T, TProperty> : FluentValidatorBase<T, PropertyValidator<T, TProperty>>,
+    IObjectValidator<T>
     where T : class
 {
     /// <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
@@ -41,21 +42,6 @@ public sealed partial class PropertyValidator<T, TProperty> : IObjectValidator<T
 
     /// <inheritdoc cref="ObjectValidator{T}" />
     internal readonly ObjectValidator<T> _objectValidator;
-
-    /// <summary>
-    ///     高优先级验证器区域的结束索引（同时也是普通验证器区域的起始索引）
-    /// </summary>
-    /// <remarks>
-    ///     该索引将验证器列表划分为两个区域：<c>[0, _highPriorityEndIndex)</c> 为高优先级验证器区域（按 <see cref="IHighPriorityValidator.Priority" />
-    ///     升序排列），<c>[_highPriorityEndIndex, Count)</c>
-    ///     为普通验证器区域。当添加新验证器时，高优先级验证器会插入到指定位置以维持顺序，普通验证器则直接追加到列表末尾，此索引值会相应更新以维护区域边界。
-    /// </remarks>
-    internal int _highPriorityEndIndex;
-
-    /// <summary>
-    ///     跟踪最新添加的 <see cref="ValidatorBase" /> 实例
-    /// </summary>
-    internal ValidatorBase? _lastAddedValidator;
 
     /// <inheritdoc cref="IObjectValidator{T}" />
     internal IObjectValidator<TProperty>? _propertyValidator;
@@ -68,6 +54,7 @@ public sealed partial class PropertyValidator<T, TProperty> : IObjectValidator<T
     ///     <see cref="ObjectValidator{T}" />
     /// </param>
     internal PropertyValidator(Expression<Func<T, TProperty?>> selector, ObjectValidator<T> objectValidator)
+        : base((objectValidator ?? throw new ArgumentNullException(nameof(objectValidator)))._serviceProvider)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
@@ -76,26 +63,13 @@ public sealed partial class PropertyValidator<T, TProperty> : IObjectValidator<T
         _objectValidator = objectValidator;
 
         // 初始化 PropertyAnnotationValidator 实例
-        _annotationValidator =
-            new PropertyAnnotationValidator<T, TProperty>(selector, objectValidator._serviceProvider, null);
-
-        Validators = [];
+        _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector, _serviceProvider, null);
     }
 
     /// <summary>
     ///     规则集列表
     /// </summary>
     internal string?[]? RuleSets { get; init; }
-
-    /// <summary>
-    ///     显示名称
-    /// </summary>
-    internal string? DisplayName { get; private set; }
-
-    /// <summary>
-    ///     验证器集合
-    /// </summary>
-    internal List<ValidatorBase> Validators { get; }
 
     /// <summary>
     ///     是否禁用属性验证特性验证
@@ -105,18 +79,6 @@ public sealed partial class PropertyValidator<T, TProperty> : IObjectValidator<T
     ///     <see cref="ValidatorOptions.SuppressAnnotationValidation" /> 配置项决定。
     /// </remarks>
     internal bool? SuppressAnnotationValidation { get; private set; }
-
-    /// <summary>
-    ///     验证条件
-    /// </summary>
-    /// <remarks>当条件满足时才进行验证。</remarks>
-    internal Func<T, bool>? WhenCondition { get; private set; }
-
-    /// <summary>
-    ///     逆向验证条件
-    /// </summary>
-    /// <remarks>当条件不满足时才进行验证。</remarks>
-    internal Func<T, bool>? UnlessCondition { get; private set; }
 
     /// <inheritdoc />
     public bool IsValid(T? instance, params string?[]? ruleSets)
@@ -225,79 +187,6 @@ public sealed partial class PropertyValidator<T, TProperty> : IObjectValidator<T
     }
 
     /// <summary>
-    ///     批量添加添加验证器
-    /// </summary>
-    /// <param name="validators">验证器集合</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> AddValidators(params IEnumerable<ValidatorBase> validators)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(validators);
-
-        // 遍历集合并逐项添加
-        foreach (var validator in validators)
-        {
-            AddValidator(validator);
-        }
-
-        return this;
-    }
-
-    /// <summary>
-    ///     添加验证器
-    /// </summary>
-    /// <param name="validator">
-    ///     <see cref="ValidatorBase" />
-    /// </param>
-    /// <param name="configure">自定义配置委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> AddValidator<TValidator>(TValidator validator,
-        Action<TValidator>? configure = null)
-        where TValidator : ValidatorBase
-    {
-        // 空检查 
-        ArgumentNullException.ThrowIfNull(validator);
-
-        // 检查是否是高优先级验证器
-        if (validator is IHighPriorityValidator highPriorityValidator)
-        {
-            // 只在 [0, _highPriorityEndIndex) 范围内查找插入位置（保持 Priority 升序）
-            var insertIndex = _highPriorityEndIndex;
-            for (var i = 0; i < _highPriorityEndIndex; i++)
-            {
-                // ReSharper disable once InvertIf
-                if (Validators[i] is IHighPriorityValidator existing &&
-                    existing.Priority > highPriorityValidator.Priority)
-                {
-                    insertIndex = i;
-                    break;
-                }
-            }
-
-            Validators.Insert(insertIndex, validator);
-
-            // 高优先级区域扩大
-            _highPriorityEndIndex++;
-        }
-        else
-        {
-            Validators.Add(validator);
-        }
-
-        // 调用自定义配置委托
-        configure?.Invoke(validator);
-
-        // 记录最新添加的验证器实例
-        _lastAddedValidator = validator;
-
-        return this;
-    }
-
-    /// <summary>
     ///     设置对象验证器
     /// </summary>
     /// <remarks>属性级别的对象验证器。</remarks>
@@ -310,42 +199,6 @@ public sealed partial class PropertyValidator<T, TProperty> : IObjectValidator<T
     public PropertyValidator<T, TProperty> SetValidator(IObjectValidator<TProperty>? validator)
     {
         _propertyValidator = validator;
-
-        return this;
-    }
-
-    /// <summary>
-    ///     设置验证条件
-    /// </summary>
-    /// <remarks>当条件满足时才验证。</remarks>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> When(Func<T, bool> condition)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        WhenCondition = condition;
-
-        return this;
-    }
-
-    /// <summary>
-    ///     设置逆向验证条件
-    /// </summary>
-    /// <remarks>当条件不满足时才验证。</remarks>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> Unless(Func<T, bool> condition)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        UnlessCondition = condition;
 
         return this;
     }
