@@ -357,6 +357,27 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <summary>
+    ///     应用对象验证器配置
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <returns>
+    ///     <see cref="ObjectValidator{T}" />
+    /// </returns>
+    public ObjectValidator<T> ConfigureWith(T instance)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(instance);
+
+        // 检查是否实现 IValidatorConfigure<T> 接口
+        if (instance is IValidatorConfigure<T> configure)
+        {
+            ConfigureWith(configure);
+        }
+
+        return this;
+    }
+
+    /// <summary>
     ///     设置验证条件
     /// </summary>
     /// <remarks>当条件满足时才验证。</remarks>

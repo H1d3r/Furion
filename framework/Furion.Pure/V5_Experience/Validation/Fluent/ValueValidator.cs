@@ -27,14 +27,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Furion.Validation;
 
-/// <inheritdoc cref="ValueValidator{T}" />
-public class ValueValidator : ValueValidator<object>;
-
 /// <summary>
 ///     单个值验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ValueValidator<T> : FluentValidatorBase<T, ValueValidator<T>>
+public partial class ValueValidator<T> : FluentValidatorBase<T, ValueValidator<T>>
 {
     /// <summary>
     ///     <inheritdoc cref="ValueValidator{T}" />
