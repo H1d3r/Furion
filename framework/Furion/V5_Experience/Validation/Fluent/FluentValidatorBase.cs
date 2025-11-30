@@ -56,7 +56,7 @@ public abstract class FluentValidatorBase<T, TSelf>
     internal ValidatorBase? _lastAddedValidator;
 
     /// <summary>
-    ///     <inheritdoc cref="FluentValidatorBase{T,TFluentValidator}" />
+    ///     <inheritdoc cref="FluentValidatorBase{T,TSelf}" />
     /// </summary>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />

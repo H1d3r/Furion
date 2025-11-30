@@ -36,18 +36,26 @@ namespace Furion.Validation;
 public static class Validators
 {
     /// <summary>
-    ///     为对象类型添加验证器
+    ///     创建对象验证器
     /// </summary>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public static ObjectValidator<T> For<T>()
-        where T : class =>
-        new();
+    public static ObjectValidator<T> Object<T>()
+        where T : class => new();
 
     /// <summary>
-    ///     添加年龄（0-120 岁）验证器
+    ///     创建单个值验证器
+    /// </summary>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="ValueValidator{T}" />
+    /// </returns>
+    public static ValueValidator<T> Value<T>() => new();
+
+    /// <summary>
+    ///     创建年龄（0-120 岁）验证器
     /// </summary>
     /// <param name="isAdultOnly">是否仅验证成年人（18 岁及以上），默认值为：<c>false</c></param>
     /// <param name="allowStringValues">允许字符串数值，默认值为：<c>false</c></param>
@@ -58,7 +66,7 @@ public static class Validators
         new() { IsAdultOnly = isAdultOnly, AllowStringValues = allowStringValues };
 
     /// <summary>
-    ///     添加允许的值列表验证器
+    ///     创建允许的值列表验证器
     /// </summary>
     /// <param name="values">允许的值列表</param>
     /// <returns>
@@ -67,7 +75,7 @@ public static class Validators
     public static AllowedValuesValidator AllowedValues(params object?[] values) => new(values);
 
     /// <summary>
-    ///     添加银行卡号验证器（Luhn 算法）
+    ///     创建银行卡号验证器（Luhn 算法）
     /// </summary>
     /// <returns>
     ///     <see cref="BankCardValidator" />
@@ -75,7 +83,7 @@ public static class Validators
     public static BankCardValidator BankCard() => new();
 
     /// <summary>
-    ///     添加 Base64 字符串验证器
+    ///     创建 Base64 字符串验证器
     /// </summary>
     /// <returns>
     ///     <see cref="Base64StringValidator" />
@@ -83,7 +91,7 @@ public static class Validators
     public static Base64StringValidator Base64String() => new();
 
     /// <summary>
-    ///     添加中文姓名验证器
+    ///     创建中文姓名验证器
     /// </summary>
     /// <returns>
     ///     <see cref="ChineseNameValidator" />
@@ -91,7 +99,7 @@ public static class Validators
     public static ChineseNameValidator ChineseName() => new();
 
     /// <summary>
-    ///     添加中文/汉字验证器
+    ///     创建中文/汉字验证器
     /// </summary>
     /// <returns>
     ///     <see cref="ChineseValidator" />
@@ -99,7 +107,7 @@ public static class Validators
     public static ChineseValidator Chinese() => new();
 
     /// <summary>
-    ///     添加颜色值验证器
+    ///     创建颜色值验证器
     /// </summary>
     /// <param name="fullMode">
     ///     是否启用完整模式。在完整模式下，支持的颜色格式包括：十六进制颜色、RGB、RGBA、HSL 和 HSLA。若未启用，则仅支持：十六进制颜色、RGB 和 RGBA。默认值为：<c>false</c>
@@ -110,7 +118,7 @@ public static class Validators
     public static ColorValueValidator ColorValue(bool fullMode = false) => new() { FullMode = fullMode };
 
     /// <summary>
-    ///     添加组合验证器
+    ///     创建组合验证器
     /// </summary>
     /// <param name="validators">验证器列表</param>
     /// <returns>
@@ -119,7 +127,7 @@ public static class Validators
     public static CompositeValidator Composite(params ValidatorBase[] validators) => new(validators);
 
     /// <summary>
-    ///     添加组合验证器
+    ///     创建组合验证器
     /// </summary>
     /// <param name="validators">验证器列表</param>
     /// <param name="mode">
@@ -132,7 +140,7 @@ public static class Validators
         new(validators) { Mode = mode };
 
     /// <summary>
-    ///     添加条件验证器
+    ///     创建条件验证器
     /// </summary>
     /// <param name="buildConditions">条件构建器配置委托</param>
     /// <typeparam name="T">对象类型</typeparam>
@@ -143,7 +151,7 @@ public static class Validators
         new(buildConditions);
 
     /// <summary>
-    ///     添加 <see cref="System.DateOnly" /> 验证器
+    ///     创建 <see cref="System.DateOnly" /> 验证器
     /// </summary>
     /// <param name="formats">允许的日期格式（如 "yyyy-MM-dd"）</param>
     /// <returns>
@@ -152,7 +160,7 @@ public static class Validators
     public static DateOnlyValidator DateOnly(params string[] formats) => new(formats);
 
     /// <summary>
-    ///     添加 <see cref="System.DateOnly" /> 验证器
+    ///     创建 <see cref="System.DateOnly" /> 验证器
     /// </summary>
     /// <param name="formats">允许的日期格式（如 "yyyy-MM-dd"）</param>
     /// <param name="provider">格式提供器</param>
@@ -164,7 +172,7 @@ public static class Validators
         DateTimeStyles style = DateTimeStyles.None) => new(formats) { Provider = provider, Style = style };
 
     /// <summary>
-    ///     添加 <see cref="System.DateTime" /> 验证器
+    ///     创建 <see cref="System.DateTime" /> 验证器
     /// </summary>
     /// <param name="formats">允许的日期格式（如 "yyyy-MM-dd HH:mm:ss"）</param>
     /// <returns>
@@ -173,7 +181,7 @@ public static class Validators
     public static DateTimeValidator DateTime(params string[] formats) => new(formats);
 
     /// <summary>
-    ///     添加 <see cref="System.DateTime" /> 验证器
+    ///     创建 <see cref="System.DateTime" /> 验证器
     /// </summary>
     /// <param name="formats">允许的日期格式（如 "yyyy-MM-dd HH:mm:ss"）</param>
     /// <param name="provider">格式提供器</param>
@@ -185,7 +193,7 @@ public static class Validators
         DateTimeStyles style = DateTimeStyles.None) => new(formats) { Provider = provider, Style = style };
 
     /// <summary>
-    ///     添加验证数值的小数位数验证器
+    ///     创建验证数值的小数位数验证器
     /// </summary>
     /// <param name="maxDecimalPlaces">允许的最大有效小数位数</param>
     /// <param name="allowStringValues">允许字符串数值，默认值为：<c>false</c></param>
@@ -196,7 +204,7 @@ public static class Validators
         new(maxDecimalPlaces) { AllowStringValues = allowStringValues };
 
     /// <summary>
-    ///     添加不允许的值列表验证器
+    ///     创建不允许的值列表验证器
     /// </summary>
     /// <param name="values">不允许的值列表</param>
     /// <returns>
@@ -205,7 +213,7 @@ public static class Validators
     public static DeniedValuesValidator DeniedValues(params object?[] values) => new(values);
 
     /// <summary>
-    ///     添加域名验证器
+    ///     创建域名验证器
     /// </summary>
     /// <returns>
     ///     <see cref="DomainValidator" />
@@ -213,7 +221,7 @@ public static class Validators
     public static DomainValidator Domain() => new();
 
     /// <summary>
-    ///     添加邮箱地址验证器
+    ///     创建邮箱地址验证器
     /// </summary>
     /// <returns>
     ///     <see cref="EmailAddressValidator" />
@@ -221,7 +229,7 @@ public static class Validators
     public static EmailAddressValidator EmailAddress() => new();
 
     /// <summary>
-    ///     添加以特定字符/字符串结尾的验证器
+    ///     创建以特定字符/字符串结尾的验证器
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     /// <param name="comparison"><see cref="StringComparison" />，默认值为：<see cref="StringComparison.Ordinal" /></param>
@@ -233,7 +241,7 @@ public static class Validators
         new(searchValue) { Comparison = comparison };
 
     /// <summary>
-    ///     添加相等验证器
+    ///     创建相等验证器
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     /// <returns>
@@ -242,7 +250,7 @@ public static class Validators
     public static EqualToValidator EqualTo(object? compareValue) => new(compareValue);
 
     /// <summary>
-    ///     添加大于等于验证器
+    ///     创建大于等于验证器
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     /// <returns>
@@ -251,7 +259,7 @@ public static class Validators
     public static GreaterThanOrEqualToValidator GreaterThanOrEqualTo(IComparable compareValue) => new(compareValue);
 
     /// <summary>
-    ///     添加大于验证器
+    ///     创建大于验证器
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     /// <returns>
@@ -260,7 +268,7 @@ public static class Validators
     public static GreaterThanValidator GreaterThan(IComparable compareValue) => new(compareValue);
 
     /// <summary>
-    ///     添加身份证号验证器
+    ///     创建身份证号验证器
     /// </summary>
     /// <returns>
     ///     <see cref="IDCardValidator" />
@@ -268,7 +276,7 @@ public static class Validators
     public static IDCardValidator IDCard() => new();
 
     /// <summary>
-    ///     添加 JSON 格式验证器
+    ///     创建 JSON 格式验证器
     /// </summary>
     /// <param name="allowTrailingCommas">是否允许末尾多余逗号，默认值为：<c>false</c></param>
     /// <returns>
@@ -278,7 +286,7 @@ public static class Validators
         new() { AllowTrailingCommas = allowTrailingCommas };
 
     /// <summary>
-    ///     添加长度验证器
+    ///     创建长度验证器
     /// </summary>
     /// <param name="minimumLength">最小允许长度</param>
     /// <param name="maximumLength">最大允许长度</param>
@@ -288,7 +296,7 @@ public static class Validators
     public static LengthValidator Length(int minimumLength, int maximumLength) => new(minimumLength, maximumLength);
 
     /// <summary>
-    ///     添加小于等于验证器
+    ///     创建小于等于验证器
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     /// <returns>
@@ -297,7 +305,7 @@ public static class Validators
     public static LessThanOrEqualToValidator LessThanOrEqualTo(IComparable compareValue) => new(compareValue);
 
     /// <summary>
-    ///     添加小于验证器
+    ///     创建小于验证器
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     /// <returns>
@@ -306,7 +314,7 @@ public static class Validators
     public static LessThanValidator LessThan(IComparable compareValue) => new(compareValue);
 
     /// <summary>
-    ///     添加最大长度验证器
+    ///     创建最大长度验证器
     /// </summary>
     /// <param name="length">最大允许长度</param>
     /// <returns>
@@ -315,7 +323,7 @@ public static class Validators
     public static MaxLengthValidator MaxLength(int length) => new(length);
 
     /// <summary>
-    ///     添加最大值验证器
+    ///     创建最大值验证器
     /// </summary>
     /// <param name="maximum">允许的最大字段值</param>
     /// <returns>
@@ -324,7 +332,7 @@ public static class Validators
     public static MaxValidator Max(IComparable maximum) => new(maximum);
 
     /// <summary>
-    ///     添加 MD5 字符串验证器
+    ///     创建 MD5 字符串验证器
     /// </summary>
     /// <param name="allowShortFormat">是否允许截断的 128 位哈希值（16 字节的十六进制字符串，共 32 字符），默认值为：<c>false</c></param>
     /// <returns>
@@ -334,7 +342,7 @@ public static class Validators
         new() { AllowShortFormat = allowShortFormat };
 
     /// <summary>
-    ///     添加最小长度验证器
+    ///     创建最小长度验证器
     /// </summary>
     /// <param name="length">最小允许长度</param>
     /// <returns>
@@ -343,7 +351,7 @@ public static class Validators
     public static MinLengthValidator MinLength(int length) => new(length);
 
     /// <summary>
-    ///     添加最小值验证器
+    ///     创建最小值验证器
     /// </summary>
     /// <param name="minimum">允许的最小字段值</param>
     /// <returns>
@@ -352,7 +360,7 @@ public static class Validators
     public static MinValidator Min(IComparable minimum) => new(minimum);
 
     /// <summary>
-    ///     添加自定义条件不成立时委托验证器
+    ///     创建自定义条件不成立时委托验证器
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <typeparam name="T">对象类型</typeparam>
@@ -362,7 +370,7 @@ public static class Validators
     public static MustUnlessValidator<T> MustUnless<T>(Func<T, bool> condition) => new(condition);
 
     /// <summary>
-    ///     添加自定义条件成立时委托验证器
+    ///     创建自定义条件成立时委托验证器
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <typeparam name="T">对象类型</typeparam>
@@ -372,7 +380,7 @@ public static class Validators
     public static MustValidator<T> Must<T>(Func<T, bool> condition) => new(condition);
 
     /// <summary>
-    ///     添加非空白字符串验证器
+    ///     创建非空白字符串验证器
     /// </summary>
     /// <returns>
     ///     <see cref="NotBlankValidator" />
@@ -380,7 +388,7 @@ public static class Validators
     public static NotBlankValidator NotBlank() => new();
 
     /// <summary>
-    ///     添加非空集合、数组和字符串验证器
+    ///     创建非空集合、数组和字符串验证器
     /// </summary>
     /// <returns>
     ///     <see cref="NotEmptyValidator" />
@@ -388,7 +396,7 @@ public static class Validators
     public static NotEmptyValidator NotEmpty() => new();
 
     /// <summary>
-    ///     添加不相等验证器
+    ///     创建不相等验证器
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     /// <returns>
@@ -397,7 +405,7 @@ public static class Validators
     public static NotEqualToValidator NotEqualTo(object? compareValue) => new(compareValue);
 
     /// <summary>
-    ///     添加非 null 验证器
+    ///     创建非 null 验证器
     /// </summary>
     /// <returns>
     ///     <see cref="NotNullValidator" />
@@ -405,7 +413,7 @@ public static class Validators
     public static NotNullValidator NotNull() => new();
 
     /// <summary>
-    ///     添加对象验证特性验证器
+    ///     创建对象验证特性验证器
     /// </summary>
     /// <remarks>支持使用 <c>[ValidateNever]</c> 特性来跳过对特定属性的验证，仅限于 ASP.NET Core 应用项目。</remarks>
     /// <param name="serviceProvider">
@@ -419,7 +427,7 @@ public static class Validators
         IDictionary<object, object?>? items = null) => new(serviceProvider, items);
 
     /// <summary>
-    ///     添加密码验证器
+    ///     创建密码验证器
     /// </summary>
     /// <param name="strong">是否启用强密码验证模式，默认值为：<c>false</c></param>
     /// <returns>
@@ -428,7 +436,7 @@ public static class Validators
     public static PasswordValidator Password(bool strong = false) => new() { Strong = strong };
 
     /// <summary>
-    ///     添加手机号（中国）验证器
+    ///     创建手机号（中国）验证器
     /// </summary>
     /// <returns>
     ///     <see cref="PhoneNumberValidator" />
@@ -436,7 +444,7 @@ public static class Validators
     public static PhoneNumberValidator PhoneNumber() => new();
 
     /// <summary>
-    ///     添加邮政编码（中国）验证器
+    ///     创建邮政编码（中国）验证器
     /// </summary>
     /// <returns>
     ///     <see cref="PostalCodeValidator" />
@@ -444,7 +452,7 @@ public static class Validators
     public static PostalCodeValidator PostalCode() => new();
 
     /// <summary>
-    ///     添加自定义条件成立时委托验证器
+    ///     创建自定义条件成立时委托验证器
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <typeparam name="T">对象类型</typeparam>
@@ -454,7 +462,7 @@ public static class Validators
     public static PredicateValidator<T> Predicate<T>(Func<T, bool> condition) => new(condition);
 
     /// <summary>
-    ///     添加属性验证特性验证器
+    ///     创建属性验证特性验证器
     /// </summary>
     /// <param name="selector">属性选择器</param>
     /// <param name="serviceProvider">
@@ -471,7 +479,7 @@ public static class Validators
         new(selector, serviceProvider, items);
 
     /// <summary>
-    ///     添加属性验证特性验证器
+    ///     创建属性验证特性验证器
     /// </summary>
     /// <param name="selector">属性选择器</param>
     /// <param name="serviceProvider">
@@ -490,7 +498,7 @@ public static class Validators
         new(selector, serviceProvider, items);
 
     /// <summary>
-    ///     添加指定数值范围约束验证器
+    ///     创建指定数值范围约束验证器
     /// </summary>
     /// <param name="minimum">允许的最小字段值</param>
     /// <param name="maximum">允许的最大字段值</param>
@@ -510,7 +518,7 @@ public static class Validators
     }
 
     /// <summary>
-    ///     添加指定数值范围约束验证器
+    ///     创建指定数值范围约束验证器
     /// </summary>
     /// <param name="minimum">允许的最小字段值</param>
     /// <param name="maximum">允许的最大字段值</param>
@@ -530,7 +538,7 @@ public static class Validators
     }
 
     /// <summary>
-    ///     添加指定数值范围约束验证器
+    ///     创建指定数值范围约束验证器
     /// </summary>
     /// <param name="type">数据字段值的类型</param>
     /// <param name="minimum">允许的最小字段值</param>
@@ -552,7 +560,7 @@ public static class Validators
     }
 
     /// <summary>
-    ///     添加正则表达式验证器
+    ///     创建正则表达式验证器
     /// </summary>
     /// <param name="pattern">正则表达式模式</param>
     /// <param name="matchTimeoutInMilliseconds">用于在操作超时前执行单个匹配操作的时间量。以毫秒为单位，默认值为：2000。</param>
@@ -563,7 +571,18 @@ public static class Validators
         new(pattern) { MatchTimeoutInMilliseconds = matchTimeoutInMilliseconds };
 
     /// <summary>
-    ///     添加必填验证器
+    ///     创建正则表达式验证器
+    /// </summary>
+    /// <param name="pattern">正则表达式模式</param>
+    /// <param name="matchTimeoutInMilliseconds">用于在操作超时前执行单个匹配操作的时间量。以毫秒为单位，默认值为：2000。</param>
+    /// <returns>
+    ///     <see cref="RegularExpressionValidator" />
+    /// </returns>
+    public static RegularExpressionValidator Matches(string pattern, int matchTimeoutInMilliseconds = 2000) =>
+        new(pattern) { MatchTimeoutInMilliseconds = matchTimeoutInMilliseconds };
+
+    /// <summary>
+    ///     创建必填验证器
     /// </summary>
     /// <param name="allowEmptyStrings">是否允许空字符串。默认值为：<c>false</c>。</param>
     /// <returns>
@@ -573,7 +592,7 @@ public static class Validators
         new() { AllowEmptyStrings = allowEmptyStrings };
 
     /// <summary>
-    ///     添加单项验证器
+    ///     创建单项验证器
     /// </summary>
     /// <returns>
     ///     <see cref="SingleValidator" />
@@ -581,7 +600,7 @@ public static class Validators
     public static SingleValidator Single() => new();
 
     /// <summary>
-    ///     添加以特定字符/字符串开头的验证器
+    ///     创建以特定字符/字符串开头的验证器
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     /// <param name="comparison"><see cref="StringComparison" />，默认值为：<see cref="StringComparison.Ordinal" /></param>
@@ -592,7 +611,7 @@ public static class Validators
         StringComparison comparison = StringComparison.Ordinal) => new(searchValue) { Comparison = comparison };
 
     /// <summary>
-    ///     添加包含特定字符/字符串的验证器
+    ///     创建包含特定字符/字符串的验证器
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     /// <param name="comparison"><see cref="StringComparison" />，默认值为：<see cref="StringComparison.Ordinal" /></param>
@@ -603,7 +622,7 @@ public static class Validators
         StringComparison comparison = StringComparison.Ordinal) => new(searchValue) { Comparison = comparison };
 
     /// <summary>
-    ///     添加字符串长度验证器
+    ///     创建字符串长度验证器
     /// </summary>
     /// <param name="maximumLength">最大允许长度</param>
     /// <returns>
@@ -612,7 +631,7 @@ public static class Validators
     public static StringLengthValidator StringLength(int maximumLength) => new(maximumLength);
 
     /// <summary>
-    ///     添加字符串长度验证器
+    ///     创建字符串长度验证器
     /// </summary>
     /// <param name="minimumLength">最小允许长度</param>
     /// <param name="maximumLength">最大允许长度</param>
@@ -623,7 +642,7 @@ public static class Validators
         new(maximumLength) { MinimumLength = minimumLength };
 
     /// <summary>
-    ///     添加强密码模式验证器
+    ///     创建强密码模式验证器
     /// </summary>
     /// <returns>
     ///     <see cref="StrongPasswordValidator" />
@@ -631,7 +650,7 @@ public static class Validators
     public static StrongPasswordValidator StrongPassword() => new();
 
     /// <summary>
-    ///     添加座机（电话）验证器
+    ///     创建座机（电话）验证器
     /// </summary>
     /// <returns>
     ///     <see cref="TelephoneValidator" />
@@ -639,7 +658,7 @@ public static class Validators
     public static TelephoneValidator Telephone() => new();
 
     /// <summary>
-    ///     添加时间格式 <see cref="System.TimeOnly" /> 验证器
+    ///     创建时间格式 <see cref="System.TimeOnly" /> 验证器
     /// </summary>
     /// <param name="formats">允许的时间格式（如 "HH:mm:ss"）</param>
     /// <returns>
@@ -648,7 +667,7 @@ public static class Validators
     public static TimeOnlyValidator TimeOnly(params string[] formats) => new(formats);
 
     /// <summary>
-    ///     添加时间格式 <see cref="System.TimeOnly" /> 验证器
+    ///     创建时间格式 <see cref="System.TimeOnly" /> 验证器
     /// </summary>
     /// <param name="formats">允许的时间格式（如 "HH:mm:ss"）</param>
     /// <param name="provider">格式提供器</param>
@@ -660,7 +679,7 @@ public static class Validators
         DateTimeStyles style = DateTimeStyles.None) => new(formats) { Provider = provider, Style = style };
 
     /// <summary>
-    ///     添加 URL 地址验证器
+    ///     创建 URL 地址验证器
     /// </summary>
     /// <param name="supportsFtp">是否支持 FTP 协议。默认值为：<c>false</c>。</param>
     /// <returns>
@@ -669,7 +688,7 @@ public static class Validators
     public static UrlValidator Url(bool supportsFtp = false) => new() { SupportsFtp = supportsFtp };
 
     /// <summary>
-    ///     添加用户名验证器
+    ///     创建用户名验证器
     /// </summary>
     /// <returns>
     ///     <see cref="UserNameValidator" />
@@ -677,7 +696,7 @@ public static class Validators
     public static UserNameValidator UserName() => new();
 
     /// <summary>
-    ///     添加验证器代理
+    ///     创建验证器代理
     /// </summary>
     /// <param name="constructorArgs"><typeparamref name="TValidator" /> 构造函数参数列表</param>
     /// <typeparam name="TValidator">
@@ -691,7 +710,7 @@ public static class Validators
         new(constructorArgs);
 
     /// <summary>
-    ///     添加验证器代理
+    ///     创建验证器代理
     /// </summary>
     /// <param name="valueTransformer">验证前值转换器</param>
     /// <param name="constructorArgsFactory"><typeparamref name="TValidator" /> 构造函数参数工厂</param>
@@ -708,7 +727,7 @@ public static class Validators
         new(valueTransformer, constructorArgsFactory);
 
     /// <summary>
-    ///     添加单个值验证特性验证器
+    ///     创建单个值验证特性验证器
     /// </summary>
     /// <param name="attributes">验证特性列表</param>
     /// <returns>
@@ -717,7 +736,7 @@ public static class Validators
     public static ValueAnnotationValidator ValueAnnotation(params ValidationAttribute[] attributes) => new(attributes);
 
     /// <summary>
-    ///     添加单个值验证特性验证器
+    ///     创建单个值验证特性验证器
     /// </summary>
     /// <param name="attributes">验证特性列表</param>
     /// <param name="serviceProvider">
