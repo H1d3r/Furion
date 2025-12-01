@@ -26,20 +26,26 @@
 namespace Furion.Validation;
 
 /// <summary>
+///     链式条件构建器
+/// </summary>
+/// <typeparam name="T">对象类型</typeparam>
+public class FluentConditionBuilder<T> : FluentValidatorBuilder<T, FluentConditionBuilder<T>>;
+
+/// <summary>
 ///     条件构建器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public sealed class ConditionBuilder<T>
+public class ConditionBuilder<T>
 {
     /// <summary>
     ///     条件和对应的验证器列表
     /// </summary>
-    internal readonly List<(Func<T, bool> Condition, ValidatorBase Validator)> _conditions;
+    internal readonly List<(Func<T, bool> Condition, IReadOnlyList<ValidatorBase> Validators)> _conditions;
 
     /// <summary>
-    ///     缺省验证器
+    ///     缺省验证器集合
     /// </summary>
-    internal ValidatorBase? _defaultValidator;
+    internal IReadOnlyList<ValidatorBase>? _defaultValidators;
 
     /// <summary>
     ///     <inheritdoc cref="ConditionBuilder{T}" />
@@ -47,159 +53,92 @@ public sealed class ConditionBuilder<T>
     internal ConditionBuilder() => _conditions = [];
 
     /// <summary>
-    ///     添加条件和对应的验证器
+    ///     添加条件和对应的验证器集合
     /// </summary>
     /// <param name="condition">条件委托</param>
-    /// <param name="validator">
-    ///     <see cref="ValidatorBase" />
-    /// </param>
+    /// <param name="configure">自定义配置委托</param>
     /// <returns>
     ///     <see cref="ConditionBuilder{T}" />
     /// </returns>
-    public ConditionBuilder<T> AddCondition(Func<T, bool> condition, ValidatorBase validator)
+    public ConditionBuilder<T> AddCondition(Func<T, bool> condition, Action<FluentConditionBuilder<T>> configure)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
-        ArgumentNullException.ThrowIfNull(validator);
 
-        _conditions.Add((condition, validator));
+        _conditions.Add((condition, BuildValidators(configure)));
 
         return this;
     }
 
     /// <summary>
-    ///     添加条件成立时对应的验证器
+    ///     添加条件成立时对应的验证器集合
     /// </summary>
     /// <param name="condition">条件委托</param>
-    /// <param name="validator">
-    ///     <see cref="ValidatorBase" />
-    /// </param>
+    /// <param name="configure">自定义配置委托</param>
     /// <returns>
     ///     <see cref="ConditionBuilder{T}" />
     /// </returns>
-    public ConditionBuilder<T> When(Func<T, bool> condition, ValidatorBase validator) =>
-        AddCondition(condition, validator);
+    public ConditionBuilder<T> When(Func<T, bool> condition, Action<FluentConditionBuilder<T>> configure) =>
+        AddCondition(condition, configure);
 
     /// <summary>
-    ///     添加条件不成立时对应的验证器
+    ///     添加条件不成立时对应的验证器集合
     /// </summary>
     /// <param name="condition">条件委托</param>
-    /// <param name="validator">
-    ///     <see cref="ValidatorBase" />
-    /// </param>
+    /// <param name="configure">自定义配置委托</param>
     /// <returns>
     ///     <see cref="ConditionBuilder{T}" />
     /// </returns>
-    public ConditionBuilder<T> Unless(Func<T, bool> condition, ValidatorBase validator)
+    public ConditionBuilder<T> Unless(Func<T, bool> condition, Action<FluentConditionBuilder<T>> configure)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return AddCondition(u => !condition(u), validator);
+        return AddCondition(u => !condition(u), configure);
     }
 
     /// <summary>
-    ///     设置默认验证器
+    ///     设置默认验证器集合
     /// </summary>
     /// <remarks>当没有条件匹配时使用。</remarks>
-    /// <param name="validator">
-    ///     <see cref="ValidatorBase" />
-    /// </param>
+    /// <param name="configure">自定义配置委托</param>
     /// <returns>
     ///     <see cref="ConditionBuilder{T}" />
     /// </returns>
-    public ConditionBuilder<T> Otherwise(ValidatorBase validator)
+    public ConditionBuilder<T> Otherwise(Action<FluentConditionBuilder<T>> configure)
     {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(validator);
-
-        _defaultValidator = validator;
+        _defaultValidators = BuildValidators(configure);
 
         return this;
     }
 
     /// <summary>
-    ///     添加条件成立时对应的错误消息
+    ///     构建验证器集合
     /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <param name="errorMessage">错误信息</param>
+    /// <param name="configure">自定义配置委托</param>
     /// <returns>
-    ///     <see cref="ConditionBuilder{T}" />
+    ///     <see cref="IReadOnlyList{T}" />
     /// </returns>
-    public ConditionBuilder<T> Must(Func<T, bool> condition, string? errorMessage = null)
+    internal static IReadOnlyList<ValidatorBase> BuildValidators(Action<FluentConditionBuilder<T>> configure)
     {
         // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
+        ArgumentNullException.ThrowIfNull(configure);
 
-        // 初始化 MustValidator<T> 验证器
-        var validator = new MustValidator<T>(condition);
+        // 初始化 FluentConditionBuilder<T> 实例
+        var fluentConditionBuilder = new FluentConditionBuilder<T>();
 
-        // 空检查
-        if (errorMessage is not null)
-        {
-            validator.WithErrorMessage(errorMessage);
-        }
+        // 调用自定义配置委托
+        configure.Invoke(fluentConditionBuilder);
 
-        return AddCondition(condition, validator);
+        return fluentConditionBuilder.Build();
     }
 
     /// <summary>
-    ///     添加条件不成立时对应的错误消息
-    /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <param name="errorMessage">错误信息</param>
-    /// <returns>
-    ///     <see cref="ConditionBuilder{T}" />
-    /// </returns>
-    public ConditionBuilder<T> MustUnless(Func<T, bool> condition, string? errorMessage = null)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        // 初始化 MustUnlessValidator<T> 验证器
-        var validator = new MustUnlessValidator<T>(condition);
-
-        // 空检查
-        if (errorMessage is not null)
-        {
-            validator.WithErrorMessage(errorMessage);
-        }
-
-        return AddCondition(condition, validator);
-    }
-
-    /// <summary>
-    ///     添加条件成立时对应的错误消息
-    /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <param name="errorMessage">错误信息</param>
-    /// <returns>
-    ///     <see cref="ConditionBuilder{T}" />
-    /// </returns>
-    public ConditionBuilder<T> Predicate(Func<T, bool> condition, string? errorMessage = null)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        // 初始化 PredicateValidator<T> 验证器
-        var validator = new PredicateValidator<T>(condition);
-
-        // 空检查
-        if (errorMessage is not null)
-        {
-            validator.WithErrorMessage(errorMessage);
-        }
-
-        return AddCondition(condition, validator);
-    }
-
-    /// <summary>
-    ///     构建条件和默认验证器
+    ///     构建条件和默认验证器集合
     /// </summary>
     /// <returns>
     ///     <see cref="Tuple{T1,T2}" />
     /// </returns>
-    internal (List<(Func<T, bool> Condition, ValidatorBase Validator)> Conditions, ValidatorBase? DefaultValidator)
-        Build() =>
-        (_conditions, _defaultValidator);
+    internal (List<(Func<T, bool> Condition, IReadOnlyList<ValidatorBase> Validators)> Conditions,
+        IReadOnlyList<ValidatorBase>? DefaultValidators) Build() => (_conditions, _defaultValidators);
 }

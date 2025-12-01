@@ -31,7 +31,7 @@ namespace Furion.Validation;
 ///     单个值验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ValueValidator<T> : FluentValidatorBase<T, ValueValidator<T>>
+public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>
 {
     /// <summary>
     ///     <inheritdoc cref="ValueValidator{T}" />
@@ -43,6 +43,11 @@ public class ValueValidator<T> : FluentValidatorBase<T, ValueValidator<T>>
         : base(serviceProvider)
     {
     }
+
+    /// <summary>
+    ///     显示名称
+    /// </summary>
+    internal string? DisplayName { get; private set; }
 
     /// <summary>
     ///     验证条件
@@ -141,6 +146,20 @@ public class ValueValidator<T> : FluentValidatorBase<T, ValueValidator<T>>
         ArgumentNullException.ThrowIfNull(condition);
 
         UnlessCondition = condition;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置显示名称
+    /// </summary>
+    /// <param name="displayName">显示名称</param>
+    /// <returns>
+    ///     <see cref="ValueValidator{T}" />
+    /// </returns>
+    public ValueValidator<T> WithDisplayName(string? displayName)
+    {
+        DisplayName = displayName;
 
         return this;
     }

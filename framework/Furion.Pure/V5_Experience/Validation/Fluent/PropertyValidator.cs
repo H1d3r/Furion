@@ -33,8 +33,8 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
-public sealed partial class PropertyValidator<T, TProperty> :
-    FluentValidatorBase<TProperty, PropertyValidator<T, TProperty>>,
+public sealed partial class
+    PropertyValidator<T, TProperty> : FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>,
     IObjectValidator<T>
     where T : class
 {
@@ -80,6 +80,11 @@ public sealed partial class PropertyValidator<T, TProperty> :
     ///     <see cref="ValidatorOptions.SuppressAnnotationValidation" /> 配置项决定。
     /// </remarks>
     internal bool? SuppressAnnotationValidation { get; private set; }
+
+    /// <summary>
+    ///     显示名称
+    /// </summary>
+    internal string? DisplayName { get; private set; }
 
     /// <summary>
     ///     验证条件
@@ -284,6 +289,20 @@ public sealed partial class PropertyValidator<T, TProperty> :
         ArgumentNullException.ThrowIfNull(condition);
 
         UnlessCondition = condition;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置显示名称
+    /// </summary>
+    /// <param name="displayName">显示名称</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> WithDisplayName(string? displayName)
+    {
+        DisplayName = displayName;
 
         return this;
     }

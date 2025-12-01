@@ -30,12 +30,12 @@ using System.Globalization;
 namespace Furion.Validation;
 
 /// <summary>
-///     链式验证器抽象基类
+///     链式验证器构建器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TSelf">派生类型自身类型</typeparam>
-public abstract class FluentValidatorBase<T, TSelf>
-    where TSelf : FluentValidatorBase<T, TSelf>
+public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
+    : FluentValidatorBuilder<T, TSelf>
 {
     /// <inheritdoc cref="IServiceProvider" />
     internal readonly IServiceProvider? _serviceProvider;
@@ -56,12 +56,12 @@ public abstract class FluentValidatorBase<T, TSelf>
     internal ValidatorBase? _lastAddedValidator;
 
     /// <summary>
-    ///     <inheritdoc cref="FluentValidatorBase{T,TSelf}" />
+    ///     <inheritdoc cref="FluentValidatorBuilder{T,TSelf}" />
     /// </summary>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    internal FluentValidatorBase(IServiceProvider? serviceProvider = null)
+    internal FluentValidatorBuilder(IServiceProvider? serviceProvider = null)
     {
         _serviceProvider = serviceProvider;
         Validators = [];
@@ -73,14 +73,17 @@ public abstract class FluentValidatorBase<T, TSelf>
     internal TSelf This => (TSelf)this;
 
     /// <summary>
-    ///     显示名称
-    /// </summary>
-    internal string? DisplayName { get; private set; }
-
-    /// <summary>
     ///     验证器集合
     /// </summary>
     internal List<ValidatorBase> Validators { get; }
+
+    /// <summary>
+    ///     获取验证器集合
+    /// </summary>
+    /// <returns>
+    ///     <see cref="IReadOnlyList{T}" />
+    /// </returns>
+    public IReadOnlyList<ValidatorBase> GetValidators() => Validators;
 
     /// <summary>
     ///     批量添加添加验证器
@@ -202,20 +205,6 @@ public abstract class FluentValidatorBase<T, TSelf>
 
         // 重置最新添加的验证器实例
         _lastAddedValidator = null;
-
-        return This;
-    }
-
-    /// <summary>
-    ///     设置显示名称
-    /// </summary>
-    /// <param name="displayName">显示名称</param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public TSelf WithDisplayName(string? displayName)
-    {
-        DisplayName = displayName;
 
         return This;
     }
@@ -834,4 +823,12 @@ public abstract class FluentValidatorBase<T, TSelf>
     /// </returns>
     public TSelf AddAnnotations(ValidationAttribute[] attributes, IDictionary<object, object?>? items) =>
         AddValidator(new ValueAnnotationValidator(attributes, _serviceProvider, items));
+
+    /// <summary>
+    ///     构建验证器集合
+    /// </summary>
+    /// <returns>
+    ///     <see cref="IReadOnlyList{T}" />
+    /// </returns>
+    internal IReadOnlyList<ValidatorBase> Build() => Validators;
 }
