@@ -36,12 +36,12 @@ public class ConditionalValidator<T> : ValidatorBase<T>
     /// <summary>
     ///     条件和对应的验证器列表
     /// </summary>
-    internal readonly List<(Func<T, bool> Condition, ValidatorBase Validator)> _conditions;
+    internal readonly List<(Func<T, bool> Condition, IReadOnlyList<ValidatorBase> Validators)> _conditions;
 
     /// <summary>
-    ///     缺省验证器
+    ///     缺省验证器集合
     /// </summary>
-    internal readonly ValidatorBase? _defaultValidator;
+    internal IReadOnlyList<ValidatorBase>? _defaultValidators;
 
     /// <summary>
     ///     <inheritdoc cref="ConditionalValidator{T}" />
@@ -58,8 +58,8 @@ public class ConditionalValidator<T> : ValidatorBase<T>
         // 调用条件构建器配置委托
         buildConditions(conditionBuilder);
 
-        // 构建条件和默认验证器
-        (_conditions, _defaultValidator) = conditionBuilder.Build();
+        // 构建条件和默认验证器集合
+        (_conditions, _defaultValidators) = conditionBuilder.Build();
 
         ErrorMessageResourceAccessor = () => null!;
     }
@@ -67,44 +67,45 @@ public class ConditionalValidator<T> : ValidatorBase<T>
     /// <inheritdoc />
     public override bool IsValid(T? instance)
     {
-        // 遍历并查找第一个条件匹配的验证器
-        foreach (var (condition, validator) in _conditions)
+        // 遍历并查找第一个条件匹配的验证器集合
+        foreach (var (condition, validators) in _conditions)
         {
             if (condition(instance!))
             {
-                return validator.IsValid(instance);
+                return validators.All(u => u.IsValid(instance));
             }
         }
 
-        // 没有匹配条件时使用默认验证器
-        return _defaultValidator is null || _defaultValidator.IsValid(instance);
+        // 没有匹配条件时使用默认验证器集合
+        return _defaultValidators is null || _defaultValidators.All(u => u.IsValid(instance));
     }
 
     /// <inheritdoc />
     public override List<ValidationResult>? GetValidationResults(T? instance, string name)
     {
-        // 初始化匹配到的验证器
-        ValidatorBase? matchedValidator = null;
+        // 初始化匹配到的验证器集合
+        IReadOnlyList<ValidatorBase>? matchedValidators = null;
 
-        // 遍历并查找第一个条件匹配的验证器
-        foreach (var (condition, validator) in _conditions)
+        // 遍历并查找第一个条件匹配的验证器集合
+        foreach (var (condition, validators) in _conditions)
         {
             // ReSharper disable once InvertIf
             if (condition(instance!))
             {
-                matchedValidator = validator;
+                matchedValidators = validators;
                 break;
             }
         }
 
-        // 没有匹配条件时使用默认验证器
-        matchedValidator ??= _defaultValidator;
+        // 没有匹配条件时使用默认验证器集合
+        matchedValidators ??= _defaultValidators;
 
         // 获取验证结果集合
-        var validationResults = matchedValidator?.GetValidationResults(instance, name) ?? [];
+        var validationResults =
+            matchedValidators?.SelectMany(u => u.GetValidationResults(instance, name) ?? []).ToList();
 
         // 如果验证未通过且配置了自定义错误信息，则在首部添加自定义错误信息
-        if (validationResults.Count > 0 && (string?)ErrorMessageString is not null)
+        if (validationResults?.Count > 0 && (string?)ErrorMessageString is not null)
         {
             validationResults.Insert(0, new ValidationResult(FormatErrorMessage(name), [name]));
         }
@@ -115,27 +116,37 @@ public class ConditionalValidator<T> : ValidatorBase<T>
     /// <inheritdoc />
     public override void Validate(T? instance, string name)
     {
-        // 初始化匹配到的验证器
-        ValidatorBase? matchedValidator = null;
+        // 初始化匹配到的验证器集合
+        IReadOnlyList<ValidatorBase>? matchedValidators = null;
 
-        // 遍历并查找第一个条件匹配的验证器
-        foreach (var (condition, validator) in _conditions)
+        // 遍历并查找第一个条件匹配的验证器集合
+        foreach (var (condition, validators) in _conditions)
         {
             // ReSharper disable once InvertIf
             if (condition(instance!))
             {
-                matchedValidator = validator;
+                matchedValidators = validators;
                 break;
             }
         }
 
-        // 没有匹配条件时使用默认验证器
-        matchedValidator ??= _defaultValidator;
+        // 没有匹配条件时使用默认验证器集合
+        matchedValidators ??= _defaultValidators;
 
         // 空检查
-        if (matchedValidator is not null && !matchedValidator.IsValid(instance))
+        if (matchedValidators is null)
         {
-            ThrowValidationException(instance, name, matchedValidator);
+            return;
+        }
+
+        // 遍历验证器集合
+        foreach (var validator in matchedValidators)
+        {
+            // 检查对象合法性
+            if (!validator.IsValid(instance))
+            {
+                ThrowValidationException(instance, name, validator);
+            }
         }
     }
 
