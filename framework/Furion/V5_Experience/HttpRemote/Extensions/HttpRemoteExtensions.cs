@@ -29,6 +29,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Net.Http.Headers;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
@@ -164,14 +165,18 @@ public static partial class HttpRemoteExtensions
     /// <param name="httpRequestMessage">
     ///     <see cref="HttpRequestMessage" />
     /// </param>
+    /// <param name="httpClient">
+    ///     <see cref="HttpClient" />
+    /// </param>
     /// <param name="summary">摘要</param>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public static string? ProfilerHeaders(this HttpRequestMessage httpRequestMessage,
+    public static string? ProfilerHeaders(this HttpRequestMessage httpRequestMessage, HttpClient? httpClient = null,
         string? summary = "Request Headers") =>
         StringUtility.FormatKeyValuesSummary(
-            httpRequestMessage.Headers.ConcatIgnoreNull(httpRequestMessage.Content?.Headers), summary);
+            (httpClient?.DefaultRequestHeaders).ConcatIgnoreNull(httpRequestMessage.Headers)
+            .ConcatIgnoreNull(httpRequestMessage.Content?.Headers), summary);
 
     /// <summary>
     ///     分析 <see cref="HttpResponseMessage" /> 标头
@@ -238,7 +243,7 @@ public static partial class HttpRemoteExtensions
                     [httpRequestMessage.RequestUri?.OriginalString!]),
                 new KeyValuePair<string, IEnumerable<string>>("HTTP Method", [httpRequestMessage.Method.ToString()]),
                 new KeyValuePair<string, IEnumerable<string>>("Status Code",
-                    [$"{(int)httpResponseMessage.StatusCode} {httpResponseMessage.StatusCode}"]),
+                    [httpResponseMessage.GetColoredStatusText()]),
                 new KeyValuePair<string, IEnumerable<string>>("HTTP Version", [httpResponseMessage.Version.ToString()]),
                 new KeyValuePair<string, IEnumerable<string>>("HTTP Content",
                     [$"{httpContent?.GetType().Name}"])
@@ -252,12 +257,56 @@ public static partial class HttpRemoteExtensions
     }
 
     /// <summary>
+    ///     获取带颜色的 HTTP 状态码文本
+    /// </summary>
+    /// <param name="httpResponseMessage">
+    ///     <see cref="HttpResponseMessage" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    internal static string GetColoredStatusText(this HttpResponseMessage httpResponseMessage)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(httpResponseMessage);
+
+        // 初始化 StringBuilder 实例
+        var stringBuilder = new StringBuilder();
+
+        // 检查是否是成功请求状态码
+        if (httpResponseMessage.IsSuccessStatusCode)
+        {
+            // 输出绿色内容
+            stringBuilder.Append("\e[32m");
+        }
+        else
+        {
+            // 检查是否是重定向状态码
+            stringBuilder.Append(httpResponseMessage.StatusCode is HttpStatusCode.Ambiguous or HttpStatusCode.Moved
+                or HttpStatusCode.Redirect
+                or HttpStatusCode.RedirectMethod
+                // 输出黄色内容
+                ? "\e[33m"
+                // 输出红色内容
+                : "\e[31m");
+        }
+
+        // 追加完整内容
+        stringBuilder.Append($"\e[1m{(int)httpResponseMessage.StatusCode} {httpResponseMessage.StatusCode}\e[0m");
+
+        return stringBuilder.ToString();
+    }
+
+    /// <summary>
     ///     分析 <see cref="HttpContent" /> 内容
     /// </summary>
     /// <param name="httpContent">
     ///     <see cref="HttpContent" />
     /// </param>
     /// <param name="summary">摘要</param>
+    /// <param name="httpResponseMessage">
+    ///     <see cref="HttpResponseMessage" />
+    /// </param>
     /// <param name="cancellationToken">
     ///     <see cref="CancellationToken" />
     /// </param>
@@ -265,7 +314,7 @@ public static partial class HttpRemoteExtensions
     ///     <see cref="string" />
     /// </returns>
     public static async Task<string?> ProfilerAsync(this HttpContent? httpContent, string? summary = "Request Body",
-        CancellationToken cancellationToken = default)
+        HttpResponseMessage? httpResponseMessage = null, CancellationToken cancellationToken = default)
     {
         // 空检查
         if (httpContent is null)
@@ -313,10 +362,18 @@ public static partial class HttpRemoteExtensions
             partialContent = Regex.Unescape(partialContent);
         }
 
+        // 检查响应是否为失败状态
+        if (httpResponseMessage is not null && !httpResponseMessage.IsSuccessStatusCode)
+        {
+            // 输出带颜色的内容：重定向（黄色），其他（红色）
+            partialContent =
+                $"{(httpResponseMessage.StatusCode is HttpStatusCode.Ambiguous or HttpStatusCode.Moved or HttpStatusCode.Redirect or HttpStatusCode.RedirectMethod ? "\e[33m" : "\e[31m")}\e[1m{partialContent}\e[0m";
+        }
+
         // 如果实际读取的数据小于最大显示大小，则直接返回；否则，添加省略号表示内容被截断
         var bodyString = total <= maxBytesToDisplay
             ? partialContent
-            : partialContent + $" ... [truncated, total: {total} bytes]";
+            : partialContent + $"\e[32m\e[1m ... [truncated, total: {total} bytes]\e[0m";
 
         return StringUtility.FormatKeyValuesSummary(
             [new KeyValuePair<string, IEnumerable<string>>(string.Empty, [bodyString])],
