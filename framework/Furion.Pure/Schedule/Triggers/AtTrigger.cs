@@ -28,13 +28,13 @@ namespace Furion.Schedule;
 /// <summary>
 /// 指定具体时间触发的一次性作业触发器
 /// </summary>
-public class DateTimeTrigger : Trigger
+public class AtTrigger : Trigger
 {
     /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="triggerTime">触发时间</param>
-    public DateTimeTrigger(string triggerTime)
+    public AtTrigger(string triggerTime)
     {
         TriggerTime = Convert.ToDateTime(triggerTime);
     }

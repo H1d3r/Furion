@@ -29,14 +29,14 @@ namespace Furion.Schedule;
 /// 指定具体时间触发的一次性作业触发器特性
 /// </summary>
 [SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class DateTimeAttribute : TriggerAttribute
+public class AtAttribute : TriggerAttribute
 {
     /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="triggerTime">触发时间</param>
-    public DateTimeAttribute(string triggerTime)
-        : base(typeof(DateTimeTrigger)
+    public AtAttribute(string triggerTime)
+        : base(typeof(AtTrigger)
             , triggerTime)
     {
     }

@@ -356,9 +356,9 @@ public static class Triggers
     /// </summary>
     /// <param name="triggerTime">触发时间</param>
     /// <returns><see cref="TriggerBuilder"/></returns>
-    public static TriggerBuilder DateTime(DateTime triggerTime)
+    public static TriggerBuilder At(DateTime triggerTime)
     {
-        return TriggerBuilder.DateTime(triggerTime);
+        return TriggerBuilder.At(triggerTime);
     }
 
     /// <summary>
@@ -366,8 +366,8 @@ public static class Triggers
     /// </summary>
     /// <param name="triggerTime">触发时间</param>
     /// <returns><see cref="TriggerBuilder"/></returns>
-    public static TriggerBuilder DateTime(string triggerTime)
+    public static TriggerBuilder At(string triggerTime)
     {
-        return TriggerBuilder.DateTime(triggerTime);
+        return TriggerBuilder.At(triggerTime);
     }
 }
