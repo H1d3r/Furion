@@ -58,6 +58,17 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <summary>
     ///     <inheritdoc cref="ObjectValidator{T}" />
     /// </summary>
+    /// <param name="serviceProvider">
+    ///     <see cref="IServiceProvider" />
+    /// </param>
+    public ObjectValidator(IServiceProvider? serviceProvider)
+        : this(new ValidatorOptions(), serviceProvider)
+    {
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="ObjectValidator{T}" />
+    /// </summary>
     /// <param name="options">
     ///     <see cref="ValidatorOptions" />
     /// </param>
