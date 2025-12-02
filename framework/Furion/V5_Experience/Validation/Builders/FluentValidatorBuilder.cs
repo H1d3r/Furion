@@ -526,6 +526,21 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
         AddValidator(new MustUnlessValidator<T>(condition));
 
     /// <summary>
+    ///     添加自定义条件不成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public TSelf MustUnlessUseServices(Func<T?, IServiceProvider?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return AddValidator(new MustUnlessValidator<T>(u => condition(u, _serviceProvider)));
+    }
+
+    /// <summary>
     ///     添加自定义条件成立时委托验证器
     /// </summary>
     /// <param name="condition">条件委托</param>
@@ -533,6 +548,21 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     ///     <typeparamref name="TSelf" />
     /// </returns>
     public TSelf Must(Func<T?, bool> condition) => AddValidator(new MustValidator<T>(condition));
+
+    /// <summary>
+    ///     添加自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public TSelf MustUseServices(Func<T?, IServiceProvider?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return AddValidator(new MustValidator<T>(u => condition(u, _serviceProvider)));
+    }
 
     /// <summary>
     ///     添加非空白字符串验证器
@@ -600,6 +630,21 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     ///     <typeparamref name="TSelf" />
     /// </returns>
     public TSelf Predicate(Func<T?, bool> condition) => AddValidator(new PredicateValidator<T>(condition));
+
+    /// <summary>
+    ///     添加自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public TSelf PredicateUseServices(Func<T?, IServiceProvider?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return AddValidator(new PredicateValidator<T>(u => condition(u, _serviceProvider)));
+    }
 
     /// <summary>
     ///     添加指定数值范围约束验证器
