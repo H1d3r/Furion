@@ -177,6 +177,22 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     }
 
     /// <summary>
+    ///     添加自定义条件不成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> MustUnlessUseServices(Func<T, TProperty?, IServiceProvider?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return ValidatorProxy<MustUnlessValidator<TProperty>>(instance =>
+            [new Func<TProperty?, bool>(u => condition(instance, u, _serviceProvider))]);
+    }
+
+    /// <summary>
     ///     添加自定义条件成立时委托验证器
     /// </summary>
     /// <param name="condition">条件委托</param>
@@ -190,6 +206,22 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
 
         return ValidatorProxy<MustValidator<TProperty>>(instance =>
             [new Func<TProperty?, bool>(u => condition(instance, u))]);
+    }
+
+    /// <summary>
+    ///     添加自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> MustUseServices(Func<T, TProperty?, IServiceProvider?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return ValidatorProxy<MustValidator<TProperty>>(instance =>
+            [new Func<TProperty?, bool>(u => condition(instance, u, _serviceProvider))]);
     }
 
     /// <summary>
@@ -221,6 +253,22 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
 
         return ValidatorProxy<PredicateValidator<TProperty>>(instance =>
             [new Func<TProperty?, bool>(u => condition(instance, u))]);
+    }
+
+    /// <summary>
+    ///     添加自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> PredicateUseServices(Func<T, TProperty?, IServiceProvider?, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return ValidatorProxy<PredicateValidator<TProperty>>(instance =>
+            [new Func<TProperty?, bool>(u => condition(instance, u, _serviceProvider))]);
     }
 
     /// <summary>
@@ -330,12 +378,4 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// </returns>
     public ObjectValidator<T> RuleSet(string?[]? ruleSets, Action<ObjectValidator<T>> setAction) =>
         _objectValidator.RuleSet(ruleSets, setAction);
-
-    // TODO: 考虑支持解析服务的的拓展，比如先解析服务，满足某种添加再操作，另外是否考虑数据验证中，比如是否大于某个值，而这个值是通过服务解析出来的！
-
-    // TODO: Func<T, bool> 改为 Func<ValidationContext, bool>，因为里面可能还会解析服务
-
-    // TODO: IServiceProvider 还没用上，还有 ValidationContent 也是
-
-    // TODO: MustUseServices：解析服务的验证器
 }
