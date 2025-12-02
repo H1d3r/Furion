@@ -530,6 +530,4 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
             _annotationValidator.ValidateAllProperties = Options.ValidateAllProperties;
         }
     }
-
-    // TODO: 这里还未提供解析服务的处理，是提供 GetService<T> 还是 ServiceProvider
 }

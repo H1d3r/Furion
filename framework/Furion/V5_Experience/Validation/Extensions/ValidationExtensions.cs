@@ -59,13 +59,12 @@ public static class ValidationExtensions
     ///     <see cref="ValidationContext" />
     /// </param>
     /// <param name="configure">自定义配置委托</param>
-    /// <param name="ruleSets">规则集列表</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="IEnumerable{T}" />
     /// </returns>
     public static IEnumerable<ValidationResult> ValidateObject<T>(this ValidationContext validationContext,
-        Action<ObjectValidator<T>>? configure = null, params string?[] ruleSets)
+        Action<ObjectValidator<T>>? configure = null)
         where T : class
     {
         // 空检查
@@ -80,6 +79,13 @@ public static class ValidationExtensions
 
         // 调用自定义配置委托
         configure?.Invoke(objectValidator);
+
+        // 尝试从 Items 中解析规则集列表
+        string?[]? ruleSets = null;
+        if (validationContext.Items.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsObj))
+        {
+            ruleSets = ruleSetsObj as string?[] ?? (ruleSetsObj is string ruleSet ? [ruleSet] : null);
+        }
 
         // 获取对象验证结果集合
         return objectValidator.GetValidationResults((T)validationContext.ObjectInstance, ruleSets) ?? [];
