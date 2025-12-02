@@ -1,0 +1,93 @@
+﻿// ------------------------------------------------------------------------
+// 版权信息
+// 版权归百小僧及百签科技（广东）有限公司所有。
+// 所有权利保留。
+// 官方网站：https://baiqian.com
+//
+// 许可证信息
+// Furion 项目主要遵循 MIT 许可证和 Apache 许可证（版本 2.0）进行分发和使用。
+// 许可证的完整文本可以在源代码树根目录中的 LICENSE-APACHE 和 LICENSE-MIT 文件中找到。
+// 官方网站：https://furion.net
+//
+// 使用条款
+// 使用本代码应遵守相关法律法规和许可证的要求。
+//
+// 免责声明
+// 对于因使用本代码而产生的任何直接、间接、偶然、特殊或后果性损害，我们不承担任何责任。
+//
+// 其他重要信息
+// Furion 项目的版权、商标、专利和其他相关权利均受相应法律法规的保护。
+// 有关 Furion 项目的其他详细信息，请参阅位于源代码树根目录中的 COPYRIGHT 和 DISCLAIMER 文件。
+//
+// 更多信息
+// 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
+// ------------------------------------------------------------------------
+
+using System.ComponentModel.DataAnnotations;
+
+namespace Furion.Validation;
+
+/// <summary>
+///     数据验证模块拓展类
+/// </summary>
+public static class ValidationExtensions
+{
+    /// <summary>
+    ///     若 <see cref="ValidationResult" /> 列表为空则返回 <c>null</c>，否则返回列表本身
+    /// </summary>
+    /// <param name="validationResults"><see cref="ValidationResult" /> 列表</param>
+    /// <returns>
+    ///     <see cref="List{T}" />
+    /// </returns>
+    public static List<ValidationResult>? ToResults(this List<ValidationResult>? validationResults) =>
+        validationResults is { Count: > 0 } ? validationResults : null;
+
+    /// <summary>
+    ///     若 <see cref="ValidationResult" /> 列表为空则返回 <c>null</c>，否则返回列表本身
+    /// </summary>
+    /// <param name="validationResults"><see cref="ValidationResult" /> 列表</param>
+    /// <returns>
+    ///     <see cref="List{T}" />
+    /// </returns>
+    public static List<ValidationResult>? ToResults(this IEnumerable<ValidationResult>? validationResults) =>
+        validationResults?.ToList().ToResults();
+
+    /// <summary>
+    ///     使用对象验证器验证当前实例并返回验证结果集合
+    /// </summary>
+    /// <param name="validationContext">
+    ///     <see cref="ValidationContext" />
+    /// </param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="IEnumerable{T}" />
+    /// </returns>
+    public static IEnumerable<ValidationResult> ValidateObject<T>(this ValidationContext validationContext,
+        Action<ObjectValidator<T>>? configure = null)
+        where T : class
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validationContext);
+
+        // 解析 IServiceProvider 服务
+        var serviceProvider = validationContext.GetService(typeof(IServiceProvider)) as IServiceProvider;
+
+        // 初始化 ObjectValidator<T> 实例
+        using var objectValidator = new ObjectValidator<T>(new ValidatorOptions { SuppressAnnotationValidation = true },
+            serviceProvider);
+
+        // 调用自定义配置委托
+        configure?.Invoke(objectValidator);
+
+        // 尝试从 Items 中解析规则集列表
+        string?[]? ruleSets = null;
+        if (validationContext.Items.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsObj))
+        {
+            ruleSets = ruleSetsObj as string?[] ?? (ruleSetsObj is string ruleSet ? [ruleSet] : null);
+        }
+
+        // 获取对象验证结果集合
+        return objectValidator.GetValidationResults((T)validationContext.ObjectInstance, ruleSets) ?? [];
+    }
+}
