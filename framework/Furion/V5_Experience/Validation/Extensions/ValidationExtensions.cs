@@ -51,4 +51,37 @@ public static class ValidationExtensions
     /// </returns>
     public static List<ValidationResult>? ToResults(this IEnumerable<ValidationResult>? validationResults) =>
         validationResults?.ToList().ToResults();
+
+    /// <summary>
+    ///     使用对象验证器验证当前实例并返回验证结果集合
+    /// </summary>
+    /// <param name="validationContext">
+    ///     <see cref="ValidationContext" />
+    /// </param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <param name="ruleSets">规则集列表</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="IEnumerable{T}" />
+    /// </returns>
+    public static IEnumerable<ValidationResult> ValidateObject<T>(this ValidationContext validationContext,
+        Action<ObjectValidator<T>>? configure = null, params string?[] ruleSets)
+        where T : class
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validationContext);
+
+        // 解析 IServiceProvider 服务
+        var serviceProvider = validationContext.GetService(typeof(IServiceProvider)) as IServiceProvider;
+
+        // 初始化 ObjectValidator<T> 实例
+        using var objectValidator = new ObjectValidator<T>(new ValidatorOptions { SuppressAnnotationValidation = true },
+            serviceProvider);
+
+        // 调用自定义配置委托
+        configure?.Invoke(objectValidator);
+
+        // 获取对象验证结果集合
+        return objectValidator.GetValidationResults((T)validationContext.ObjectInstance, ruleSets) ?? [];
+    }
 }
