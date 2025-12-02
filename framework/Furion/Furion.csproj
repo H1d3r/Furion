@@ -35,4 +35,20 @@
 		<None Include="readme.txt" pack="true" PackagePath="." />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Compile Update="V5_Experience\Validation\Resources\ValidationMessages.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>ValidationMessages.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="V5_Experience\Validation\Resources\ValidationMessages.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>ValidationMessages.Designer.cs</LastGenOutput>
+			<CustomToolNamespace>Furion.Validation.Resources</CustomToolNamespace>
+		</EmbeddedResource>
+	</ItemGroup>
+
 </Project>
