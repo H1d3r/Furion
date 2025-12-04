@@ -76,13 +76,14 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Conditional(Action<T, ConditionBuilder<TProperty?>> buildConditions)
+    public PropertyValidator<T, TProperty> Conditional(
+        Action<ConditionBuilder<TProperty?>, ValidationContext<T>> buildConditions)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(buildConditions);
 
-        return ValidatorProxy<ConditionalValidator<TProperty>>(instance =>
-            [new Action<ConditionBuilder<TProperty?>>(u => buildConditions(instance, u))]);
+        return ValidatorProxy<ConditionalValidator<TProperty>>(context =>
+            [new Action<ConditionBuilder<TProperty?>>(u => buildConditions(u, context))]);
     }
 
     /// <summary>
@@ -92,12 +93,12 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> EqualTo(Func<T, object?> compareValueAccessor)
+    public PropertyValidator<T, TProperty> EqualTo(Func<ValidationContext<T>, object?> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
 
-        return ValidatorProxy<EqualToValidator>(instance => [compareValueAccessor(instance)]);
+        return ValidatorProxy<EqualToValidator>(context => [compareValueAccessor(context)]);
     }
 
     /// <summary>
@@ -107,12 +108,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> GreaterThanOrEqualTo(Func<T, IComparable> compareValueAccessor)
+    public PropertyValidator<T, TProperty> GreaterThanOrEqualTo(
+        Func<ValidationContext<T>, IComparable> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
 
-        return ValidatorProxy<GreaterThanOrEqualToValidator>(instance => [compareValueAccessor(instance)]);
+        return ValidatorProxy<GreaterThanOrEqualToValidator>(context => [compareValueAccessor(context)]);
     }
 
     /// <summary>
@@ -122,12 +124,12 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> GreaterThan(Func<T, IComparable> compareValueAccessor)
+    public PropertyValidator<T, TProperty> GreaterThan(Func<ValidationContext<T>, IComparable> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
 
-        return ValidatorProxy<GreaterThanValidator>(instance => [compareValueAccessor(instance)]);
+        return ValidatorProxy<GreaterThanValidator>(context => [compareValueAccessor(context)]);
     }
 
     /// <summary>
@@ -137,12 +139,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> LessThanOrEqualTo(Func<T, IComparable> compareValueAccessor)
+    public PropertyValidator<T, TProperty> LessThanOrEqualTo(
+        Func<ValidationContext<T>, IComparable> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
 
-        return ValidatorProxy<LessThanOrEqualToValidator>(instance => [compareValueAccessor(instance)]);
+        return ValidatorProxy<LessThanOrEqualToValidator>(context => [compareValueAccessor(context)]);
     }
 
     /// <summary>
@@ -152,12 +155,12 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> LessThan(Func<T, IComparable> compareValueAccessor)
+    public PropertyValidator<T, TProperty> LessThan(Func<ValidationContext<T>, IComparable> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
 
-        return ValidatorProxy<LessThanValidator>(instance => [compareValueAccessor(instance)]);
+        return ValidatorProxy<LessThanValidator>(context => [compareValueAccessor(context)]);
     }
 
     /// <summary>
@@ -167,29 +170,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> MustUnless(Func<T, TProperty?, bool> condition)
+    public PropertyValidator<T, TProperty> MustUnless(Func<TProperty?, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return ValidatorProxy<MustUnlessValidator<TProperty>>(instance =>
-            [new Func<TProperty?, bool>(u => condition(instance, u))]);
-    }
-
-    /// <summary>
-    ///     添加自定义条件不成立时委托验证器
-    /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> MustUnlessUseServices(Func<T, TProperty?, IServiceProvider?, bool> condition)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        return ValidatorProxy<MustUnlessValidator<TProperty>>(instance =>
-            [new Func<TProperty?, bool>(u => condition(instance, u, _serviceProvider))]);
+        return ValidatorProxy<MustUnlessValidator<TProperty>>(context =>
+            [new Func<TProperty?, bool>(u => condition(u, context))]);
     }
 
     /// <summary>
@@ -199,29 +186,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Must(Func<T, TProperty?, bool> condition)
+    public PropertyValidator<T, TProperty> Must(Func<TProperty?, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return ValidatorProxy<MustValidator<TProperty>>(instance =>
-            [new Func<TProperty?, bool>(u => condition(instance, u))]);
-    }
-
-    /// <summary>
-    ///     添加自定义条件成立时委托验证器
-    /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> MustUseServices(Func<T, TProperty?, IServiceProvider?, bool> condition)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        return ValidatorProxy<MustValidator<TProperty>>(instance =>
-            [new Func<TProperty?, bool>(u => condition(instance, u, _serviceProvider))]);
+        return ValidatorProxy<MustValidator<TProperty>>(context =>
+            [new Func<TProperty?, bool>(u => condition(u, context))]);
     }
 
     /// <summary>
@@ -231,12 +202,12 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> NotEqualTo(Func<T, object?> compareValueAccessor)
+    public PropertyValidator<T, TProperty> NotEqualTo(Func<ValidationContext<T>, object?> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
 
-        return ValidatorProxy<NotEqualToValidator>(instance => [compareValueAccessor(instance)]);
+        return ValidatorProxy<NotEqualToValidator>(context => [compareValueAccessor(context)]);
     }
 
     /// <summary>
@@ -246,29 +217,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Predicate(Func<T, TProperty?, bool> condition)
+    public PropertyValidator<T, TProperty> Predicate(Func<TProperty?, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return ValidatorProxy<PredicateValidator<TProperty>>(instance =>
-            [new Func<TProperty?, bool>(u => condition(instance, u))]);
-    }
-
-    /// <summary>
-    ///     添加自定义条件成立时委托验证器
-    /// </summary>
-    /// <param name="condition">条件委托</param>
-    /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
-    /// </returns>
-    public PropertyValidator<T, TProperty> PredicateUseServices(Func<T, TProperty?, IServiceProvider?, bool> condition)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        return ValidatorProxy<PredicateValidator<TProperty>>(instance =>
-            [new Func<TProperty?, bool>(u => condition(instance, u, _serviceProvider))]);
+        return ValidatorProxy<PredicateValidator<TProperty>>(context =>
+            [new Func<TProperty?, bool>(u => condition(u, context))]);
     }
 
     /// <summary>
@@ -282,12 +237,16 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> ValidatorProxy<TValidator>(Func<T, object?[]?>? constructorArgsFactory,
-        Action<TValidator>? configure = null)
+    public PropertyValidator<T, TProperty> ValidatorProxy<TValidator>(
+        Func<ValidationContext<T>, object?[]?>? constructorArgsFactory, Action<TValidator>? configure = null)
         where TValidator : ValidatorBase
     {
         // 初始化 ValidatorProxy<T, TValidator> 实例
-        var validatorProxy = new ValidatorProxy<T, TValidator>(instance => GetValue(instance), constructorArgsFactory);
+        var validatorProxy = new ValidatorProxy<T, TValidator>(instance => GetValue(instance),
+            constructorArgsFactory is null
+                ? null
+                : instance =>
+                    constructorArgsFactory(new ValidationContext<T>(instance, _serviceProvider, _items?.AsReadOnly())));
 
         // 空检查
         if (configure is not null)

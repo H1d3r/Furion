@@ -36,11 +36,29 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>
     /// <summary>
     ///     <inheritdoc cref="ValueValidator{T}" />
     /// </summary>
+    public ValueValidator()
+        : this(null, null)
+    {
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="ValueValidator{T}" />
+    /// </summary>
+    /// <param name="items">验证上下文数据</param>
+    public ValueValidator(IDictionary<object, object?>? items)
+        : this(null, items)
+    {
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="ValueValidator{T}" />
+    /// </summary>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    public ValueValidator(IServiceProvider? serviceProvider = null)
-        : base(serviceProvider)
+    /// <param name="items">验证上下文数据</param>
+    public ValueValidator(IServiceProvider? serviceProvider, IDictionary<object, object?>? items)
+        : base(serviceProvider, items)
     {
     }
 

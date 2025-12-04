@@ -52,7 +52,7 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
     ///     <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     public PropertyAnnotationValidator(Expression<Func<T, TProperty?>> selector, IDictionary<object, object?>? items)
         : base(ConvertExpression(selector), items)
     {
@@ -65,7 +65,7 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     public PropertyAnnotationValidator(Expression<Func<T, TProperty?>> selector, IServiceProvider? serviceProvider,
         IDictionary<object, object?>? items)
         : base(ConvertExpression(selector), serviceProvider, items)
@@ -117,7 +117,7 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
     internal readonly Func<T, object?> _getter;
 
     /// <summary>
-    ///     验证上下文关联的键值对字典
+    ///     验证上下文数据
     /// </summary>
     internal readonly IDictionary<object, object?>? _items;
 
@@ -143,7 +143,7 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
     ///     <inheritdoc cref="PropertyAnnotationValidator{T}" />
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     public PropertyAnnotationValidator(Expression<Func<T, object?>> selector, IDictionary<object, object?>? items)
         : this(selector, null, items)
     {
@@ -156,7 +156,7 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     public PropertyAnnotationValidator(Expression<Func<T, object?>> selector, IServiceProvider? serviceProvider,
         IDictionary<object, object?>? items)
         : this(selector)

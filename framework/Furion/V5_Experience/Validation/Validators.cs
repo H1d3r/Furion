@@ -419,7 +419,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     /// <returns>
     ///     <see cref="ObjectAnnotationValidator" />
     /// </returns>
@@ -468,7 +468,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="PropertyAnnotationValidator{T}" />
@@ -485,7 +485,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <typeparam name="TProperty">属性类型</typeparam>
     /// <returns>
@@ -742,7 +742,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     /// <returns>
     ///     <see cref="ValueAnnotationValidator" />
     /// </returns>

@@ -37,6 +37,11 @@ namespace Furion.Validation;
 public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     : FluentValidatorBuilder<T, TSelf>
 {
+    /// <summary>
+    ///     验证上下文数据
+    /// </summary>
+    internal readonly IDictionary<object, object?>? _items;
+
     /// <inheritdoc cref="IServiceProvider" />
     internal readonly IServiceProvider? _serviceProvider;
 
@@ -58,12 +63,31 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <summary>
     ///     <inheritdoc cref="FluentValidatorBuilder{T,TSelf}" />
     /// </summary>
+    internal FluentValidatorBuilder()
+        : this(null, null)
+    {
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="FluentValidatorBuilder{T,TSelf}" />
+    /// </summary>
+    /// <param name="items">验证上下文数据</param>
+    internal FluentValidatorBuilder(IDictionary<object, object?>? items)
+        : this(null, items)
+    {
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="FluentValidatorBuilder{T,TSelf}" />
+    /// </summary>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    internal FluentValidatorBuilder(IServiceProvider? serviceProvider = null)
+    /// <param name="items">验证上下文数据</param>
+    internal FluentValidatorBuilder(IServiceProvider? serviceProvider, IDictionary<object, object?>? items)
     {
         _serviceProvider = serviceProvider;
+        _items = items;
         Validators = [];
     }
 
@@ -92,7 +116,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf AddValidators(params IEnumerable<ValidatorBase> validators)
+    public virtual TSelf AddValidators(params IEnumerable<ValidatorBase> validators)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validators);
@@ -116,7 +140,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf AddValidator<TValidator>(TValidator validator, Action<TValidator>? configure = null)
+    public virtual TSelf AddValidator<TValidator>(TValidator validator, Action<TValidator>? configure = null)
         where TValidator : ValidatorBase
     {
         // 空检查 
@@ -164,7 +188,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf WithErrorMessage(string? errorMessage)
+    public virtual TSelf WithErrorMessage(string? errorMessage)
     {
         // 空检查
         if (_lastAddedValidator is null)
@@ -189,7 +213,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf WithErrorMessage(
+    public virtual TSelf WithErrorMessage(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties |
                                     DynamicallyAccessedMemberTypes.NonPublicProperties)]
         Type resourceType, string resourceName)
@@ -217,7 +241,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Age(bool isAdultOnly = false, bool allowStringValues = false) =>
+    public virtual TSelf Age(bool isAdultOnly = false, bool allowStringValues = false) =>
         AddValidator(new AgeValidator { IsAdultOnly = isAdultOnly, AllowStringValues = allowStringValues });
 
     /// <summary>
@@ -227,7 +251,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf AllowedValues(params object?[] values) => AddValidator(new AllowedValuesValidator(values));
+    public virtual TSelf AllowedValues(params object?[] values) => AddValidator(new AllowedValuesValidator(values));
 
     /// <summary>
     ///     添加银行卡号验证器（Luhn 算法）
@@ -235,7 +259,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf BankCard() => AddValidator(new BankCardValidator());
+    public virtual TSelf BankCard() => AddValidator(new BankCardValidator());
 
     /// <summary>
     ///     添加 Base64 字符串验证器
@@ -243,7 +267,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Base64String() => AddValidator(new Base64StringValidator());
+    public virtual TSelf Base64String() => AddValidator(new Base64StringValidator());
 
     /// <summary>
     ///     添加中文姓名验证器
@@ -251,7 +275,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf ChineseName() => AddValidator(new ChineseNameValidator());
+    public virtual TSelf ChineseName() => AddValidator(new ChineseNameValidator());
 
     /// <summary>
     ///     添加中文/汉字验证器
@@ -259,7 +283,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Chinese() => AddValidator(new ChineseValidator());
+    public virtual TSelf Chinese() => AddValidator(new ChineseValidator());
 
     /// <summary>
     ///     添加颜色值验证器
@@ -270,7 +294,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf ColorValue(bool fullMode = false) => AddValidator(new ColorValueValidator { FullMode = fullMode });
+    public virtual TSelf ColorValue(bool fullMode = false) =>
+        AddValidator(new ColorValueValidator { FullMode = fullMode });
 
     /// <summary>
     ///     添加组合验证器
@@ -279,7 +304,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Composite(params ValidatorBase[] validators) => AddValidator(new CompositeValidator(validators));
+    public virtual TSelf Composite(params ValidatorBase[] validators) =>
+        AddValidator(new CompositeValidator(validators));
 
     /// <summary>
     ///     添加组合验证器
@@ -291,7 +317,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Composite(ValidatorBase[] validators, ValidationMode mode) =>
+    public virtual TSelf Composite(ValidatorBase[] validators, ValidationMode mode) =>
         AddValidator(new CompositeValidator(validators) { Mode = mode });
 
     /// <summary>
@@ -301,7 +327,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Conditional(Action<ConditionBuilder<T?>> buildConditions) =>
+    public virtual TSelf Conditional(Action<ConditionBuilder<T?>> buildConditions) =>
         AddValidator(new ConditionalValidator<T?>(buildConditions));
 
     /// <summary>
@@ -311,7 +337,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf DateOnly(params string[] formats) => AddValidator(new DateOnlyValidator(formats));
+    public virtual TSelf DateOnly(params string[] formats) => AddValidator(new DateOnlyValidator(formats));
 
     /// <summary>
     ///     添加 <see cref="System.DateOnly" /> 验证器
@@ -322,7 +348,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf DateOnly(string[] formats, IFormatProvider? provider, DateTimeStyles style = DateTimeStyles.None) =>
+    public virtual TSelf DateOnly(string[] formats, IFormatProvider? provider,
+        DateTimeStyles style = DateTimeStyles.None) =>
         AddValidator(new DateOnlyValidator(formats) { Provider = provider, Style = style });
 
     /// <summary>
@@ -332,7 +359,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf DateTime(params string[] formats) => AddValidator(new DateTimeValidator(formats));
+    public virtual TSelf DateTime(params string[] formats) => AddValidator(new DateTimeValidator(formats));
 
     /// <summary>
     ///     添加 <see cref="System.DateTime" /> 验证器
@@ -343,7 +370,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf DateTime(string[] formats, IFormatProvider? provider, DateTimeStyles style = DateTimeStyles.None) =>
+    public virtual TSelf DateTime(string[] formats, IFormatProvider? provider,
+        DateTimeStyles style = DateTimeStyles.None) =>
         AddValidator(new DateTimeValidator(formats) { Provider = provider, Style = style });
 
     /// <summary>
@@ -354,7 +382,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf DecimalPlaces(int maxDecimalPlaces, bool allowStringValues = false) =>
+    public virtual TSelf DecimalPlaces(int maxDecimalPlaces, bool allowStringValues = false) =>
         AddValidator(new DecimalPlacesValidator(maxDecimalPlaces) { AllowStringValues = allowStringValues });
 
     /// <summary>
@@ -364,7 +392,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf DeniedValues(params object?[] values) => AddValidator(new DeniedValuesValidator(values));
+    public virtual TSelf DeniedValues(params object?[] values) => AddValidator(new DeniedValuesValidator(values));
 
     /// <summary>
     ///     添加域名验证器
@@ -372,7 +400,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Domain() => AddValidator(new DomainValidator());
+    public virtual TSelf Domain() => AddValidator(new DomainValidator());
 
     /// <summary>
     ///     添加邮箱地址验证器
@@ -380,7 +408,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf EmailAddress() => AddValidator(new EmailAddressValidator());
+    public virtual TSelf EmailAddress() => AddValidator(new EmailAddressValidator());
 
     /// <summary>
     ///     添加以特定字符/字符串结尾的验证器
@@ -390,7 +418,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf EndsWith(string searchValue, StringComparison comparison = StringComparison.Ordinal) =>
+    public virtual TSelf EndsWith(string searchValue, StringComparison comparison = StringComparison.Ordinal) =>
         AddValidator(new EndsWithValidator(searchValue) { Comparison = comparison });
 
     /// <summary>
@@ -400,7 +428,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf EqualTo(object? compareValue) => AddValidator(new EqualToValidator(compareValue));
+    public virtual TSelf EqualTo(object? compareValue) => AddValidator(new EqualToValidator(compareValue));
 
     /// <summary>
     ///     添加大于等于验证器
@@ -409,7 +437,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf GreaterThanOrEqualTo(IComparable compareValue) =>
+    public virtual TSelf GreaterThanOrEqualTo(IComparable compareValue) =>
         AddValidator(new GreaterThanOrEqualToValidator(compareValue));
 
     /// <summary>
@@ -419,7 +447,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf GreaterThan(IComparable compareValue) => AddValidator(new GreaterThanValidator(compareValue));
+    public virtual TSelf GreaterThan(IComparable compareValue) => AddValidator(new GreaterThanValidator(compareValue));
 
     /// <summary>
     ///     添加身份证号验证器
@@ -427,7 +455,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf IDCard() => AddValidator(new IDCardValidator());
+    public virtual TSelf IDCard() => AddValidator(new IDCardValidator());
 
     /// <summary>
     ///     添加 JSON 格式验证器
@@ -436,7 +464,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Json(bool allowTrailingCommas = false) =>
+    public virtual TSelf Json(bool allowTrailingCommas = false) =>
         AddValidator(new JsonValidator { AllowTrailingCommas = allowTrailingCommas });
 
     /// <summary>
@@ -447,7 +475,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Length(int minimumLength, int maximumLength) =>
+    public virtual TSelf Length(int minimumLength, int maximumLength) =>
         AddValidator(new LengthValidator(minimumLength, maximumLength));
 
     /// <summary>
@@ -457,7 +485,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf LessThanOrEqualTo(IComparable compareValue) =>
+    public virtual TSelf LessThanOrEqualTo(IComparable compareValue) =>
         AddValidator(new LessThanOrEqualToValidator(compareValue));
 
     /// <summary>
@@ -467,7 +495,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf LessThan(IComparable compareValue) => AddValidator(new LessThanValidator(compareValue));
+    public virtual TSelf LessThan(IComparable compareValue) => AddValidator(new LessThanValidator(compareValue));
 
     /// <summary>
     ///     添加最大长度验证器
@@ -476,7 +504,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf MaxLength(int length) => AddValidator(new MaxLengthValidator(length));
+    public virtual TSelf MaxLength(int length) => AddValidator(new MaxLengthValidator(length));
 
     /// <summary>
     ///     添加最大值验证器
@@ -485,7 +513,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Max(IComparable maximum) => AddValidator(new MaxValidator(maximum));
+    public virtual TSelf Max(IComparable maximum) => AddValidator(new MaxValidator(maximum));
 
     /// <summary>
     ///     添加 MD5 字符串验证器
@@ -494,7 +522,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf MD5String(bool allowShortFormat = false) =>
+    public virtual TSelf MD5String(bool allowShortFormat = false) =>
         AddValidator(new MD5StringValidator { AllowShortFormat = allowShortFormat });
 
     /// <summary>
@@ -504,7 +532,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf MinLength(int length) => AddValidator(new MinLengthValidator(length));
+    public virtual TSelf MinLength(int length) => AddValidator(new MinLengthValidator(length));
 
     /// <summary>
     ///     添加最小值验证器
@@ -513,7 +541,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Min(IComparable minimum) => AddValidator(new MinValidator(minimum));
+    public virtual TSelf Min(IComparable minimum) => AddValidator(new MinValidator(minimum));
 
     /// <summary>
     ///     添加自定义条件不成立时委托验证器
@@ -522,7 +550,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf MustUnless(Func<T?, bool> condition) =>
+    public virtual TSelf MustUnless(Func<T?, bool> condition) =>
         AddValidator(new MustUnlessValidator<T>(condition));
 
     /// <summary>
@@ -532,12 +560,13 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf MustUnlessUseServices(Func<T?, IServiceProvider?, bool> condition)
+    public virtual TSelf MustUnless(Func<T?, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return AddValidator(new MustUnlessValidator<T>(u => condition(u, _serviceProvider)));
+        return AddValidator(new MustUnlessValidator<T>(u =>
+            condition(u, new ValidationContext<T>(u, _serviceProvider, _items?.AsReadOnly()))));
     }
 
     /// <summary>
@@ -547,7 +576,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Must(Func<T?, bool> condition) => AddValidator(new MustValidator<T>(condition));
+    public virtual TSelf Must(Func<T?, bool> condition) => AddValidator(new MustValidator<T>(condition));
 
     /// <summary>
     ///     添加自定义条件成立时委托验证器
@@ -556,12 +585,13 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf MustUseServices(Func<T?, IServiceProvider?, bool> condition)
+    public virtual TSelf Must(Func<T?, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return AddValidator(new MustValidator<T>(u => condition(u, _serviceProvider)));
+        return AddValidator(new MustValidator<T>(u =>
+            condition(u, new ValidationContext<T>(u, _serviceProvider, _items?.AsReadOnly()))));
     }
 
     /// <summary>
@@ -570,7 +600,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf NotBlank() => AddValidator(new NotBlankValidator());
+    public virtual TSelf NotBlank() => AddValidator(new NotBlankValidator());
 
     /// <summary>
     ///     添加非空集合、数组和字符串验证器
@@ -578,7 +608,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf NotEmpty() => AddValidator(new NotEmptyValidator());
+    public virtual TSelf NotEmpty() => AddValidator(new NotEmptyValidator());
 
     /// <summary>
     ///     添加不相等验证器
@@ -587,7 +617,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf NotEqualTo(object? compareValue) => AddValidator(new NotEqualToValidator(compareValue));
+    public virtual TSelf NotEqualTo(object? compareValue) => AddValidator(new NotEqualToValidator(compareValue));
 
     /// <summary>
     ///     添加非 null 验证器
@@ -595,7 +625,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf NotNull() => AddValidator(new NotNullValidator());
+    public virtual TSelf NotNull() => AddValidator(new NotNullValidator());
 
     /// <summary>
     ///     添加密码验证器
@@ -604,7 +634,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Password(bool strong = false) => AddValidator(new PasswordValidator { Strong = strong });
+    public virtual TSelf Password(bool strong = false) => AddValidator(new PasswordValidator { Strong = strong });
 
     /// <summary>
     ///     添加手机号（中国）验证器
@@ -612,7 +642,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf PhoneNumber() => AddValidator(new PhoneNumberValidator());
+    public virtual TSelf PhoneNumber() => AddValidator(new PhoneNumberValidator());
 
     /// <summary>
     ///     添加邮政编码（中国）验证器
@@ -620,7 +650,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf PostalCode() => AddValidator(new PostalCodeValidator());
+    public virtual TSelf PostalCode() => AddValidator(new PostalCodeValidator());
 
     /// <summary>
     ///     添加自定义条件成立时委托验证器
@@ -629,7 +659,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Predicate(Func<T?, bool> condition) => AddValidator(new PredicateValidator<T>(condition));
+    public virtual TSelf Predicate(Func<T?, bool> condition) => AddValidator(new PredicateValidator<T>(condition));
 
     /// <summary>
     ///     添加自定义条件成立时委托验证器
@@ -638,12 +668,13 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf PredicateUseServices(Func<T?, IServiceProvider?, bool> condition)
+    public virtual TSelf Predicate(Func<T?, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return AddValidator(new PredicateValidator<T>(u => condition(u, _serviceProvider)));
+        return AddValidator(new PredicateValidator<T>(u =>
+            condition(u, new ValidationContext<T>(u, _serviceProvider, _items?.AsReadOnly()))));
     }
 
     /// <summary>
@@ -655,7 +686,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Range(int minimum, int maximum, Action<RangeValidator>? configure = null) =>
+    public virtual TSelf Range(int minimum, int maximum, Action<RangeValidator>? configure = null) =>
         AddValidator(new RangeValidator(minimum, maximum), configure);
 
     /// <summary>
@@ -667,7 +698,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Range(double minimum, double maximum, Action<RangeValidator>? configure = null) =>
+    public virtual TSelf Range(double minimum, double maximum, Action<RangeValidator>? configure = null) =>
         AddValidator(new RangeValidator(minimum, maximum), configure);
 
     /// <summary>
@@ -680,7 +711,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Range([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type, string minimum,
+    public virtual TSelf Range([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type,
+        string minimum,
         string maximum, Action<RangeValidator>? configure = null) =>
         AddValidator(new RangeValidator(type, minimum, maximum), configure);
 
@@ -692,7 +724,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf RegularExpression(string pattern, int matchTimeoutInMilliseconds = 2000) =>
+    public virtual TSelf RegularExpression(string pattern, int matchTimeoutInMilliseconds = 2000) =>
         AddValidator(
             new RegularExpressionValidator(pattern) { MatchTimeoutInMilliseconds = matchTimeoutInMilliseconds });
 
@@ -704,7 +736,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Matches(string pattern, int matchTimeoutInMilliseconds = 2000) =>
+    public virtual TSelf Matches(string pattern, int matchTimeoutInMilliseconds = 2000) =>
         AddValidator(
             new RegularExpressionValidator(pattern) { MatchTimeoutInMilliseconds = matchTimeoutInMilliseconds });
 
@@ -715,7 +747,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Required(bool allowEmptyStrings = false) =>
+    public virtual TSelf Required(bool allowEmptyStrings = false) =>
         AddValidator(new RequiredValidator { AllowEmptyStrings = allowEmptyStrings });
 
     /// <summary>
@@ -724,7 +756,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Single() => AddValidator(new SingleValidator());
+    public virtual TSelf Single() => AddValidator(new SingleValidator());
 
     /// <summary>
     ///     添加以特定字符/字符串开头的验证器
@@ -734,7 +766,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf StartsWith(string searchValue, StringComparison comparison = StringComparison.Ordinal) =>
+    public virtual TSelf StartsWith(string searchValue, StringComparison comparison = StringComparison.Ordinal) =>
         AddValidator(new StartsWithValidator(searchValue) { Comparison = comparison });
 
     /// <summary>
@@ -745,7 +777,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf StringContains(string searchValue, StringComparison comparison = StringComparison.Ordinal) =>
+    public virtual TSelf StringContains(string searchValue, StringComparison comparison = StringComparison.Ordinal) =>
         AddValidator(new StringContainsValidator(searchValue) { Comparison = comparison });
 
     /// <summary>
@@ -755,7 +787,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf StringLength(int maximumLength) => AddValidator(new StringLengthValidator(maximumLength));
+    public virtual TSelf StringLength(int maximumLength) => AddValidator(new StringLengthValidator(maximumLength));
 
     /// <summary>
     ///     添加字符串长度验证器
@@ -765,7 +797,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf StringLength(int minimumLength, int maximumLength) =>
+    public virtual TSelf StringLength(int minimumLength, int maximumLength) =>
         AddValidator(new StringLengthValidator(maximumLength) { MinimumLength = minimumLength });
 
     /// <summary>
@@ -774,7 +806,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf StrongPassword() => AddValidator(new StrongPasswordValidator());
+    public virtual TSelf StrongPassword() => AddValidator(new StrongPasswordValidator());
 
     /// <summary>
     ///     添加座机（电话）验证器
@@ -782,7 +814,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Telephone() => AddValidator(new TelephoneValidator());
+    public virtual TSelf Telephone() => AddValidator(new TelephoneValidator());
 
     /// <summary>
     ///     添加时间格式 <see cref="System.TimeOnly" /> 验证器
@@ -791,7 +823,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf TimeOnly(params string[] formats) => AddValidator(new TimeOnlyValidator(formats));
+    public virtual TSelf TimeOnly(params string[] formats) => AddValidator(new TimeOnlyValidator(formats));
 
     /// <summary>
     ///     添加时间格式 <see cref="System.TimeOnly" /> 验证器
@@ -802,7 +834,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf TimeOnly(string[] formats, IFormatProvider? provider, DateTimeStyles style = DateTimeStyles.None) =>
+    public virtual TSelf TimeOnly(string[] formats, IFormatProvider? provider,
+        DateTimeStyles style = DateTimeStyles.None) =>
         AddValidator(new TimeOnlyValidator(formats) { Provider = provider, Style = style });
 
     /// <summary>
@@ -812,7 +845,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf Url(bool supportsFtp = false) => AddValidator(new UrlValidator { SupportsFtp = supportsFtp });
+    public virtual TSelf Url(bool supportsFtp = false) => AddValidator(new UrlValidator { SupportsFtp = supportsFtp });
 
     /// <summary>
     ///     添加用户名验证器
@@ -820,7 +853,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf UserName() => AddValidator(new UserNameValidator());
+    public virtual TSelf UserName() => AddValidator(new UserNameValidator());
 
     /// <summary>
     ///     添加验证器代理
@@ -833,7 +866,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf ValidatorProxy<TValidator>(object?[]? constructorArgs, Action<TValidator>? configure = null)
+    public virtual TSelf ValidatorProxy<TValidator>(object?[]? constructorArgs, Action<TValidator>? configure = null)
         where TValidator : ValidatorBase
     {
         // 初始化 ValidatorProxy<TValidator> 实例
@@ -855,19 +888,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public TSelf AddAnnotations(params ValidationAttribute[] attributes) =>
-        AddValidator(new ValueAnnotationValidator(attributes, _serviceProvider, null));
-
-    /// <summary>
-    ///     添加验证特性验证器
-    /// </summary>
-    /// <param name="attributes">验证特性列表</param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public TSelf AddAnnotations(ValidationAttribute[] attributes, IDictionary<object, object?>? items) =>
-        AddValidator(new ValueAnnotationValidator(attributes, _serviceProvider, items));
+    public virtual TSelf AddAnnotations(params ValidationAttribute[] attributes) =>
+        AddValidator(new ValueAnnotationValidator(attributes, _serviceProvider, _items));
 
     /// <summary>
     ///     构建验证器集合

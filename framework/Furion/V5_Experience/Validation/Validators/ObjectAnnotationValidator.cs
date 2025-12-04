@@ -34,7 +34,7 @@ namespace Furion.Validation;
 public class ObjectAnnotationValidator : ValidatorBase
 {
     /// <summary>
-    ///     验证上下文关联的键值对字典
+    ///     验证上下文数据
     /// </summary>
     internal readonly IDictionary<object, object?>? _items;
 
@@ -49,7 +49,7 @@ public class ObjectAnnotationValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="ObjectAnnotationValidator" />
     /// </summary>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     public ObjectAnnotationValidator(IDictionary<object, object?>? items)
         : this(null, items)
     {
@@ -61,7 +61,7 @@ public class ObjectAnnotationValidator : ValidatorBase
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文关联的键值对字典</param>
+    /// <param name="items">验证上下文数据</param>
     public ObjectAnnotationValidator(IServiceProvider? serviceProvider, IDictionary<object, object?>? items)
         : this()
     {

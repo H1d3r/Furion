@@ -40,6 +40,11 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     internal readonly ObjectAnnotationValidator _annotationValidator;
 
     /// <summary>
+    ///     验证上下文数据
+    /// </summary>
+    internal readonly IDictionary<object, object?>? _items;
+
+    /// <summary>
     ///     当前规则集上下文栈
     /// </summary>
     internal readonly Stack<string?> _ruleSetStack;
@@ -51,18 +56,19 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     ///     <inheritdoc cref="ObjectValidator{T}" />
     /// </summary>
     public ObjectValidator()
-        : this(new ValidatorOptions())
+        : this(new ValidatorOptions(), null, null)
     {
     }
 
     /// <summary>
     ///     <inheritdoc cref="ObjectValidator{T}" />
     /// </summary>
-    /// <param name="serviceProvider">
-    ///     <see cref="IServiceProvider" />
+    /// <param name="options">
+    ///     <see cref="ValidatorOptions" />
     /// </param>
-    public ObjectValidator(IServiceProvider? serviceProvider)
-        : this(new ValidatorOptions(), serviceProvider)
+    /// <param name="items">验证上下文数据</param>
+    public ObjectValidator(ValidatorOptions options, IDictionary<object, object?>? items)
+        : this(options, null, items)
     {
     }
 
@@ -75,16 +81,19 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    public ObjectValidator(ValidatorOptions options, IServiceProvider? serviceProvider = null)
+    /// <param name="items">验证上下文数据</param>
+    public ObjectValidator(ValidatorOptions options, IServiceProvider? serviceProvider,
+        IDictionary<object, object?>? items)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(options);
 
         Options = options;
         _serviceProvider = serviceProvider;
+        _items = items;
 
         // 初始化 ObjectAnnotationValidator 实例
-        _annotationValidator = new ObjectAnnotationValidator(serviceProvider, null)
+        _annotationValidator = new ObjectAnnotationValidator(serviceProvider, items)
         {
             ValidateAllProperties = options.ValidateAllProperties
         };
