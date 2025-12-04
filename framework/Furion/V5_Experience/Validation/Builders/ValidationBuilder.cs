@@ -1,0 +1,195 @@
+﻿// ------------------------------------------------------------------------
+// 版权信息
+// 版权归百小僧及百签科技（广东）有限公司所有。
+// 所有权利保留。
+// 官方网站：https://baiqian.com
+//
+// 许可证信息
+// Furion 项目主要遵循 MIT 许可证和 Apache 许可证（版本 2.0）进行分发和使用。
+// 许可证的完整文本可以在源代码树根目录中的 LICENSE-APACHE 和 LICENSE-MIT 文件中找到。
+// 官方网站：https://furion.net
+//
+// 使用条款
+// 使用本代码应遵守相关法律法规和许可证的要求。
+//
+// 免责声明
+// 对于因使用本代码而产生的任何直接、间接、偶然、特殊或后果性损害，我们不承担任何责任。
+//
+// 其他重要信息
+// Furion 项目的版权、商标、专利和其他相关权利均受相应法律法规的保护。
+// 有关 Furion 项目的其他详细信息，请参阅位于源代码树根目录中的 COPYRIGHT 和 DISCLAIMER 文件。
+//
+// 更多信息
+// 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
+// ------------------------------------------------------------------------
+
+using Furion.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+
+namespace Furion.Validation;
+
+/// <summary>
+///     数据验证构建器
+/// </summary>
+public sealed class ValidationBuilder
+{
+    /// <summary>
+    ///     <see cref="AbstractValidator{T}" /> 类型集合
+    /// </summary>
+    internal Dictionary<Type, Type>? _validatorTypes;
+
+    /// <summary>
+    ///     添加 <see cref="AbstractValidator{T}" /> 对象验证器
+    /// </summary>
+    /// <param name="validatorType">
+    ///     <see cref="AbstractValidator{T}" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="ValidationBuilder" />
+    /// </returns>
+    /// <exception cref="ArgumentException"></exception>
+    public ValidationBuilder AddValidator(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        Type validatorType)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validatorType);
+
+        // 检查类型是否定义了公开无参构造函数
+        if (!validatorType.HasDefinePublicParameterlessConstructor())
+        {
+            throw new ArgumentException(
+                // ReSharper disable once LocalizableElement
+                $"Type `{validatorType}` must have a public parameterless constructor to be registered as a validator.",
+                nameof(validatorType));
+        }
+
+        // 检查是否继承自 AbstractValidator<T> 抽象基类
+        if (!TryGetValidatedType(validatorType, out var modelType))
+        {
+            throw new ArgumentException(
+                // ReSharper disable once LocalizableElement
+                $"Type `{validatorType}` is not a valid validator; it does not derive from `AbstractValidator<T>`.",
+                nameof(validatorType));
+        }
+
+        _validatorTypes ??= new Dictionary<Type, Type>();
+
+        _validatorTypes[validatorType] = modelType;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     添加 <see cref="AbstractValidator{T}" /> 对象验证器
+    /// </summary>
+    /// <param name="validatorTypes">
+    ///     <see cref="AbstractValidator{T}" /> 集合
+    /// </param>
+    /// <returns>
+    ///     <see cref="ValidationBuilder" />
+    /// </returns>
+    /// <exception cref="ArgumentException"></exception>
+    public ValidationBuilder AddValidators(params IEnumerable<Type> validatorTypes)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validatorTypes);
+
+        foreach (var validatorType in validatorTypes)
+        {
+            AddValidator(validatorType);
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    ///     扫描程序集并添加 <see cref="AbstractValidator{T}" /> 对象验证器
+    /// </summary>
+    /// <param name="assemblies"><see cref="Assembly" /> 集合</param>
+    /// <returns>
+    ///     <see cref="ValidationBuilder" />
+    /// </returns>
+    public ValidationBuilder AddValidatorFromAssemblies(params IEnumerable<Assembly?> assemblies)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(assemblies);
+
+        return AddValidators(assemblies.SelectMany(ass =>
+            (ass?.GetTypes() ?? Enumerable.Empty<Type>()).Where(t =>
+                t.HasDefinePublicParameterlessConstructor() && TryGetValidatedType(t, out _))));
+    }
+
+    /// <summary>
+    ///     构建模块服务
+    /// </summary>
+    /// <param name="services">
+    ///     <see cref="IServiceCollection" />
+    /// </param>
+    internal void Build(IServiceCollection services)
+    {
+        // 空检查
+        if (_validatorTypes is null)
+        {
+            return;
+        }
+
+        // 遍历所有对象验证器类型并注册为服务
+        foreach (var (validatorType, modelType) in _validatorTypes)
+        {
+            // 注册 IObjectValidator<T> 泛型接口
+            services.TryAddEnumerable(ServiceDescriptor.Transient(typeof(IObjectValidator<>).MakeGenericType(modelType),
+                validatorType));
+
+            // 注册 AbstractValidator<T> 基类
+            // services.TryAddEnumerable(
+            //     ServiceDescriptor.Transient(typeof(AbstractValidator<>).MakeGenericType(modelType), validatorType));
+
+            // 注册 IObjectValidator 非泛型接口
+            services.TryAddEnumerable(ServiceDescriptor.Transient(typeof(IObjectValidator), validatorType));
+        }
+    }
+
+    /// <summary>
+    ///     检查是否继承自 <see cref="AbstractValidator{T}" /> 抽象基类
+    /// </summary>
+    /// <param name="type">类型</param>
+    /// <param name="modelType">被验证的模型类型</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal static bool TryGetValidatedType(Type type, [NotNullWhen(true)] out Type? modelType)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(type);
+
+        // 初始化被验证的模型类型
+        modelType = null;
+
+        // 必须是类且不能是抽象类
+        if (!type.IsClass || type.IsAbstract)
+        {
+            return false;
+        }
+
+        // 沿着继承链向上遍历
+        for (var current = type; current != null; current = current.BaseType)
+        {
+            // 检查当前类型是否是泛型并且泛型定义为 AbstractValidator<>
+            if (!current.IsGenericType || current.GetGenericTypeDefinition() != typeof(AbstractValidator<>))
+            {
+                continue;
+            }
+
+            // 提取泛型参数 T（即被验证的模型类型）
+            modelType = current.GetGenericArguments()[0];
+
+            return true;
+        }
+
+        return false;
+    }
+}

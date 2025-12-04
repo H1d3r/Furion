@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Furion.Validation;
 
 /// <summary>
@@ -30,8 +32,45 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 public sealed class ValidationContext<T>
-    where T : class
 {
+    /// <summary>
+    ///     <inheritdoc cref="ValidationContext{T}" />
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <param name="serviceProvider">
+    ///     <see cref="IServiceProvider" />
+    /// </param>
+    /// <param name="items">验证上下文数据</param>
+    internal ValidationContext(T instance, IServiceProvider? serviceProvider,
+        IReadOnlyDictionary<object, object?>? items)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(instance);
+
+        Instance = instance;
+        ServiceProvider = serviceProvider;
+        Items = items is not null ? new Dictionary<object, object?>(items) : new Dictionary<object, object?>();
+    }
+
+    /// <summary>
+    ///     对象
+    /// </summary>
+    public T Instance { get; }
+
     /// <inheritdoc cref="IServiceProvider" />
-    public IServiceProvider? ServiceProvider { get; set; }
+    public IServiceProvider? ServiceProvider { get; }
+
+    /// <summary>
+    ///     验证上下文数据
+    /// </summary>
+    public IReadOnlyDictionary<object, object?> Items { get; }
+
+    /// <summary>
+    ///     解析服务
+    /// </summary>
+    /// <typeparam name="TService">服务类型</typeparam>
+    /// <returns>
+    ///     <typeparamref name="TService" />
+    /// </returns>
+    public TService? GetService<TService>() where TService : class => ServiceProvider?.GetService<TService>();
 }

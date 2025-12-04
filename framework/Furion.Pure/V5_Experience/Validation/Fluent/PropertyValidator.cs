@@ -55,7 +55,8 @@ public sealed partial class
     ///     <see cref="ObjectValidator{T}" />
     /// </param>
     internal PropertyValidator(Expression<Func<T, TProperty?>> selector, ObjectValidator<T> objectValidator)
-        : base((objectValidator ?? throw new ArgumentNullException(nameof(objectValidator)))._serviceProvider)
+        : base((objectValidator ?? throw new ArgumentNullException(nameof(objectValidator)))._serviceProvider,
+            objectValidator._items)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
@@ -64,7 +65,8 @@ public sealed partial class
         _objectValidator = objectValidator;
 
         // 初始化 PropertyAnnotationValidator 实例
-        _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector, _serviceProvider, null);
+        _annotationValidator =
+            new PropertyAnnotationValidator<T, TProperty>(selector, _serviceProvider, objectValidator._items);
     }
 
     /// <summary>

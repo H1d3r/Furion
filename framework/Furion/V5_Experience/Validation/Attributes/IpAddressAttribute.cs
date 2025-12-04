@@ -23,54 +23,56 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.Extensions.DependencyInjection;
+using Furion.Validation;
+using Furion.Validation.Resources;
 
-namespace Furion.Validation;
+namespace System.ComponentModel.DataAnnotations;
 
 /// <summary>
-///     验证上下文
+///     IP 地址验证特性
 /// </summary>
-/// <typeparam name="T">对象类型</typeparam>
-public sealed class ValidationContext<T>
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+public class IpAddressAttribute : ValidationAttribute
 {
     /// <summary>
-    ///     <inheritdoc cref="ValidationContext{T}" />
+    ///     <inheritdoc cref="IpAddressAttribute" />
     /// </summary>
-    /// <param name="instance">对象</param>
-    /// <param name="serviceProvider">
-    ///     <see cref="IServiceProvider" />
-    /// </param>
-    /// <param name="items">验证上下文数据</param>
-    internal ValidationContext(T instance, IServiceProvider? serviceProvider,
-        IReadOnlyDictionary<object, object?>? items)
+    public IpAddressAttribute()
     {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(instance);
-
-        Instance = instance;
-        ServiceProvider = serviceProvider;
-        Items = items is not null ? new Dictionary<object, object?>(items) : new Dictionary<object, object?>();
+        Validator = new IpAddressValidator();
+        this.SetErrorMessageResourceAccessor(GetErrorMessage);
     }
 
     /// <summary>
-    ///     对象
+    ///     是否允许 IPv6 地址
     /// </summary>
-    public T Instance { get; }
-
-    /// <inheritdoc cref="IServiceProvider" />
-    public IServiceProvider? ServiceProvider { get; }
+    /// <remarks>默认值为：<c>false</c>。</remarks>
+    public bool AllowIPv6
+    {
+        get;
+        set
+        {
+            field = value;
+            Validator.AllowIPv6 = value;
+        }
+    }
 
     /// <summary>
-    ///     验证上下文数据
+    ///     <inheritdoc cref="IpAddressValidator" />
     /// </summary>
-    public IReadOnlyDictionary<object, object?> Items { get; }
+    protected IpAddressValidator Validator { get; }
+
+    /// <inheritdoc />
+    public override bool IsValid(object? value) => Validator.IsValid(value);
 
     /// <summary>
-    ///     解析服务
+    ///     获取错误信息
     /// </summary>
-    /// <typeparam name="TService">服务类型</typeparam>
     /// <returns>
-    ///     <typeparamref name="TService" />
+    ///     <see cref="string" />
     /// </returns>
-    public TService? GetService<TService>() where TService : class => ServiceProvider?.GetService<TService>();
+    internal string GetErrorMessage() =>
+        AllowIPv6
+            ? ValidationMessages.IpAddressValidator_ValidationError_AllowIPv6
+            : ValidationMessages.IpAddressValidator_ValidationError;
 }
