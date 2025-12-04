@@ -332,6 +332,15 @@ public static class Validators
     public static IDCardValidator IDCard() => new();
 
     /// <summary>
+    ///     创建 IP 地址验证器
+    /// </summary>
+    /// <param name="allowIPv6">是否允许 IPv6 地址，默认值为：<c>false</c></param>
+    /// <returns>
+    ///     <see cref="IpAddressValidator" />
+    /// </returns>
+    public static IpAddressValidator IpAddress(bool allowIPv6 = false) => new() { AllowIPv6 = allowIPv6 };
+
+    /// <summary>
     ///     创建 JSON 格式验证器
     /// </summary>
     /// <param name="allowTrailingCommas">是否允许末尾多余逗号，默认值为：<c>false</c></param>
