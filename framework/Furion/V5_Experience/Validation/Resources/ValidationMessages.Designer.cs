@@ -250,6 +250,24 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
+        ///   查找类似 The field {0} is not a valid IPv4 address. 的本地化字符串。
+        /// </summary>
+        internal static string IpAddressValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("IpAddressValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The field {0} is not a valid IP address (IPv4 or IPv6). 的本地化字符串。
+        /// </summary>
+        internal static string IpAddressValidator_ValidationError_AllowIPv6 {
+            get {
+                return ResourceManager.GetString("IpAddressValidator_ValidationError_AllowIPv6", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The {0} field must be a valid JSON object or array. 的本地化字符串。
         /// </summary>
         internal static string JsonValidator_ValidationError {
