@@ -39,7 +39,7 @@ namespace Furion.Validation.Resources {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Furion.V5_Experience.Validation.Resources.ValidationMessages", typeof(ValidationMessages).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Furion.Pure.V5_Experience.Validation.Resources.ValidationMessages", typeof(ValidationMessages).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -246,6 +246,24 @@ namespace Furion.Validation.Resources {
         internal static string IDCardValidator_ValidationError {
             get {
                 return ResourceManager.GetString("IDCardValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The field {0} is not a valid IPv4 address. 的本地化字符串。
+        /// </summary>
+        internal static string IpAddressValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("IpAddressValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The field {0} is not a valid IP address (IPv4 or IPv6). 的本地化字符串。
+        /// </summary>
+        internal static string IpAddressValidator_ValidationError_AllowIPv6 {
+            get {
+                return ResourceManager.GetString("IpAddressValidator_ValidationError_AllowIPv6", resourceCulture);
             }
         }
         

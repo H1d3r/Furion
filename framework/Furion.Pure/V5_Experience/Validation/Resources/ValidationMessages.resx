@@ -291,4 +291,10 @@
     <data name="MaxValidator_ValidationError" xml:space="preserve">
         <value>The field {0} must be less than or equal to '{1}'.</value>
     </data>
+    <data name="IpAddressValidator_ValidationError" xml:space="preserve">
+        <value>The field {0} is not a valid IPv4 address.</value>
+    </data>
+    <data name="IpAddressValidator_ValidationError_AllowIPv6" xml:space="preserve">
+        <value>The field {0} is not a valid IP address (IPv4 or IPv6).</value>
+    </data>
 </root>

@@ -75,7 +75,7 @@ public static class ValidationExtensions
 
         // 初始化 ObjectValidator<T> 实例
         using var objectValidator = new ObjectValidator<T>(new ValidatorOptions { SuppressAnnotationValidation = true },
-            serviceProvider);
+            serviceProvider, validationContext.Items);
 
         // 调用自定义配置委托
         configure?.Invoke(objectValidator);
