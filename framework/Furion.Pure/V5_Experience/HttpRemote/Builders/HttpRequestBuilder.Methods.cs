@@ -26,10 +26,8 @@
 using Furion.Extensions;
 using Furion.Utilities;
 using Microsoft.Net.Http.Headers;
-using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Mime;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using MediaTypeHeaderValue = System.Net.Http.Headers.MediaTypeHeaderValue;
