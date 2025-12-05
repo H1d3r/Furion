@@ -55,8 +55,7 @@ public sealed partial class
     ///     <see cref="ObjectValidator{T}" />
     /// </param>
     internal PropertyValidator(Expression<Func<T, TProperty?>> selector, ObjectValidator<T> objectValidator)
-        : base((objectValidator ?? throw new ArgumentNullException(nameof(objectValidator)))._serviceProvider,
-            objectValidator._items)
+        : base(null, (objectValidator ?? throw new ArgumentNullException(nameof(objectValidator)))._items)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
@@ -65,8 +64,10 @@ public sealed partial class
         _objectValidator = objectValidator;
 
         // 初始化 PropertyAnnotationValidator 实例
-        _annotationValidator =
-            new PropertyAnnotationValidator<T, TProperty>(selector, _serviceProvider, objectValidator._items);
+        _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector, null, objectValidator._items);
+
+        // 同步 IServiceProvider 委托
+        InitializeServiceProvider(objectValidator._serviceProvider);
     }
 
     /// <summary>
@@ -206,6 +207,16 @@ public sealed partial class
         }
     }
 
+    /// <inheritdoc />
+    public override void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 同步基类 IServiceProvider 委托
+        base.InitializeServiceProvider(serviceProvider);
+
+        // 同步 _annotationValidator 实例 IServiceProvider 委托
+        _annotationValidator.InitializeServiceProvider(serviceProvider);
+    }
+
     /// <summary>
     ///     设置对象验证器
     /// </summary>
@@ -219,6 +230,9 @@ public sealed partial class
     public PropertyValidator<T, TProperty> SetValidator(IObjectValidator<TProperty>? validator)
     {
         _propertyValidator = validator;
+
+        // 同步 IServiceProvider 委托
+        _propertyValidator?.InitializeServiceProvider(_serviceProvider);
 
         return this;
     }
@@ -438,4 +452,22 @@ public sealed partial class
     ///     <see cref="string" />
     /// </returns>
     internal string GetDisplayName() => _annotationValidator.GetDisplayName(DisplayName);
+
+    /// <summary>
+    ///     创建 <see cref="ValidationContext{T}" /> 实例
+    /// </summary>
+    /// <param name="value">对象</param>
+    /// <returns>
+    ///     <see cref="ValidationContext{T}" />
+    /// </returns>
+    internal ValidationContext<T> CreateValidationContext(T value)
+    {
+        // 初始化 ValidationContext 实例
+        var validationContext = new ValidationContext<T>(value, null, _items?.AsReadOnly());
+
+        // 同步 IServiceProvider 委托
+        validationContext.InitializeServiceProvider(_serviceProvider);
+
+        return validationContext;
+    }
 }

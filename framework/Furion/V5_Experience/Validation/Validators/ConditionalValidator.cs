@@ -31,7 +31,7 @@ namespace Furion.Validation;
 ///     条件验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ConditionalValidator<T> : ValidatorBase<T>
+public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer
 {
     /// <summary>
     ///     条件和对应的验证器列表
@@ -62,6 +62,22 @@ public class ConditionalValidator<T> : ValidatorBase<T>
         (_conditions, _defaultValidators) = conditionBuilder.Build();
 
         ErrorMessageResourceAccessor = () => null!;
+    }
+
+    /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 组合所有条件的验证器
+        var validators = (_defaultValidators ?? []).Concat(_conditions.SelectMany(u => u.Validators));
+
+        // 遍历所有实现 IValidatorInitializer 接口的验证器并同步 IServiceProvider 委托
+        foreach (var validator in validators)
+        {
+            if (validator is IValidatorInitializer initializer)
+            {
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
+        }
     }
 
     /// <inheritdoc />
