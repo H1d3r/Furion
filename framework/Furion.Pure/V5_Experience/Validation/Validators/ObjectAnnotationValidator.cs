@@ -31,20 +31,25 @@ namespace Furion.Validation;
 ///     对象验证特性验证器
 /// </summary>
 /// <remarks>支持使用 <c>[ValidateNever]</c> 特性来跳过对特定属性的验证，仅限于 ASP.NET Core 应用项目。</remarks>
-public class ObjectAnnotationValidator : ValidatorBase
+public class ObjectAnnotationValidator : ValidatorBase, IValidatorInitializer
 {
     /// <summary>
     ///     验证上下文数据
     /// </summary>
     internal readonly IDictionary<object, object?>? _items;
 
-    /// <inheritdoc cref="IServiceProvider" />
-    internal readonly IServiceProvider? _serviceProvider;
+    /// <summary>
+    ///     <see cref="IServiceProvider" /> 委托
+    /// </summary>
+    internal Func<Type, object?>? _serviceProvider;
 
     /// <summary>
     ///     <inheritdoc cref="ObjectAnnotationValidator" />
     /// </summary>
-    public ObjectAnnotationValidator() => ErrorMessageResourceAccessor = () => null!;
+    public ObjectAnnotationValidator()
+        : this(null, null)
+    {
+    }
 
     /// <summary>
     ///     <inheritdoc cref="ObjectAnnotationValidator" />
@@ -63,10 +68,15 @@ public class ObjectAnnotationValidator : ValidatorBase
     /// </param>
     /// <param name="items">验证上下文数据</param>
     public ObjectAnnotationValidator(IServiceProvider? serviceProvider, IDictionary<object, object?>? items)
-        : this()
     {
+        // 空检查
+        if (serviceProvider is not null)
+        {
+            _serviceProvider = serviceProvider.GetService;
+        }
+
         _items = items;
-        _serviceProvider = serviceProvider;
+        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <summary>
@@ -80,13 +90,15 @@ public class ObjectAnnotationValidator : ValidatorBase
     public bool ValidateAllProperties { get; set; } = true;
 
     /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
+
+    /// <inheritdoc />
     public override bool IsValid(object? value)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(value);
 
-        return Validator.TryValidateObject(value, new ValidationContext(value, _serviceProvider, _items), null,
-            ValidateAllProperties);
+        return Validator.TryValidateObject(value, CreateValidationContext(value), null, ValidateAllProperties);
     }
 
     /// <inheritdoc />
@@ -105,8 +117,7 @@ public class ObjectAnnotationValidator : ValidatorBase
          * 参考源码：
          * https://github.com/dotnet/runtime/blob/5535e31a712343a63f5d7d796cd874e563e5ac14/src/libraries/System.ComponentModel.Annotations/src/System/ComponentModel/DataAnnotations/Validator.cs#L423-L430
          */
-        Validator.TryValidateObject(value, new ValidationContext(value, _serviceProvider, _items), validationResults,
-            ValidateAllProperties);
+        Validator.TryValidateObject(value, CreateValidationContext(value), validationResults, ValidateAllProperties);
 
         // 如果验证未通过且配置了自定义错误信息，则在首部添加自定义错误信息
         if (validationResults.Count > 0 && (string?)ErrorMessageString is not null)
@@ -125,8 +136,7 @@ public class ObjectAnnotationValidator : ValidatorBase
 
         try
         {
-            Validator.ValidateObject(value, new ValidationContext(value, _serviceProvider, _items),
-                ValidateAllProperties);
+            Validator.ValidateObject(value, CreateValidationContext(value), ValidateAllProperties);
         }
         // 如果验证未通过且配置了自定义错误信息，则重新抛出异常
         catch (ValidationException e) when (ErrorMessageString is not null)
@@ -142,4 +152,22 @@ public class ObjectAnnotationValidator : ValidatorBase
     /// <inheritdoc />
     public override string? FormatErrorMessage(string name) =>
         (string?)ErrorMessageString is null ? null : base.FormatErrorMessage(name);
+
+    /// <summary>
+    ///     创建 <see cref="ValidationContext" /> 实例
+    /// </summary>
+    /// <param name="value">对象</param>
+    /// <returns>
+    ///     <see cref="ValidationContext" />
+    /// </returns>
+    internal ValidationContext CreateValidationContext(object value)
+    {
+        // 初始化 ValidationContext 实例
+        var validationContext = new ValidationContext(value, null, _items);
+
+        // 同步 IServiceProvider 委托
+        validationContext.InitializeServiceProvider(_serviceProvider!);
+
+        return validationContext;
+    }
 }

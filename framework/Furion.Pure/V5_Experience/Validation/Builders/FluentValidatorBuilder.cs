@@ -34,16 +34,13 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TSelf">派生类型自身类型</typeparam>
-public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
-    : FluentValidatorBuilder<T, TSelf>
+public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
+    where TSelf : FluentValidatorBuilder<T, TSelf>
 {
     /// <summary>
     ///     验证上下文数据
     /// </summary>
     internal readonly IDictionary<object, object?>? _items;
-
-    /// <inheritdoc cref="IServiceProvider" />
-    internal readonly IServiceProvider? _serviceProvider;
 
     /// <summary>
     ///     高优先级验证器区域的结束索引（同时也是普通验证器区域的起始索引）
@@ -59,6 +56,11 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     ///     跟踪最新添加的 <see cref="ValidatorBase" /> 实例
     /// </summary>
     internal ValidatorBase? _lastAddedValidator;
+
+    /// <summary>
+    ///     <see cref="IServiceProvider" /> 委托
+    /// </summary>
+    internal Func<Type, object?>? _serviceProvider;
 
     /// <summary>
     ///     <inheritdoc cref="FluentValidatorBuilder{T,TSelf}" />
@@ -86,7 +88,12 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <param name="items">验证上下文数据</param>
     internal FluentValidatorBuilder(IServiceProvider? serviceProvider, IDictionary<object, object?>? items)
     {
-        _serviceProvider = serviceProvider;
+        // 空检查
+        if (serviceProvider is not null)
+        {
+            _serviceProvider = serviceProvider.GetService;
+        }
+
         _items = items;
         Validators = [];
     }
@@ -100,6 +107,21 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     ///     验证器集合
     /// </summary>
     internal List<ValidatorBase> Validators { get; }
+
+    /// <inheritdoc />
+    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+
+        // 遍历所有实现 IValidatorInitializer 接口的验证器并同步 IServiceProvider 委托
+        foreach (var validator in Validators)
+        {
+            if (validator is IValidatorInitializer initializer)
+            {
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
+        }
+    }
 
     /// <summary>
     ///     获取验证器集合
@@ -575,8 +597,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return AddValidator(new MustUnlessValidator<T>(u =>
-            condition(u, new ValidationContext<T>(u, _serviceProvider, _items?.AsReadOnly()))));
+        return AddValidator(new MustUnlessValidator<T>(u => condition(u, CreateValidationContext(u))));
     }
 
     /// <summary>
@@ -600,8 +621,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return AddValidator(new MustValidator<T>(u =>
-            condition(u, new ValidationContext<T>(u, _serviceProvider, _items?.AsReadOnly()))));
+        return AddValidator(new MustValidator<T>(u => condition(u, CreateValidationContext(u))));
     }
 
     /// <summary>
@@ -683,8 +703,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        return AddValidator(new PredicateValidator<T>(u =>
-            condition(u, new ValidationContext<T>(u, _serviceProvider, _items?.AsReadOnly()))));
+        return AddValidator(new PredicateValidator<T>(u => condition(u, CreateValidationContext(u))));
     }
 
     /// <summary>
@@ -898,8 +917,9 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf AddAnnotations(params ValidationAttribute[] attributes) =>
-        AddValidator(new ValueAnnotationValidator(attributes, _serviceProvider, _items));
+    public virtual TSelf AddAnnotations(params ValidationAttribute[] attributes) => AddValidator(
+        new ValueAnnotationValidator(attributes, null, _items),
+        validator => validator.InitializeServiceProvider(_serviceProvider));
 
     /// <summary>
     ///     构建验证器集合
@@ -908,4 +928,22 @@ public abstract class FluentValidatorBuilder<T, TSelf> where TSelf
     ///     <see cref="IReadOnlyList{T}" />
     /// </returns>
     internal IReadOnlyList<ValidatorBase> Build() => Validators;
+
+    /// <summary>
+    ///     创建 <see cref="ValidationContext{T}" /> 实例
+    /// </summary>
+    /// <param name="value">对象</param>
+    /// <returns>
+    ///     <see cref="ValidationContext{T}" />
+    /// </returns>
+    internal ValidationContext<T> CreateValidationContext(T value)
+    {
+        // 初始化 ValidationContext 实例
+        var validationContext = new ValidationContext<T>(value, null, _items?.AsReadOnly());
+
+        // 同步 IServiceProvider 委托
+        validationContext.InitializeServiceProvider(_serviceProvider);
+
+        return validationContext;
+    }
 }

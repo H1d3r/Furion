@@ -30,7 +30,7 @@ namespace Furion.Validation;
 /// <summary>
 ///     组合验证器
 /// </summary>
-public class CompositeValidator : ValidatorBase
+public class CompositeValidator : ValidatorBase, IValidatorInitializer
 {
     /// <summary>
     ///     高优先级验证器列表
@@ -72,6 +72,19 @@ public class CompositeValidator : ValidatorBase
     /// </summary>
     /// <remarks>默认值为：<see cref="ValidationMode.ValidateAll" />。</remarks>
     public ValidationMode Mode { get; set; } = ValidationMode.ValidateAll;
+
+    /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 遍历所有实现 IValidatorInitializer 接口的验证器并同步 IServiceProvider 委托
+        foreach (var validator in Validators)
+        {
+            if (validator is IValidatorInitializer initializer)
+            {
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
+        }
+    }
 
     /// <inheritdoc />
     public override bool IsValid(object? value)
