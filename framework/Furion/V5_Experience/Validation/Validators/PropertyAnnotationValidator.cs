@@ -108,7 +108,7 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
 ///     属性验证特性验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class PropertyAnnotationValidator<T> : ValidatorBase<T>
+public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitializer
     where T : class
 {
     /// <summary>
@@ -121,22 +121,18 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
     /// </summary>
     internal readonly IDictionary<object, object?>? _items;
 
-    /// <inheritdoc cref="IServiceProvider" />
-    internal readonly IServiceProvider? _serviceProvider;
+    /// <summary>
+    ///     <see cref="IServiceProvider" /> 委托
+    /// </summary>
+    internal Func<Type, object?>? _serviceProvider;
 
     /// <summary>
     ///     <inheritdoc cref="PropertyAnnotationValidator{T}" />
     /// </summary>
     /// <param name="selector">属性选择器</param>
     public PropertyAnnotationValidator(Expression<Func<T, object?>> selector)
+        : this(selector, null, null)
     {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(selector);
-
-        Property = selector.GetProperty();
-        ErrorMessageResourceAccessor = () => null!;
-
-        _getter = selector.Compile();
     }
 
     /// <summary>
@@ -159,10 +155,21 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
     /// <param name="items">验证上下文数据</param>
     public PropertyAnnotationValidator(Expression<Func<T, object?>> selector, IServiceProvider? serviceProvider,
         IDictionary<object, object?>? items)
-        : this(selector)
     {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(selector);
+
+        Property = selector.GetProperty();
+        _getter = selector.Compile();
+
+        // 空检查
+        if (serviceProvider is not null)
+        {
+            _serviceProvider = serviceProvider.GetService;
+        }
+
         _items = items;
-        _serviceProvider = serviceProvider;
+        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <summary>
@@ -171,13 +178,16 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
     public PropertyInfo Property { get; }
 
     /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
+
+    /// <inheritdoc />
     public override bool IsValid(T? instance)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        return Validator.TryValidateProperty(GetValue(instance),
-            new ValidationContext(instance, _serviceProvider, _items) { MemberName = Property.Name }, null);
+        return Validator.TryValidateProperty(GetValue(instance), CreateValidationContext(instance, Property.Name),
+            null);
     }
 
     /// <inheritdoc />
@@ -192,8 +202,8 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
         // 初始化验证结果集合
         var validationResults = new List<ValidationResult>();
 
-        Validator.TryValidateProperty(GetValue(instance),
-            new ValidationContext(instance, _serviceProvider, _items) { MemberName = propertyName }, validationResults);
+        Validator.TryValidateProperty(GetValue(instance), CreateValidationContext(instance, propertyName),
+            validationResults);
 
         // 如果验证未通过且配置了自定义错误信息，则在首部添加自定义错误信息
         if (validationResults.Count > 0 && (string?)ErrorMessageString is not null)
@@ -216,8 +226,7 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
 
         try
         {
-            Validator.ValidateProperty(GetValue(instance),
-                new ValidationContext(instance, _serviceProvider, _items) { MemberName = propertyName });
+            Validator.ValidateProperty(GetValue(instance), CreateValidationContext(instance, propertyName));
         }
         // 如果验证未通过且配置了自定义错误信息，则重新抛出异常
         catch (ValidationException e) when (ErrorMessageString is not null)
@@ -256,4 +265,23 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>
     public string GetDisplayName(string? name) =>
         name ?? Property.GetCustomAttribute<DisplayAttribute>(false)?.Name ??
         Property.GetCustomAttribute<DisplayNameAttribute>(false)?.DisplayName ?? Property.Name;
+
+    /// <summary>
+    ///     创建 <see cref="ValidationContext" /> 实例
+    /// </summary>
+    /// <param name="value">对象</param>
+    /// <param name="memberName">成员名称</param>
+    /// <returns>
+    ///     <see cref="ValidationContext" />
+    /// </returns>
+    internal ValidationContext CreateValidationContext(object value, string? memberName)
+    {
+        // 初始化 ValidationContext 实例
+        var validationContext = new ValidationContext(value, null, _items) { MemberName = memberName };
+
+        // 同步 IServiceProvider 委托
+        validationContext.InitializeServiceProvider(_serviceProvider!);
+
+        return validationContext;
+    }
 }

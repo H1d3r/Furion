@@ -23,45 +23,16 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.ComponentModel.DataAnnotations;
-
 namespace Furion.Validation;
 
 /// <summary>
-///     对象验证器服务
+///     定义验证器的 <see cref="IServiceProvider" /> 初始化行为
 /// </summary>
-public interface IObjectValidator : IValidatorInitializer;
-
-/// <summary>
-///     <inheritdoc cref="IObjectValidator" />
-/// </summary>
-/// <typeparam name="T">对象类型</typeparam>
-public interface IObjectValidator<in T> : IObjectValidator
+public interface IValidatorInitializer
 {
     /// <summary>
-    ///     检查对象合法性
+    ///     初始化（同步） <see cref="IServiceProvider" /> 委托
     /// </summary>
-    /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    bool IsValid(T? instance, params string?[]? ruleSets);
-
-    /// <summary>
-    ///     获取对象验证结果集合
-    /// </summary>
-    /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
-    /// <returns>
-    ///     <see cref="List{T}" />
-    /// </returns>
-    List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets);
-
-    /// <summary>
-    ///     验证指定的对象
-    /// </summary>
-    /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
-    void Validate(T? instance, params string?[]? ruleSets);
+    /// <param name="serviceProvider"><see cref="IServiceProvider" /> 委托</param>
+    void InitializeServiceProvider(Func<Type, object?>? serviceProvider);
 }

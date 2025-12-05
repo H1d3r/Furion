@@ -30,15 +30,17 @@ namespace Furion.Validation;
 /// <summary>
 ///     单个值验证特性验证器
 /// </summary>
-public class ValueAnnotationValidator : ValidatorBase
+public class ValueAnnotationValidator : ValidatorBase, IValidatorInitializer
 {
     /// <summary>
     ///     验证上下文数据
     /// </summary>
     internal readonly IDictionary<object, object?>? _items;
 
-    /// <inheritdoc cref="IServiceProvider" />
-    internal readonly IServiceProvider? _serviceProvider;
+    /// <summary>
+    ///     <see cref="IServiceProvider" /> 委托
+    /// </summary>
+    internal Func<Type, object?>? _serviceProvider;
 
     /// <summary>
     ///     <inheritdoc cref="ValueAnnotationValidator" />
@@ -46,19 +48,8 @@ public class ValueAnnotationValidator : ValidatorBase
     /// <param name="attributes">验证特性列表</param>
     /// <exception cref="ArgumentException"></exception>
     public ValueAnnotationValidator(params ValidationAttribute[] attributes)
+        : this(attributes, null, null)
     {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(attributes);
-
-        // 确保数组元素不存在 null 值
-        if (attributes.Any(u => (ValidationAttribute?)u is null))
-        {
-            // ReSharper disable once LocalizableElement
-            throw new ArgumentException("Attributes cannot contain null elements.", nameof(attributes));
-        }
-
-        Attributes = attributes;
-        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <summary>
@@ -81,10 +72,27 @@ public class ValueAnnotationValidator : ValidatorBase
     /// <param name="items">验证上下文数据</param>
     public ValueAnnotationValidator(ValidationAttribute[] attributes, IServiceProvider? serviceProvider,
         IDictionary<object, object?>? items)
-        : this(attributes)
     {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(attributes);
+
+        // 确保数组元素不存在 null 值
+        if (attributes.Any(u => (ValidationAttribute?)u is null))
+        {
+            // ReSharper disable once LocalizableElement
+            throw new ArgumentException("Attributes cannot contain null elements.", nameof(attributes));
+        }
+
+        Attributes = attributes;
+
+        // 空检查
+        if (serviceProvider is not null)
+        {
+            _serviceProvider = serviceProvider.GetService;
+        }
+
         _items = items;
-        _serviceProvider = serviceProvider;
+        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <summary>
@@ -93,9 +101,11 @@ public class ValueAnnotationValidator : ValidatorBase
     public ValidationAttribute[] Attributes { get; }
 
     /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
+
+    /// <inheritdoc />
     public override bool IsValid(object? value) =>
-        Validator.TryValidateValue(value, new ValidationContext(new object(), _serviceProvider, _items), null,
-            Attributes);
+        Validator.TryValidateValue(value, CreateValidationContext(new object(), null), null, Attributes);
 
     /// <inheritdoc />
     public override List<ValidationResult>? GetValidationResults(object? value, string name)
@@ -103,9 +113,8 @@ public class ValueAnnotationValidator : ValidatorBase
         // 初始化属性名称和验证结果集合
         var (memberName, validationResults) = (GetMemberName(name), new List<ValidationResult>());
 
-        Validator.TryValidateValue(value,
-            new ValidationContext(new object(), _serviceProvider, _items) { MemberName = memberName },
-            validationResults, Attributes);
+        Validator.TryValidateValue(value, CreateValidationContext(new object(), memberName), validationResults,
+            Attributes);
 
         // 如果验证未通过且配置了自定义错误信息，则在首部添加自定义错误信息
         if (validationResults.Count > 0 && (string?)ErrorMessageString is not null)
@@ -124,8 +133,7 @@ public class ValueAnnotationValidator : ValidatorBase
 
         try
         {
-            Validator.ValidateValue(value,
-                new ValidationContext(new object(), _serviceProvider, _items) { MemberName = memberName }, Attributes);
+            Validator.ValidateValue(value, CreateValidationContext(new object(), memberName), Attributes);
         }
         // 如果验证未通过且配置了自定义错误信息，则重新抛出异常
         catch (ValidationException e) when (ErrorMessageString is not null)
@@ -147,4 +155,23 @@ public class ValueAnnotationValidator : ValidatorBase
     ///     <see cref="string" />
     /// </returns>
     internal static string GetMemberName(string name) => string.IsNullOrEmpty(name) ? "Value" : name;
+
+    /// <summary>
+    ///     创建 <see cref="ValidationContext" /> 实例
+    /// </summary>
+    /// <param name="value">对象</param>
+    /// <param name="memberName">成员名称</param>
+    /// <returns>
+    ///     <see cref="ValidationContext" />
+    /// </returns>
+    internal ValidationContext CreateValidationContext(object value, string? memberName)
+    {
+        // 初始化 ValidationContext 实例
+        var validationContext = new ValidationContext(value, null, _items) { MemberName = memberName };
+
+        // 同步 IServiceProvider 委托
+        validationContext.InitializeServiceProvider(_serviceProvider!);
+
+        return validationContext;
+    }
 }

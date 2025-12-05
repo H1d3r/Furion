@@ -245,8 +245,7 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
         var validatorProxy = new ValidatorProxy<T, TValidator>(instance => GetValue(instance),
             constructorArgsFactory is null
                 ? null
-                : instance =>
-                    constructorArgsFactory(new ValidationContext<T>(instance, _serviceProvider, _items?.AsReadOnly())));
+                : instance => constructorArgsFactory(CreateValidationContext(instance)));
 
         // 空检查
         if (configure is not null)

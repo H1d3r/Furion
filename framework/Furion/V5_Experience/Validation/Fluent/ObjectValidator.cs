@@ -49,8 +49,10 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// </summary>
     internal readonly Stack<string?> _ruleSetStack;
 
-    /// <inheritdoc cref="IServiceProvider" />
-    internal readonly IServiceProvider? _serviceProvider;
+    /// <summary>
+    ///     <see cref="IServiceProvider" /> 委托
+    /// </summary>
+    internal Func<Type, object?>? _serviceProvider;
 
     /// <summary>
     ///     <inheritdoc cref="ObjectValidator{T}" />
@@ -89,7 +91,13 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         ArgumentNullException.ThrowIfNull(options);
 
         Options = options;
-        _serviceProvider = serviceProvider;
+
+        // 空检查
+        if (serviceProvider is not null)
+        {
+            _serviceProvider = serviceProvider.GetService;
+        }
+
         _items = items;
 
         // 初始化 ObjectAnnotationValidator 实例
@@ -206,6 +214,21 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         foreach (var validator in PropertyValidators)
         {
             validator.Validate(instance, ruleSets);
+        }
+    }
+
+    /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+
+        // 同步 _annotationValidator 实例 IServiceProvider 委托
+        _annotationValidator.InitializeServiceProvider(serviceProvider);
+
+        // 遍历所有属性验证器并同步 IServiceProvider 委托
+        foreach (var propertyValidator in PropertyValidators)
+        {
+            propertyValidator.InitializeServiceProvider(serviceProvider);
         }
     }
 
