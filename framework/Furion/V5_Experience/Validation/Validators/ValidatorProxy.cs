@@ -37,7 +37,7 @@ namespace Furion.Validation;
 /// <typeparam name="TValidator">
 ///     <see cref="ValidatorBase" />
 /// </typeparam>
-public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable
+public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidatorInitializer
     where TValidator : ValidatorBase
 {
     /// <summary>
@@ -63,6 +63,17 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable
     {
         Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 检查验证器是否实现 IValidatorInitializer 接口
+        if (Validator is IValidatorInitializer initializer)
+        {
+            // 同步 IServiceProvider 委托
+            initializer.InitializeServiceProvider(serviceProvider);
+        }
     }
 
     /// <summary>

@@ -23,16 +23,19 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Furion.Validation;
 
 /// <summary>
 ///     验证上下文
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public sealed class ValidationContext<T>
+public sealed class ValidationContext<T> : IValidatorInitializer
 {
+    /// <summary>
+    ///     <see cref="IServiceProvider" /> 委托
+    /// </summary>
+    internal Func<Type, object?>? _serviceProvider;
+
     /// <summary>
     ///     <inheritdoc cref="ValidationContext{T}" />
     /// </summary>
@@ -48,7 +51,13 @@ public sealed class ValidationContext<T>
         ArgumentNullException.ThrowIfNull(instance);
 
         Instance = instance;
-        ServiceProvider = serviceProvider;
+
+        // 空检查
+        if (serviceProvider is not null)
+        {
+            _serviceProvider = serviceProvider.GetService;
+        }
+
         Items = items is not null ? new Dictionary<object, object?>(items) : new Dictionary<object, object?>();
     }
 
@@ -57,13 +66,22 @@ public sealed class ValidationContext<T>
     /// </summary>
     public T Instance { get; }
 
-    /// <inheritdoc cref="IServiceProvider" />
-    public IServiceProvider? ServiceProvider { get; }
-
     /// <summary>
     ///     验证上下文数据
     /// </summary>
     public IReadOnlyDictionary<object, object?> Items { get; }
+
+    /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
+
+    /// <summary>
+    ///     解析服务
+    /// </summary>
+    /// <param name="serviceType">服务类型</param>
+    /// <returns>
+    ///     <see cref="object" />
+    /// </returns>
+    public object? GetService(Type serviceType) => _serviceProvider?.Invoke(serviceType);
 
     /// <summary>
     ///     解析服务
@@ -72,5 +90,5 @@ public sealed class ValidationContext<T>
     /// <returns>
     ///     <typeparamref name="TService" />
     /// </returns>
-    public TService? GetService<TService>() where TService : class => ServiceProvider?.GetService<TService>();
+    public TService? GetService<TService>() where TService : class => (TService?)GetService(typeof(TService));
 }

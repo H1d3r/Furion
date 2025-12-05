@@ -58,12 +58,12 @@ public sealed class ValidationBuilder
         // 空检查
         ArgumentNullException.ThrowIfNull(validatorType);
 
-        // 检查类型是否定义了公开无参构造函数
-        if (!validatorType.HasDefinePublicParameterlessConstructor())
+        // 检查类型是否可实例化
+        if (!validatorType.IsInstantiable())
         {
             throw new ArgumentException(
                 // ReSharper disable once LocalizableElement
-                $"Type `{validatorType}` must have a public parameterless constructor to be registered as a validator.",
+                $"Type `{validatorType}` must be a non-abstract, non-static class to be registered as a validator.",
                 nameof(validatorType));
         }
 
@@ -120,7 +120,7 @@ public sealed class ValidationBuilder
 
         return AddValidators(assemblies.SelectMany(ass =>
             (ass?.GetTypes() ?? Enumerable.Empty<Type>()).Where(t =>
-                t.HasDefinePublicParameterlessConstructor() && TryGetValidatedType(t, out _))));
+                t.IsInstantiable() && TryGetValidatedType(t, out _))));
     }
 
     /// <summary>
@@ -141,16 +141,42 @@ public sealed class ValidationBuilder
         foreach (var (validatorType, modelType) in _validatorTypes)
         {
             // 注册 IObjectValidator<T> 泛型接口
-            services.TryAddEnumerable(ServiceDescriptor.Transient(typeof(IObjectValidator<>).MakeGenericType(modelType),
-                validatorType));
+            services.Add(ServiceDescriptor.Transient(typeof(IObjectValidator<>).MakeGenericType(modelType),
+                provider => CreateValidator(provider, validatorType)));
 
             // 注册 AbstractValidator<T> 基类
-            // services.TryAddEnumerable(
-            //     ServiceDescriptor.Transient(typeof(AbstractValidator<>).MakeGenericType(modelType), validatorType));
+            // services.Add(ServiceDescriptor.Transient(typeof(AbstractValidator<>).MakeGenericType(modelType),
+            //     provider => CreateValidator(provider, validatorType)));
 
             // 注册 IObjectValidator 非泛型接口
-            services.TryAddEnumerable(ServiceDescriptor.Transient(typeof(IObjectValidator), validatorType));
+            services.Add(ServiceDescriptor.Transient(typeof(IObjectValidator),
+                provider => CreateValidator(provider, validatorType)));
         }
+    }
+
+    /// <summary>
+    ///     创建对象验证器实例
+    /// </summary>
+    /// <param name="serviceProvider">
+    ///     <see cref="IServiceProvider" />
+    /// </param>
+    /// <param name="validatorType">对象验证器类型</param>
+    /// <returns>
+    ///     <see cref="IObjectValidator" />
+    /// </returns>
+    internal static IObjectValidator CreateValidator(IServiceProvider serviceProvider, Type validatorType)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(validatorType);
+
+        // 创建对象验证器实例
+        var validator = (IObjectValidator)ActivatorUtilities.CreateInstance(serviceProvider, validatorType);
+
+        // 同步 IServiceProvider 委托
+        validator.InitializeServiceProvider(serviceProvider.GetService);
+
+        return validator;
     }
 
     /// <summary>

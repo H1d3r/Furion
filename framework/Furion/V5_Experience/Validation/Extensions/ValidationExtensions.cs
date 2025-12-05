@@ -53,7 +53,7 @@ public static class ValidationExtensions
         validationResults?.ToList().ToResults();
 
     /// <summary>
-    ///     使用对象验证器验证当前实例并返回验证结果集合
+    ///     创建对象验证器验证当前实例并返回验证结果集合
     /// </summary>
     /// <param name="validationContext">
     ///     <see cref="ValidationContext" />
@@ -70,15 +70,43 @@ public static class ValidationExtensions
         // 空检查
         ArgumentNullException.ThrowIfNull(validationContext);
 
-        // 解析 IServiceProvider 服务
-        var serviceProvider = validationContext.GetService(typeof(IServiceProvider)) as IServiceProvider;
-
-        // 初始化 ObjectValidator<T> 实例
+        // 初始化 ObjectValidator<T> 实例并禁用属性验证特性验证，避免死循环
         using var objectValidator = new ObjectValidator<T>(new ValidatorOptions { SuppressAnnotationValidation = true },
-            serviceProvider, validationContext.Items);
+            null, validationContext.Items);
 
         // 调用自定义配置委托
         configure?.Invoke(objectValidator);
+
+        return validationContext.ValidateWith(objectValidator);
+    }
+
+    /// <summary>
+    ///     使用指定对象验证器验证当前实例并返回验证结果集合
+    /// </summary>
+    /// <param name="validationContext">
+    ///     <see cref="ValidationContext" />
+    /// </param>
+    /// <param name="objectValidator">
+    ///     <see cref="AbstractValidator{T}" />
+    /// </param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="IEnumerable{T}" />
+    /// </returns>
+    public static IEnumerable<ValidationResult> ValidateWith<T>(this ValidationContext validationContext,
+        ObjectValidator<T> objectValidator) where T : class
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validationContext);
+
+        // 禁用属性验证特性验证，避免死循环
+        objectValidator.ConfigureOptions(options =>
+        {
+            options.SuppressAnnotationValidation = true;
+        });
+
+        // 同步 IServiceProvider 委托
+        objectValidator.InitializeServiceProvider(validationContext.GetService);
 
         // 尝试从 Items 中解析规则集列表
         string?[]? ruleSets = null;

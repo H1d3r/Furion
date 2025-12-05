@@ -30,7 +30,7 @@ namespace Furion.Validation;
 /// <summary>
 ///     对象验证器服务
 /// </summary>
-public interface IObjectValidator;
+public interface IObjectValidator : IValidatorInitializer;
 
 /// <summary>
 ///     <inheritdoc cref="IObjectValidator" />
