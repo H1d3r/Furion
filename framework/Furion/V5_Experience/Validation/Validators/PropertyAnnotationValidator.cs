@@ -263,7 +263,7 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitia
     ///     <see cref="string" />
     /// </returns>
     public string GetDisplayName(string? name) =>
-        name ?? Property.GetCustomAttribute<DisplayAttribute>(false)?.Name ??
+        name ?? Property.GetCustomAttribute<DisplayAttribute>(false)?.GetName() ??
         Property.GetCustomAttribute<DisplayNameAttribute>(false)?.DisplayName ?? Property.Name;
 
     /// <summary>
