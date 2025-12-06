@@ -113,11 +113,13 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     {
         _serviceProvider = serviceProvider;
 
-        // 遍历所有实现 IValidatorInitializer 接口的验证器并同步 IServiceProvider 委托
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
         foreach (var validator in Validators)
         {
+            // 检查验证器是否实现 IValidatorInitializer 接口
             if (validator is IValidatorInitializer initializer)
             {
+                // 同步 IServiceProvider 委托
                 initializer.InitializeServiceProvider(serviceProvider);
             }
         }
@@ -199,6 +201,13 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
 
         // 记录最新添加的验证器实例
         _lastAddedValidator = validator;
+
+        // 检查验证器是否实现 IValidatorInitializer 接口
+        if (validator is IValidatorInitializer initializer)
+        {
+            // 同步 IServiceProvider 委托
+            initializer.InitializeServiceProvider(_serviceProvider);
+        }
 
         return This;
     }
@@ -917,9 +926,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf AddAnnotations(params ValidationAttribute[] attributes) => AddValidator(
-        new ValueAnnotationValidator(attributes, null, _items),
-        validator => validator.InitializeServiceProvider(_serviceProvider));
+    public virtual TSelf AddAnnotations(params ValidationAttribute[] attributes) =>
+        AddValidator(new ValueAnnotationValidator(attributes, null, _items));
 
     /// <summary>
     ///     构建验证器集合
