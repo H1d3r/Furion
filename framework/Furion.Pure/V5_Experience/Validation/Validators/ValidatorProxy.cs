@@ -112,10 +112,18 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
     /// <param name="disposing">是否释放托管资源</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (disposing)
+        if (!disposing)
         {
-            // 移除属性变更事件
-            PropertyChanged -= OnPropertyChanged;
+            return;
+        }
+
+        // 移除属性变更事件
+        PropertyChanged -= OnPropertyChanged;
+
+        // 释放验证器资源
+        if (Validator is IDisposable disposable)
+        {
+            disposable.Dispose();
         }
     }
 
@@ -150,7 +158,7 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
 /// <typeparam name="TValidator">
 ///     <see cref="ValidatorBase" />
 /// </typeparam>
-public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable
+public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IValidatorInitializer
     where TValidator : ValidatorBase
 {
     /// <summary>
@@ -201,6 +209,21 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable
     {
         Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
+        foreach (var validator in _validatorCache.Values)
+        {
+            // 检查验证器是否实现 IValidatorInitializer 接口
+            if (validator is IValidatorInitializer initializer)
+            {
+                // 同步 IServiceProvider 委托
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
+        }
     }
 
     /// <summary>
@@ -331,10 +354,21 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable
     /// <param name="disposing">是否释放托管资源</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (disposing)
+        if (!disposing)
         {
-            // 移除属性变更事件
-            PropertyChanged -= OnPropertyChanged;
+            return;
+        }
+
+        // 移除属性变更事件
+        PropertyChanged -= OnPropertyChanged;
+
+        // 释放所有验证器资源
+        foreach (var validator in _validatorCache.Values)
+        {
+            if (validator is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
     }
 

@@ -26,12 +26,12 @@
 namespace Furion.Validation;
 
 /// <summary>
-///     定义验证器的 <see cref="IServiceProvider" /> 初始化行为
+///     验证器的始化行为接口
 /// </summary>
 public interface IValidatorInitializer
 {
     /// <summary>
-    ///     初始化（同步） <see cref="IServiceProvider" /> 委托
+    ///     同步 <see cref="IServiceProvider" /> 委托
     /// </summary>
     /// <param name="serviceProvider"><see cref="IServiceProvider" /> 委托</param>
     void InitializeServiceProvider(Func<Type, object?>? serviceProvider);

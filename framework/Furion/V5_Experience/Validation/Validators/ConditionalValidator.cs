@@ -31,7 +31,7 @@ namespace Furion.Validation;
 ///     条件验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer
+public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, IDisposable
 {
     /// <summary>
     ///     条件和对应的验证器列表
@@ -65,16 +65,22 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer
     }
 
     /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
     public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
-        // 组合所有条件的验证器
-        var validators = (_defaultValidators ?? []).Concat(_conditions.SelectMany(u => u.Validators));
-
-        // 遍历所有实现 IValidatorInitializer 接口的验证器并同步 IServiceProvider 委托
-        foreach (var validator in validators)
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
+        foreach (var validator in (_defaultValidators ?? []).Concat(_conditions.SelectMany(u => u.Validators)))
         {
+            // 检查验证器是否实现 IValidatorInitializer 接口
             if (validator is IValidatorInitializer initializer)
             {
+                // 同步 IServiceProvider 委托
                 initializer.InitializeServiceProvider(serviceProvider);
             }
         }
@@ -192,6 +198,27 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer
         else
         {
             throw new ValidationException(new ValidationResult(FormatErrorMessage(name), [name]), null, value);
+        }
+    }
+
+    /// <summary>
+    ///     释放资源
+    /// </summary>
+    /// <param name="disposing">是否释放托管资源</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposing)
+        {
+            return;
+        }
+
+        // 释放所有验证器资源
+        foreach (var validator in (_defaultValidators ?? []).Concat(_conditions.SelectMany(u => u.Validators)))
+        {
+            if (validator is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
     }
 }

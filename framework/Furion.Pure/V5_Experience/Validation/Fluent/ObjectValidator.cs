@@ -225,9 +225,10 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 同步 _annotationValidator 实例 IServiceProvider 委托
         _annotationValidator.InitializeServiceProvider(serviceProvider);
 
-        // 遍历所有属性验证器并同步 IServiceProvider 委托
+        // 遍历所有属性验证器并尝试同步 IServiceProvider 委托
         foreach (var propertyValidator in PropertyValidators)
         {
+            // 同步 IServiceProvider 委托
             propertyValidator.InitializeServiceProvider(serviceProvider);
         }
     }
@@ -257,6 +258,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
 
         // 将实例添加到集合中
         PropertyValidators.Add(propertyValidator);
+
+        // 同步 IServiceProvider 委托
+        propertyValidator.InitializeServiceProvider(_serviceProvider);
 
         return propertyValidator;
     }
@@ -501,10 +505,21 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <param name="disposing">是否释放托管资源</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (disposing)
+        if (!disposing)
         {
-            // 移除 ValidatorOptions 属性变更事件
-            Options.PropertyChanged -= OptionsOnPropertyChanged;
+            return;
+        }
+
+        // 移除 ValidatorOptions 属性变更事件
+        Options.PropertyChanged -= OptionsOnPropertyChanged;
+
+        // 释放所有属性验证器资源
+        foreach (var propertyValidator in PropertyValidators)
+        {
+            if (propertyValidator is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
     }
 

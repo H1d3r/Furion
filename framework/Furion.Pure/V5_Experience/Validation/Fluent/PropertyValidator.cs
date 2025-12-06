@@ -35,7 +35,7 @@ namespace Furion.Validation;
 /// <typeparam name="TProperty">属性类型</typeparam>
 public sealed partial class
     PropertyValidator<T, TProperty> : FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>,
-    IObjectValidator<T>
+    IObjectValidator<T>, IDisposable
     where T : class
 {
     /// <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
@@ -66,8 +66,8 @@ public sealed partial class
         // 初始化 PropertyAnnotationValidator 实例
         _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector, null, objectValidator._items);
 
-        // 同步 IServiceProvider 委托
-        InitializeServiceProvider(objectValidator._serviceProvider);
+        // 同步 IServiceProvider 委托（已在 RuleFor 创建时同步）
+        // InitializeServiceProvider(objectValidator._serviceProvider);
     }
 
     /// <summary>
@@ -102,6 +102,13 @@ public sealed partial class
     internal Func<T, TProperty?, bool>? UnlessCondition { get; private set; }
 
     /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
     public bool IsValid(T? instance, params string?[]? ruleSets)
     {
         // 空检查
@@ -122,7 +129,7 @@ public sealed partial class
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器（TODO: 考虑释放 _propertyValidator 资源问题）
+        // 检查是否设置了属性级别的对象验证器
         if (propertyValue is not null && _propertyValidator is not null &&
             !_propertyValidator.IsValid(propertyValue, ruleSets))
         {
@@ -157,7 +164,7 @@ public sealed partial class
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器（TODO: 考虑释放 _propertyValidator 资源问题）
+        // 检查是否设置了属性级别的对象验证器
         if (propertyValue is not null && _propertyValidator is not null)
         {
             validationResults.AddRange(_propertyValidator.GetValidationResults(propertyValue, ruleSets) ?? []);
@@ -194,7 +201,7 @@ public sealed partial class
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器（TODO: 考虑释放 _propertyValidator 资源问题）
+        // 检查是否设置了属性级别的对象验证器
         if (propertyValue is not null && _propertyValidator is not null)
         {
             _propertyValidator.Validate(propertyValue, ruleSets);
@@ -472,5 +479,32 @@ public sealed partial class
         validationContext.InitializeServiceProvider(_serviceProvider);
 
         return validationContext;
+    }
+
+    /// <summary>
+    ///     释放资源
+    /// </summary>
+    /// <param name="disposing">是否释放托管资源</param>
+    private void Dispose(bool disposing)
+    {
+        if (!disposing)
+        {
+            return;
+        }
+
+        // 释放所有验证器资源
+        foreach (var validator in Validators)
+        {
+            if (validator is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+
+        // 释放属性级别的对象验证器资源
+        if (_propertyValidator is IDisposable propertyValidatorDisposable)
+        {
+            propertyValidatorDisposable.Dispose();
+        }
     }
 }
