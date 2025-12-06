@@ -122,7 +122,7 @@ public sealed partial class
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器
+        // 检查是否设置了属性级别的对象验证器（TODO: 考虑释放 _propertyValidator 资源问题）
         if (propertyValue is not null && _propertyValidator is not null &&
             !_propertyValidator.IsValid(propertyValue, ruleSets))
         {
@@ -157,7 +157,7 @@ public sealed partial class
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器
+        // 检查是否设置了属性级别的对象验证器（TODO: 考虑释放 _propertyValidator 资源问题）
         if (propertyValue is not null && _propertyValidator is not null)
         {
             validationResults.AddRange(_propertyValidator.GetValidationResults(propertyValue, ruleSets) ?? []);
@@ -194,7 +194,7 @@ public sealed partial class
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器
+        // 检查是否设置了属性级别的对象验证器（TODO: 考虑释放 _propertyValidator 资源问题）
         if (propertyValue is not null && _propertyValidator is not null)
         {
             _propertyValidator.Validate(propertyValue, ruleSets);
@@ -215,6 +215,9 @@ public sealed partial class
 
         // 同步 _annotationValidator 实例 IServiceProvider 委托
         _annotationValidator.InitializeServiceProvider(serviceProvider);
+
+        // 同步 _propertyValidator 实例 IServiceProvider 委托
+        _propertyValidator?.InitializeServiceProvider(serviceProvider);
     }
 
     /// <summary>
