@@ -34,7 +34,6 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
-    where T : class
 {
     /// <inheritdoc cref="ObjectAnnotationValidator" />
     internal readonly ObjectAnnotationValidator _annotationValidator;
@@ -368,58 +367,6 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
 
         // 调用自定义配置委托
         configure(Options);
-
-        return this;
-    }
-
-    /// <summary>
-    ///     应用对象验证器配置
-    /// </summary>
-    /// <typeparam name="TValidatorConfigure">
-    ///     <see cref="IValidatorConfigure{T}" />
-    /// </typeparam>
-    /// <returns>
-    ///     <see cref="ObjectValidator{T}" />
-    /// </returns>
-    public ObjectValidator<T> ConfigureWith<TValidatorConfigure>()
-        where TValidatorConfigure : IValidatorConfigure<T>, new() =>
-        ConfigureWith(new TValidatorConfigure());
-
-    /// <summary>
-    ///     应用对象验证器配置
-    /// </summary>
-    /// <param name="configure"><see cref="IValidatorConfigure{T}" /> 实例</param>
-    /// <returns>
-    ///     <see cref="ObjectValidator{T}" />
-    /// </returns>
-    public ObjectValidator<T> ConfigureWith(IValidatorConfigure<T> configure)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(configure);
-
-        // 调用配置验证规则方法
-        configure.Configure(this);
-
-        return this;
-    }
-
-    /// <summary>
-    ///     应用对象验证器配置
-    /// </summary>
-    /// <param name="instance">对象</param>
-    /// <returns>
-    ///     <see cref="ObjectValidator{T}" />
-    /// </returns>
-    public ObjectValidator<T> ConfigureWith(T instance)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(instance);
-
-        // 检查是否实现 IValidatorConfigure<T> 接口
-        if (instance is IValidatorConfigure<T> configure)
-        {
-            ConfigureWith(configure);
-        }
 
         return this;
     }

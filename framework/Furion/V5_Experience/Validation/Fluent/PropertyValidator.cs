@@ -36,7 +36,6 @@ namespace Furion.Validation;
 public sealed partial class
     PropertyValidator<T, TProperty> : FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>,
     IObjectValidator<T>, IDisposable
-    where T : class
 {
     /// <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
     internal readonly PropertyAnnotationValidator<T, TProperty> _annotationValidator;
@@ -45,7 +44,7 @@ public sealed partial class
     internal readonly ObjectValidator<T> _objectValidator;
 
     /// <inheritdoc cref="IObjectValidator{T}" />
-    internal IObjectValidator<TProperty>? _propertyValidator;
+    internal ObjectValidator<TProperty>? _propertyValidator;
 
     /// <summary>
     ///     <inheritdoc cref="PropertyValidator{T,TProperty}" />
@@ -93,13 +92,13 @@ public sealed partial class
     ///     验证条件
     /// </summary>
     /// <remarks>当条件满足时才进行验证。</remarks>
-    internal Func<T, TProperty?, bool>? WhenCondition { get; private set; }
+    internal Func<TProperty?, ValidationContext<T>, bool>? WhenCondition { get; private set; }
 
     /// <summary>
     ///     逆向验证条件
     /// </summary>
     /// <remarks>当条件不满足时才进行验证。</remarks>
-    internal Func<T, TProperty?, bool>? UnlessCondition { get; private set; }
+    internal Func<TProperty?, ValidationContext<T>, bool>? UnlessCondition { get; private set; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -237,14 +236,51 @@ public sealed partial class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> SetValidator(IObjectValidator<TProperty>? validator)
+    /// <exception cref="InvalidOperationException"></exception>
+    public PropertyValidator<T, TProperty> SetValidator(ObjectValidator<TProperty>? validator)
     {
+        // 空检查（重复调用检查）
+        if (_propertyValidator is not null && validator is not null)
+        {
+            throw new InvalidOperationException(
+                $"An object validator has already been assigned to this property. Only one object validator is allowed per property. To define nested rules, use `{nameof(ChildRules)}` within a single validator.");
+        }
+
         _propertyValidator = validator;
 
         // 同步 IServiceProvider 委托
         _propertyValidator?.InitializeServiceProvider(_serviceProvider);
 
         return this;
+    }
+
+    /// <summary>
+    ///     为子属性继续配置规则
+    /// </summary>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public PropertyValidator<T, TProperty> ChildRules(Action<ObjectValidator<TProperty>> configure)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(configure);
+
+        // 空检查（重复调用检查）
+        if (_propertyValidator is not null)
+        {
+            throw new InvalidOperationException(
+                $"An object validator has already been assigned to this property. ChildRules cannot be applied after `{nameof(SetValidator)}` or another `{nameof(ChildRules)}` call.");
+        }
+
+        // 初始化属性级别的对象验证器实例
+        var propertyValidator = new ObjectValidator<TProperty>();
+
+        // 调用自定义配置委托
+        configure(propertyValidator);
+
+        return SetValidator(propertyValidator);
     }
 
     /// <summary>
@@ -260,7 +296,7 @@ public sealed partial class
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        WhenCondition = (_, p) => condition(p);
+        WhenCondition = (p, _) => condition(p);
 
         return this;
     }
@@ -278,7 +314,7 @@ public sealed partial class
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
-        UnlessCondition = (_, p) => condition(p);
+        UnlessCondition = (p, _) => condition(p);
 
         return this;
     }
@@ -291,7 +327,7 @@ public sealed partial class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> When(Func<T, TProperty?, bool> condition)
+    public PropertyValidator<T, TProperty> When(Func<TProperty?, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -309,7 +345,7 @@ public sealed partial class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Unless(Func<T, TProperty?, bool> condition)
+    public PropertyValidator<T, TProperty> Unless(Func<TProperty?, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -353,14 +389,14 @@ public sealed partial class
         }
 
         // 检查正向条件（When）
-        if (WhenCondition is not null && !WhenCondition(instance, GetValue(instance)))
+        if (WhenCondition is not null && !WhenCondition(GetValue(instance), CreateValidationContext(instance)))
         {
             return false;
         }
 
         // 检查逆向条件（Unless）
         // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (UnlessCondition is not null && UnlessCondition(instance, GetValue(instance)))
+        if (UnlessCondition is not null && UnlessCondition(GetValue(instance), CreateValidationContext(instance)))
         {
             return false;
         }
