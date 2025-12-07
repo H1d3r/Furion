@@ -358,8 +358,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf Conditional(Action<ConditionBuilder<T?>> buildConditions) =>
-        AddValidator(new ConditionalValidator<T?>(buildConditions));
+    public virtual TSelf Conditional(Action<ConditionBuilder<T>> buildConditions) =>
+        AddValidator(new ConditionalValidator<T>(buildConditions));
 
     /// <summary>
     ///     添加 <see cref="System.DateOnly" /> 验证器
@@ -591,7 +591,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf MustUnless(Func<T?, bool> condition) =>
+    public virtual TSelf MustUnless(Func<T, bool> condition) =>
         AddValidator(new MustUnlessValidator<T>(condition));
 
     /// <summary>
@@ -601,7 +601,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf MustUnless(Func<T?, ValidationContext<T>, bool> condition)
+    public virtual TSelf MustUnless(Func<T, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -616,7 +616,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf Must(Func<T?, bool> condition) => AddValidator(new MustValidator<T>(condition));
+    public virtual TSelf Must(Func<T, bool> condition) => AddValidator(new MustValidator<T>(condition));
 
     /// <summary>
     ///     添加自定义条件成立时委托验证器
@@ -625,7 +625,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf Must(Func<T?, ValidationContext<T>, bool> condition)
+    public virtual TSelf Must(Func<T, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -698,7 +698,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf Predicate(Func<T?, bool> condition) => AddValidator(new PredicateValidator<T>(condition));
+    public virtual TSelf Predicate(Func<T, bool> condition) => AddValidator(new PredicateValidator<T>(condition));
 
     /// <summary>
     ///     添加自定义条件成立时委托验证器
@@ -707,7 +707,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf Predicate(Func<T?, ValidationContext<T>, bool> condition)
+    public virtual TSelf Predicate(Func<T, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);

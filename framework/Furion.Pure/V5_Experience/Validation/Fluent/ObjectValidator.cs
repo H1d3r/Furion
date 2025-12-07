@@ -140,7 +140,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    public bool IsValid(T? instance, params string?[]? ruleSets)
+    public virtual bool IsValid(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -162,7 +162,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    public List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets)
+    public virtual List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -191,7 +191,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    public void Validate(T? instance, params string?[]? ruleSets)
+    public virtual void Validate(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -217,7 +217,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
         _serviceProvider = serviceProvider;
 
@@ -233,7 +233,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <summary>
-    ///     配置属性验证器
+    ///     为指定属性配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
     /// <param name="ruleSets">规则集列表</param>
@@ -241,7 +241,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty?>> selector,
+    public PropertyValidator<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty>> selector,
         params string?[]? ruleSets)
     {
         // 空检查
@@ -265,7 +265,41 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <summary>
-    ///     在指定规则集上下文中配置属性验证器
+    ///     为集合类型属性中的每一个元素配置验证规则
+    /// </summary>
+    /// <param name="selector">属性选择器</param>
+    /// <param name="ruleSets">规则集列表</param>
+    /// <typeparam name="TElement">元素类型</typeparam>
+    /// <returns>
+    ///     <see cref="CollectionPropertyValidator{T,TElement}" />
+    /// </returns>
+    public CollectionPropertyValidator<T, TElement> RuleForEach<TElement>(
+        Expression<Func<T, IEnumerable<TElement>?>> selector, params string?[]? ruleSets)
+        where TElement : class
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(selector);
+
+        // 优先使用规则集上下文栈栈顶的规则集，否则使用传入的规则集列表
+        var effectiveRuleSets = _ruleSetStack is { Count: > 0 }
+            ? [_ruleSetStack.Peek()]
+            : (ruleSets ?? []).Select(u => u?.Trim()).ToArray();
+
+        // 初始化 CollectionPropertyValidator 实例
+        var propertyValidator =
+            new CollectionPropertyValidator<T, TElement>(selector, this) { RuleSets = effectiveRuleSets };
+
+        // 将实例添加到集合中
+        PropertyValidators.Add(propertyValidator);
+
+        // 同步 IServiceProvider 委托
+        propertyValidator.InitializeServiceProvider(_serviceProvider);
+
+        return propertyValidator;
+    }
+
+    /// <summary>
+    ///     在指定规则集上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSet">规则集</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -281,7 +315,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <summary>
-    ///     在指定规则集列表上下文中配置属性验证器
+    ///     在指定规则集列表上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSets">规则集列表</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -297,7 +331,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <summary>
-    ///     在指定规则集上下文中配置属性验证器
+    ///     在指定规则集上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSet">规则集</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -308,7 +342,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         RuleSet(ruleSet is null ? null : [ruleSet], setAction);
 
     /// <summary>
-    ///     在指定规则集列表上下文中配置属性验证器
+    ///     在指定规则集列表上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSets">规则集列表</param>
     /// <param name="setAction">自定义配置委托</param>
