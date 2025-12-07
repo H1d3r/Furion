@@ -33,9 +33,8 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
-public sealed partial class
-    PropertyValidator<T, TProperty> : FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>,
-    IObjectValidator<T>, IDisposable
+public partial class PropertyValidator<T, TProperty> :
+    FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>, IObjectValidator<T>, IDisposable
 {
     /// <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
     internal readonly PropertyAnnotationValidator<T, TProperty> _annotationValidator;
@@ -44,6 +43,7 @@ public sealed partial class
     internal readonly ObjectValidator<T> _objectValidator;
 
     /// <inheritdoc cref="IObjectValidator{T}" />
+    /// <remarks>属性级别的对象验证器。</remarks>
     internal ObjectValidator<TProperty>? _propertyValidator;
 
     /// <summary>
@@ -53,7 +53,7 @@ public sealed partial class
     /// <param name="objectValidator">
     ///     <see cref="ObjectValidator{T}" />
     /// </param>
-    internal PropertyValidator(Expression<Func<T, TProperty?>> selector, ObjectValidator<T> objectValidator)
+    internal PropertyValidator(Expression<Func<T, TProperty>> selector, ObjectValidator<T> objectValidator)
         : base(null, (objectValidator ?? throw new ArgumentNullException(nameof(objectValidator)))._items)
     {
         // 空检查
@@ -92,13 +92,13 @@ public sealed partial class
     ///     验证条件
     /// </summary>
     /// <remarks>当条件满足时才进行验证。</remarks>
-    internal Func<TProperty?, ValidationContext<T>, bool>? WhenCondition { get; private set; }
+    internal Func<TProperty, ValidationContext<T>, bool>? WhenCondition { get; private set; }
 
     /// <summary>
     ///     逆向验证条件
     /// </summary>
     /// <remarks>当条件不满足时才进行验证。</remarks>
-    internal Func<TProperty?, ValidationContext<T>, bool>? UnlessCondition { get; private set; }
+    internal Func<TProperty, ValidationContext<T>, bool>? UnlessCondition { get; private set; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -108,7 +108,7 @@ public sealed partial class
     }
 
     /// <inheritdoc />
-    public bool IsValid(T? instance, params string?[]? ruleSets)
+    public virtual bool IsValid(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -139,7 +139,7 @@ public sealed partial class
     }
 
     /// <inheritdoc />
-    public List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets)
+    public virtual List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -177,7 +177,7 @@ public sealed partial class
     }
 
     /// <inheritdoc />
-    public void Validate(T? instance, params string?[]? ruleSets)
+    public virtual void Validate(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -227,9 +227,8 @@ public sealed partial class
     }
 
     /// <summary>
-    ///     设置对象验证器
+    ///     设置属性级别对象验证器
     /// </summary>
-    /// <remarks>属性级别的对象验证器。</remarks>
     /// <param name="validator">
     ///     <see cref="ValidatorBase" />
     /// </param>
@@ -271,7 +270,7 @@ public sealed partial class
         if (_propertyValidator is not null)
         {
             throw new InvalidOperationException(
-                $"An object validator has already been assigned to this property. ChildRules cannot be applied after `{nameof(SetValidator)}` or another `{nameof(ChildRules)}` call.");
+                $"An object validator has already been assigned to this property. `{nameof(ChildRules)}` cannot be applied after `{nameof(SetValidator)}` or another `{nameof(ChildRules)}` call.");
         }
 
         // 初始化属性级别的对象验证器实例
@@ -291,7 +290,7 @@ public sealed partial class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> When(Func<TProperty?, bool> condition)
+    public PropertyValidator<T, TProperty> When(Func<TProperty, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -309,7 +308,7 @@ public sealed partial class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Unless(Func<TProperty?, bool> condition)
+    public PropertyValidator<T, TProperty> Unless(Func<TProperty, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -327,7 +326,7 @@ public sealed partial class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> When(Func<TProperty?, ValidationContext<T>, bool> condition)
+    public PropertyValidator<T, TProperty> When(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -345,7 +344,7 @@ public sealed partial class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Unless(Func<TProperty?, ValidationContext<T>, bool> condition)
+    public PropertyValidator<T, TProperty> Unless(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -464,7 +463,7 @@ public sealed partial class
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal static object? GetValidationValue(T instance, ValidatorBase validator, TProperty? propertyValue)
+    internal static object? GetValidationValue(T instance, ValidatorBase validator, TProperty propertyValue)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -489,7 +488,7 @@ public sealed partial class
     /// <returns>
     ///     <typeparamref name="TProperty" />
     /// </returns>
-    internal TProperty? GetValue(T instance) => _annotationValidator.GetValue(instance);
+    internal TProperty GetValue(T instance) => _annotationValidator.GetValue(instance)!;
 
     /// <summary>
     ///     获取显示名称
@@ -521,7 +520,7 @@ public sealed partial class
     ///     释放资源
     /// </summary>
     /// <param name="disposing">是否释放托管资源</param>
-    private void Dispose(bool disposing)
+    protected virtual void Dispose(bool disposing)
     {
         if (!disposing)
         {

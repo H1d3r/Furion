@@ -72,7 +72,7 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, 
     }
 
     /// <inheritdoc />
-    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
         // 遍历所有验证器并尝试同步 IServiceProvider 委托
         foreach (var validator in (_defaultValidators ?? []).Concat(_conditions.SelectMany(u => u.Validators)))
