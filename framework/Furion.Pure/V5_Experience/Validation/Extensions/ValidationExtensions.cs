@@ -53,6 +53,26 @@ public static class ValidationExtensions
         validationResults?.ToList().ToResults();
 
     /// <summary>
+    ///     设置规则集列表
+    /// </summary>
+    /// <param name="validationContext">
+    ///     <see cref="ValidationContext" />
+    /// </param>
+    /// <param name="ruleSets">规则集列表</param>
+    /// <returns>
+    ///     <see cref="ValidationContext" />
+    /// </returns>
+    public static ValidationContext WithRuleSets(this ValidationContext validationContext, params string?[]? ruleSets)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validationContext);
+
+        validationContext.Items[Constants.RULESETS_KEY] = ruleSets;
+
+        return validationContext;
+    }
+
+    /// <summary>
     ///     创建对象验证器验证当前实例并返回验证结果集合
     /// </summary>
     /// <param name="validationContext">
@@ -89,21 +109,27 @@ public static class ValidationExtensions
     /// <param name="objectValidator">
     ///     <see cref="AbstractValidator{T}" />
     /// </param>
+    /// <param name="disposeAfterValidation">
+    ///     是否在验证完成后自动释放 <paramref name="objectValidator" />。默认值为：<c>true</c>。
+    /// </param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="IEnumerable{T}" />
     /// </returns>
     public static IEnumerable<ValidationResult> ValidateWith<T>(this ValidationContext validationContext,
-        ObjectValidator<T> objectValidator) where T : class
+        ObjectValidator<T> objectValidator, bool disposeAfterValidation = true) where T : class
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validationContext);
+        ArgumentNullException.ThrowIfNull(objectValidator);
 
-        // 禁用属性验证特性验证，避免死循环
-        objectValidator.ConfigureOptions(options =>
+        // 禁用属性验证特性验证，避免死循环（TODO: 这里存在线程安全问题）
+        var needsRestoreSuppressAnnotationValidation = false;
+        if (!objectValidator.Options.SuppressAnnotationValidation)
         {
-            options.SuppressAnnotationValidation = true;
-        });
+            objectValidator.Options.SuppressAnnotationValidation = true;
+            needsRestoreSuppressAnnotationValidation = true;
+        }
 
         // 同步 IServiceProvider 委托
         objectValidator.InitializeServiceProvider(validationContext.GetService);
@@ -115,7 +141,30 @@ public static class ValidationExtensions
             ruleSets = ruleSetsObj as string?[] ?? (ruleSetsObj is string ruleSet ? [ruleSet] : null);
         }
 
-        // 获取对象验证结果集合
-        return objectValidator.GetValidationResults((T)validationContext.ObjectInstance, ruleSets) ?? [];
+        // 初始化验证结果集合
+        List<ValidationResult>? validationResults;
+
+        try
+        {
+            // 获取对象验证结果集合
+            validationResults = objectValidator.GetValidationResults((T)validationContext.ObjectInstance, ruleSets) ??
+                                [];
+        }
+        finally
+        {
+            // 恢复禁用属性验证特性验证状态
+            if (needsRestoreSuppressAnnotationValidation)
+            {
+                objectValidator.Options.SuppressAnnotationValidation = false;
+            }
+
+            // 自动释放资源
+            if (disposeAfterValidation && objectValidator is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+
+        return validationResults;
     }
 }

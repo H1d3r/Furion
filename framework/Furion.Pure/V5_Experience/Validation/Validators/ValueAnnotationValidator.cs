@@ -101,7 +101,8 @@ public class ValueAnnotationValidator : ValidatorBase, IValidatorInitializer
     public ValidationAttribute[] Attributes { get; }
 
     /// <inheritdoc />
-    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
+    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        _serviceProvider = serviceProvider;
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

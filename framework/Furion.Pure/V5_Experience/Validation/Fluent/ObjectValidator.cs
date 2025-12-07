@@ -34,7 +34,6 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
-    where T : class
 {
     /// <inheritdoc cref="ObjectAnnotationValidator" />
     internal readonly ObjectAnnotationValidator _annotationValidator;
@@ -141,7 +140,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    public bool IsValid(T? instance, params string?[]? ruleSets)
+    public virtual bool IsValid(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -163,7 +162,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    public List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets)
+    public virtual List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -192,7 +191,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    public void Validate(T? instance, params string?[]? ruleSets)
+    public virtual void Validate(T? instance, params string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -218,22 +217,23 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
         _serviceProvider = serviceProvider;
 
         // 同步 _annotationValidator 实例 IServiceProvider 委托
         _annotationValidator.InitializeServiceProvider(serviceProvider);
 
-        // 遍历所有属性验证器并同步 IServiceProvider 委托
+        // 遍历所有属性验证器并尝试同步 IServiceProvider 委托
         foreach (var propertyValidator in PropertyValidators)
         {
+            // 同步 IServiceProvider 委托
             propertyValidator.InitializeServiceProvider(serviceProvider);
         }
     }
 
     /// <summary>
-    ///     配置属性验证器
+    ///     为指定属性配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
     /// <param name="ruleSets">规则集列表</param>
@@ -241,7 +241,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty?>> selector,
+    public PropertyValidator<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty>> selector,
         params string?[]? ruleSets)
     {
         // 空检查
@@ -258,11 +258,48 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 将实例添加到集合中
         PropertyValidators.Add(propertyValidator);
 
+        // 同步 IServiceProvider 委托
+        propertyValidator.InitializeServiceProvider(_serviceProvider);
+
         return propertyValidator;
     }
 
     /// <summary>
-    ///     在指定规则集上下文中配置属性验证器
+    ///     为集合类型属性中的每一个元素配置验证规则
+    /// </summary>
+    /// <param name="selector">属性选择器</param>
+    /// <param name="ruleSets">规则集列表</param>
+    /// <typeparam name="TElement">元素类型</typeparam>
+    /// <returns>
+    ///     <see cref="CollectionPropertyValidator{T,TElement}" />
+    /// </returns>
+    public CollectionPropertyValidator<T, TElement> RuleForEach<TElement>(
+        Expression<Func<T, IEnumerable<TElement>?>> selector, params string?[]? ruleSets)
+        where TElement : class
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(selector);
+
+        // 优先使用规则集上下文栈栈顶的规则集，否则使用传入的规则集列表
+        var effectiveRuleSets = _ruleSetStack is { Count: > 0 }
+            ? [_ruleSetStack.Peek()]
+            : (ruleSets ?? []).Select(u => u?.Trim()).ToArray();
+
+        // 初始化 CollectionPropertyValidator 实例
+        var propertyValidator =
+            new CollectionPropertyValidator<T, TElement>(selector, this) { RuleSets = effectiveRuleSets };
+
+        // 将实例添加到集合中
+        PropertyValidators.Add(propertyValidator);
+
+        // 同步 IServiceProvider 委托
+        propertyValidator.InitializeServiceProvider(_serviceProvider);
+
+        return propertyValidator;
+    }
+
+    /// <summary>
+    ///     在指定规则集上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSet">规则集</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -278,7 +315,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <summary>
-    ///     在指定规则集列表上下文中配置属性验证器
+    ///     在指定规则集列表上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSets">规则集列表</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -294,7 +331,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <summary>
-    ///     在指定规则集上下文中配置属性验证器
+    ///     在指定规则集上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSet">规则集</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -305,7 +342,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         RuleSet(ruleSet is null ? null : [ruleSet], setAction);
 
     /// <summary>
-    ///     在指定规则集列表上下文中配置属性验证器
+    ///     在指定规则集列表上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSets">规则集列表</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -364,58 +401,6 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
 
         // 调用自定义配置委托
         configure(Options);
-
-        return this;
-    }
-
-    /// <summary>
-    ///     应用对象验证器配置
-    /// </summary>
-    /// <typeparam name="TValidatorConfigure">
-    ///     <see cref="IValidatorConfigure{T}" />
-    /// </typeparam>
-    /// <returns>
-    ///     <see cref="ObjectValidator{T}" />
-    /// </returns>
-    public ObjectValidator<T> ConfigureWith<TValidatorConfigure>()
-        where TValidatorConfigure : IValidatorConfigure<T>, new() =>
-        ConfigureWith(new TValidatorConfigure());
-
-    /// <summary>
-    ///     应用对象验证器配置
-    /// </summary>
-    /// <param name="configure"><see cref="IValidatorConfigure{T}" /> 实例</param>
-    /// <returns>
-    ///     <see cref="ObjectValidator{T}" />
-    /// </returns>
-    public ObjectValidator<T> ConfigureWith(IValidatorConfigure<T> configure)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(configure);
-
-        // 调用配置验证规则方法
-        configure.Configure(this);
-
-        return this;
-    }
-
-    /// <summary>
-    ///     应用对象验证器配置
-    /// </summary>
-    /// <param name="instance">对象</param>
-    /// <returns>
-    ///     <see cref="ObjectValidator{T}" />
-    /// </returns>
-    public ObjectValidator<T> ConfigureWith(T instance)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(instance);
-
-        // 检查是否实现 IValidatorConfigure<T> 接口
-        if (instance is IValidatorConfigure<T> configure)
-        {
-            ConfigureWith(configure);
-        }
 
         return this;
     }
@@ -501,10 +486,21 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <param name="disposing">是否释放托管资源</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (disposing)
+        if (!disposing)
         {
-            // 移除 ValidatorOptions 属性变更事件
-            Options.PropertyChanged -= OptionsOnPropertyChanged;
+            return;
+        }
+
+        // 移除 ValidatorOptions 属性变更事件
+        Options.PropertyChanged -= OptionsOnPropertyChanged;
+
+        // 释放所有属性验证器资源
+        foreach (var propertyValidator in PropertyValidators)
+        {
+            if (propertyValidator is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
     }
 

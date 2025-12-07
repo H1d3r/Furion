@@ -28,7 +28,7 @@ using System.Linq.Expressions;
 namespace Furion.Validation;
 
 /// <inheritdoc cref="PropertyValidator{T,TProperty}" />
-public sealed partial class PropertyValidator<T, TProperty> where T : class
+public partial class PropertyValidator<T, TProperty>
 {
     /// <summary>
     ///     配置是否启用该属性上的验证特性验证
@@ -77,13 +77,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
     public PropertyValidator<T, TProperty> Conditional(
-        Action<ConditionBuilder<TProperty?>, ValidationContext<T>> buildConditions)
+        Action<ConditionBuilder<TProperty>, ValidationContext<T>> buildConditions)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(buildConditions);
 
         return ValidatorProxy<ConditionalValidator<TProperty>>(context =>
-            [new Action<ConditionBuilder<TProperty?>>(u => buildConditions(u, context))]);
+            [new Action<ConditionBuilder<TProperty>>(u => buildConditions(u, context))]);
     }
 
     /// <summary>
@@ -170,13 +170,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> MustUnless(Func<TProperty?, ValidationContext<T>, bool> condition)
+    public PropertyValidator<T, TProperty> MustUnless(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
         return ValidatorProxy<MustUnlessValidator<TProperty>>(context =>
-            [new Func<TProperty?, bool>(u => condition(u, context))]);
+            [new Func<TProperty, bool>(u => condition(u, context))]);
     }
 
     /// <summary>
@@ -186,13 +186,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Must(Func<TProperty?, ValidationContext<T>, bool> condition)
+    public PropertyValidator<T, TProperty> Must(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
         return ValidatorProxy<MustValidator<TProperty>>(context =>
-            [new Func<TProperty?, bool>(u => condition(u, context))]);
+            [new Func<TProperty, bool>(u => condition(u, context))]);
     }
 
     /// <summary>
@@ -217,13 +217,13 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Predicate(Func<TProperty?, ValidationContext<T>, bool> condition)
+    public PropertyValidator<T, TProperty> Predicate(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
         return ValidatorProxy<PredicateValidator<TProperty>>(context =>
-            [new Func<TProperty?, bool>(u => condition(u, context))]);
+            [new Func<TProperty, bool>(u => condition(u, context))]);
     }
 
     /// <summary>
@@ -281,20 +281,33 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
     public ObjectValidator<T> End() => _objectValidator;
 
     /// <summary>
-    ///     配置属性验证器
+    ///     为指定属性配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
     /// <param name="ruleSets">规则集列表</param>
-    /// <typeparam name="TNewProperty">属性类型</typeparam>
+    /// <typeparam name="TOtherProperty">属性类型</typeparam>
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TNewProperty> RuleFor<TNewProperty>(Expression<Func<T, TNewProperty?>> selector,
-        params string?[]? ruleSets) =>
-        _objectValidator.RuleFor(selector, ruleSets);
+    public PropertyValidator<T, TOtherProperty> RuleFor<TOtherProperty>(Expression<Func<T, TOtherProperty>> selector,
+        params string?[]? ruleSets) => _objectValidator.RuleFor(selector, ruleSets);
 
     /// <summary>
-    ///     在指定规则集上下文中配置属性验证器
+    ///     为集合类型属性中的每一个元素配置验证规则
+    /// </summary>
+    /// <param name="selector">属性选择器</param>
+    /// <param name="ruleSets">规则集列表</param>
+    /// <typeparam name="TOtherElement">元素类型</typeparam>
+    /// <returns>
+    ///     <see cref="CollectionPropertyValidator{T,TElement}" />
+    /// </returns>
+    public CollectionPropertyValidator<T, TOtherElement> RuleForEach<TOtherElement>(
+        Expression<Func<T, IEnumerable<TOtherElement>?>> selector, params string?[]? ruleSets)
+        where TOtherElement : class =>
+        _objectValidator.RuleForEach(selector, ruleSets);
+
+    /// <summary>
+    ///     在指定规则集上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSet">规则集</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -305,7 +318,7 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
         _objectValidator.RuleSet(ruleSet, setAction);
 
     /// <summary>
-    ///     在指定规则集列表上下文中配置属性验证器
+    ///     在指定规则集列表上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSets">规则集列表</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -316,7 +329,7 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
         _objectValidator.RuleSet(ruleSets, setAction);
 
     /// <summary>
-    ///     在指定规则集上下文中配置属性验证器
+    ///     在指定规则集上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSet">规则集</param>
     /// <param name="setAction">自定义配置委托</param>
@@ -327,7 +340,7 @@ public sealed partial class PropertyValidator<T, TProperty> where T : class
         _objectValidator.RuleSet(ruleSet, setAction);
 
     /// <summary>
-    ///     在指定规则集列表上下文中配置属性验证器
+    ///     在指定规则集列表上下文中为指定属性配置验证规则
     /// </summary>
     /// <param name="ruleSets">规则集列表</param>
     /// <param name="setAction">自定义配置委托</param>

@@ -37,13 +37,12 @@ namespace Furion.Validation;
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
 public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValidator<T>
-    where T : class
 {
     /// <summary>
     ///     <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    public PropertyAnnotationValidator(Expression<Func<T, TProperty?>> selector)
+    public PropertyAnnotationValidator(Expression<Func<T, TProperty>> selector)
         : base(ConvertExpression(selector))
     {
     }
@@ -53,7 +52,7 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
     /// </summary>
     /// <param name="selector">属性选择器</param>
     /// <param name="items">验证上下文数据</param>
-    public PropertyAnnotationValidator(Expression<Func<T, TProperty?>> selector, IDictionary<object, object?>? items)
+    public PropertyAnnotationValidator(Expression<Func<T, TProperty>> selector, IDictionary<object, object?>? items)
         : base(ConvertExpression(selector), items)
     {
     }
@@ -66,7 +65,7 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
     ///     <see cref="IServiceProvider" />
     /// </param>
     /// <param name="items">验证上下文数据</param>
-    public PropertyAnnotationValidator(Expression<Func<T, TProperty?>> selector, IServiceProvider? serviceProvider,
+    public PropertyAnnotationValidator(Expression<Func<T, TProperty>> selector, IServiceProvider? serviceProvider,
         IDictionary<object, object?>? items)
         : base(ConvertExpression(selector), serviceProvider, items)
     {
@@ -79,7 +78,7 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
     /// <returns>
     ///     <see cref="Expression{TDelegate}" />
     /// </returns>
-    internal static Expression<Func<T, object?>> ConvertExpression(Expression<Func<T, TProperty?>> selector)
+    internal static Expression<Func<T, object?>> ConvertExpression(Expression<Func<T, TProperty>> selector)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
@@ -95,12 +94,12 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
     /// <returns>
     ///     <typeparamref name="TProperty" />
     /// </returns>
-    public new TProperty? GetValue(T instance)
+    public new TProperty GetValue(T instance)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        return (TProperty?)base.GetValue(instance);
+        return (TProperty)base.GetValue(instance)!;
     }
 }
 
@@ -109,7 +108,6 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitializer
-    where T : class
 {
     /// <summary>
     ///     属性值访问器
@@ -178,7 +176,8 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitia
     public PropertyInfo Property { get; }
 
     /// <inheritdoc />
-    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
+    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        _serviceProvider = serviceProvider;
 
     /// <inheritdoc />
     public override bool IsValid(T? instance)
@@ -263,7 +262,7 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitia
     ///     <see cref="string" />
     /// </returns>
     public string GetDisplayName(string? name) =>
-        name ?? Property.GetCustomAttribute<DisplayAttribute>(false)?.Name ??
+        name ?? Property.GetCustomAttribute<DisplayAttribute>(false)?.GetName() ??
         Property.GetCustomAttribute<DisplayNameAttribute>(false)?.DisplayName ?? Property.Name;
 
     /// <summary>
