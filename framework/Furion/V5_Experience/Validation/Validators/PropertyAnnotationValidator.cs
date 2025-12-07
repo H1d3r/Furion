@@ -37,7 +37,6 @@ namespace Furion.Validation;
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
 public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValidator<T>
-    where T : class
 {
     /// <summary>
     ///     <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
@@ -109,7 +108,6 @@ public class PropertyAnnotationValidator<T, TProperty> : PropertyAnnotationValid
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitializer
-    where T : class
 {
     /// <summary>
     ///     属性值访问器

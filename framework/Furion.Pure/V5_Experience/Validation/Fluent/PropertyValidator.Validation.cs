@@ -28,7 +28,7 @@ using System.Linq.Expressions;
 namespace Furion.Validation;
 
 /// <inheritdoc cref="PropertyValidator{T,TProperty}" />
-public sealed partial class PropertyValidator<T, TProperty> where T : class
+public sealed partial class PropertyValidator<T, TProperty>
 {
     /// <summary>
     ///     配置是否启用该属性上的验证特性验证

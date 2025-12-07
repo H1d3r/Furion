@@ -43,7 +43,6 @@ public static class ObjectValidatorEnumerableExtensions
     /// </returns>
     public static bool IsValid<T>(this IEnumerable<IObjectValidator<T>> validators, T? instance,
         params string?[]? ruleSets)
-        where T : class
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validators);
@@ -62,7 +61,6 @@ public static class ObjectValidatorEnumerableExtensions
     /// </returns>
     public static List<ValidationResult>? GetValidationResults<T>(this IEnumerable<IObjectValidator<T>> validators,
         T? instance, params string?[]? ruleSets)
-        where T : class
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validators);
@@ -78,7 +76,6 @@ public static class ObjectValidatorEnumerableExtensions
     /// <param name="ruleSets">规则集列表</param>
     public static void Validate<T>(this IEnumerable<IObjectValidator<T>> validators, T? instance,
         params string?[]? ruleSets)
-        where T : class
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validators);
