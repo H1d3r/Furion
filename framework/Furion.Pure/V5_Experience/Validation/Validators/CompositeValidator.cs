@@ -30,7 +30,7 @@ namespace Furion.Validation;
 /// <summary>
 ///     组合验证器
 /// </summary>
-public class CompositeValidator : ValidatorBase, IValidatorInitializer
+public class CompositeValidator : ValidatorBase, IValidatorInitializer, IDisposable
 {
     /// <summary>
     ///     高优先级验证器列表
@@ -74,13 +74,22 @@ public class CompositeValidator : ValidatorBase, IValidatorInitializer
     public ValidationMode Mode { get; set; } = ValidationMode.ValidateAll;
 
     /// <inheritdoc />
-    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    public void Dispose()
     {
-        // 遍历所有实现 IValidatorInitializer 接口的验证器并同步 IServiceProvider 委托
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
+    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
         foreach (var validator in Validators)
         {
+            // 检查验证器是否实现 IValidatorInitializer 接口
             if (validator is IValidatorInitializer initializer)
             {
+                // 同步 IServiceProvider 委托
                 initializer.InitializeServiceProvider(serviceProvider);
             }
         }
@@ -209,6 +218,27 @@ public class CompositeValidator : ValidatorBase, IValidatorInitializer
         else
         {
             throw new ValidationException(new ValidationResult(FormatErrorMessage(name), [name]), null, value);
+        }
+    }
+
+    /// <summary>
+    ///     释放资源
+    /// </summary>
+    /// <param name="disposing">是否释放托管资源</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposing)
+        {
+            return;
+        }
+
+        // 释放所有验证器资源
+        foreach (var validator in Validators)
+        {
+            if (validator is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
     }
 }

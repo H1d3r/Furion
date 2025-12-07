@@ -126,6 +126,7 @@ public sealed class ValidationBuilder
     /// <summary>
     ///     构建模块服务
     /// </summary>
+    /// <remarks>多个实例会导致重复注册。</remarks>
     /// <param name="services">
     ///     <see cref="IServiceCollection" />
     /// </param>
@@ -142,15 +143,15 @@ public sealed class ValidationBuilder
         {
             // 注册 IObjectValidator<T> 泛型接口
             services.Add(ServiceDescriptor.Transient(typeof(IObjectValidator<>).MakeGenericType(modelType),
-                provider => CreateValidator(provider, validatorType)));
+                provider => CreateObjectValidator(provider, validatorType)));
 
             // 注册 AbstractValidator<T> 基类
             // services.Add(ServiceDescriptor.Transient(typeof(AbstractValidator<>).MakeGenericType(modelType),
-            //     provider => CreateValidator(provider, validatorType)));
+            //     provider => CreateObjectValidator(provider, validatorType)));
 
             // 注册 IObjectValidator 非泛型接口
             services.Add(ServiceDescriptor.Transient(typeof(IObjectValidator),
-                provider => CreateValidator(provider, validatorType)));
+                provider => CreateObjectValidator(provider, validatorType)));
         }
     }
 
@@ -162,21 +163,25 @@ public sealed class ValidationBuilder
     /// </param>
     /// <param name="validatorType">对象验证器类型</param>
     /// <returns>
-    ///     <see cref="IObjectValidator" />
+    ///     <see cref="object" />
     /// </returns>
-    internal static IObjectValidator CreateValidator(IServiceProvider serviceProvider, Type validatorType)
+    internal static object CreateObjectValidator(IServiceProvider serviceProvider, Type validatorType)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(serviceProvider);
         ArgumentNullException.ThrowIfNull(validatorType);
 
         // 创建对象验证器实例
-        var validator = (IObjectValidator)ActivatorUtilities.CreateInstance(serviceProvider, validatorType);
+        var validatorObject = ActivatorUtilities.CreateInstance(serviceProvider, validatorType);
 
-        // 同步 IServiceProvider 委托
-        validator.InitializeServiceProvider(serviceProvider.GetService);
+        // 检查验证器是否实现 IValidatorInitializer 接口
+        if (validatorObject is IValidatorInitializer initializer)
+        {
+            // 同步 IServiceProvider 委托
+            initializer.InitializeServiceProvider(serviceProvider.GetService);
+        }
 
-        return validator;
+        return validatorObject;
     }
 
     /// <summary>
