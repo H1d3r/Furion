@@ -49,6 +49,12 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     internal readonly Stack<string?> _ruleSetStack;
 
     /// <summary>
+    ///     从父级继承的规则集列表
+    /// </summary>
+    /// <remarks>用于 <see cref="PropertyValidator{T,TProperty}.ChildRules" /> 场景。</remarks>
+    internal string?[]? _inheritedRuleSets;
+
+    /// <summary>
     ///     <see cref="IServiceProvider" /> 委托
     /// </summary>
     internal Func<Type, object?>? _serviceProvider;
@@ -56,8 +62,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <summary>
     ///     <inheritdoc cref="ObjectValidator{T}" />
     /// </summary>
-    public ObjectValidator()
-        : this(new ValidatorOptions(), null, null)
+    /// <param name="inheritedRuleSets">从父级继承的规则集列表</param>
+    public ObjectValidator(string?[]? inheritedRuleSets = null)
+        : this(new ValidatorOptions(), null, null, inheritedRuleSets)
     {
     }
 
@@ -68,8 +75,10 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     ///     <see cref="ValidatorOptions" />
     /// </param>
     /// <param name="items">验证上下文数据</param>
-    public ObjectValidator(ValidatorOptions options, IDictionary<object, object?>? items)
-        : this(options, null, items)
+    /// <param name="inheritedRuleSets">从父级继承的规则集列表</param>
+    public ObjectValidator(ValidatorOptions options, IDictionary<object, object?>? items,
+        string?[]? inheritedRuleSets = null)
+        : this(options, null, items, inheritedRuleSets)
     {
     }
 
@@ -83,8 +92,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     ///     <see cref="IServiceProvider" />
     /// </param>
     /// <param name="items">验证上下文数据</param>
+    /// <param name="inheritedRuleSets">从父级继承的规则集列表</param>
     public ObjectValidator(ValidatorOptions options, IServiceProvider? serviceProvider,
-        IDictionary<object, object?>? items)
+        IDictionary<object, object?>? items, string?[]? inheritedRuleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(options);
@@ -98,6 +108,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         }
 
         _items = items;
+        _inheritedRuleSets = inheritedRuleSets?.Select(u => u?.Trim()).ToArray();
 
         // 初始化 ObjectAnnotationValidator 实例
         _annotationValidator = new ObjectAnnotationValidator(serviceProvider, items)
@@ -247,10 +258,8 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
 
-        // 优先使用规则集上下文栈栈顶的规则集，否则使用传入的规则集列表
-        var effectiveRuleSets = _ruleSetStack is { Count: > 0 }
-            ? [_ruleSetStack.Peek()]
-            : (ruleSets ?? []).Select(u => u?.Trim()).ToArray();
+        // 解析当前有效的规则集列表
+        var effectiveRuleSets = ResolveEffectiveRuleSets(ruleSets);
 
         // 初始化 PropertyValidator 实例
         var propertyValidator = new PropertyValidator<T, TProperty>(selector, this) { RuleSets = effectiveRuleSets };
@@ -280,10 +289,8 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
 
-        // 优先使用规则集上下文栈栈顶的规则集，否则使用传入的规则集列表
-        var effectiveRuleSets = _ruleSetStack is { Count: > 0 }
-            ? [_ruleSetStack.Peek()]
-            : (ruleSets ?? []).Select(u => u?.Trim()).ToArray();
+        // 解析当前有效的规则集列表
+        var effectiveRuleSets = ResolveEffectiveRuleSets(ruleSets);
 
         // 初始化 CollectionPropertyValidator 实例
         var propertyValidator =
@@ -558,4 +565,24 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
             _annotationValidator.ValidateAllProperties = Options.ValidateAllProperties;
         }
     }
+
+    /// <summary>
+    ///     解析当前有效的规则集列表
+    /// </summary>
+    /// <param name="ruleSets">规则集列表</param>
+    /// <returns><see cref="string" />列表</returns>
+    internal string?[]? ResolveEffectiveRuleSets(params string?[]? ruleSets) =>
+        // 优先使用规则集上下文栈顶的规则集；否则依次尝试使用传入的规则集列表或从父级继承的规则集列表
+        _ruleSetStack is { Count: > 0 }
+            ? [_ruleSetStack.Peek()]
+            : ruleSets is not null && ruleSets.Length > 0
+                ? ruleSets.Select(u => u?.Trim()).ToArray()
+                : _inheritedRuleSets;
+
+    /// <summary>
+    ///     设置从父级继承的规则集（仅当尚未设置时）
+    /// </summary>
+    /// <param name="inheritedRuleSets">从父级继承的规则集列表</param>
+    internal void SetInheritedRuleSetsIfNotSet(string?[]? inheritedRuleSets) =>
+        _inheritedRuleSets ??= inheritedRuleSets?.Select(u => u?.Trim()).ToArray();
 }

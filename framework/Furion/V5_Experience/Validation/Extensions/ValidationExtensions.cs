@@ -155,19 +155,18 @@ public static class ValidationExtensions
         // 同步 IServiceProvider 委托
         objectValidator.InitializeServiceProvider(validationContext.GetService);
 
-        // 尝试从 Items 中解析规则集列表
+        // 首先尝试从 ValidationContext.Items 中获取
         string?[]? ruleSets = null;
         if (validationContext.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsObj))
         {
             ruleSets = ruleSetsObj as string?[] ?? (ruleSetsObj is string ruleSet ? [ruleSet] : null);
         }
+        // 如果未找到，尝试从 IValidationDataContext 中获取
         else
         {
-            // 解析 IValidationDataContext 服务
-            var validationDataContext = validationContext.GetService<IValidationDataContext>();
-
             // 尝试从验证数据上下文服务中读取
-            if (validationDataContext?.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsData) == true)
+            if (validationContext.GetService<IValidationDataContext>()
+                    ?.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsData) == true)
             {
                 ruleSets = ruleSetsData as string?[] ?? (ruleSetsData is string ruleSet ? [ruleSet] : null);
             }
