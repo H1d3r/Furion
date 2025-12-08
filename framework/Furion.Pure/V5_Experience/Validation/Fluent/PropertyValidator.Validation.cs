@@ -289,7 +289,7 @@ public partial class PropertyValidator<T, TProperty>
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TOtherProperty> RuleFor<TOtherProperty>(Expression<Func<T, TOtherProperty>> selector,
+    public PropertyValidator<T, TOtherProperty> RuleFor<TOtherProperty>(Expression<Func<T, TOtherProperty?>> selector,
         params string?[]? ruleSets) => _objectValidator.RuleFor(selector, ruleSets);
 
     /// <summary>

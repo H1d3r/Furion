@@ -241,7 +241,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty>> selector,
+    public PropertyValidator<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty?>> selector,
         params string?[]? ruleSets)
     {
         // 空检查

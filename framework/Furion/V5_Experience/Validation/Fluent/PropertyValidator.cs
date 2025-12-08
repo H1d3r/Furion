@@ -53,7 +53,7 @@ public partial class PropertyValidator<T, TProperty> :
     /// <param name="objectValidator">
     ///     <see cref="ObjectValidator{T}" />
     /// </param>
-    internal PropertyValidator(Expression<Func<T, TProperty>> selector, ObjectValidator<T> objectValidator)
+    internal PropertyValidator(Expression<Func<T, TProperty?>> selector, ObjectValidator<T> objectValidator)
         : base(null, (objectValidator ?? throw new ArgumentNullException(nameof(objectValidator)))._items)
     {
         // 空检查
@@ -63,7 +63,7 @@ public partial class PropertyValidator<T, TProperty> :
         _objectValidator = objectValidator;
 
         // 初始化 PropertyAnnotationValidator 实例
-        _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector, null, objectValidator._items);
+        _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector!, null, objectValidator._items);
 
         // 同步 IServiceProvider 委托（已在 RuleFor 创建时同步）
         // InitializeServiceProvider(objectValidator._serviceProvider);
