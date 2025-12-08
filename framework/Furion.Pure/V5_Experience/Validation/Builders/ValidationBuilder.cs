@@ -132,6 +132,24 @@ public sealed class ValidationBuilder
     /// </param>
     internal void Build(IServiceCollection services)
     {
+        // 注册验证数据上下文服务
+        services.TryAddScoped<IValidationDataContext, ValidationDataContext>();
+
+        // 构建对象验证器服务
+        BuildObjectValidatorServices(services);
+    }
+
+    /// <summary>
+    ///     构建对象验证器服务
+    /// </summary>
+    /// <param name="services">
+    ///     <see cref="IServiceCollection" />
+    /// </param>
+    internal void BuildObjectValidatorServices(IServiceCollection services)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(services);
+
         // 空检查
         if (_validatorTypes is null)
         {

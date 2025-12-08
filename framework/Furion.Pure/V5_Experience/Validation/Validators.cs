@@ -595,7 +595,7 @@ public static class Validators
     ///     <see cref="PropertyAnnotationValidator{T,TProperty}" />
     /// </returns>
     public static PropertyAnnotationValidator<T, TProperty> PropertyAnnotation<T, TProperty>(
-        Expression<Func<T, TProperty?>> selector) where T : class =>
+        Expression<Func<T, TProperty>> selector) where T : class =>
         new(selector);
 
     /// <summary>
@@ -609,7 +609,7 @@ public static class Validators
     ///     <see cref="PropertyAnnotationValidator{T,TProperty}" />
     /// </returns>
     public static PropertyAnnotationValidator<T, TProperty> PropertyAnnotation<T, TProperty>(
-        Expression<Func<T, TProperty?>> selector, IDictionary<object, object?>? items) where T : class =>
+        Expression<Func<T, TProperty>> selector, IDictionary<object, object?>? items) where T : class =>
         new(selector, items);
 
     /// <summary>
@@ -626,7 +626,7 @@ public static class Validators
     ///     <see cref="PropertyAnnotationValidator{T,TProperty}" />
     /// </returns>
     public static PropertyAnnotationValidator<T, TProperty> PropertyAnnotation<T, TProperty>(
-        Expression<Func<T, TProperty?>> selector, IServiceProvider? serviceProvider,
+        Expression<Func<T, TProperty>> selector, IServiceProvider? serviceProvider,
         IDictionary<object, object?>? items) where T : class => new(selector, serviceProvider, items);
 
     /// <summary>

@@ -43,7 +43,7 @@ public partial class PropertyValidator<T, TProperty> :
     internal readonly ObjectValidator<T> _objectValidator;
 
     /// <inheritdoc cref="IObjectValidator{T}" />
-    /// <remarks>属性级别的对象验证器。</remarks>
+    /// <remarks>属性级别对象验证器。</remarks>
     internal ObjectValidator<TProperty>? _propertyValidator;
 
     /// <summary>
@@ -53,7 +53,7 @@ public partial class PropertyValidator<T, TProperty> :
     /// <param name="objectValidator">
     ///     <see cref="ObjectValidator{T}" />
     /// </param>
-    internal PropertyValidator(Expression<Func<T, TProperty>> selector, ObjectValidator<T> objectValidator)
+    internal PropertyValidator(Expression<Func<T, TProperty?>> selector, ObjectValidator<T> objectValidator)
         : base(null, (objectValidator ?? throw new ArgumentNullException(nameof(objectValidator)))._items)
     {
         // 空检查
@@ -63,7 +63,7 @@ public partial class PropertyValidator<T, TProperty> :
         _objectValidator = objectValidator;
 
         // 初始化 PropertyAnnotationValidator 实例
-        _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector, null, objectValidator._items);
+        _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector!, null, objectValidator._items);
 
         // 同步 IServiceProvider 委托（已在 RuleFor 创建时同步）
         // InitializeServiceProvider(objectValidator._serviceProvider);
@@ -128,7 +128,7 @@ public partial class PropertyValidator<T, TProperty> :
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器
+        // 检查是否设置了属性级别对象验证器
         if (propertyValue is not null && _propertyValidator is not null &&
             !_propertyValidator.IsValid(propertyValue, ruleSets))
         {
@@ -163,7 +163,7 @@ public partial class PropertyValidator<T, TProperty> :
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器
+        // 检查是否设置了属性级别对象验证器
         if (propertyValue is not null && _propertyValidator is not null)
         {
             validationResults.AddRange(_propertyValidator.GetValidationResults(propertyValue, ruleSets) ?? []);
@@ -200,7 +200,7 @@ public partial class PropertyValidator<T, TProperty> :
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了属性级别的对象验证器
+        // 检查是否设置了属性级别对象验证器
         if (propertyValue is not null && _propertyValidator is not null)
         {
             _propertyValidator.Validate(propertyValue, ruleSets);
@@ -229,29 +229,50 @@ public partial class PropertyValidator<T, TProperty> :
     /// <summary>
     ///     设置属性级别对象验证器
     /// </summary>
-    /// <param name="validator">
-    ///     <see cref="ValidatorBase" />
+    /// <param name="validatorFactory">
+    ///     <see cref="ObjectValidator{T}" /> 工厂委托
     /// </param>
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public PropertyValidator<T, TProperty> SetValidator(ObjectValidator<TProperty>? validator)
+    public PropertyValidator<T, TProperty> SetValidator(
+        Func<string?[]?, IDictionary<object, object?>?, ValidatorOptions, ObjectValidator<TProperty>?> validatorFactory)
     {
-        // 空检查（重复调用检查）
-        if (_propertyValidator is not null && validator is not null)
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validatorFactory);
+
+        // 空检查
+        if (_propertyValidator is not null)
         {
             throw new InvalidOperationException(
                 $"An object validator has already been assigned to this property. Only one object validator is allowed per property. To define nested rules, use `{nameof(ChildRules)}` within a single validator.");
         }
 
-        _propertyValidator = validator;
+        // 调用工厂方法，传入当前 RuleSets、_items 和 Options
+        _propertyValidator = validatorFactory(RuleSets, _objectValidator._items, _objectValidator.Options);
+
+        // 继承当前规则集列表
+        _propertyValidator?.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托
         _propertyValidator?.InitializeServiceProvider(_serviceProvider);
 
         return this;
     }
+
+    /// <summary>
+    ///     设置属性级别对象验证器
+    /// </summary>
+    /// <param name="validator">
+    ///     <see cref="ObjectValidator{T}" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public PropertyValidator<T, TProperty> SetValidator(ObjectValidator<TProperty>? validator) =>
+        SetValidator((_, _, _) => validator);
 
     /// <summary>
     ///     为子属性继续配置规则
@@ -266,20 +287,23 @@ public partial class PropertyValidator<T, TProperty> :
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
 
-        // 空检查（重复调用检查）
+        // 空检查
         if (_propertyValidator is not null)
         {
             throw new InvalidOperationException(
                 $"An object validator has already been assigned to this property. `{nameof(ChildRules)}` cannot be applied after `{nameof(SetValidator)}` or another `{nameof(ChildRules)}` call.");
         }
 
-        // 初始化属性级别的对象验证器实例
-        var propertyValidator = new ObjectValidator<TProperty>();
+        return SetValidator((ruleSets, items, options) =>
+        {
+            // 初始化属性级别对象验证器实例
+            var propertyValidator = new ObjectValidator<TProperty>(options, null, items, ruleSets);
 
-        // 调用自定义配置委托
-        configure(propertyValidator);
+            // 调用自定义配置委托
+            configure(propertyValidator);
 
-        return SetValidator(propertyValidator);
+            return propertyValidator;
+        });
     }
 
     /// <summary>
@@ -536,7 +560,7 @@ public partial class PropertyValidator<T, TProperty> :
             }
         }
 
-        // 释放属性级别的对象验证器资源
+        // 释放属性级别对象验证器资源
         if (_propertyValidator is IDisposable propertyValidatorDisposable)
         {
             propertyValidatorDisposable.Dispose();
