@@ -23,35 +23,34 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-namespace Furion.HttpRemote;
+namespace Furion.Validation;
 
-/// <summary>
-///     <see cref="IHttpContentConverter{TResult}" /> 内容处理器基类
-/// </summary>
-/// <typeparam name="TResult">转换的目标类型</typeparam>
-public abstract class HttpContentConverterBase<TResult> : IHttpContentConverter<TResult>, IServiceProvider
+/// <inheritdoc />
+internal sealed class ValidationDataContext : IValidationDataContext
 {
-    /// <inheritdoc />
-    public IServiceProvider? ServiceProvider { get; set; }
+    /// <summary>
+    ///     存储验证数据的内部字典
+    /// </summary>
+    internal readonly Dictionary<object, object?> _items = new();
 
     /// <inheritdoc />
-    public abstract TResult? Read(HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default);
+    public IDictionary<object, object?> Items => _items;
 
     /// <inheritdoc />
-    public abstract Task<TResult?> ReadAsync(HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default);
+    public void SetValue(object key, object? value)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(key);
+
+        _items[key] = value;
+    }
 
     /// <inheritdoc />
-    public virtual object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default) =>
-        Read(httpResponseMessage, cancellationToken);
+    public bool TryGetValue(object key, out object? value)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(key);
 
-    /// <inheritdoc />
-    public virtual async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default) =>
-        await ReadAsync(httpResponseMessage, cancellationToken);
-
-    /// <inheritdoc />
-    public object? GetService(Type serviceType) => ServiceProvider?.GetService(serviceType);
+        return _items.TryGetValue(key, out value);
+    }
 }

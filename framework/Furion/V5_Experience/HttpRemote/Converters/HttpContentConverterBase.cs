@@ -23,15 +23,13 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
 ///     <see cref="IHttpContentConverter{TResult}" /> 内容处理器基类
 /// </summary>
 /// <typeparam name="TResult">转换的目标类型</typeparam>
-public abstract class HttpContentConverterBase<TResult> : IHttpContentConverter<TResult>
+public abstract class HttpContentConverterBase<TResult> : IHttpContentConverter<TResult>, IServiceProvider
 {
     /// <inheritdoc />
     public IServiceProvider? ServiceProvider { get; set; }
@@ -54,12 +52,6 @@ public abstract class HttpContentConverterBase<TResult> : IHttpContentConverter<
         CancellationToken cancellationToken = default) =>
         await ReadAsync(httpResponseMessage, cancellationToken);
 
-    /// <summary>
-    ///     解析服务
-    /// </summary>
-    /// <typeparam name="TService">服务类型</typeparam>
-    /// <returns>
-    ///     <typeparamref name="TService" />
-    /// </returns>
-    public TService? GetService<TService>() where TService : class => ServiceProvider?.GetService<TService>();
+    /// <inheritdoc />
+    public object? GetService(Type serviceType) => ServiceProvider?.GetService(serviceType);
 }

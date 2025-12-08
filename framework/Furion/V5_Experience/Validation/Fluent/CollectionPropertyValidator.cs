@@ -37,7 +37,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     where TElement : class
 {
     /// <inheritdoc cref="IObjectValidator{T}" />
-    /// <remarks>集合元素级别的对象验证器。</remarks>
+    /// <remarks>集合元素对象验证器。</remarks>
     internal ObjectValidator<TElement>? _elementValidator;
 
     /// <inheritdoc />
@@ -47,10 +47,9 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     }
 
     /// <summary>
-    ///     过滤条件
+    ///     元素过滤委托
     /// </summary>
-    /// <remarks>当条件满足时才进行验证。</remarks>
-    internal Func<TElement, ValidationContext<T>, bool>? WhereCondition { get; private set; }
+    internal Func<TElement, ValidationContext<T>, bool>? ElementFilter { get; private set; }
 
     /// <inheritdoc />
     public override bool IsValid(T? instance, params string?[]? ruleSets)
@@ -67,7 +66,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了集合元素级别对象验证器
+        // 检查是否设置了集合元素对象验证器
         if (propertyValue is not null && _elementValidator is not null)
         {
             return GetValidatedElements(propertyValue, instance)
@@ -92,7 +91,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了集合元素级别对象验证器
+        // 检查是否设置了集合元素对象验证器
         if (propertyValue is not null && _elementValidator is not null)
         {
             validationResults.AddRange(GetValidatedElements(propertyValue, instance)
@@ -114,13 +113,13 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 获取属性值
         var propertyValue = GetValue(instance);
 
-        // 检查是否设置了集合元素级别对象验证器
+        // 检查是否设置了集合元素对象验证器
         if (propertyValue is null || _elementValidator is null)
         {
             return;
         }
 
-        // 遍历验证的集合元素
+        // 遍历待验证的集合元素
         foreach (var element in GetValidatedElements(propertyValue, instance))
         {
             _elementValidator.Validate(element, ruleSets);
@@ -128,61 +127,67 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     }
 
     /// <summary>
-    ///     设置过滤条件
+    ///     筛选待验证的集合元素
     /// </summary>
-    /// <remarks>当条件满足时才验证。</remarks>
-    /// <param name="condition">条件委托</param>
+    /// <param name="filter">过滤委托</param>
     /// <returns>
     ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
-    public CollectionPropertyValidator<T, TElement> Where(Func<TElement, bool> condition)
+    public CollectionPropertyValidator<T, TElement> Where(Func<TElement, bool> filter)
     {
         // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
+        ArgumentNullException.ThrowIfNull(filter);
 
-        WhereCondition = (e, _) => condition(e);
+        ElementFilter = (element, _) => filter(element);
 
         return this;
     }
 
     /// <summary>
-    ///     设置过滤条件
+    ///     筛选待验证的集合元素
     /// </summary>
-    /// <remarks>当条件满足时才验证。</remarks>
-    /// <param name="condition">条件委托</param>
+    /// <param name="filter">过滤委托</param>
     /// <returns>
     ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
-    public CollectionPropertyValidator<T, TElement> Where(Func<TElement, ValidationContext<T>, bool> condition)
+    public CollectionPropertyValidator<T, TElement> Where(Func<TElement, ValidationContext<T>, bool> filter)
     {
         // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
+        ArgumentNullException.ThrowIfNull(filter);
 
-        WhereCondition = condition;
+        ElementFilter = filter;
 
         return this;
     }
 
     /// <summary>
-    ///     设置集合元素级别对象验证器
+    ///     设置集合元素对象验证器
     /// </summary>
-    /// <param name="validator">
-    ///     <see cref="ValidatorBase" />
+    /// <param name="validatorFactory">
+    ///     <see cref="ObjectValidator{T}" /> 工厂委托
     /// </param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public PropertyValidator<T, IEnumerable<TElement>?> SetValidator(ObjectValidator<TElement>? validator)
+    public CollectionPropertyValidator<T, TElement> SetValidator(
+        Func<string?[]?, IDictionary<object, object?>?, ValidatorOptions, ObjectValidator<TElement>?> validatorFactory)
     {
-        // 空检查（重复调用检查）
-        if (_elementValidator is not null && validator is not null)
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validatorFactory);
+
+        // 空检查
+        if (_elementValidator is not null)
         {
             throw new InvalidOperationException(
                 $"An object validator has already been assigned to this element. Only one object validator is allowed per element. To define nested rules, use `{nameof(ChildRules)}` within a single validator.");
         }
 
-        _elementValidator = validator;
+        // 调用工厂方法，传入当前 RuleSets、_items 和 Options
+        _elementValidator = validatorFactory(RuleSets, _objectValidator._items, _objectValidator.Options);
+
+        // 继承当前规则集列表
+        _elementValidator?.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托
         _elementValidator?.InitializeServiceProvider(_serviceProvider);
@@ -190,34 +195,49 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         return this;
     }
 
+    /// <summary>
+    ///     设置集合元素对象验证器
+    /// </summary>
+    /// <param name="validator">
+    ///     <see cref="ObjectValidator{T}" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="CollectionPropertyValidator{T,TElement}" />
+    /// </returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public CollectionPropertyValidator<T, TElement> SetValidator(ObjectValidator<TElement>? validator) =>
+        SetValidator((_, _, _) => validator);
 
     /// <summary>
     ///     为集合元素继续配置规则
     /// </summary>
     /// <param name="configure">自定义配置委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public PropertyValidator<T, IEnumerable<TElement>?> ChildRules(Action<ObjectValidator<TElement>> configure)
+    public CollectionPropertyValidator<T, TElement> ChildRules(Action<ObjectValidator<TElement>> configure)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
 
-        // 空检查（重复调用检查）
+        // 空检查
         if (_elementValidator is not null)
         {
             throw new InvalidOperationException(
                 $"An object validator has already been assigned to this element. `{nameof(ChildRules)}` cannot be applied after `{nameof(SetValidator)}` or another `{nameof(ChildRules)}` call.");
         }
 
-        // 初始化集合元素级别对象验证器实例
-        var elementValidator = new ObjectValidator<TElement>();
+        return SetValidator((ruleSets, items, options) =>
+        {
+            // 初始化集合元素对象验证器实例
+            var elementValidator = new ObjectValidator<TElement>(options, null, items, ruleSets);
 
-        // 调用自定义配置委托
-        configure(elementValidator);
+            // 调用自定义配置委托
+            configure(elementValidator);
 
-        return SetValidator(elementValidator);
+            return elementValidator;
+        });
     }
 
     /// <inheritdoc />
@@ -236,7 +256,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 调用基类 Dispose 方法
         base.Dispose(disposing);
 
-        // 释放集合元素级别对象验证器资源
+        // 释放集合元素对象验证器资源
         if (_elementValidator is IDisposable disposable)
         {
             disposable.Dispose();
@@ -244,7 +264,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     }
 
     /// <summary>
-    ///     获取验证的集合元素
+    ///     筛选待验证的集合元素
     /// </summary>
     /// <param name="elements">
     ///     <see cref="IEnumerable{T}" />
@@ -256,7 +276,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     internal IEnumerable<TElement> GetValidatedElements(IEnumerable<TElement> elements, T instance)
     {
         // 空检查
-        if (WhereCondition is null)
+        if (ElementFilter is null)
         {
             return elements;
         }
@@ -264,6 +284,6 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 创建 ValidationContext<T> 实例
         var context = CreateValidationContext(instance);
 
-        return elements.Where(element => WhereCondition(element, context));
+        return elements.Where(element => ElementFilter(element, context));
     }
 }
