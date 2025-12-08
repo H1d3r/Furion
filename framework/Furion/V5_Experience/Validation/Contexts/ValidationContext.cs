@@ -29,7 +29,7 @@ namespace Furion.Validation;
 ///     验证上下文
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public sealed class ValidationContext<T> : IValidatorInitializer
+public sealed class ValidationContext<T> : IValidatorInitializer, IServiceProvider
 {
     /// <summary>
     ///     <see cref="IServiceProvider" /> 委托
@@ -71,9 +71,6 @@ public sealed class ValidationContext<T> : IValidatorInitializer
     /// </summary>
     public IReadOnlyDictionary<object, object?> Items { get; }
 
-    /// <inheritdoc />
-    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
-
     /// <summary>
     ///     解析服务
     /// </summary>
@@ -83,12 +80,6 @@ public sealed class ValidationContext<T> : IValidatorInitializer
     /// </returns>
     public object? GetService(Type serviceType) => _serviceProvider?.Invoke(serviceType);
 
-    /// <summary>
-    ///     解析服务
-    /// </summary>
-    /// <typeparam name="TService">服务类型</typeparam>
-    /// <returns>
-    ///     <typeparamref name="TService" />
-    /// </returns>
-    public TService? GetService<TService>() where TService : class => (TService?)GetService(typeof(TService));
+    /// <inheritdoc />
+    public void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
 }

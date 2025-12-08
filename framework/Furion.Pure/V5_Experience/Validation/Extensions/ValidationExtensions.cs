@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 
 namespace Furion.Validation;
@@ -70,6 +71,26 @@ public static class ValidationExtensions
         validationContext.Items[Constants.RULESETS_KEY] = ruleSets;
 
         return validationContext;
+    }
+
+    /// <summary>
+    ///     获取验证上下文数据
+    /// </summary>
+    /// <param name="validationContext">
+    ///     <see cref="ValidationContext" />
+    /// </param>
+    /// <param name="key">键</param>
+    /// <param name="value">数据</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    public static bool TryGetValue(this ValidationContext validationContext, object key, out object? value)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validationContext);
+        ArgumentNullException.ThrowIfNull(key);
+
+        return validationContext.Items.TryGetValue(key, out value);
     }
 
     /// <summary>
@@ -136,9 +157,20 @@ public static class ValidationExtensions
 
         // 尝试从 Items 中解析规则集列表
         string?[]? ruleSets = null;
-        if (validationContext.Items.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsObj))
+        if (validationContext.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsObj))
         {
             ruleSets = ruleSetsObj as string?[] ?? (ruleSetsObj is string ruleSet ? [ruleSet] : null);
+        }
+        else
+        {
+            // 解析 IValidationDataContext 服务
+            var validationDataContext = validationContext.GetService<IValidationDataContext>();
+
+            // 尝试从验证数据上下文服务中读取
+            if (validationDataContext?.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsData) == true)
+            {
+                ruleSets = ruleSetsData as string?[] ?? (ruleSetsData is string ruleSet ? [ruleSet] : null);
+            }
         }
 
         // 初始化验证结果集合
