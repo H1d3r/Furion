@@ -66,15 +66,8 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
     }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        // 检查验证器是否实现 IValidatorInitializer 接口
-        if (Validator is IValidatorInitializer initializer)
-        {
-            // 同步 IServiceProvider 委托
-            initializer.InitializeServiceProvider(serviceProvider);
-        }
-    }
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <summary>
     ///     配置验证器实例
@@ -151,6 +144,17 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
         // 设置验证器实例属性值
         validatorProperty.SetValue(Validator, eventArgs.PropertyValue);
     }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 检查验证器是否实现 IValidatorInitializer 接口
+        if (Validator is IValidatorInitializer initializer)
+        {
+            // 同步 IServiceProvider 委托
+            initializer.InitializeServiceProvider(serviceProvider);
+        }
+    }
 }
 
 /// <summary>
@@ -214,19 +218,8 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IVal
     }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        // 遍历所有验证器并尝试同步 IServiceProvider 委托
-        foreach (var validator in _validatorCache.Values)
-        {
-            // 检查验证器是否实现 IValidatorInitializer 接口
-            if (validator is IValidatorInitializer initializer)
-            {
-                // 同步 IServiceProvider 委托
-                initializer.InitializeServiceProvider(serviceProvider);
-            }
-        }
-    }
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <summary>
     ///     配置验证器实例
@@ -388,5 +381,20 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IVal
 
         // 清除缓存以确保新实例获取最新属性
         _validatorCache.Clear();
+    }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
+        foreach (var validator in _validatorCache.Values)
+        {
+            // 检查验证器是否实现 IValidatorInitializer 接口
+            if (validator is IValidatorInitializer initializer)
+            {
+                // 同步 IServiceProvider 委托
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
+        }
     }
 }

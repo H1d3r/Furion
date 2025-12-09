@@ -86,19 +86,8 @@ public class CompositeValidator : ValidatorBase, IValidatorInitializer, IDisposa
     }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        // 遍历所有验证器并尝试同步 IServiceProvider 委托
-        foreach (var validator in Validators)
-        {
-            // 检查验证器是否实现 IValidatorInitializer 接口
-            if (validator is IValidatorInitializer initializer)
-            {
-                // 同步 IServiceProvider 委托
-                initializer.InitializeServiceProvider(serviceProvider);
-            }
-        }
-    }
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>
@@ -275,6 +264,21 @@ public class CompositeValidator : ValidatorBase, IValidatorInitializer, IDisposa
         else
         {
             _validators.Add(validator);
+        }
+    }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
+        foreach (var validator in Validators)
+        {
+            // 检查验证器是否实现 IValidatorInitializer 接口
+            if (validator is IValidatorInitializer initializer)
+            {
+                // 同步 IServiceProvider 委托
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
         }
     }
 }

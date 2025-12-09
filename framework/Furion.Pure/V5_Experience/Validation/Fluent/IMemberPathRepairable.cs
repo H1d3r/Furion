@@ -26,13 +26,12 @@
 namespace Furion.Validation;
 
 /// <summary>
-///     验证器的初始化行为接口
+///     支持成员路径修复的验证器
 /// </summary>
-public interface IValidatorInitializer
+public interface IMemberPathRepairable
 {
     /// <summary>
-    ///     同步 <see cref="IServiceProvider" /> 委托
+    ///     修复验证器及其子验证器的成员路径
     /// </summary>
-    /// <param name="serviceProvider"><see cref="IServiceProvider" /> 委托</param>
-    void InitializeServiceProvider(Func<Type, object?>? serviceProvider);
+    void RepairMemberPaths();
 }

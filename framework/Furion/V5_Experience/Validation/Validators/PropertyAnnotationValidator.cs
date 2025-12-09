@@ -176,8 +176,8 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitia
     public PropertyInfo Property { get; }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
-        _serviceProvider = serviceProvider;
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <inheritdoc />
     public override bool IsValid(T? instance)
@@ -290,4 +290,7 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitia
 
         return validationContext;
     }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
 }

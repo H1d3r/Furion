@@ -167,14 +167,14 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
             return this;
         }
 
-        // 设置当前属性路径
-        _elementValidator.MemberPath = GetMemberName();
-
         // 继承当前规则集列表
         _elementValidator.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托
         _elementValidator.InitializeServiceProvider(_serviceProvider);
+
+        // 修复整个子验证器树的成员路径
+        RepairMemberPaths();
 
         return this;
     }
@@ -222,16 +222,6 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
 
             return elementValidator;
         });
-    }
-
-    /// <inheritdoc />
-    public override void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        // 同步基类 IServiceProvider 委托
-        base.InitializeServiceProvider(serviceProvider);
-
-        // 同步 _elementValidator 实例 IServiceProvider 委托
-        _elementValidator?.InitializeServiceProvider(serviceProvider);
     }
 
     /// <inheritdoc />
@@ -284,6 +274,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
+        ArgumentNullException.ThrowIfNull(action);
 
         // 检查是否设置了集合元素对象验证器
         if (_elementValidator is null)
@@ -300,7 +291,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
 
         // 获取原始属性路径
         var originalPath = _elementValidator.MemberPath;
-        var baseMemberName = originalPath ?? GetMemberName();
+        var baseMemberName = originalPath ?? GetMemberPath();
 
         try
         {
@@ -327,5 +318,39 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         }
 
         return true;
+    }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal new void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 同步基类 IServiceProvider 委托
+        base.InitializeServiceProvider(serviceProvider);
+
+        // 同步 _elementValidator 实例 IServiceProvider 委托
+        _elementValidator?.InitializeServiceProvider(serviceProvider);
+    }
+
+    /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
+    internal new void RepairMemberPaths()
+    {
+        // 空检查
+        if (_elementValidator is null)
+        {
+            return;
+        }
+
+        // 设置元素验证器的基础路径
+        _elementValidator.MemberPath = GetMemberPath();
+
+        // 递归修复元素验证器内部的所有子验证器
+        foreach (var childValidator in _elementValidator.Validators)
+        {
+            // 检查验证器是否实现 IMemberPathRepairable 接口
+            if (childValidator is IMemberPathRepairable repairable)
+            {
+                // 修复验证器及其子验证器的成员路径
+                repairable.RepairMemberPaths();
+            }
+        }
     }
 }

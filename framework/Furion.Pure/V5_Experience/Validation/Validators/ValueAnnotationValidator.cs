@@ -106,8 +106,8 @@ public class ValueAnnotationValidator : ValidatorBase, IValidatorInitializer
     public ValidationAttribute[] Attributes { get; }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
-        _serviceProvider = serviceProvider;
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>
@@ -174,4 +174,7 @@ public class ValueAnnotationValidator : ValidatorBase, IValidatorInitializer
 
         return validationContext;
     }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
 }
