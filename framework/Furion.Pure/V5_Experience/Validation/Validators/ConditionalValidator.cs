@@ -89,77 +89,55 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, 
     /// <inheritdoc />
     public override bool IsValid(T? instance)
     {
-        // 遍历并查找第一个条件匹配的验证器集合
-        foreach (var (condition, validators) in _conditions)
-        {
-            if (condition(instance!))
-            {
-                return validators.All(u => u.IsValid(instance));
-            }
-        }
+        // 获取匹配到的验证器集合
+        var matchedValidators = GetMatchedValidators(instance);
 
-        // 没有匹配条件时使用默认验证器集合
-        return _defaultValidators is null || _defaultValidators.All(u => u.IsValid(instance));
+        return matchedValidators is null or { Count: 0 } || matchedValidators.All(u => u.IsValid(instance));
     }
 
     /// <inheritdoc />
-    public override List<ValidationResult>? GetValidationResults(T? instance, string name)
+    public override List<ValidationResult>? GetValidationResults(T? instance, string name,
+        IEnumerable<string>? memberNames = null)
     {
-        // 初始化匹配到的验证器集合
-        IReadOnlyList<ValidatorBase>? matchedValidators = null;
+        // 获取匹配到的验证器集合和成员名称列表
+        var matchedValidators = GetMatchedValidators(instance);
 
-        // 遍历并查找第一个条件匹配的验证器集合
-        foreach (var (condition, validators) in _conditions)
+        // 空检查
+        if (matchedValidators is null or { Count: 0 })
         {
-            // ReSharper disable once InvertIf
-            if (condition(instance!))
-            {
-                matchedValidators = validators;
-                break;
-            }
+            return null;
         }
 
-        // 没有匹配条件时使用默认验证器集合
-        matchedValidators ??= _defaultValidators;
+        // 获取成员名称列表
+        var memberNameList = memberNames?.ToList();
 
         // 获取验证结果集合
-        var validationResults =
-            matchedValidators?.SelectMany(u => u.GetValidationResults(instance, name) ?? []).ToList();
+        var validationResults = matchedValidators
+            .SelectMany(u => u.GetValidationResults(instance, name, memberNameList) ?? []).ToList();
 
         // 如果验证未通过且配置了自定义错误信息，则在首部添加自定义错误信息
-        if (validationResults?.Count > 0 && (string?)ErrorMessageString is not null)
+        if (validationResults.Count > 0 && (string?)ErrorMessageString is not null)
         {
-            validationResults.Insert(0, new ValidationResult(FormatErrorMessage(name), [name]));
+            validationResults.Insert(0, new ValidationResult(FormatErrorMessage(name), memberNameList));
         }
 
         return validationResults.ToResults();
     }
 
     /// <inheritdoc />
-    public override void Validate(T? instance, string name)
+    public override void Validate(T? instance, string name, IEnumerable<string>? memberNames = null)
     {
-        // 初始化匹配到的验证器集合
-        IReadOnlyList<ValidatorBase>? matchedValidators = null;
-
-        // 遍历并查找第一个条件匹配的验证器集合
-        foreach (var (condition, validators) in _conditions)
-        {
-            // ReSharper disable once InvertIf
-            if (condition(instance!))
-            {
-                matchedValidators = validators;
-                break;
-            }
-        }
-
-        // 没有匹配条件时使用默认验证器集合
-        matchedValidators ??= _defaultValidators;
+        // 获取匹配到的验证器集合
+        var matchedValidators = GetMatchedValidators(instance);
 
         // 空检查
-        if (matchedValidators is null)
+        if (matchedValidators is null or { Count: 0 })
         {
             return;
         }
+
+        // 获取成员名称列表
+        var memberNameList = memberNames?.ToList();
 
         // 遍历验证器集合
         foreach (var validator in matchedValidators)
@@ -167,7 +145,7 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, 
             // 检查对象合法性
             if (!validator.IsValid(instance))
             {
-                ThrowValidationException(instance, name, validator);
+                ThrowValidationException(instance, name, validator, memberNameList);
             }
         }
     }
@@ -184,8 +162,10 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, 
     /// <param name="validator">
     ///     <see cref="ValidatorBase" />
     /// </param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <exception cref="ValidationException"></exception>
-    internal void ThrowValidationException(object? value, string name, ValidatorBase validator)
+    internal void ThrowValidationException(object? value, string name, ValidatorBase validator,
+        IEnumerable<string>? memberNames = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validator);
@@ -193,11 +173,12 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, 
         // 检查是否配置了自定义错误信息
         if ((string?)ErrorMessageString is null)
         {
-            validator.Validate(value, name);
+            validator.Validate(value, name, memberNames);
         }
         else
         {
-            throw new ValidationException(new ValidationResult(FormatErrorMessage(name), [name]), null, value);
+            throw new ValidationException(new ValidationResult(FormatErrorMessage(name), memberNames), null,
+                value);
         }
     }
 
@@ -220,5 +201,34 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, 
                 disposable.Dispose();
             }
         }
+    }
+
+    /// <summary>
+    ///     获取匹配到的验证器集合
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <returns>
+    ///     <see cref="IReadOnlyList{T}" />
+    /// </returns>
+    internal IReadOnlyList<ValidatorBase>? GetMatchedValidators(T? instance)
+    {
+        // 初始化匹配到的验证器集合
+        IReadOnlyList<ValidatorBase>? matchedValidators = null;
+
+        // 遍历并查找第一个条件匹配的验证器集合
+        foreach (var (condition, validators) in _conditions)
+        {
+            // ReSharper disable once InvertIf
+            if (condition(instance!))
+            {
+                matchedValidators = validators;
+                break;
+            }
+        }
+
+        // 没有匹配条件时使用默认验证器集合
+        matchedValidators ??= _defaultValidators;
+
+        return matchedValidators;
     }
 }

@@ -77,29 +77,35 @@ public abstract class ValidatorBase<T> : ValidatorBase
     /// </summary>
     /// <param name="instance">对象</param>
     /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <returns>
     ///     <see cref="List{T}" />
     /// </returns>
-    public virtual List<ValidationResult>? GetValidationResults(T? instance, string name) =>
-        base.GetValidationResults(instance, name);
+    public virtual List<ValidationResult>? GetValidationResults(T? instance, string name,
+        IEnumerable<string>? memberNames = null) =>
+        base.GetValidationResults(instance, name, memberNames);
 
     /// <summary>
     ///     验证指定的对象
     /// </summary>
     /// <param name="instance">对象</param>
     /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <exception cref="ValidationException"></exception>
-    public virtual void Validate(T? instance, string name) => base.Validate(instance, name);
+    public virtual void Validate(T? instance, string name, IEnumerable<string>? memberNames = null) =>
+        base.Validate(instance, name, memberNames);
 
     /// <inheritdoc />
     public sealed override bool IsValid(object? value) => IsValid(ConvertValue(value));
 
     /// <inheritdoc />
-    public sealed override List<ValidationResult>? GetValidationResults(object? value, string name) =>
-        GetValidationResults(ConvertValue(value), name);
+    public sealed override List<ValidationResult>? GetValidationResults(object? value, string name,
+        IEnumerable<string>? memberNames = null) =>
+        GetValidationResults(ConvertValue(value), name, memberNames);
 
     /// <inheritdoc />
-    public sealed override void Validate(object? value, string name) => Validate(ConvertValue(value), name);
+    public sealed override void Validate(object? value, string name, IEnumerable<string>? memberNames = null) =>
+        Validate(ConvertValue(value), name, memberNames);
 
     /// <summary>
     ///     将 <see cref="object" /> 类型对象转换为 <typeparamref name="T" /> 类型对象
@@ -261,24 +267,27 @@ public abstract class ValidatorBase
     /// </summary>
     /// <param name="value">对象</param>
     /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <returns>
     ///     <see cref="List{T}" />
     /// </returns>
-    public virtual List<ValidationResult>? GetValidationResults(object? value, string name) =>
-        IsValid(value) ? null : [new ValidationResult(FormatErrorMessage(name), [name])];
+    public virtual List<ValidationResult>? GetValidationResults(object? value, string name,
+        IEnumerable<string>? memberNames = null) =>
+        IsValid(value) ? null : [new ValidationResult(FormatErrorMessage(name), memberNames)];
 
     /// <summary>
     ///     验证指定的对象
     /// </summary>
     /// <param name="value">对象</param>
     /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <exception cref="ValidationException"></exception>
-    public virtual void Validate(object? value, string name)
+    public virtual void Validate(object? value, string name, IEnumerable<string>? memberNames = null)
     {
         // 检查对象合法性
         if (!IsValid(value))
         {
-            throw new ValidationException(new ValidationResult(FormatErrorMessage(name), [name]), null, value);
+            throw new ValidationException(new ValidationResult(FormatErrorMessage(name), memberNames), null, value);
         }
     }
 

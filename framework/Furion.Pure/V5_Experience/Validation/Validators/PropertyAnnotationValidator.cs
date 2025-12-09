@@ -185,52 +185,53 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitia
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        return Validator.TryValidateProperty(GetValue(instance), CreateValidationContext(instance, Property.Name),
-            null);
+        return Validator.TryValidateProperty(GetValue(instance), CreateValidationContext(instance, null), null);
     }
 
     /// <inheritdoc />
-    public override List<ValidationResult>? GetValidationResults(T? instance, string name)
+    public override List<ValidationResult>? GetValidationResults(T? instance, string name,
+        IEnumerable<string>? memberNames = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        // 获取属性名称和显示名称
-        var propertyName = Property.Name;
+        // 获取显示名称
         var displayName = GetDisplayName(name);
+
         // 初始化验证结果集合
         var validationResults = new List<ValidationResult>();
 
-        Validator.TryValidateProperty(GetValue(instance), CreateValidationContext(instance, propertyName),
+        Validator.TryValidateProperty(GetValue(instance), CreateValidationContext(instance, displayName),
             validationResults);
 
         // 如果验证未通过且配置了自定义错误信息，则在首部添加自定义错误信息
         if (validationResults.Count > 0 && (string?)ErrorMessageString is not null)
         {
-            validationResults.Insert(0, new ValidationResult(FormatErrorMessage(displayName), [propertyName]));
+            validationResults.Insert(0,
+                new ValidationResult(FormatErrorMessage(displayName), memberNames ?? [Property.Name]));
         }
 
         return validationResults.ToResults();
     }
 
     /// <inheritdoc />
-    public override void Validate(T? instance, string name)
+    public override void Validate(T? instance, string name, IEnumerable<string>? memberNames = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        // 获取属性名称和显示名称
-        var propertyName = Property.Name;
+        // 获取显示名称
         var displayName = GetDisplayName(name);
 
         try
         {
-            Validator.ValidateProperty(GetValue(instance), CreateValidationContext(instance, propertyName));
+            Validator.ValidateProperty(GetValue(instance), CreateValidationContext(instance, displayName));
         }
         // 如果验证未通过且配置了自定义错误信息，则重新抛出异常
         catch (ValidationException e) when (ErrorMessageString is not null)
         {
-            throw new ValidationException(new ValidationResult(FormatErrorMessage(displayName), [propertyName]),
+            throw new ValidationException(
+                new ValidationResult(FormatErrorMessage(displayName), memberNames ?? e.ValidationResult.MemberNames),
                 e.ValidationAttribute, e.Value) { Source = e.Source };
         }
     }
@@ -269,14 +270,20 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitia
     ///     创建 <see cref="ValidationContext" /> 实例
     /// </summary>
     /// <param name="value">对象</param>
-    /// <param name="memberName">成员名称</param>
+    /// <param name="name">显示名称</param>
     /// <returns>
     ///     <see cref="ValidationContext" />
     /// </returns>
-    internal ValidationContext CreateValidationContext(object value, string? memberName)
+    internal ValidationContext CreateValidationContext(object value, string? name)
     {
         // 初始化 ValidationContext 实例
-        var validationContext = new ValidationContext(value, null, _items) { MemberName = memberName };
+        var validationContext = new ValidationContext(value, null, _items) { MemberName = Property.Name };
+
+        // 空检查
+        if (name is not null)
+        {
+            validationContext.DisplayName = name;
+        }
 
         // 同步 IServiceProvider 委托
         validationContext.InitializeServiceProvider(_serviceProvider!);

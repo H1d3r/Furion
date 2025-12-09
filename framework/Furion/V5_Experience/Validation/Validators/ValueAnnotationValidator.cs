@@ -33,6 +33,11 @@ namespace Furion.Validation;
 public class ValueAnnotationValidator : ValidatorBase, IValidatorInitializer
 {
     /// <summary>
+    ///     用于值验证的 <see cref="ValidationContext" /> 占位对象
+    /// </summary>
+    internal static readonly object _sentinel = new();
+
+    /// <summary>
     ///     验证上下文数据
     /// </summary>
     internal readonly IDictionary<object, object?>? _items;
@@ -106,69 +111,63 @@ public class ValueAnnotationValidator : ValidatorBase, IValidatorInitializer
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>
-        Validator.TryValidateValue(value, CreateValidationContext(new object(), null), null, Attributes);
+        Validator.TryValidateValue(value, CreateValidationContext(_sentinel, null), null, Attributes);
 
     /// <inheritdoc />
-    public override List<ValidationResult>? GetValidationResults(object? value, string name)
+    public override List<ValidationResult>? GetValidationResults(object? value, string name,
+        IEnumerable<string>? memberNames = null)
     {
-        // 初始化属性名称和验证结果集合
-        var (memberName, validationResults) = (GetMemberName(name), new List<ValidationResult>());
+        // 初始化验证结果集合和成员名称列表
+        var validationResults = new List<ValidationResult>();
 
-        Validator.TryValidateValue(value, CreateValidationContext(new object(), memberName), validationResults,
-            Attributes);
+        Validator.TryValidateValue(value, CreateValidationContext(_sentinel, name), validationResults, Attributes);
 
         // 如果验证未通过且配置了自定义错误信息，则在首部添加自定义错误信息
         if (validationResults.Count > 0 && (string?)ErrorMessageString is not null)
         {
-            validationResults.Insert(0, new ValidationResult(FormatErrorMessage(memberName), [memberName]));
+            validationResults.Insert(0, new ValidationResult(FormatErrorMessage(name), memberNames));
         }
 
         return validationResults.ToResults();
     }
 
     /// <inheritdoc />
-    public override void Validate(object? value, string name)
+    public override void Validate(object? value, string name, IEnumerable<string>? memberNames = null)
     {
-        // 获取显示名称
-        var memberName = GetMemberName(name);
-
         try
         {
-            Validator.ValidateValue(value, CreateValidationContext(new object(), memberName), Attributes);
+            Validator.ValidateValue(value, CreateValidationContext(_sentinel, name), Attributes);
         }
         // 如果验证未通过且配置了自定义错误信息，则重新抛出异常
         catch (ValidationException e) when (ErrorMessageString is not null)
         {
-            throw new ValidationException(new ValidationResult(FormatErrorMessage(memberName), [memberName]),
+            throw new ValidationException(new ValidationResult(FormatErrorMessage(name), memberNames),
                 e.ValidationAttribute, e.Value) { Source = e.Source };
         }
     }
 
     /// <inheritdoc />
     public override string? FormatErrorMessage(string name) =>
-        (string?)ErrorMessageString is null ? null : base.FormatErrorMessage(GetMemberName(name));
-
-    /// <summary>
-    ///     获取显示名称
-    /// </summary>
-    /// <param name="name">显示名称</param>
-    /// <returns>
-    ///     <see cref="string" />
-    /// </returns>
-    internal static string GetMemberName(string name) => string.IsNullOrEmpty(name) ? "Value" : name;
+        (string?)ErrorMessageString is null ? null : base.FormatErrorMessage(name);
 
     /// <summary>
     ///     创建 <see cref="ValidationContext" /> 实例
     /// </summary>
     /// <param name="value">对象</param>
-    /// <param name="memberName">成员名称</param>
+    /// <param name="name">显示名称</param>
     /// <returns>
     ///     <see cref="ValidationContext" />
     /// </returns>
-    internal ValidationContext CreateValidationContext(object value, string? memberName)
+    internal ValidationContext CreateValidationContext(object value, string? name)
     {
         // 初始化 ValidationContext 实例
-        var validationContext = new ValidationContext(value, null, _items) { MemberName = memberName };
+        var validationContext = new ValidationContext(value, null, _items);
+
+        // 空检查
+        if (name is not null)
+        {
+            validationContext.DisplayName = name;
+        }
 
         // 同步 IServiceProvider 委托
         validationContext.InitializeServiceProvider(_serviceProvider!);
