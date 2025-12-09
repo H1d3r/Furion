@@ -58,22 +58,8 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         ArgumentNullException.ThrowIfNull(instance);
 
         // 调用基类 IsValid 方法
-        if (!base.IsValid(instance, ruleSets))
-        {
-            return false;
-        }
-
-        // 获取属性值
-        var propertyValue = GetValue(instance);
-
-        // 检查是否设置了集合元素对象验证器
-        if (propertyValue is not null && _elementValidator is not null)
-        {
-            return GetValidatedElements(propertyValue, instance)
-                .All(element => _elementValidator.IsValid(element, ruleSets));
-        }
-
-        return true;
+        return base.IsValid(instance, ruleSets) &&
+               ForEachValidatedElement(instance, element => _elementValidator!.IsValid(element, ruleSets));
     }
 
     /// <inheritdoc />
@@ -88,15 +74,12 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 调用基类 GetValidationResults 方法
         validationResults.AddRange(base.GetValidationResults(instance, ruleSets) ?? []);
 
-        // 获取属性值
-        var propertyValue = GetValue(instance);
-
-        // 检查是否设置了集合元素对象验证器
-        if (propertyValue is not null && _elementValidator is not null)
+        // 获取集合并遍历待验证的元素
+        ForEachValidatedElement(instance, element =>
         {
-            validationResults.AddRange(GetValidatedElements(propertyValue, instance)
-                .SelectMany(element => _elementValidator.GetValidationResults(element, ruleSets) ?? []));
-        }
+            validationResults.AddRange(_elementValidator!.GetValidationResults(element, ruleSets) ?? []);
+            return true;
+        });
 
         return validationResults.ToResults();
     }
@@ -110,20 +93,12 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 调用基类 Validate 方法
         base.Validate(instance, ruleSets);
 
-        // 获取属性值
-        var propertyValue = GetValue(instance);
-
-        // 检查是否设置了集合元素对象验证器
-        if (propertyValue is null || _elementValidator is null)
+        // 获取集合并遍历待验证的元素
+        ForEachValidatedElement(instance, element =>
         {
-            return;
-        }
-
-        // 遍历待验证的集合元素
-        foreach (var element in GetValidatedElements(propertyValue, instance))
-        {
-            _elementValidator.Validate(element, ruleSets);
-        }
+            _elementValidator!.Validate(element, ruleSets);
+            return true;
+        });
     }
 
     /// <summary>
@@ -186,11 +161,20 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 调用工厂方法，传入当前 RuleSets、_items 和 Options
         _elementValidator = validatorFactory(RuleSets, _objectValidator._items, _objectValidator.Options);
 
+        // 空检查
+        if (_elementValidator is null)
+        {
+            return this;
+        }
+
+        // 设置当前属性路径
+        _elementValidator.MemberPath = GetMemberName();
+
         // 继承当前规则集列表
-        _elementValidator?.SetInheritedRuleSetsIfNotSet(RuleSets);
+        _elementValidator.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托
-        _elementValidator?.InitializeServiceProvider(_serviceProvider);
+        _elementValidator.InitializeServiceProvider(_serviceProvider);
 
         return this;
     }
@@ -285,5 +269,63 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         var context = CreateValidationContext(instance);
 
         return elements.Where(element => ElementFilter(element, context));
+    }
+
+    /// <summary>
+    ///     获取集合并遍历待验证的元素
+    /// </summary>
+    /// <remarks>内部为每个元素设置带索引的成员路径（如 "Addresses[0]"），然后执行验证操作。支持短路退出：若操作返回 <c>false</c>，则立即终止遍历。</remarks>
+    /// <param name="instance">对象</param>
+    /// <param name="action">元素处理委托</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal bool ForEachValidatedElement(T instance, Func<TElement, bool> action)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(instance);
+
+        // 检查是否设置了集合元素对象验证器
+        if (_elementValidator is null)
+        {
+            return true;
+        }
+
+        // 获取属性值
+        var propertyValue = GetValue(instance);
+        if (propertyValue is null)
+        {
+            return true;
+        }
+
+        // 获取原始属性路径
+        var originalPath = _elementValidator.MemberPath;
+        var baseMemberName = originalPath ?? GetMemberName();
+
+        try
+        {
+            // 遍历待验证的集合元素
+            var index = 0;
+            foreach (var element in GetValidatedElements(propertyValue, instance))
+            {
+                // 设置当前属性路径
+                _elementValidator.MemberPath = $"{baseMemberName}[{index}]";
+
+                // 调用元素处理委托
+                if (!action(element))
+                {
+                    return false;
+                }
+
+                index++;
+            }
+        }
+        finally
+        {
+            // 恢复原始属性路径
+            _elementValidator.MemberPath = originalPath;
+        }
+
+        return true;
     }
 }

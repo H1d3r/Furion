@@ -150,14 +150,15 @@ public partial class PropertyValidator<T, TProperty> :
             return null;
         }
 
-        // 获取显示名称和初始化验证结果集合
-        var displayName = GetDisplayName();
+        // 获取显示名称、成员名称和初始化验证结果集合
+        var (displayName, memberName) = (GetDisplayName(), GetMemberName());
         var validationResults = new List<ValidationResult>();
 
         // 检查是否启用属性验证特性验证
         if (ShouldRunAnnotationValidation())
         {
-            validationResults.AddRange(_annotationValidator.GetValidationResults(instance, displayName) ?? []);
+            validationResults.AddRange(_annotationValidator.GetValidationResults(instance, displayName, [memberName]) ??
+                                       []);
         }
 
         // 获取属性值
@@ -171,7 +172,7 @@ public partial class PropertyValidator<T, TProperty> :
 
         // 获取所有验证器验证结果集合
         validationResults.AddRange(Validators.SelectMany(u =>
-            u.GetValidationResults(GetValidationValue(instance, u, propertyValue), displayName) ?? []));
+            u.GetValidationResults(GetValidationValue(instance, u, propertyValue), displayName, [memberName]) ?? []));
 
         return validationResults.ToResults();
     }
@@ -189,12 +190,12 @@ public partial class PropertyValidator<T, TProperty> :
         }
 
         // 获取显示名称
-        var displayName = GetDisplayName();
+        var (displayName, memberName) = (GetDisplayName(), GetMemberName());
 
         // 检查是否启用属性验证特性验证
         if (ShouldRunAnnotationValidation())
         {
-            _annotationValidator.Validate(instance, displayName);
+            _annotationValidator.Validate(instance, displayName, [memberName]);
         }
 
         // 获取属性值
@@ -209,7 +210,7 @@ public partial class PropertyValidator<T, TProperty> :
         // 遍历验证器集合
         foreach (var validator in Validators)
         {
-            validator.Validate(GetValidationValue(instance, validator, propertyValue), displayName);
+            validator.Validate(GetValidationValue(instance, validator, propertyValue), displayName, [memberName]);
         }
     }
 
@@ -252,11 +253,20 @@ public partial class PropertyValidator<T, TProperty> :
         // 调用工厂方法，传入当前 RuleSets、_items 和 Options
         _propertyValidator = validatorFactory(RuleSets, _objectValidator._items, _objectValidator.Options);
 
+        // 空检查
+        if (_propertyValidator is null)
+        {
+            return this;
+        }
+
+        // 设置当前属性路径
+        _propertyValidator.MemberPath = GetMemberName();
+
         // 继承当前规则集列表
-        _propertyValidator?.SetInheritedRuleSetsIfNotSet(RuleSets);
+        _propertyValidator.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托
-        _propertyValidator?.InitializeServiceProvider(_serviceProvider);
+        _propertyValidator.InitializeServiceProvider(_serviceProvider);
 
         return this;
     }
@@ -485,7 +495,7 @@ public partial class PropertyValidator<T, TProperty> :
     /// </param>
     /// <param name="propertyValue">属性值</param>
     /// <returns>
-    ///     <see cref="bool" />
+    ///     <see cref="object" />
     /// </returns>
     internal static object? GetValidationValue(T instance, ValidatorBase validator, TProperty propertyValue)
     {
@@ -521,6 +531,23 @@ public partial class PropertyValidator<T, TProperty> :
     ///     <see cref="string" />
     /// </returns>
     internal string GetDisplayName() => _annotationValidator.GetDisplayName(DisplayName);
+
+    /// <summary>
+    ///     获取成员名称
+    /// </summary>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    internal string GetMemberName()
+    {
+        // 获取属性名称和父级属性路径
+        var propertyName = _annotationValidator.Property.Name;
+        var parentPath = _objectValidator.MemberPath;
+
+        return string.IsNullOrEmpty(parentPath)
+            ? propertyName
+            : $"{parentPath}.{propertyName}";
+    }
 
     /// <summary>
     ///     创建 <see cref="ValidationContext{T}" /> 实例

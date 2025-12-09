@@ -143,6 +143,12 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// </summary>
     internal List<IObjectValidator<T>> PropertyValidators { get; }
 
+    /// <summary>
+    ///     当前验证器在对象图中的属性路径（如 "User.Address"）
+    /// </summary>
+    /// <remarks>仅在作为嵌套验证器时由父验证器设置。</remarks>
+    internal string? MemberPath { get; set; }
+
     /// <inheritdoc />
     public void Dispose()
     {

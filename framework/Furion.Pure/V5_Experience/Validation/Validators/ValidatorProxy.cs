@@ -97,11 +97,13 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
     public override bool IsValid(object? value) => Validator.IsValid(value);
 
     /// <inheritdoc />
-    public override List<ValidationResult>? GetValidationResults(object? value, string name) =>
-        Validator.GetValidationResults(value, name);
+    public override List<ValidationResult>? GetValidationResults(object? value, string name,
+        IEnumerable<string>? memberNames = null) =>
+        Validator.GetValidationResults(value, name, memberNames);
 
     /// <inheritdoc />
-    public override void Validate(object? value, string name) => Validator.Validate(value, name);
+    public override void Validate(object? value, string name, IEnumerable<string>? memberNames = null) =>
+        Validator.Validate(value, name, memberNames);
 
     /// <inheritdoc />
     public override string? FormatErrorMessage(string name) => Validator.FormatErrorMessage(name);
@@ -250,12 +252,13 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IVal
     public override bool IsValid(T? instance) => GetValidator(instance).IsValid(GetValidationValue(instance));
 
     /// <inheritdoc />
-    public override List<ValidationResult>? GetValidationResults(T? instance, string name) =>
-        GetValidator(instance).GetValidationResults(GetValidationValue(instance), name);
+    public override List<ValidationResult>? GetValidationResults(T? instance, string name,
+        IEnumerable<string>? memberNames = null) =>
+        GetValidator(instance).GetValidationResults(GetValidationValue(instance), name, memberNames);
 
     /// <inheritdoc />
-    public override void Validate(T? instance, string name) =>
-        GetValidator(instance).Validate(GetValidationValue(instance), name);
+    public override void Validate(T? instance, string name, IEnumerable<string>? memberNames = null) =>
+        GetValidator(instance).Validate(GetValidationValue(instance), name, memberNames);
 
     /// <inheritdoc />
     /// <exception cref="NotSupportedException"></exception>
