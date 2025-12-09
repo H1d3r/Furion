@@ -109,21 +109,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     internal List<ValidatorBase> Validators { get; }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-
-        // 遍历所有验证器并尝试同步 IServiceProvider 委托
-        foreach (var validator in Validators)
-        {
-            // 检查验证器是否实现 IValidatorInitializer 接口
-            if (validator is IValidatorInitializer initializer)
-            {
-                // 同步 IServiceProvider 委托
-                initializer.InitializeServiceProvider(serviceProvider);
-            }
-        }
-    }
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <summary>
     ///     获取验证器集合
@@ -953,5 +940,22 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
         validationContext.InitializeServiceProvider(_serviceProvider);
 
         return validationContext;
+    }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
+        foreach (var validator in Validators)
+        {
+            // 检查验证器是否实现 IValidatorInitializer 接口
+            if (validator is IValidatorInitializer initializer)
+            {
+                // 同步 IServiceProvider 委托
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
+        }
     }
 }

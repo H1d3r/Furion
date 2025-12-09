@@ -72,19 +72,8 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, 
     }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        // 遍历所有验证器并尝试同步 IServiceProvider 委托
-        foreach (var validator in (_defaultValidators ?? []).Concat(_conditions.SelectMany(u => u.Validators)))
-        {
-            // 检查验证器是否实现 IValidatorInitializer 接口
-            if (validator is IValidatorInitializer initializer)
-            {
-                // 同步 IServiceProvider 委托
-                initializer.InitializeServiceProvider(serviceProvider);
-            }
-        }
-    }
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <inheritdoc />
     public override bool IsValid(T? instance)
@@ -230,5 +219,20 @@ public class ConditionalValidator<T> : ValidatorBase<T>, IValidatorInitializer, 
         matchedValidators ??= _defaultValidators;
 
         return matchedValidators;
+    }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
+        foreach (var validator in (_defaultValidators ?? []).Concat(_conditions.SelectMany(u => u.Validators)))
+        {
+            // 检查验证器是否实现 IValidatorInitializer 接口
+            if (validator is IValidatorInitializer initializer)
+            {
+                // 同步 IServiceProvider 委托
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
+        }
     }
 }
