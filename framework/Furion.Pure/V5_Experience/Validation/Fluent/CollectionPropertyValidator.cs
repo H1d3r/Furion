@@ -291,7 +291,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
 
         // 获取原始属性路径
         var originalPath = _elementValidator.MemberPath;
-        var baseMemberName = originalPath ?? GetMemberPath();
+        var baseMemberName = originalPath ?? GetEffectiveMemberName();
 
         try
         {
@@ -340,7 +340,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         }
 
         // 设置元素验证器的基础路径
-        _elementValidator.MemberPath = GetMemberPath();
+        _elementValidator.MemberPath = GetEffectiveMemberName();
 
         // 递归修复元素验证器内部的所有子验证器
         foreach (var childValidator in _elementValidator.Validators)
