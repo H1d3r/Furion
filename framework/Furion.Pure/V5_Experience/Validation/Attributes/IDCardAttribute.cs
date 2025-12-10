@@ -38,7 +38,7 @@ public class IDCardAttribute : ValidationAttribute
     ///     <inheritdoc cref="IDCardAttribute" />
     /// </summary>
     public IDCardAttribute()
-        : base(ValidationMessages.IDCardValidator_ValidationError) =>
+        : base(() => ValidationMessages.IDCardValidator_ValidationError) =>
         Validator = new IDCardValidator();
 
     /// <summary>

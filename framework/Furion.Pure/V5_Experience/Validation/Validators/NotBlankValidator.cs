@@ -36,7 +36,7 @@ public class NotBlankValidator : ValidatorBase
     ///     <inheritdoc cref="NotBlankValidator" />
     /// </summary>
     public NotBlankValidator()
-        : base(ValidationMessages.NotBlankValidator_ValidationError)
+        : base(() => ValidationMessages.NotBlankValidator_ValidationError)
     {
     }
 

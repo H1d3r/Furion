@@ -36,7 +36,7 @@ public class NotNullValidator : ValidatorBase, IHighPriorityValidator
     ///     <inheritdoc cref="NotNullValidator" />
     /// </summary>
     public NotNullValidator()
-        : base(ValidationMessages.NotNullValidator_ValidationError)
+        : base(() => ValidationMessages.NotNullValidator_ValidationError)
     {
     }
 

@@ -39,7 +39,7 @@ public class DomainAttribute : ValidationAttribute
     ///     <inheritdoc cref="DomainAttribute" />
     /// </summary>
     public DomainAttribute()
-        : base(ValidationMessages.DomainValidator_ValidationError) =>
+        : base(() => ValidationMessages.DomainValidator_ValidationError) =>
         Validator = new DomainValidator();
 
     /// <summary>

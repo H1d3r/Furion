@@ -40,7 +40,7 @@ public class EqualToAttribute : ValidationAttribute
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public EqualToAttribute(object? compareValue)
-        : base(ValidationMessages.EqualToValidator_ValidationError)
+        : base(() => ValidationMessages.EqualToValidator_ValidationError)
     {
         CompareValue = compareValue;
         Validator = new EqualToValidator(compareValue);

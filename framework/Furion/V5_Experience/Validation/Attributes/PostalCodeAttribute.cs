@@ -38,7 +38,7 @@ public class PostalCodeAttribute : ValidationAttribute
     ///     <inheritdoc cref="PostalCodeAttribute" />
     /// </summary>
     public PostalCodeAttribute()
-        : base(ValidationMessages.PostalCodeValidator_ValidationError) =>
+        : base(() => ValidationMessages.PostalCodeValidator_ValidationError) =>
         Validator = new PostalCodeValidator();
 
     /// <summary>

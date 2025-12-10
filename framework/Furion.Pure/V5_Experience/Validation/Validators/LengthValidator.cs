@@ -45,7 +45,7 @@ public class LengthValidator : ValidatorBase
     /// <param name="minimumLength">最小允许长度</param>
     /// <param name="maximumLength">最大允许长度</param>
     public LengthValidator(int minimumLength, int maximumLength)
-        : base(ValidationMessages.LengthValidator_ValidationError)
+        : base(() => ValidationMessages.LengthValidator_ValidationError)
     {
         MinimumLength = minimumLength;
         MaximumLength = maximumLength;

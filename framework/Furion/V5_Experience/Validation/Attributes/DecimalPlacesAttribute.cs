@@ -40,7 +40,7 @@ public class DecimalPlacesAttribute : ValidationAttribute
     /// </summary>
     /// <param name="maxDecimalPlaces">允许的最大有效小数位数</param>
     public DecimalPlacesAttribute(int maxDecimalPlaces)
-        : base(ValidationMessages.DecimalPlacesValidator_ValidationError)
+        : base(() => ValidationMessages.DecimalPlacesValidator_ValidationError)
     {
         MaxDecimalPlaces = maxDecimalPlaces;
         Validator = new DecimalPlacesValidator(maxDecimalPlaces);

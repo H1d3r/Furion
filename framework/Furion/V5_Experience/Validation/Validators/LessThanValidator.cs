@@ -37,7 +37,7 @@ public class LessThanValidator : ComparisonValidator
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public LessThanValidator(IComparable compareValue)
-        : base(compareValue, ValidationMessages.LessThanValidator_ValidationError)
+        : base(compareValue, () => ValidationMessages.LessThanValidator_ValidationError)
     {
     }
 

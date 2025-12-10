@@ -38,7 +38,7 @@ public class NotNullAttribute : ValidationAttribute
     ///     <inheritdoc cref="NotNullAttribute" />
     /// </summary>
     public NotNullAttribute()
-        : base(ValidationMessages.NotNullValidator_ValidationError) =>
+        : base(() => ValidationMessages.NotNullValidator_ValidationError) =>
         Validator = new NotNullValidator();
 
     /// <summary>

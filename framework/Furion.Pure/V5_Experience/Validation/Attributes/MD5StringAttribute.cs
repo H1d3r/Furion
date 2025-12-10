@@ -39,7 +39,7 @@ public class MD5StringAttribute : ValidationAttribute
     ///     <inheritdoc cref="MD5StringAttribute" />
     /// </summary>
     public MD5StringAttribute()
-        : base(ValidationMessages.MD5StringValidator_ValidationError) =>
+        : base(() => ValidationMessages.MD5StringValidator_ValidationError) =>
         Validator = new MD5StringValidator();
 
     /// <summary>

@@ -42,7 +42,7 @@ public class BankCardAttribute : ValidationAttribute
     ///     <inheritdoc cref="BankCardAttribute" />
     /// </summary>
     public BankCardAttribute()
-        : base(ValidationMessages.BankCardValidator_ValidationError) =>
+        : base(() => ValidationMessages.BankCardValidator_ValidationError) =>
         Validator = new BankCardValidator();
 
     /// <summary>

@@ -37,7 +37,7 @@ public partial class ChineseNameValidator : ValidatorBase
     ///     <inheritdoc cref="ChineseNameValidator" />
     /// </summary>
     public ChineseNameValidator()
-        : base(ValidationMessages.ChineseNameValidator_ValidationError)
+        : base(() => ValidationMessages.ChineseNameValidator_ValidationError)
     {
     }
 

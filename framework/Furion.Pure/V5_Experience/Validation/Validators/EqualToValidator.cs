@@ -38,7 +38,7 @@ public class EqualToValidator : ValidatorBase
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public EqualToValidator(object? compareValue)
-        : base(ValidationMessages.EqualToValidator_ValidationError) =>
+        : base(() => ValidationMessages.EqualToValidator_ValidationError) =>
         CompareValue = compareValue;
 
     /// <summary>

@@ -43,7 +43,7 @@ public class DeniedValuesValidator : ValidatorBase
     /// </summary>
     /// <param name="values">不允许的值列表</param>
     public DeniedValuesValidator(params object?[] values)
-        : base(ValidationMessages.DeniedValuesValidator_ValidationError)
+        : base(() => ValidationMessages.DeniedValuesValidator_ValidationError)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(values);

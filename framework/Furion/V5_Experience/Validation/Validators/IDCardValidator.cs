@@ -37,7 +37,7 @@ public partial class IDCardValidator : ValidatorBase
     ///     <inheritdoc cref="IDCardValidator" />
     /// </summary>
     public IDCardValidator()
-        : base(ValidationMessages.IDCardValidator_ValidationError)
+        : base(() => ValidationMessages.IDCardValidator_ValidationError)
     {
     }
 

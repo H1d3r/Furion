@@ -38,7 +38,7 @@ public class ColorValueAttribute : ValidationAttribute
     ///     <inheritdoc cref="ColorValueAttribute" />
     /// </summary>
     public ColorValueAttribute()
-        : base(ValidationMessages.ColorValueValidator_ValidationError) =>
+        : base(() => ValidationMessages.ColorValueValidator_ValidationError) =>
         Validator = new ColorValueValidator();
 
     /// <summary>

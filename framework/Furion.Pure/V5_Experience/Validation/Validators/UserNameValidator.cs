@@ -41,7 +41,7 @@ public partial class UserNameValidator : ValidatorBase
     ///     <inheritdoc cref="UserNameValidator" />
     /// </summary>
     public UserNameValidator()
-        : base(ValidationMessages.UserNameValidator_ValidationError)
+        : base(() => ValidationMessages.UserNameValidator_ValidationError)
     {
     }
 

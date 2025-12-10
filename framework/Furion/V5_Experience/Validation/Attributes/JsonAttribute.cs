@@ -39,7 +39,7 @@ public class JsonAttribute : ValidationAttribute
     ///     <inheritdoc cref="JsonAttribute" />
     /// </summary>
     public JsonAttribute()
-        : base(ValidationMessages.JsonValidator_ValidationError) =>
+        : base(() => ValidationMessages.JsonValidator_ValidationError) =>
         Validator = new JsonValidator();
 
     /// <summary>

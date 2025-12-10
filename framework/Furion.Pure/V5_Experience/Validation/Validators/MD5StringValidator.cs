@@ -38,7 +38,7 @@ public partial class MD5StringValidator : ValidatorBase
     ///     <inheritdoc cref="MD5StringValidator" />
     /// </summary>
     public MD5StringValidator()
-        : base(ValidationMessages.MD5StringValidator_ValidationError)
+        : base(() => ValidationMessages.MD5StringValidator_ValidationError)
     {
     }
 

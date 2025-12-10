@@ -38,7 +38,7 @@ public class JsonValidator : ValidatorBase
     ///     <inheritdoc cref="JsonValidator" />
     /// </summary>
     public JsonValidator()
-        : base(ValidationMessages.JsonValidator_ValidationError)
+        : base(() => ValidationMessages.JsonValidator_ValidationError)
     {
     }
 

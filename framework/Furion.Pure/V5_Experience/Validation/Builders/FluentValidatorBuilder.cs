@@ -206,6 +206,15 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
+    public virtual TSelf WithMessage(string? errorMessage) => WithErrorMessage(errorMessage);
+
+    /// <summary>
+    ///     设置错误信息
+    /// </summary>
+    /// <param name="errorMessage">错误信息</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
     public virtual TSelf WithErrorMessage(string? errorMessage)
     {
         // 空检查
@@ -222,6 +231,20 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
 
         return This;
     }
+
+    /// <summary>
+    ///     设置错误信息
+    /// </summary>
+    /// <param name="resourceType">错误信息资源类型</param>
+    /// <param name="resourceName">错误信息资源名称</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf WithMessage(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties |
+                                    DynamicallyAccessedMemberTypes.NonPublicProperties)]
+        Type resourceType, string resourceName) =>
+        WithErrorMessage(resourceType, resourceName);
 
     /// <summary>
     ///     设置错误信息
@@ -737,6 +760,45 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     ///     <typeparamref name="TSelf" />
     /// </returns>
     public virtual TSelf Range([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type,
+        string minimum,
+        string maximum, Action<RangeValidator>? configure = null) =>
+        AddValidator(new RangeValidator(type, minimum, maximum), configure);
+
+    /// <summary>
+    ///     添加指定数值范围约束验证器
+    /// </summary>
+    /// <param name="minimum">允许的最小字段值</param>
+    /// <param name="maximum">允许的最大字段值</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf Between(int minimum, int maximum, Action<RangeValidator>? configure = null) =>
+        AddValidator(new RangeValidator(minimum, maximum), configure);
+
+    /// <summary>
+    ///     添加指定数值范围约束验证器
+    /// </summary>
+    /// <param name="minimum">允许的最小字段值</param>
+    /// <param name="maximum">允许的最大字段值</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf Between(double minimum, double maximum, Action<RangeValidator>? configure = null) =>
+        AddValidator(new RangeValidator(minimum, maximum), configure);
+
+    /// <summary>
+    ///     添加指定数值范围约束验证器
+    /// </summary>
+    /// <param name="type">数据字段值的类型</param>
+    /// <param name="minimum">允许的最小字段值</param>
+    /// <param name="maximum">允许的最大字段值</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf Between([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type,
         string minimum,
         string maximum, Action<RangeValidator>? configure = null) =>
         AddValidator(new RangeValidator(type, minimum, maximum), configure);
