@@ -38,8 +38,11 @@ public class EqualToValidator : ValidatorBase
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public EqualToValidator(object? compareValue)
-        : base(ValidationMessages.EqualToValidator_ValidationError) =>
+    {
         CompareValue = compareValue;
+
+        UseResourceKey(() => nameof(ValidationMessages.EqualToValidator_ValidationError));
+    }
 
     /// <summary>
     ///     比较的值

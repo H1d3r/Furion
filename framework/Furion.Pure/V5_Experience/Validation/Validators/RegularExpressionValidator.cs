@@ -49,7 +49,6 @@ public class RegularExpressionValidator : ValidatorBase, IDisposable
     /// </summary>
     /// <param name="pattern">正则表达式模式</param>
     public RegularExpressionValidator(string pattern)
-        : base(ValidationMessages.RegularExpressionValidator_ValidationError)
     {
         Pattern = pattern;
         MatchTimeoutInMilliseconds = 2000;
@@ -58,6 +57,8 @@ public class RegularExpressionValidator : ValidatorBase, IDisposable
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        UseResourceKey(() => nameof(ValidationMessages.RegularExpressionValidator_ValidationError));
     }
 
     /// <summary>

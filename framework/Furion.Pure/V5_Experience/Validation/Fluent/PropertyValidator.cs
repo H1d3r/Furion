@@ -34,7 +34,8 @@ namespace Furion.Validation;
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
 public partial class PropertyValidator<T, TProperty> :
-    FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>, IObjectValidator<T>, IDisposable
+    FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>, IObjectValidator<T>, IMemberPathRepairable,
+    IDisposable
 {
     /// <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
     internal readonly PropertyAnnotationValidator<T, TProperty> _annotationValidator;
@@ -89,6 +90,11 @@ public partial class PropertyValidator<T, TProperty> :
     internal string? DisplayName { get; private set; }
 
     /// <summary>
+    ///     成员名称
+    /// </summary>
+    internal string? MemberName { get; private set; }
+
+    /// <summary>
     ///     验证条件
     /// </summary>
     /// <remarks>当条件满足时才进行验证。</remarks>
@@ -106,6 +112,9 @@ public partial class PropertyValidator<T, TProperty> :
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+    /// <inheritdoc />
+    void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
 
     /// <inheritdoc />
     public virtual bool IsValid(T? instance, params string?[]? ruleSets)
@@ -150,14 +159,15 @@ public partial class PropertyValidator<T, TProperty> :
             return null;
         }
 
-        // 获取显示名称和初始化验证结果集合
-        var displayName = GetDisplayName();
+        // 获取显示名称、属性路径和初始化验证结果集合
+        var (displayName, memberPath) = (GetDisplayName(), GetEffectiveMemberName());
         var validationResults = new List<ValidationResult>();
 
         // 检查是否启用属性验证特性验证
         if (ShouldRunAnnotationValidation())
         {
-            validationResults.AddRange(_annotationValidator.GetValidationResults(instance, displayName) ?? []);
+            validationResults.AddRange(_annotationValidator.GetValidationResults(instance, displayName, [memberPath]) ??
+                                       []);
         }
 
         // 获取属性值
@@ -171,7 +181,7 @@ public partial class PropertyValidator<T, TProperty> :
 
         // 获取所有验证器验证结果集合
         validationResults.AddRange(Validators.SelectMany(u =>
-            u.GetValidationResults(GetValidationValue(instance, u, propertyValue), displayName) ?? []));
+            u.GetValidationResults(GetValidationValue(instance, u, propertyValue), displayName, [memberPath]) ?? []));
 
         return validationResults.ToResults();
     }
@@ -188,13 +198,13 @@ public partial class PropertyValidator<T, TProperty> :
             return;
         }
 
-        // 获取显示名称
-        var displayName = GetDisplayName();
+        // 获取显示名称和属性路径
+        var (displayName, memberPath) = (GetDisplayName(), GetEffectiveMemberName());
 
         // 检查是否启用属性验证特性验证
         if (ShouldRunAnnotationValidation())
         {
-            _annotationValidator.Validate(instance, displayName);
+            _annotationValidator.Validate(instance, displayName, [memberPath]);
         }
 
         // 获取属性值
@@ -209,12 +219,16 @@ public partial class PropertyValidator<T, TProperty> :
         // 遍历验证器集合
         foreach (var validator in Validators)
         {
-            validator.Validate(GetValidationValue(instance, validator, propertyValue), displayName);
+            validator.Validate(GetValidationValue(instance, validator, propertyValue), displayName, [memberPath]);
         }
     }
 
     /// <inheritdoc />
-    public override void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal new void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
         // 同步基类 IServiceProvider 委托
         base.InitializeServiceProvider(serviceProvider);
@@ -252,11 +266,20 @@ public partial class PropertyValidator<T, TProperty> :
         // 调用工厂方法，传入当前 RuleSets、_items 和 Options
         _propertyValidator = validatorFactory(RuleSets, _objectValidator._items, _objectValidator.Options);
 
+        // 空检查
+        if (_propertyValidator is null)
+        {
+            return this;
+        }
+
         // 继承当前规则集列表
-        _propertyValidator?.SetInheritedRuleSetsIfNotSet(RuleSets);
+        _propertyValidator.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托
-        _propertyValidator?.InitializeServiceProvider(_serviceProvider);
+        _propertyValidator.InitializeServiceProvider(_serviceProvider);
+
+        // 修复整个子验证器树的成员路径
+        RepairMemberPaths();
 
         return this;
     }
@@ -393,6 +416,29 @@ public partial class PropertyValidator<T, TProperty> :
     }
 
     /// <summary>
+    ///     设置成员名称
+    /// </summary>
+    /// <param name="memberName">成员名称</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> WithMemberName(string? memberName)
+    {
+        MemberName = memberName;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置成员名称
+    /// </summary>
+    /// <param name="memberName">成员名称</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> WithName(string? memberName) => WithMemberName(memberName);
+
+    /// <summary>
     ///     检查是否应该对该属性执行验证
     /// </summary>
     /// <param name="instance">对象</param>
@@ -485,7 +531,7 @@ public partial class PropertyValidator<T, TProperty> :
     /// </param>
     /// <param name="propertyValue">属性值</param>
     /// <returns>
-    ///     <see cref="bool" />
+    ///     <see cref="object" />
     /// </returns>
     internal static object? GetValidationValue(T instance, ValidatorBase validator, TProperty propertyValue)
     {
@@ -520,7 +566,30 @@ public partial class PropertyValidator<T, TProperty> :
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetDisplayName() => _annotationValidator.GetDisplayName(DisplayName);
+    internal string GetDisplayName() => DisplayName ?? MemberName ?? _annotationValidator.GetDisplayName(null);
+
+    /// <summary>
+    ///     获取属性路径
+    /// </summary>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    internal string GetMemberPath()
+    {
+        // 获取属性名称和父级属性路径
+        var propertyName = _annotationValidator.Property.Name;
+        var parentPath = _objectValidator.MemberPath;
+
+        return string.IsNullOrWhiteSpace(parentPath) ? propertyName : $"{parentPath}.{propertyName}";
+    }
+
+    /// <summary>
+    ///     获取用于 <see cref="ValidationResult.MemberNames" /> 的最终成员名称
+    /// </summary>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    internal string GetEffectiveMemberName() => MemberName ?? GetMemberPath();
 
     /// <summary>
     ///     创建 <see cref="ValidationContext{T}" /> 实例
@@ -564,6 +633,30 @@ public partial class PropertyValidator<T, TProperty> :
         if (_propertyValidator is IDisposable propertyValidatorDisposable)
         {
             propertyValidatorDisposable.Dispose();
+        }
+    }
+
+    /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
+    internal void RepairMemberPaths()
+    {
+        // 空检查
+        if (_propertyValidator is null)
+        {
+            return;
+        }
+
+        // 设置当前子验证器的完整成员路径
+        _propertyValidator.MemberPath = GetEffectiveMemberName();
+
+        // 递归修复所有子属性验证器
+        foreach (var childValidator in _propertyValidator.Validators)
+        {
+            // 检查验证器是否实现 IMemberPathRepairable 接口
+            if (childValidator is IMemberPathRepairable repairable)
+            {
+                // 修复验证器及其子验证器的成员路径
+                repairable.RepairMemberPaths();
+            }
         }
     }
 }

@@ -42,8 +42,11 @@ public class Base64StringValidator : ValidatorBase
     ///     <inheritdoc cref="Base64StringValidator" />
     /// </summary>
     public Base64StringValidator()
-        : base(ValidationMessages.Base64StringValidator_ValidationError) =>
+    {
         _validator = new ValueAnnotationValidator(new Base64StringAttribute());
+
+        UseResourceKey(() => nameof(ValidationMessages.Base64StringValidator_ValidationError));
+    }
 
     /// <inheritdoc />
     public override bool IsValid(object? value) => _validator.IsValid(value);

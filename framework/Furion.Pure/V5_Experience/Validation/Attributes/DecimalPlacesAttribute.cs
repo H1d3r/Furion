@@ -33,17 +33,18 @@ namespace System.ComponentModel.DataAnnotations;
 ///     验证数值的小数位数验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class DecimalPlacesAttribute : ValidationAttribute
+public class DecimalPlacesAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="DecimalPlacesAttribute" />
     /// </summary>
     /// <param name="maxDecimalPlaces">允许的最大有效小数位数</param>
     public DecimalPlacesAttribute(int maxDecimalPlaces)
-        : base(ValidationMessages.DecimalPlacesValidator_ValidationError)
     {
         MaxDecimalPlaces = maxDecimalPlaces;
         Validator = new DecimalPlacesValidator(maxDecimalPlaces);
+
+        UseResourceKey(() => nameof(ValidationMessages.DecimalPlacesValidator_ValidationError));
     }
 
     /// <summary>

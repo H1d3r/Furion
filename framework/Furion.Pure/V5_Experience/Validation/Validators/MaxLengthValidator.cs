@@ -44,10 +44,11 @@ public class MaxLengthValidator : ValidatorBase
     /// </summary>
     /// <param name="length">最大允许长度</param>
     public MaxLengthValidator(int length)
-        : base(ValidationMessages.MaxLengthValidator_ValidationError)
     {
         Length = length;
         _validator = new ValueAnnotationValidator(new MaxLengthAttribute(Length));
+
+        UseResourceKey(() => nameof(ValidationMessages.MaxLengthValidator_ValidationError));
     }
 
     /// <summary>

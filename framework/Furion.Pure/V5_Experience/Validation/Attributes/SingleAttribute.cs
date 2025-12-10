@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     单项验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class SingleAttribute : ValidationAttribute
+public class SingleAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="SingleAttribute" />
     /// </summary>
     public SingleAttribute()
-        : base(ValidationMessages.SingleValidator_ValidationError) =>
+    {
         Validator = new SingleValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.SingleValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="SingleValidator" />

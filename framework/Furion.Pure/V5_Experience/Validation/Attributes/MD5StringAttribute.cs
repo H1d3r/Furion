@@ -33,14 +33,17 @@ namespace System.ComponentModel.DataAnnotations;
 /// </summary>
 /// <remarks>支持 32 位标准格式，可选 16 字符截断格式。</remarks>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class MD5StringAttribute : ValidationAttribute
+public class MD5StringAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="MD5StringAttribute" />
     /// </summary>
     public MD5StringAttribute()
-        : base(ValidationMessages.MD5StringValidator_ValidationError) =>
+    {
         Validator = new MD5StringValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.MD5StringValidator_ValidationError));
+    }
 
     /// <summary>
     ///     是否允许截断的 128 位哈希值（16 字节的十六进制字符串，共 32 字符）

@@ -33,17 +33,18 @@ namespace System.ComponentModel.DataAnnotations;
 ///     不相等验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class NotEqualToAttribute : ValidationAttribute
+public class NotEqualToAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="NotEqualToAttribute" />
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public NotEqualToAttribute(object? compareValue)
-        : base(ValidationMessages.NotEqualToValidator_ValidationError)
     {
         CompareValue = compareValue;
         Validator = new NotEqualToValidator(compareValue);
+
+        UseResourceKey(() => nameof(ValidationMessages.NotEqualToValidator_ValidationError));
     }
 
     /// <summary>

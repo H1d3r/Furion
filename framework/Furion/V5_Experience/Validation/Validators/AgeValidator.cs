@@ -36,7 +36,7 @@ public class AgeValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="AgeValidator" />
     /// </summary>
-    public AgeValidator() => ErrorMessageResourceAccessor = GetErrorMessage;
+    public AgeValidator() => UseResourceKey(GetResourceKey);
 
     /// <summary>
     ///     是否仅验证成年人（18 岁及以上）
@@ -86,13 +86,13 @@ public class AgeValidator : ValidatorBase
     }
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         IsAdultOnly
-            ? ValidationMessages.AgeValidator_ValidationError_IsAdultOnly
-            : ValidationMessages.AgeValidator_ValidationError;
+            ? nameof(ValidationMessages.AgeValidator_ValidationError_IsAdultOnly)
+            : nameof(ValidationMessages.AgeValidator_ValidationError);
 }

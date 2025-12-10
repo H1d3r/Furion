@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     非空白字符串验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class NotBlankAttribute : ValidationAttribute
+public class NotBlankAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="NotBlankAttribute" />
     /// </summary>
     public NotBlankAttribute()
-        : base(ValidationMessages.NotBlankValidator_ValidationError) =>
+    {
         Validator = new NotBlankValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.NotBlankValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="NotBlankValidator" />

@@ -36,10 +36,8 @@ public partial class PostalCodeValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="PostalCodeValidator" />
     /// </summary>
-    public PostalCodeValidator()
-        : base(ValidationMessages.PostalCodeValidator_ValidationError)
-    {
-    }
+    public PostalCodeValidator() =>
+        UseResourceKey(() => nameof(ValidationMessages.PostalCodeValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

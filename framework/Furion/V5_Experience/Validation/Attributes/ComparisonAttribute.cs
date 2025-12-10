@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Validation;
+using Furion.Validation.Resources;
 using System.Globalization;
 
 namespace System.ComponentModel.DataAnnotations;
@@ -31,15 +33,31 @@ namespace System.ComponentModel.DataAnnotations;
 ///     比较验证特性抽象基类
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public abstract class ComparisonAttribute : ValidationAttribute
+public abstract class ComparisonAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="ComparisonAttribute" />
     /// </summary>
     /// <param name="compareValue">比较的值</param>
-    /// <param name="errorMessage">错误信息</param>
-    protected ComparisonAttribute(IComparable compareValue, string errorMessage)
-        : base(errorMessage)
+    /// <param name="resourceKey">错误信息资源键（对应 <see cref="ValidationMessages" /> 中的属性名）</param>
+    protected ComparisonAttribute(IComparable compareValue, string resourceKey)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(compareValue);
+        ArgumentException.ThrowIfNullOrWhiteSpace(resourceKey);
+
+        CompareValue = compareValue;
+
+        UseResourceKey(() => resourceKey);
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="ComparisonAttribute" />
+    /// </summary>
+    /// <param name="compareValue">比较的值</param>
+    /// <param name="errorMessageResourceAccessor">错误信息资源访问器</param>
+    protected ComparisonAttribute(IComparable compareValue, Func<string> errorMessageResourceAccessor)
+        : base(errorMessageResourceAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValue);

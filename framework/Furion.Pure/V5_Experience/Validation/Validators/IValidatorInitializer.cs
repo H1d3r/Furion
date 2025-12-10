@@ -26,7 +26,7 @@
 namespace Furion.Validation;
 
 /// <summary>
-///     验证器的始化行为接口
+///     验证器的初始化行为接口
 /// </summary>
 public interface IValidatorInitializer
 {

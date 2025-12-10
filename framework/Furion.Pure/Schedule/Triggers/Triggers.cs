@@ -212,6 +212,16 @@ public static class Triggers
     }
 
     /// <summary>
+    /// 创建秒周期（间隔）作业触发器构建器
+    /// </summary>
+    /// <param name="interval">间隔（秒）</param>
+    /// <returns><see cref="TriggerBuilder"/></returns>
+    public static TriggerBuilder Secondly(int interval)
+    {
+        return PeriodSeconds(interval);
+    }
+
+    /// <summary>
     /// 创建指定特定秒开始作业触发器构建器
     /// </summary>
     /// <param name="field">字段值</param>
@@ -232,6 +242,16 @@ public static class Triggers
     }
 
     /// <summary>
+    /// 创建分钟周期（间隔）作业触发器构建器
+    /// </summary>
+    /// <param name="interval">间隔（分钟）</param>
+    /// <returns><see cref="TriggerBuilder"/></returns>
+    public static TriggerBuilder Minutely(int interval)
+    {
+        return PeriodMinutes(interval);
+    }
+
+    /// <summary>
     /// 创建每分钟特定秒开始作业触发器构建器
     /// </summary>
     /// <param name="field">字段值</param>
@@ -249,6 +269,16 @@ public static class Triggers
     public static TriggerBuilder Hourly()
     {
         return Cron("@hourly");
+    }
+
+    /// <summary>
+    /// 创建小时周期（间隔）作业触发器构建器
+    /// </summary>
+    /// <param name="interval">间隔（小时）</param>
+    /// <returns><see cref="TriggerBuilder"/></returns>
+    public static TriggerBuilder Hourly(int interval)
+    {
+        return PeriodHours(interval);
     }
 
     /// <summary>

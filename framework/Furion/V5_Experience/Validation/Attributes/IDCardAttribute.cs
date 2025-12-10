@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     身份证号验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class IDCardAttribute : ValidationAttribute
+public class IDCardAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="IDCardAttribute" />
     /// </summary>
     public IDCardAttribute()
-        : base(ValidationMessages.IDCardValidator_ValidationError) =>
+    {
         Validator = new IDCardValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.IDCardValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="IDCardValidator" />

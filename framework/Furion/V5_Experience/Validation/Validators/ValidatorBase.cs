@@ -77,29 +77,35 @@ public abstract class ValidatorBase<T> : ValidatorBase
     /// </summary>
     /// <param name="instance">对象</param>
     /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <returns>
     ///     <see cref="List{T}" />
     /// </returns>
-    public virtual List<ValidationResult>? GetValidationResults(T? instance, string name) =>
-        base.GetValidationResults(instance, name);
+    public virtual List<ValidationResult>? GetValidationResults(T? instance, string name,
+        IEnumerable<string>? memberNames = null) =>
+        base.GetValidationResults(instance, name, memberNames);
 
     /// <summary>
     ///     验证指定的对象
     /// </summary>
     /// <param name="instance">对象</param>
     /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <exception cref="ValidationException"></exception>
-    public virtual void Validate(T? instance, string name) => base.Validate(instance, name);
+    public virtual void Validate(T? instance, string name, IEnumerable<string>? memberNames = null) =>
+        base.Validate(instance, name, memberNames);
 
     /// <inheritdoc />
     public sealed override bool IsValid(object? value) => IsValid(ConvertValue(value));
 
     /// <inheritdoc />
-    public sealed override List<ValidationResult>? GetValidationResults(object? value, string name) =>
-        GetValidationResults(ConvertValue(value), name);
+    public sealed override List<ValidationResult>? GetValidationResults(object? value, string name,
+        IEnumerable<string>? memberNames = null) =>
+        GetValidationResults(ConvertValue(value), name, memberNames);
 
     /// <inheritdoc />
-    public sealed override void Validate(object? value, string name) => Validate(ConvertValue(value), name);
+    public sealed override void Validate(object? value, string name, IEnumerable<string>? memberNames = null) =>
+        Validate(ConvertValue(value), name, memberNames);
 
     /// <summary>
     ///     将 <see cref="object" /> 类型对象转换为 <typeparamref name="T" /> 类型对象
@@ -116,6 +122,9 @@ public abstract class ValidatorBase<T> : ValidatorBase
 /// </summary>
 public abstract class ValidatorBase
 {
+    // 资源类型全名常量
+    internal const string ValidationMessagesFullTypeName = "Furion.Validation.Resources.ValidationMessages";
+
     /// <summary>
     ///     错误信息
     /// </summary>
@@ -141,10 +150,7 @@ public abstract class ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="ValidatorBase" />
     /// </summary>
-    protected ValidatorBase()
-        : this(() => ValidationMessages.ValidatorBase_ValidationError)
-    {
-    }
+    protected ValidatorBase() => UseResourceKey(() => nameof(ValidationMessages.ValidatorBase_ValidationError));
 
     /// <summary>
     ///     <inheritdoc cref="ValidatorBase" />
@@ -261,24 +267,27 @@ public abstract class ValidatorBase
     /// </summary>
     /// <param name="value">对象</param>
     /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <returns>
     ///     <see cref="List{T}" />
     /// </returns>
-    public virtual List<ValidationResult>? GetValidationResults(object? value, string name) =>
-        IsValid(value) ? null : [new ValidationResult(FormatErrorMessage(name), [name])];
+    public virtual List<ValidationResult>? GetValidationResults(object? value, string name,
+        IEnumerable<string>? memberNames = null) =>
+        IsValid(value) ? null : [new ValidationResult(FormatErrorMessage(name), memberNames)];
 
     /// <summary>
     ///     验证指定的对象
     /// </summary>
     /// <param name="value">对象</param>
     /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
     /// <exception cref="ValidationException"></exception>
-    public virtual void Validate(object? value, string name)
+    public virtual void Validate(object? value, string name, IEnumerable<string>? memberNames = null)
     {
         // 检查对象合法性
         if (!IsValid(value))
         {
-            throw new ValidationException(new ValidationResult(FormatErrorMessage(name), [name]), null, value);
+            throw new ValidationException(new ValidationResult(FormatErrorMessage(name), memberNames), null, value);
         }
     }
 
@@ -291,6 +300,57 @@ public abstract class ValidatorBase
     /// </returns>
     public virtual string? FormatErrorMessage(string name) =>
         string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name);
+
+    /// <summary>
+    ///     使用指定资源键设置验证错误消息
+    /// </summary>
+    /// <remarks>支持入口程序集覆盖。</remarks>
+    /// <param name="resourceKeyResolver">返回 <see cref="ValidationMessages" /> 中属性名的委托</param>
+    protected void UseResourceKey(Func<string> resourceKeyResolver)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(resourceKeyResolver);
+
+        _errorMessageResourceAccessor = () =>
+        {
+            // 获取 ValidationMessages 中的属性名
+            var resourceKey = resourceKeyResolver();
+
+            return GetResourceString(resourceKey) ?? $"[{resourceKey}]";
+        };
+    }
+
+    /// <summary>
+    ///     获取支持外部覆盖的资源字符串
+    /// </summary>
+    /// <param name="resourceKey">资源属性名</param>
+    /// <returns>资源字符串，若未找到则返回占位符</returns>
+    internal static string? GetResourceString(string resourceKey)
+    {
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(resourceKey);
+
+        // 获取入口程序集和内部程序集
+        var entryAssembly = Assembly.GetEntryAssembly();
+        var internalAssembly = typeof(ValidationMessages).Assembly; // 固定为内部资源程序集
+
+        // 初始化属性对象
+        PropertyInfo? property;
+
+        // 先查询入口程序集（命名空间必须为 Furion.Validation.Resources）
+        if (entryAssembly is not null && entryAssembly != internalAssembly)
+        {
+            property = TryGetPropertyFromAssembly(entryAssembly, ValidationMessagesFullTypeName, resourceKey);
+            if (property?.GetValue(null, null) is string errorMessageResourceName)
+            {
+                return errorMessageResourceName;
+            }
+        }
+
+        // 回退到框架内置资源
+        property = TryGetPropertyFromAssembly(internalAssembly, ValidationMessagesFullTypeName, resourceKey);
+        return property?.GetValue(null, null) as string;
+    }
 
     /// <summary>
     ///     触发属性变更事件
@@ -360,9 +420,23 @@ public abstract class ValidatorBase
         ArgumentNullException.ThrowIfNull(_errorMessageResourceType);
         ArgumentException.ThrowIfNullOrWhiteSpace(_errorMessageResourceName);
 
-        // 尝试获取 ErrorMessageResourceType 类型的 ErrorMessageResourceName 属性
-        var property = _errorMessageResourceType.GetProperty(_errorMessageResourceName,
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly);
+        // 获取入口程序集和资源所在程序集
+        var entryAssembly = Assembly.GetEntryAssembly();
+        var resourceTypeAssembly = _errorMessageResourceType.Assembly;
+
+        // 初始化属性对象
+        PropertyInfo? property = null;
+        var propertyName = _errorMessageResourceName;
+
+        // 尝试从入口程序集加载（命名空间必须为 Furion.Validation.Resources）
+        if (entryAssembly is not null && entryAssembly != resourceTypeAssembly)
+        {
+            property = TryGetPropertyFromAssembly(entryAssembly, ValidationMessagesFullTypeName, propertyName);
+        }
+
+        // 回退到框架内置资源
+        property ??=
+            TryGetPropertyFromAssembly(resourceTypeAssembly, _errorMessageResourceType.FullName!, propertyName);
 
         // 检查属性是否只对同一程序集中的其他类型可见，而对该程序集以外的派生类型则不可见（顾名思义，使用 internal 声明的属性）
         // https://learn.microsoft.com/zh-cn/dotnet/api/system.reflection.methodbase.isassembly?view=net-9.0
@@ -387,4 +461,18 @@ public abstract class ValidatorBase
 
         _errorMessageResourceAccessor = () => (string)property.GetValue(null, null)!;
     }
+
+    /// <summary>
+    ///     尝试从指定程序集中获取资源类型的静态字符串属性
+    /// </summary>
+    /// <param name="assembly">目标程序集</param>
+    /// <param name="fullTypeName">完整类型名（如 <c>Furion.Validation.Resources.ValidationMessages</c>）</param>
+    /// <param name="propertyName">属性名</param>
+    /// <returns>
+    ///     <see cref="PropertyInfo" />
+    /// </returns>
+    internal static PropertyInfo?
+        TryGetPropertyFromAssembly(Assembly assembly, string fullTypeName, string propertyName) => assembly
+        .GetType(fullTypeName)?.GetProperty(propertyName,
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly);
 }

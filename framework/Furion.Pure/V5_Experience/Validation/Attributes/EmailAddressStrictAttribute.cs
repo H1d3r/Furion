@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     邮箱地址增强版验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class EmailAddressStrictAttribute : ValidationAttribute
+public class EmailAddressStrictAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="EmailAddressStrictAttribute" />
     /// </summary>
     public EmailAddressStrictAttribute()
-        : base(ValidationMessages.EmailAddressValidator_ValidationError) =>
+    {
         Validator = new EmailAddressValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.EmailAddressValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="EmailAddressValidator" />

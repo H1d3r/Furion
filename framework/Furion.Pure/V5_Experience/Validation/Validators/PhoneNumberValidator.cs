@@ -37,10 +37,8 @@ public partial class PhoneNumberValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="PhoneNumberValidator" />
     /// </summary>
-    public PhoneNumberValidator()
-        : base(ValidationMessages.PhoneNumberValidator_ValidationError)
-    {
-    }
+    public PhoneNumberValidator() =>
+        UseResourceKey(() => nameof(ValidationMessages.PhoneNumberValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

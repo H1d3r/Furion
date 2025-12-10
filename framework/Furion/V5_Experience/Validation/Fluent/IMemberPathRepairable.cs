@@ -23,21 +23,15 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Extensions;
-using Furion.Validation.Resources;
-
 namespace Furion.Validation;
 
 /// <summary>
-///     非空集合、数组和字符串验证器
+///     支持成员路径修复的验证器
 /// </summary>
-public class NotEmptyValidator : ValidatorBase
+public interface IMemberPathRepairable
 {
     /// <summary>
-    ///     <inheritdoc cref="NotEmptyValidator" />
+    ///     修复验证器及其子验证器的成员路径
     /// </summary>
-    public NotEmptyValidator() => UseResourceKey(() => nameof(ValidationMessages.NotEmptyValidator_ValidationError));
-
-    /// <inheritdoc />
-    public override bool IsValid(object? value) => value is null || (value.TryGetCount(out var count) && count > 0);
+    void RepairMemberPaths();
 }

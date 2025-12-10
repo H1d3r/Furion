@@ -37,10 +37,7 @@ public class JsonValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="JsonValidator" />
     /// </summary>
-    public JsonValidator()
-        : base(ValidationMessages.JsonValidator_ValidationError)
-    {
-    }
+    public JsonValidator() => UseResourceKey(() => nameof(ValidationMessages.JsonValidator_ValidationError));
 
     /// <summary>
     ///     是否允许末尾多余逗号

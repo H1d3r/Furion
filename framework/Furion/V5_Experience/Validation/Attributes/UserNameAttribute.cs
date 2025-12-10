@@ -36,14 +36,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     不允许包含空格或其他特殊字符，禁止连续特殊字符（如 __）。
 /// </remarks>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class UserNameAttribute : ValidationAttribute
+public class UserNameAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="UserNameAttribute" />
     /// </summary>
     public UserNameAttribute()
-        : base(ValidationMessages.UserNameValidator_ValidationError) =>
+    {
         Validator = new UserNameValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.UserNameValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="UserNameValidator" />
