@@ -90,6 +90,11 @@ public partial class PropertyValidator<T, TProperty> :
     internal string? DisplayName { get; private set; }
 
     /// <summary>
+    ///     成员名称
+    /// </summary>
+    internal string? MemberName { get; private set; }
+
+    /// <summary>
     ///     验证条件
     /// </summary>
     /// <remarks>当条件满足时才进行验证。</remarks>
@@ -155,7 +160,7 @@ public partial class PropertyValidator<T, TProperty> :
         }
 
         // 获取显示名称、属性路径和初始化验证结果集合
-        var (displayName, memberPath) = (GetDisplayName(), GetMemberPath());
+        var (displayName, memberPath) = (GetDisplayName(), GetEffectiveMemberName());
         var validationResults = new List<ValidationResult>();
 
         // 检查是否启用属性验证特性验证
@@ -194,7 +199,7 @@ public partial class PropertyValidator<T, TProperty> :
         }
 
         // 获取显示名称和属性路径
-        var (displayName, memberPath) = (GetDisplayName(), GetMemberPath());
+        var (displayName, memberPath) = (GetDisplayName(), GetEffectiveMemberName());
 
         // 检查是否启用属性验证特性验证
         if (ShouldRunAnnotationValidation())
@@ -411,6 +416,29 @@ public partial class PropertyValidator<T, TProperty> :
     }
 
     /// <summary>
+    ///     设置成员名称
+    /// </summary>
+    /// <param name="memberName">成员名称</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> WithMemberName(string? memberName)
+    {
+        MemberName = memberName;
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置成员名称
+    /// </summary>
+    /// <param name="memberName">成员名称</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> WithName(string? memberName) => WithMemberName(memberName);
+
+    /// <summary>
     ///     检查是否应该对该属性执行验证
     /// </summary>
     /// <param name="instance">对象</param>
@@ -538,7 +566,7 @@ public partial class PropertyValidator<T, TProperty> :
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetDisplayName() => _annotationValidator.GetDisplayName(DisplayName);
+    internal string GetDisplayName() => DisplayName ?? MemberName ?? _annotationValidator.GetDisplayName(null);
 
     /// <summary>
     ///     获取属性路径
@@ -554,6 +582,14 @@ public partial class PropertyValidator<T, TProperty> :
 
         return string.IsNullOrWhiteSpace(parentPath) ? propertyName : $"{parentPath}.{propertyName}";
     }
+
+    /// <summary>
+    ///     获取用于 <see cref="ValidationResult.MemberNames" /> 的最终成员名称
+    /// </summary>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    internal string GetEffectiveMemberName() => MemberName ?? GetMemberPath();
 
     /// <summary>
     ///     创建 <see cref="ValidationContext{T}" /> 实例
@@ -610,7 +646,7 @@ public partial class PropertyValidator<T, TProperty> :
         }
 
         // 设置当前子验证器的完整成员路径
-        _propertyValidator.MemberPath = GetMemberPath();
+        _propertyValidator.MemberPath = GetEffectiveMemberName();
 
         // 递归修复所有子属性验证器
         foreach (var childValidator in _propertyValidator.Validators)

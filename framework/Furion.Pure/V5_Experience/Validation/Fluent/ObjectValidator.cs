@@ -234,8 +234,20 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <inheritdoc />
-    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
-        InitializeServiceProvider(serviceProvider);
+    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+
+        // 同步 _annotationValidator 实例 IServiceProvider 委托
+        _annotationValidator.InitializeServiceProvider(serviceProvider);
+
+        // 遍历所有属性验证器并尝试同步 IServiceProvider 委托
+        foreach (var propertyValidator in Validators)
+        {
+            // 同步 IServiceProvider 委托
+            propertyValidator.InitializeServiceProvider(serviceProvider);
+        }
+    }
 
     /// <summary>
     ///     为指定属性配置验证规则
@@ -579,20 +591,4 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <param name="inheritedRuleSets">从父级继承的规则集列表</param>
     internal void SetInheritedRuleSetsIfNotSet(string?[]? inheritedRuleSets) =>
         _inheritedRuleSets ??= inheritedRuleSets?.Select(u => u?.Trim()).ToArray();
-
-    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
-    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-
-        // 同步 _annotationValidator 实例 IServiceProvider 委托
-        _annotationValidator.InitializeServiceProvider(serviceProvider);
-
-        // 遍历所有属性验证器并尝试同步 IServiceProvider 委托
-        foreach (var propertyValidator in Validators)
-        {
-            // 同步 IServiceProvider 委托
-            propertyValidator.InitializeServiceProvider(serviceProvider);
-        }
-    }
 }
