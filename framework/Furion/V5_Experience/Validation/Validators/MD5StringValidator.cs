@@ -37,10 +37,7 @@ public partial class MD5StringValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="MD5StringValidator" />
     /// </summary>
-    public MD5StringValidator()
-        : base(() => ValidationMessages.MD5StringValidator_ValidationError)
-    {
-    }
+    public MD5StringValidator() => UseResourceKey(() => nameof(ValidationMessages.MD5StringValidator_ValidationError));
 
     /// <summary>
     ///     是否允许截断的 128 位哈希值（16 字节的十六进制字符串，共 32 字符）

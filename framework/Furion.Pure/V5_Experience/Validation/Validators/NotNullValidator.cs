@@ -35,10 +35,7 @@ public class NotNullValidator : ValidatorBase, IHighPriorityValidator
     /// <summary>
     ///     <inheritdoc cref="NotNullValidator" />
     /// </summary>
-    public NotNullValidator()
-        : base(() => ValidationMessages.NotNullValidator_ValidationError)
-    {
-    }
+    public NotNullValidator() => UseResourceKey(() => nameof(ValidationMessages.NotNullValidator_ValidationError));
 
     /// <inheritdoc />
     /// <remarks>默认值为：0。</remarks>

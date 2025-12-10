@@ -59,12 +59,13 @@ public class RangeValidator : ValidatorBase, IDisposable
         Minimum = minimum;
         Maximum = maximum;
         OperandType = typeof(int);
-        ErrorMessageResourceAccessor = GetErrorMessage;
 
         _validator = new ValueAnnotationValidator(new RangeAttribute(minimum, maximum));
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -77,12 +78,13 @@ public class RangeValidator : ValidatorBase, IDisposable
         Minimum = minimum;
         Maximum = maximum;
         OperandType = typeof(double);
-        ErrorMessageResourceAccessor = GetErrorMessage;
 
         _validator = new ValueAnnotationValidator(new RangeAttribute(minimum, maximum));
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -97,12 +99,13 @@ public class RangeValidator : ValidatorBase, IDisposable
         OperandType = type;
         Minimum = minimum;
         Maximum = maximum;
-        ErrorMessageResourceAccessor = GetErrorMessage;
 
         _validator = new ValueAnnotationValidator(new RangeAttribute(type, minimum, maximum));
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -214,19 +217,20 @@ public class RangeValidator : ValidatorBase, IDisposable
     }
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         MinimumIsExclusive switch
         {
-            true when MaximumIsExclusive => ValidationMessages.RangeValidator_ValidationError_MinExclusive_MaxExclusive,
-            true => ValidationMessages.RangeValidator_ValidationError_MinExclusive,
+            true when MaximumIsExclusive => nameof(ValidationMessages
+                .RangeValidator_ValidationError_MinExclusive_MaxExclusive),
+            true => nameof(ValidationMessages.RangeValidator_ValidationError_MinExclusive),
             _ => MaximumIsExclusive
-                ? ValidationMessages.RangeValidator_ValidationError_MaxExclusive
-                : ValidationMessages.RangeValidator_ValidationError
+                ? nameof(ValidationMessages.RangeValidator_ValidationError_MaxExclusive)
+                : nameof(ValidationMessages.RangeValidator_ValidationError)
         };
 
     /// <summary>

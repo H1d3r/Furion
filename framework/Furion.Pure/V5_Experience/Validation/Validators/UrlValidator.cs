@@ -35,7 +35,7 @@ public class UrlValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="UrlValidator" />
     /// </summary>
-    public UrlValidator() => ErrorMessageResourceAccessor = GetErrorMessage;
+    public UrlValidator() => UseResourceKey(GetResourceKey);
 
     /// <summary>
     ///     是否支持 FTP 协议
@@ -76,13 +76,13 @@ public class UrlValidator : ValidatorBase
     }
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         SupportsFtp
-            ? ValidationMessages.UrlValidator_ValidationError_SupportsFtp
-            : ValidationMessages.UrlValidator_ValidationError;
+            ? nameof(ValidationMessages.UrlValidator_ValidationError_SupportsFtp)
+            : nameof(ValidationMessages.UrlValidator_ValidationError);
 }

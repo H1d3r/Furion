@@ -122,6 +122,9 @@ public abstract class ValidatorBase<T> : ValidatorBase
 /// </summary>
 public abstract class ValidatorBase
 {
+    // 资源类型全名常量
+    internal const string ValidationMessagesFullTypeName = "Furion.Validation.Resources.ValidationMessages";
+
     /// <summary>
     ///     错误信息
     /// </summary>
@@ -147,10 +150,7 @@ public abstract class ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="ValidatorBase" />
     /// </summary>
-    protected ValidatorBase()
-        : this(() => ValidationMessages.ValidatorBase_ValidationError)
-    {
-    }
+    protected ValidatorBase() => UseResourceKey(() => nameof(ValidationMessages.ValidatorBase_ValidationError));
 
     /// <summary>
     ///     <inheritdoc cref="ValidatorBase" />
@@ -302,6 +302,54 @@ public abstract class ValidatorBase
         string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name);
 
     /// <summary>
+    ///     使用指定资源键设置验证错误消息
+    /// </summary>
+    /// <remarks>支持用户程序集覆盖。</remarks>
+    /// <param name="resourceKeyResolver">返回 <see cref="ValidationMessages" /> 中属性名的委托</param>
+    protected void UseResourceKey(Func<string> resourceKeyResolver)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(resourceKeyResolver);
+
+        _errorMessageResourceAccessor = () =>
+        {
+            // 获取 ValidationMessages 中的属性名
+            var resourceKey = resourceKeyResolver();
+
+            return GetResourceString(resourceKey) ?? $"[{resourceKey}]";
+        };
+    }
+
+    /// <summary>
+    ///     获取支持用户覆盖的资源字符串
+    /// </summary>
+    /// <param name="resourceKey">资源属性名</param>
+    /// <returns>资源字符串，若未找到则返回占位符</returns>
+    internal static string? GetResourceString(string resourceKey)
+    {
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(resourceKey);
+
+        // 获取入口程序集和内部程序集
+        var entryAssembly = Assembly.GetEntryAssembly();
+        var internalAssembly = typeof(ValidationMessages).Assembly;
+
+        // 先查用户入口程序集（命名空间必须为 Furion.Validation.Resources）
+        if (entryAssembly is not null && entryAssembly != internalAssembly)
+        {
+            var property = TryGetPropertyFromAssembly(entryAssembly, ValidationMessagesFullTypeName, resourceKey);
+            if (property?.GetValue(null, null) is string errorMessageResourceName)
+            {
+                return errorMessageResourceName;
+            }
+        }
+
+        // 回退到框架内置资源
+        var builtIn = TryGetPropertyFromAssembly(internalAssembly, ValidationMessagesFullTypeName, resourceKey);
+        return builtIn?.GetValue(null, null) as string;
+    }
+
+    /// <summary>
     ///     触发属性变更事件
     /// </summary>
     /// <param name="propertyValue">已更改属性的值</param>
@@ -369,9 +417,22 @@ public abstract class ValidatorBase
         ArgumentNullException.ThrowIfNull(_errorMessageResourceType);
         ArgumentException.ThrowIfNullOrWhiteSpace(_errorMessageResourceName);
 
-        // 尝试获取 ErrorMessageResourceType 类型的 ErrorMessageResourceName 属性
-        var property = _errorMessageResourceType.GetProperty(_errorMessageResourceName,
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly);
+        // 支持从入口程序集覆盖资源
+        var propertyName = _errorMessageResourceName;
+        var entryAssembly = Assembly.GetEntryAssembly();
+
+        // 初始化属性对象
+        PropertyInfo? property = null;
+
+        // 尝试从用户入口程序集加载（命名空间必须为 Furion.Validation.Resources）
+        if (entryAssembly is not null && entryAssembly != _errorMessageResourceType.Assembly)
+        {
+            property = TryGetPropertyFromAssembly(entryAssembly, ValidationMessagesFullTypeName, propertyName);
+        }
+
+        // 回退到内置资源（当前 _errorMessageResourceType 所在程序集）
+        property ??= TryGetPropertyFromAssembly(_errorMessageResourceType.Assembly, _errorMessageResourceType.FullName!,
+            propertyName);
 
         // 检查属性是否只对同一程序集中的其他类型可见，而对该程序集以外的派生类型则不可见（顾名思义，使用 internal 声明的属性）
         // https://learn.microsoft.com/zh-cn/dotnet/api/system.reflection.methodbase.isassembly?view=net-9.0
@@ -396,4 +457,18 @@ public abstract class ValidatorBase
 
         _errorMessageResourceAccessor = () => (string)property.GetValue(null, null)!;
     }
+
+    /// <summary>
+    ///     尝试从指定程序集中获取资源类型的静态字符串属性
+    /// </summary>
+    /// <param name="assembly">目标程序集</param>
+    /// <param name="fullTypeName">完整类型名（如 <c>Furion.Validation.Resources.ValidationMessages</c>）</param>
+    /// <param name="propertyName">属性名</param>
+    /// <returns>
+    ///     <see cref="PropertyInfo" />
+    /// </returns>
+    internal static PropertyInfo?
+        TryGetPropertyFromAssembly(Assembly assembly, string fullTypeName, string propertyName) => assembly
+        .GetType(fullTypeName)?.GetProperty(propertyName,
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly);
 }

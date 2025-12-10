@@ -41,7 +41,7 @@ public partial class PasswordValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="PasswordValidator" />
     /// </summary>
-    public PasswordValidator() => ErrorMessageResourceAccessor = GetErrorMessage;
+    public PasswordValidator() => UseResourceKey(GetResourceKey);
 
     /// <summary>
     ///     是否启用强密码验证模式
@@ -60,6 +60,17 @@ public partial class PasswordValidator : ValidatorBase
         };
 
     /// <summary>
+    ///     获取错误信息对应的资源键
+    /// </summary>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    internal string GetResourceKey() =>
+        Strong
+            ? nameof(ValidationMessages.PasswordValidator_ValidationError_Strong)
+            : nameof(ValidationMessages.PasswordValidator_ValidationError);
+
+    /// <summary>
     ///     普通密码正则表达式
     /// </summary>
     /// <remarks>至少包含一个字母和一个数字，长度 8-64 位。</remarks>
@@ -72,15 +83,4 @@ public partial class PasswordValidator : ValidatorBase
     /// <remarks>必须包含大小写、数字、特殊字符，长度 12-64 位。</remarks>
     [GeneratedRegex(@"\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{12,64}\z")]
     private static partial Regex StrongRegex();
-
-    /// <summary>
-    ///     获取错误信息
-    /// </summary>
-    /// <returns>
-    ///     <see cref="string" />
-    /// </returns>
-    internal string GetErrorMessage() =>
-        Strong
-            ? ValidationMessages.PasswordValidator_ValidationError_Strong
-            : ValidationMessages.PasswordValidator_ValidationError;
 }

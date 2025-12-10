@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Validation.Resources;
 using System.Globalization;
 
 namespace Furion.Validation;
@@ -32,6 +33,22 @@ namespace Furion.Validation;
 /// </summary>
 public abstract class ComparisonValidator : ValidatorBase
 {
+    /// <summary>
+    ///     <inheritdoc cref="ComparisonValidator" />
+    /// </summary>
+    /// <param name="compareValue">比较的值</param>
+    /// <param name="resourceKey">错误信息资源键（对应 <see cref="ValidationMessages" /> 中的属性名）</param>
+    protected ComparisonValidator(IComparable compareValue, string resourceKey)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(compareValue);
+        ArgumentException.ThrowIfNullOrWhiteSpace(resourceKey);
+
+        CompareValue = compareValue;
+
+        UseResourceKey(() => resourceKey);
+    }
+
     /// <summary>
     ///     <inheritdoc cref="ComparisonValidator" />
     /// </summary>

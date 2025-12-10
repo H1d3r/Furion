@@ -36,14 +36,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     <see href="https://www.ee.unb.ca/cgi-bin/tervo/luhn.pl">Luhn 算法在线测试</see>
 /// </remarks>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class BankCardAttribute : ValidationAttribute
+public class BankCardAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="BankCardAttribute" />
     /// </summary>
     public BankCardAttribute()
-        : base(() => ValidationMessages.BankCardValidator_ValidationError) =>
+    {
         Validator = new BankCardValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.BankCardValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="BankCardValidator" />

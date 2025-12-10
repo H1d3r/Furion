@@ -97,6 +97,7 @@ public class ValueAnnotationValidator : ValidatorBase, IValidatorInitializer
         }
 
         _items = items;
+
         ErrorMessageResourceAccessor = () => null!;
     }
 

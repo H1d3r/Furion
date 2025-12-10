@@ -36,10 +36,7 @@ public class NotEmptyValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="NotEmptyValidator" />
     /// </summary>
-    public NotEmptyValidator()
-        : base(() => ValidationMessages.NotEmptyValidator_ValidationError)
-    {
-    }
+    public NotEmptyValidator() => UseResourceKey(() => nameof(ValidationMessages.NotEmptyValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) => value is null || (value.TryGetCount(out var count) && count > 0);

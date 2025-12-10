@@ -43,13 +43,14 @@ public class AllowedValuesValidator : ValidatorBase
     /// </summary>
     /// <param name="values">允许的值列表</param>
     public AllowedValuesValidator(params object?[] values)
-        : base(() => ValidationMessages.AllowedValuesValidator_ValidationError)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(values);
 
         Values = values;
         _validator = new ValueAnnotationValidator(new AllowedValuesAttribute(values));
+
+        UseResourceKey(() => nameof(ValidationMessages.AllowedValuesValidator_ValidationError));
     }
 
     /// <summary>

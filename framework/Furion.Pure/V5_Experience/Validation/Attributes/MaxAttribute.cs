@@ -57,7 +57,7 @@ public class MaxAttribute : ComparisonAttribute
     /// </summary>
     /// <param name="maximum">允许的最大字段值</param>
     public MaxAttribute(IComparable maximum)
-        : base(maximum, () => ValidationMessages.MaxValidator_ValidationError) =>
+        : base(maximum, nameof(ValidationMessages.MaxValidator_ValidationError)) =>
         Validator = new MaxValidator(maximum);
 
     /// <summary>

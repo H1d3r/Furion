@@ -36,10 +36,7 @@ public partial class ChineseValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="ChineseValidator" />
     /// </summary>
-    public ChineseValidator()
-        : base(() => ValidationMessages.ChineseValidator_ValidationError)
-    {
-    }
+    public ChineseValidator() => UseResourceKey(() => nameof(ValidationMessages.ChineseValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

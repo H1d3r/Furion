@@ -46,11 +46,12 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
     /// <param name="constructorArgs"><typeparamref name="TValidator" /> 构造函数参数列表</param>
     public ValidatorProxy(params object?[]? constructorArgs)
     {
-        ErrorMessageResourceAccessor = () => null!;
         Validator = (TValidator)Activator.CreateInstance(typeof(TValidator), constructorArgs)!;
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <summary>
@@ -204,10 +205,11 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IVal
 
         _valueTransformer = valueTransformer;
         _constructorArgsFactory = constructorArgsFactory;
-        ErrorMessageResourceAccessor = () => null!;
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <inheritdoc />

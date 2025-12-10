@@ -40,10 +40,7 @@ public partial class UserNameValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="UserNameValidator" />
     /// </summary>
-    public UserNameValidator()
-        : base(() => ValidationMessages.UserNameValidator_ValidationError)
-    {
-    }
+    public UserNameValidator() => UseResourceKey(() => nameof(ValidationMessages.UserNameValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

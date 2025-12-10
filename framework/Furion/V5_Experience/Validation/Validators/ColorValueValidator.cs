@@ -36,10 +36,8 @@ public partial class ColorValueValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="ColorValueValidator" />
     /// </summary>
-    public ColorValueValidator()
-        : base(() => ValidationMessages.ColorValueValidator_ValidationError)
-    {
-    }
+    public ColorValueValidator() =>
+        UseResourceKey(() => nameof(ValidationMessages.ColorValueValidator_ValidationError));
 
     /// <summary>
     ///     是否启用完整模式

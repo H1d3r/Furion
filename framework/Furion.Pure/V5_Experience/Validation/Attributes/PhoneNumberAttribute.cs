@@ -33,14 +33,17 @@ namespace System.ComponentModel.DataAnnotations;
 /// </summary>
 /// <remarks>支持国际区号（如：13800138000 或 +8613800138000 或 008613800138000）。</remarks>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class PhoneNumberAttribute : ValidationAttribute
+public class PhoneNumberAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="PhoneNumberAttribute" />
     /// </summary>
     public PhoneNumberAttribute()
-        : base(() => ValidationMessages.PhoneNumberValidator_ValidationError) =>
+    {
         Validator = new PhoneNumberValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.PhoneNumberValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="PhoneNumberValidator" />

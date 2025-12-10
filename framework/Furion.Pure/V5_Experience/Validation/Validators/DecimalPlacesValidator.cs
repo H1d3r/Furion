@@ -39,7 +39,6 @@ public class DecimalPlacesValidator : ValidatorBase
     /// </summary>
     /// <param name="maxDecimalPlaces">允许的最大有效小数位数</param>
     public DecimalPlacesValidator(int maxDecimalPlaces)
-        : base(() => ValidationMessages.DecimalPlacesValidator_ValidationError)
     {
         // 检查允许的最大有效小数位数合法性
         if (maxDecimalPlaces < 0)
@@ -50,6 +49,8 @@ public class DecimalPlacesValidator : ValidatorBase
         }
 
         MaxDecimalPlaces = maxDecimalPlaces;
+
+        UseResourceKey(() => nameof(ValidationMessages.DecimalPlacesValidator_ValidationError));
     }
 
     /// <summary>
