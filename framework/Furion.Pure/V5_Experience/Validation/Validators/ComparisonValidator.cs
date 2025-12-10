@@ -36,9 +36,9 @@ public abstract class ComparisonValidator : ValidatorBase
     ///     <inheritdoc cref="ComparisonValidator" />
     /// </summary>
     /// <param name="compareValue">比较的值</param>
-    /// <param name="errorMessage">错误信息</param>
-    protected ComparisonValidator(IComparable compareValue, string errorMessage)
-        : base(errorMessage)
+    /// <param name="errorMessageResourceAccessor">错误信息资源访问器</param>
+    protected ComparisonValidator(IComparable compareValue, Func<string> errorMessageResourceAccessor)
+        : base(errorMessageResourceAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValue);

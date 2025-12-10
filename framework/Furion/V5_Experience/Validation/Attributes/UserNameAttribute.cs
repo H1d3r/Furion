@@ -42,7 +42,7 @@ public class UserNameAttribute : ValidationAttribute
     ///     <inheritdoc cref="UserNameAttribute" />
     /// </summary>
     public UserNameAttribute()
-        : base(ValidationMessages.UserNameValidator_ValidationError) =>
+        : base(() => ValidationMessages.UserNameValidator_ValidationError) =>
         Validator = new UserNameValidator();
 
     /// <summary>

@@ -40,7 +40,7 @@ public class NotEqualToAttribute : ValidationAttribute
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public NotEqualToAttribute(object? compareValue)
-        : base(ValidationMessages.NotEqualToValidator_ValidationError)
+        : base(() => ValidationMessages.NotEqualToValidator_ValidationError)
     {
         CompareValue = compareValue;
         Validator = new NotEqualToValidator(compareValue);

@@ -38,7 +38,7 @@ public class ChineseNameAttribute : ValidationAttribute
     ///     <inheritdoc cref="ChineseNameAttribute" />
     /// </summary>
     public ChineseNameAttribute()
-        : base(ValidationMessages.ChineseNameValidator_ValidationError) =>
+        : base(() => ValidationMessages.ChineseNameValidator_ValidationError) =>
         Validator = new ChineseNameValidator();
 
     /// <summary>

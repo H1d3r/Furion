@@ -57,7 +57,7 @@ public class LessThanOrEqualToAttribute : ComparisonAttribute
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public LessThanOrEqualToAttribute(IComparable compareValue)
-        : base(compareValue, ValidationMessages.LessThanOrEqualToValidator_ValidationError) =>
+        : base(compareValue, () => ValidationMessages.LessThanOrEqualToValidator_ValidationError) =>
         Validator = new LessThanOrEqualToValidator(compareValue);
 
     /// <summary>

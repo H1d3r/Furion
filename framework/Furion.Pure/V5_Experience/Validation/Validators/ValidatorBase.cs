@@ -314,6 +314,8 @@ public abstract class ValidatorBase
         PropertyChanged?.Invoke(this, new ValidationPropertyChangedEventArgs(propertyName, propertyValue));
     }
 
+    // TODO: 这里内置中文的 resx 文件
+
     /// <summary>
     ///     设置错误信息资源访问器
     /// </summary>

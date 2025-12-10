@@ -44,7 +44,7 @@ public class MinLengthValidator : ValidatorBase
     /// </summary>
     /// <param name="length">最小允许长度</param>
     public MinLengthValidator(int length)
-        : base(ValidationMessages.MinLengthValidator_ValidationError)
+        : base(() => ValidationMessages.MinLengthValidator_ValidationError)
     {
         Length = length;
         _validator = new ValueAnnotationValidator(new MinLengthAttribute(Length));

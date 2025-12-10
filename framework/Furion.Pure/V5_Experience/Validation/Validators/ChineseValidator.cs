@@ -37,7 +37,7 @@ public partial class ChineseValidator : ValidatorBase
     ///     <inheritdoc cref="ChineseValidator" />
     /// </summary>
     public ChineseValidator()
-        : base(ValidationMessages.ChineseValidator_ValidationError)
+        : base(() => ValidationMessages.ChineseValidator_ValidationError)
     {
     }
 

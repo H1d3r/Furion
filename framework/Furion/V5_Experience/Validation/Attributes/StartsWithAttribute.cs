@@ -49,7 +49,7 @@ public class StartsWithAttribute : ValidationAttribute
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public StartsWithAttribute(string searchValue)
-        : base(ValidationMessages.StartsWithValidator_ValidationError)
+        : base(() => ValidationMessages.StartsWithValidator_ValidationError)
     {
         SearchValue = searchValue;
         Validator = new StartsWithValidator(searchValue);

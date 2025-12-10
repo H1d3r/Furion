@@ -47,7 +47,7 @@ public class RequiredValidator : ValidatorBase, IHighPriorityValidator, IDisposa
     ///     <inheritdoc cref="RequiredValidator" />
     /// </summary>
     public RequiredValidator()
-        : base(ValidationMessages.RequiredValidator_ValidationError)
+        : base(() => ValidationMessages.RequiredValidator_ValidationError)
     {
         _validator = new ValueAnnotationValidator(new RequiredAttribute());
 

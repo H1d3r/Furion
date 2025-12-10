@@ -47,7 +47,7 @@ public class StartsWithValidator : ValidatorBase
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public StartsWithValidator(string searchValue)
-        : base(ValidationMessages.StartsWithValidator_ValidationError)
+        : base(() => ValidationMessages.StartsWithValidator_ValidationError)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrEmpty(searchValue);

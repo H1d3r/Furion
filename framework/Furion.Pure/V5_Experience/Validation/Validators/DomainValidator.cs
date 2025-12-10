@@ -42,7 +42,7 @@ public partial class DomainValidator : ValidatorBase
     ///     <inheritdoc cref="DomainValidator" />
     /// </summary>
     public DomainValidator()
-        : base(ValidationMessages.DomainValidator_ValidationError) =>
+        : base(() => ValidationMessages.DomainValidator_ValidationError) =>
         _idnMapping = new IdnMapping { AllowUnassigned = true };
 
     /// <inheritdoc />

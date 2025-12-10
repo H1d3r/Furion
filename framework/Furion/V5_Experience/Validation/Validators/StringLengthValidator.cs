@@ -49,7 +49,7 @@ public class StringLengthValidator : ValidatorBase, IDisposable
     /// </summary>
     /// <param name="maximumLength">最大允许长度</param>
     public StringLengthValidator(int maximumLength)
-        : base(ValidationMessages.StringLengthValidator_ValidationError)
+        : base(() => ValidationMessages.StringLengthValidator_ValidationError)
     {
         MaximumLength = maximumLength;
 

@@ -37,7 +37,7 @@ public partial class EmailAddressValidator : ValidatorBase
     ///     <inheritdoc cref="EmailAddressValidator" />
     /// </summary>
     public EmailAddressValidator()
-        : base(ValidationMessages.EmailAddressValidator_ValidationError)
+        : base(() => ValidationMessages.EmailAddressValidator_ValidationError)
     {
     }
 

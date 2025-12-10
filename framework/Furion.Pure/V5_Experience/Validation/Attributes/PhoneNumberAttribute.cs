@@ -39,7 +39,7 @@ public class PhoneNumberAttribute : ValidationAttribute
     ///     <inheritdoc cref="PhoneNumberAttribute" />
     /// </summary>
     public PhoneNumberAttribute()
-        : base(ValidationMessages.PhoneNumberValidator_ValidationError) =>
+        : base(() => ValidationMessages.PhoneNumberValidator_ValidationError) =>
         Validator = new PhoneNumberValidator();
 
     /// <summary>

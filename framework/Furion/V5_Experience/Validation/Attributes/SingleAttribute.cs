@@ -38,7 +38,7 @@ public class SingleAttribute : ValidationAttribute
     ///     <inheritdoc cref="SingleAttribute" />
     /// </summary>
     public SingleAttribute()
-        : base(ValidationMessages.SingleValidator_ValidationError) =>
+        : base(() => ValidationMessages.SingleValidator_ValidationError) =>
         Validator = new SingleValidator();
 
     /// <summary>

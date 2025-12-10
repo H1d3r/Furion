@@ -49,7 +49,7 @@ public class EndsWithAttribute : ValidationAttribute
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public EndsWithAttribute(string searchValue)
-        : base(ValidationMessages.EndsWithValidator_ValidationError)
+        : base(() => ValidationMessages.EndsWithValidator_ValidationError)
     {
         SearchValue = searchValue;
         Validator = new EndsWithValidator(SearchValue);

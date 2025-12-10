@@ -38,7 +38,7 @@ public class TelephoneAttribute : ValidationAttribute
     ///     <inheritdoc cref="TelephoneAttribute" />
     /// </summary>
     public TelephoneAttribute()
-        : base(ValidationMessages.TelephoneValidator_ValidationError) =>
+        : base(() => ValidationMessages.TelephoneValidator_ValidationError) =>
         Validator = new TelephoneValidator();
 
     /// <summary>

@@ -38,7 +38,7 @@ public class NotBlankAttribute : ValidationAttribute
     ///     <inheritdoc cref="NotBlankAttribute" />
     /// </summary>
     public NotBlankAttribute()
-        : base(ValidationMessages.NotBlankValidator_ValidationError) =>
+        : base(() => ValidationMessages.NotBlankValidator_ValidationError) =>
         Validator = new NotBlankValidator();
 
     /// <summary>

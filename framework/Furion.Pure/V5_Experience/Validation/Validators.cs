@@ -692,6 +692,68 @@ public static class Validators
     }
 
     /// <summary>
+    ///     创建指定数值范围约束验证器
+    /// </summary>
+    /// <param name="minimum">允许的最小字段值</param>
+    /// <param name="maximum">允许的最大字段值</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="RangeValidator" />
+    /// </returns>
+    public static RangeValidator Between(int minimum, int maximum, Action<RangeValidator>? configure = null)
+    {
+        // 初始化 RangeValidator 实例
+        var validator = new RangeValidator(minimum, maximum);
+
+        // 调用自定义配置委托
+        configure?.Invoke(validator);
+
+        return validator;
+    }
+
+    /// <summary>
+    ///     创建指定数值范围约束验证器
+    /// </summary>
+    /// <param name="minimum">允许的最小字段值</param>
+    /// <param name="maximum">允许的最大字段值</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="RangeValidator" />
+    /// </returns>
+    public static RangeValidator Between(double minimum, double maximum, Action<RangeValidator>? configure = null)
+    {
+        // 初始化 RangeValidator 实例
+        var validator = new RangeValidator(minimum, maximum);
+
+        // 调用自定义配置委托
+        configure?.Invoke(validator);
+
+        return validator;
+    }
+
+    /// <summary>
+    ///     创建指定数值范围约束验证器
+    /// </summary>
+    /// <param name="type">数据字段值的类型</param>
+    /// <param name="minimum">允许的最小字段值</param>
+    /// <param name="maximum">允许的最大字段值</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="RangeValidator" />
+    /// </returns>
+    public static RangeValidator Between([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type,
+        string minimum, string maximum, Action<RangeValidator>? configure = null)
+    {
+        // 初始化 RangeValidator 实例
+        var validator = new RangeValidator(type, minimum, maximum);
+
+        // 调用自定义配置委托
+        configure?.Invoke(validator);
+
+        return validator;
+    }
+
+    /// <summary>
     ///     创建正则表达式验证器
     /// </summary>
     /// <param name="pattern">正则表达式模式</param>

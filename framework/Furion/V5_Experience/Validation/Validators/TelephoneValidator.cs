@@ -37,7 +37,7 @@ public partial class TelephoneValidator : ValidatorBase
     ///     <inheritdoc cref="TelephoneValidator" />
     /// </summary>
     public TelephoneValidator()
-        : base(ValidationMessages.TelephoneValidator_ValidationError)
+        : base(() => ValidationMessages.TelephoneValidator_ValidationError)
     {
     }
 

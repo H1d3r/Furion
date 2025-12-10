@@ -37,7 +37,7 @@ public partial class PostalCodeValidator : ValidatorBase
     ///     <inheritdoc cref="PostalCodeValidator" />
     /// </summary>
     public PostalCodeValidator()
-        : base(ValidationMessages.PostalCodeValidator_ValidationError)
+        : base(() => ValidationMessages.PostalCodeValidator_ValidationError)
     {
     }
 

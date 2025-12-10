@@ -38,7 +38,7 @@ public class EmailAddressStrictAttribute : ValidationAttribute
     ///     <inheritdoc cref="EmailAddressStrictAttribute" />
     /// </summary>
     public EmailAddressStrictAttribute()
-        : base(ValidationMessages.EmailAddressValidator_ValidationError) =>
+        : base(() => ValidationMessages.EmailAddressValidator_ValidationError) =>
         Validator = new EmailAddressValidator();
 
     /// <summary>

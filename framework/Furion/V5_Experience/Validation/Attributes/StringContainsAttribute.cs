@@ -49,7 +49,7 @@ public class StringContainsAttribute : ValidationAttribute
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public StringContainsAttribute(string searchValue)
-        : base(ValidationMessages.StringContainsValidator_ValidationError)
+        : base(() => ValidationMessages.StringContainsValidator_ValidationError)
     {
         SearchValue = searchValue;
         Validator = new StringContainsValidator(searchValue);

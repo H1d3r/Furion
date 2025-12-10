@@ -41,7 +41,7 @@ public partial class BankCardValidator : ValidatorBase
     ///     <inheritdoc cref="BankCardValidator" />
     /// </summary>
     public BankCardValidator()
-        : base(ValidationMessages.BankCardValidator_ValidationError)
+        : base(() => ValidationMessages.BankCardValidator_ValidationError)
     {
     }
 

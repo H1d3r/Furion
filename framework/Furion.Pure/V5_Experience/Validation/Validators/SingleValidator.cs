@@ -37,7 +37,7 @@ public class SingleValidator : ValidatorBase
     ///     <inheritdoc cref="SingleValidator" />
     /// </summary>
     public SingleValidator()
-        : base(ValidationMessages.SingleValidator_ValidationError)
+        : base(() => ValidationMessages.SingleValidator_ValidationError)
     {
     }
 

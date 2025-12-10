@@ -37,7 +37,7 @@ public partial class ColorValueValidator : ValidatorBase
     ///     <inheritdoc cref="ColorValueValidator" />
     /// </summary>
     public ColorValueValidator()
-        : base(ValidationMessages.ColorValueValidator_ValidationError)
+        : base(() => ValidationMessages.ColorValueValidator_ValidationError)
     {
     }
 
