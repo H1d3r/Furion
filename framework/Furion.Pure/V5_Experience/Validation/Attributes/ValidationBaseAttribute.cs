@@ -37,7 +37,7 @@ namespace Furion.Validation;
 public abstract class ValidationBaseAttribute : ValidationAttribute
 {
     /// <summary>
-    ///     ErrorMessageResourceAccessor 属性设置其
+    ///     ErrorMessageResourceAccessor 属性设置器
     /// </summary>
     internal static readonly Lazy<Action<object, object?>> _errorMessageResourceAccessorSetter = new(() =>
         typeof(ValidationAttribute).CreatePropertySetter(
