@@ -33,7 +33,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     以特定字符/字符串结尾的验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class EndsWithAttribute : ValidationAttribute
+public class EndsWithAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="EndsWithAttribute" />
@@ -49,10 +49,11 @@ public class EndsWithAttribute : ValidationAttribute
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public EndsWithAttribute(string searchValue)
-        : base(ValidationMessages.EndsWithValidator_ValidationError)
     {
         SearchValue = searchValue;
         Validator = new EndsWithValidator(SearchValue);
+
+        UseResourceKey(() => nameof(ValidationMessages.EndsWithValidator_ValidationError));
     }
 
     /// <summary>

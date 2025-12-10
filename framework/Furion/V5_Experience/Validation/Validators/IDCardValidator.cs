@@ -36,10 +36,7 @@ public partial class IDCardValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="IDCardValidator" />
     /// </summary>
-    public IDCardValidator()
-        : base(ValidationMessages.IDCardValidator_ValidationError)
-    {
-    }
+    public IDCardValidator() => UseResourceKey(() => nameof(ValidationMessages.IDCardValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

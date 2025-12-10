@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     邮政编码（中国）验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class PostalCodeAttribute : ValidationAttribute
+public class PostalCodeAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="PostalCodeAttribute" />
     /// </summary>
     public PostalCodeAttribute()
-        : base(ValidationMessages.PostalCodeValidator_ValidationError) =>
+    {
         Validator = new PostalCodeValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.PostalCodeValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="PostalCodeValidator" />

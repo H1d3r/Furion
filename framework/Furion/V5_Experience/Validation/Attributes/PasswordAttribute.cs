@@ -37,7 +37,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     强密码模式：密码长度为 12-64 位，必须包含大小写字母、数字、特殊字符（如 <![CDATA[!@#$%^&*]]>）。
 /// </remarks>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class PasswordAttribute : ValidationAttribute
+public class PasswordAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="PasswordAttribute" />
@@ -45,7 +45,8 @@ public class PasswordAttribute : ValidationAttribute
     public PasswordAttribute()
     {
         Validator = new PasswordValidator();
-        this.SetErrorMessageResourceAccessor(GetErrorMessage);
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -71,13 +72,13 @@ public class PasswordAttribute : ValidationAttribute
     public override bool IsValid(object? value) => Validator.IsValid(value);
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         Strong
-            ? ValidationMessages.PasswordValidator_ValidationError_Strong
-            : ValidationMessages.PasswordValidator_ValidationError;
+            ? nameof(ValidationMessages.PasswordValidator_ValidationError_Strong)
+            : nameof(ValidationMessages.PasswordValidator_ValidationError);
 }

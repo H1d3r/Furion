@@ -38,7 +38,7 @@ public partial class IpAddressValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="IpAddressValidator" />
     /// </summary>
-    public IpAddressValidator() => ErrorMessageResourceAccessor = GetErrorMessage;
+    public IpAddressValidator() => UseResourceKey(GetResourceKey);
 
     /// <summary>
     ///     是否允许 IPv6 地址
@@ -88,15 +88,15 @@ public partial class IpAddressValidator : ValidatorBase
     }
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         AllowIPv6
-            ? ValidationMessages.IpAddressValidator_ValidationError_AllowIPv6
-            : ValidationMessages.IpAddressValidator_ValidationError;
+            ? nameof(ValidationMessages.IpAddressValidator_ValidationError_AllowIPv6)
+            : nameof(ValidationMessages.IpAddressValidator_ValidationError);
 
     /// <summary>
     ///     严格的 IPv4 地址正则表达式

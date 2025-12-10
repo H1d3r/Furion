@@ -33,7 +33,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     <see cref="DateTime" /> 验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class DateTimeAttribute : ValidationAttribute
+public class DateTimeAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="DateTimeAttribute" />
@@ -46,7 +46,8 @@ public class DateTimeAttribute : ValidationAttribute
 
         Formats = formats;
         Validator = new DateTimeValidator(formats);
-        this.SetErrorMessageResourceAccessor(GetErrorMessage);
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -95,13 +96,13 @@ public class DateTimeAttribute : ValidationAttribute
         ErrorMessageString, name, string.Join(", ", Formats.Select(u => $"'{u}'")));
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         Formats.Length == 0
-            ? ValidationMessages.DateTimeValidator_ValidationError
-            : ValidationMessages.DateTimeValidator_ValidationError_Formats;
+            ? nameof(ValidationMessages.DateTimeValidator_ValidationError)
+            : nameof(ValidationMessages.DateTimeValidator_ValidationError_Formats);
 }

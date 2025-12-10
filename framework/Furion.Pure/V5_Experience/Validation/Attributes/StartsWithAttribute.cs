@@ -33,7 +33,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     以特定字符/字符串开头的验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class StartsWithAttribute : ValidationAttribute
+public class StartsWithAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="StartsWithAttribute" />
@@ -49,10 +49,11 @@ public class StartsWithAttribute : ValidationAttribute
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public StartsWithAttribute(string searchValue)
-        : base(ValidationMessages.StartsWithValidator_ValidationError)
     {
         SearchValue = searchValue;
         Validator = new StartsWithValidator(searchValue);
+
+        UseResourceKey(() => nameof(ValidationMessages.StartsWithValidator_ValidationError));
     }
 
     /// <summary>

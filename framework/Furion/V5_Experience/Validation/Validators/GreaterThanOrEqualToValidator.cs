@@ -37,7 +37,7 @@ public class GreaterThanOrEqualToValidator : ComparisonValidator
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public GreaterThanOrEqualToValidator(IComparable compareValue)
-        : base(compareValue, ValidationMessages.GreaterThanOrEqualToValidator_ValidationError)
+        : base(compareValue, nameof(ValidationMessages.GreaterThanOrEqualToValidator_ValidationError))
     {
     }
 

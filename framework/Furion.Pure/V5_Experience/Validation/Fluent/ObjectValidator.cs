@@ -116,7 +116,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
             ValidateAllProperties = options.ValidateAllProperties
         };
 
-        PropertyValidators = [];
+        Validators = [];
         _ruleSetStack = new Stack<string?>();
 
         // 订阅 ValidatorOptions 属性变更事件
@@ -141,7 +141,13 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     /// <summary>
     ///     属性验证器集合
     /// </summary>
-    internal List<IObjectValidator<T>> PropertyValidators { get; }
+    internal List<IObjectValidator<T>> Validators { get; }
+
+    /// <summary>
+    ///     当前验证器在对象图中的属性路径（如 "User.Address"）
+    /// </summary>
+    /// <remarks>仅在作为嵌套验证器时由父验证器设置。</remarks>
+    internal string? MemberPath { get; set; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -169,7 +175,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
             return false;
         }
 
-        return PropertyValidators.All(u => u.IsValid(instance, ruleSets));
+        return Validators.All(u => u.IsValid(instance, ruleSets));
     }
 
     /// <inheritdoc />
@@ -196,7 +202,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
 
         // 获取所有属性验证器验证结果集合
         validationResults.AddRange(
-            PropertyValidators.SelectMany(u => u.GetValidationResults(instance, ruleSets) ?? []));
+            Validators.SelectMany(u => u.GetValidationResults(instance, ruleSets) ?? []));
 
         return validationResults.ToResults();
     }
@@ -221,7 +227,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         }
 
         // 遍历属性验证器集合
-        foreach (var validator in PropertyValidators)
+        foreach (var validator in Validators)
         {
             validator.Validate(instance, ruleSets);
         }
@@ -236,7 +242,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         _annotationValidator.InitializeServiceProvider(serviceProvider);
 
         // 遍历所有属性验证器并尝试同步 IServiceProvider 委托
-        foreach (var propertyValidator in PropertyValidators)
+        foreach (var propertyValidator in Validators)
         {
             // 同步 IServiceProvider 委托
             propertyValidator.InitializeServiceProvider(serviceProvider);
@@ -265,7 +271,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         var propertyValidator = new PropertyValidator<T, TProperty>(selector, this) { RuleSets = effectiveRuleSets };
 
         // 将实例添加到集合中
-        PropertyValidators.Add(propertyValidator);
+        Validators.Add(propertyValidator);
 
         // 同步 IServiceProvider 委托
         propertyValidator.InitializeServiceProvider(_serviceProvider);
@@ -297,7 +303,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
             new CollectionPropertyValidator<T, TElement>(selector, this) { RuleSets = effectiveRuleSets };
 
         // 将实例添加到集合中
-        PropertyValidators.Add(propertyValidator);
+        Validators.Add(propertyValidator);
 
         // 同步 IServiceProvider 委托
         propertyValidator.InitializeServiceProvider(_serviceProvider);
@@ -502,7 +508,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         Options.PropertyChanged -= OptionsOnPropertyChanged;
 
         // 释放所有属性验证器资源
-        foreach (var propertyValidator in PropertyValidators)
+        foreach (var propertyValidator in Validators)
         {
             if (propertyValidator is IDisposable disposable)
             {

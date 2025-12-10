@@ -31,8 +31,14 @@ namespace Furion.Validation;
 public abstract class NumericComparisonValidator : ComparisonValidator
 {
     /// <inheritdoc />
-    protected NumericComparisonValidator(IComparable compareValue, string errorMessage)
-        : base(compareValue, errorMessage)
+    protected NumericComparisonValidator(IComparable compareValue, string resourceKey)
+        : base(compareValue, resourceKey)
+    {
+    }
+
+    /// <inheritdoc />
+    protected NumericComparisonValidator(IComparable compareValue, Func<string> errorMessageResourceAccessor)
+        : base(compareValue, errorMessageResourceAccessor)
     {
     }
 

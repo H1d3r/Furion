@@ -40,10 +40,7 @@ public partial class BankCardValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="BankCardValidator" />
     /// </summary>
-    public BankCardValidator()
-        : base(ValidationMessages.BankCardValidator_ValidationError)
-    {
-    }
+    public BankCardValidator() => UseResourceKey(() => nameof(ValidationMessages.BankCardValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value)

@@ -26,22 +26,12 @@
 namespace Furion.Validation;
 
 /// <summary>
-///     对象验证器配置服务
+///     支持成员路径修复的验证器
 /// </summary>
-public interface IValidatorConfigure;
-
-/// <summary>
-///     <inheritdoc cref="IValidatorConfigure" />
-/// </summary>
-/// <typeparam name="T">对象类型</typeparam>
-public interface IValidatorConfigure<T> : IValidatorConfigure
-    where T : class
+public interface IMemberPathRepairable
 {
     /// <summary>
-    ///     配置验证规则
+    ///     修复验证器及其子验证器的成员路径
     /// </summary>
-    /// <param name="validator">
-    ///     <see cref="ObjectValidator{T}" />
-    /// </param>
-    void Configure(ObjectValidator<T> validator);
+    void RepairMemberPaths();
 }

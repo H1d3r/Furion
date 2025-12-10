@@ -46,11 +46,12 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
     /// <param name="constructorArgs"><typeparamref name="TValidator" /> 构造函数参数列表</param>
     public ValidatorProxy(params object?[]? constructorArgs)
     {
-        ErrorMessageResourceAccessor = () => null!;
         Validator = (TValidator)Activator.CreateInstance(typeof(TValidator), constructorArgs)!;
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <summary>
@@ -66,15 +67,8 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
     }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        // 检查验证器是否实现 IValidatorInitializer 接口
-        if (Validator is IValidatorInitializer initializer)
-        {
-            // 同步 IServiceProvider 委托
-            initializer.InitializeServiceProvider(serviceProvider);
-        }
-    }
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <summary>
     ///     配置验证器实例
@@ -97,11 +91,13 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
     public override bool IsValid(object? value) => Validator.IsValid(value);
 
     /// <inheritdoc />
-    public override List<ValidationResult>? GetValidationResults(object? value, string name) =>
-        Validator.GetValidationResults(value, name);
+    public override List<ValidationResult>? GetValidationResults(object? value, string name,
+        IEnumerable<string>? memberNames = null) =>
+        Validator.GetValidationResults(value, name, memberNames);
 
     /// <inheritdoc />
-    public override void Validate(object? value, string name) => Validator.Validate(value, name);
+    public override void Validate(object? value, string name, IEnumerable<string>? memberNames = null) =>
+        Validator.Validate(value, name, memberNames);
 
     /// <inheritdoc />
     public override string? FormatErrorMessage(string name) => Validator.FormatErrorMessage(name);
@@ -148,6 +144,17 @@ public class ValidatorProxy<TValidator> : ValidatorBase, IDisposable, IValidator
 
         // 设置验证器实例属性值
         validatorProperty.SetValue(Validator, eventArgs.PropertyValue);
+    }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 检查验证器是否实现 IValidatorInitializer 接口
+        if (Validator is IValidatorInitializer initializer)
+        {
+            // 同步 IServiceProvider 委托
+            initializer.InitializeServiceProvider(serviceProvider);
+        }
     }
 }
 
@@ -198,10 +205,11 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IVal
 
         _valueTransformer = valueTransformer;
         _constructorArgsFactory = constructorArgsFactory;
-        ErrorMessageResourceAccessor = () => null!;
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <inheritdoc />
@@ -212,19 +220,8 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IVal
     }
 
     /// <inheritdoc />
-    public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        // 遍历所有验证器并尝试同步 IServiceProvider 委托
-        foreach (var validator in _validatorCache.Values)
-        {
-            // 检查验证器是否实现 IValidatorInitializer 接口
-            if (validator is IValidatorInitializer initializer)
-            {
-                // 同步 IServiceProvider 委托
-                initializer.InitializeServiceProvider(serviceProvider);
-            }
-        }
-    }
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
 
     /// <summary>
     ///     配置验证器实例
@@ -250,12 +247,13 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IVal
     public override bool IsValid(T? instance) => GetValidator(instance).IsValid(GetValidationValue(instance));
 
     /// <inheritdoc />
-    public override List<ValidationResult>? GetValidationResults(T? instance, string name) =>
-        GetValidator(instance).GetValidationResults(GetValidationValue(instance), name);
+    public override List<ValidationResult>? GetValidationResults(T? instance, string name,
+        IEnumerable<string>? memberNames = null) =>
+        GetValidator(instance).GetValidationResults(GetValidationValue(instance), name, memberNames);
 
     /// <inheritdoc />
-    public override void Validate(T? instance, string name) =>
-        GetValidator(instance).Validate(GetValidationValue(instance), name);
+    public override void Validate(T? instance, string name, IEnumerable<string>? memberNames = null) =>
+        GetValidator(instance).Validate(GetValidationValue(instance), name, memberNames);
 
     /// <inheritdoc />
     /// <exception cref="NotSupportedException"></exception>
@@ -385,5 +383,20 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IDisposable, IVal
 
         // 清除缓存以确保新实例获取最新属性
         _validatorCache.Clear();
+    }
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 遍历所有验证器并尝试同步 IServiceProvider 委托
+        foreach (var validator in _validatorCache.Values)
+        {
+            // 检查验证器是否实现 IValidatorInitializer 接口
+            if (validator is IValidatorInitializer initializer)
+            {
+                // 同步 IServiceProvider 委托
+                initializer.InitializeServiceProvider(serviceProvider);
+            }
+        }
     }
 }

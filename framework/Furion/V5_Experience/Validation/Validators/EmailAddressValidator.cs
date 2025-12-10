@@ -36,10 +36,8 @@ public partial class EmailAddressValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="EmailAddressValidator" />
     /// </summary>
-    public EmailAddressValidator()
-        : base(ValidationMessages.EmailAddressValidator_ValidationError)
-    {
-    }
+    public EmailAddressValidator() =>
+        UseResourceKey(() => nameof(ValidationMessages.EmailAddressValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

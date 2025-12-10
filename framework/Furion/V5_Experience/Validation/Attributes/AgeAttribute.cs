@@ -32,7 +32,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     年龄（0-120 岁）验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class AgeAttribute : ValidationAttribute
+public class AgeAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="AgeAttribute" />
@@ -40,7 +40,8 @@ public class AgeAttribute : ValidationAttribute
     public AgeAttribute()
     {
         Validator = new AgeValidator();
-        this.SetErrorMessageResourceAccessor(GetErrorMessage);
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -80,13 +81,13 @@ public class AgeAttribute : ValidationAttribute
     public override bool IsValid(object? value) => Validator.IsValid(value);
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         IsAdultOnly
-            ? ValidationMessages.AgeValidator_ValidationError_IsAdultOnly
-            : ValidationMessages.AgeValidator_ValidationError;
+            ? nameof(ValidationMessages.AgeValidator_ValidationError_IsAdultOnly)
+            : nameof(ValidationMessages.AgeValidator_ValidationError);
 }
