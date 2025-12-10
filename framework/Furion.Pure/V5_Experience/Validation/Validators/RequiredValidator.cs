@@ -47,12 +47,13 @@ public class RequiredValidator : ValidatorBase, IHighPriorityValidator, IDisposa
     ///     <inheritdoc cref="RequiredValidator" />
     /// </summary>
     public RequiredValidator()
-        : base(() => ValidationMessages.RequiredValidator_ValidationError)
     {
         _validator = new ValueAnnotationValidator(new RequiredAttribute());
 
         // 订阅属性变更事件
         PropertyChanged += OnPropertyChanged;
+
+        UseResourceKey(() => nameof(ValidationMessages.RequiredValidator_ValidationError));
     }
 
     /// <summary>

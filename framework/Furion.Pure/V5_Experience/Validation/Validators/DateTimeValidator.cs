@@ -43,7 +43,8 @@ public class DateTimeValidator : ValidatorBase
         ArgumentNullException.ThrowIfNull(formats);
 
         Formats = formats;
-        ErrorMessageResourceAccessor = GetErrorMessage;
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -90,13 +91,13 @@ public class DateTimeValidator : ValidatorBase
             : DateTime.TryParseExact(text, Formats, Provider, Style, out _);
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         Formats.Length == 0
-            ? ValidationMessages.DateTimeValidator_ValidationError
-            : ValidationMessages.DateTimeValidator_ValidationError_Formats;
+            ? nameof(ValidationMessages.DateTimeValidator_ValidationError)
+            : nameof(ValidationMessages.DateTimeValidator_ValidationError_Formats);
 }

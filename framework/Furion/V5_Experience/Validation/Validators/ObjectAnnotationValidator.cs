@@ -76,6 +76,7 @@ public class ObjectAnnotationValidator : ValidatorBase, IValidatorInitializer
         }
 
         _items = items;
+
         ErrorMessageResourceAccessor = () => null!;
     }
 

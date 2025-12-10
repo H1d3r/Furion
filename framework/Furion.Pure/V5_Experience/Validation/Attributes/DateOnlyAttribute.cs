@@ -33,7 +33,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     <see cref="DateOnly" /> 验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class DateOnlyAttribute : ValidationAttribute
+public class DateOnlyAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="DateOnlyAttribute" />
@@ -46,7 +46,8 @@ public class DateOnlyAttribute : ValidationAttribute
 
         Formats = formats;
         Validator = new DateOnlyValidator(formats);
-        this.SetErrorMessageResourceAccessor(GetErrorMessage);
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -95,13 +96,13 @@ public class DateOnlyAttribute : ValidationAttribute
         ErrorMessageString, name, string.Join(", ", Formats.Select(u => $"'{u}'")));
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         Formats.Length == 0
-            ? ValidationMessages.DateOnlyValidator_ValidationError
-            : ValidationMessages.DateOnlyValidator_ValidationError_Formats;
+            ? nameof(ValidationMessages.DateOnlyValidator_ValidationError)
+            : nameof(ValidationMessages.DateOnlyValidator_ValidationError_Formats);
 }

@@ -32,6 +32,12 @@ namespace System.ComponentModel.DataAnnotations;
 public abstract class NumericComparisonAttribute : ComparisonAttribute
 {
     /// <inheritdoc />
+    protected NumericComparisonAttribute(IComparable compareValue, string resourceKey)
+        : base(compareValue, resourceKey)
+    {
+    }
+
+    /// <inheritdoc />
     protected NumericComparisonAttribute(IComparable compareValue, Func<string> errorMessageResourceAccessor)
         : base(compareValue, errorMessageResourceAccessor)
     {

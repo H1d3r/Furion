@@ -32,7 +32,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     IP 地址验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class IpAddressAttribute : ValidationAttribute
+public class IpAddressAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="IpAddressAttribute" />
@@ -40,7 +40,8 @@ public class IpAddressAttribute : ValidationAttribute
     public IpAddressAttribute()
     {
         Validator = new IpAddressValidator();
-        this.SetErrorMessageResourceAccessor(GetErrorMessage);
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -66,13 +67,13 @@ public class IpAddressAttribute : ValidationAttribute
     public override bool IsValid(object? value) => Validator.IsValid(value);
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         AllowIPv6
-            ? ValidationMessages.IpAddressValidator_ValidationError_AllowIPv6
-            : ValidationMessages.IpAddressValidator_ValidationError;
+            ? nameof(ValidationMessages.IpAddressValidator_ValidationError_AllowIPv6)
+            : nameof(ValidationMessages.IpAddressValidator_ValidationError);
 }

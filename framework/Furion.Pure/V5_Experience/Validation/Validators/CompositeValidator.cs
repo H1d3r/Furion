@@ -64,6 +64,7 @@ public class CompositeValidator : ValidatorBase, IValidatorInitializer, IDisposa
         }
 
         Validators = _validators;
+
         ErrorMessageResourceAccessor = () => null!;
     }
 

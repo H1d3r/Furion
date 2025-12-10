@@ -33,7 +33,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     时间格式 <see cref="System.TimeOnly" /> 验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class TimeOnlyAttribute : ValidationAttribute
+public class TimeOnlyAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="TimeOnlyAttribute" />
@@ -46,7 +46,8 @@ public class TimeOnlyAttribute : ValidationAttribute
 
         Formats = formats;
         Validator = new TimeOnlyValidator(formats);
-        this.SetErrorMessageResourceAccessor(GetErrorMessage);
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -95,13 +96,13 @@ public class TimeOnlyAttribute : ValidationAttribute
         ErrorMessageString, name, string.Join(", ", Formats.Select(u => $"'{u}'")));
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         Formats.Length == 0
-            ? ValidationMessages.TimeOnlyValidator_ValidationError
-            : ValidationMessages.TimeOnlyValidator_ValidationError_Formats;
+            ? nameof(ValidationMessages.TimeOnlyValidator_ValidationError)
+            : nameof(ValidationMessages.TimeOnlyValidator_ValidationError_Formats);
 }

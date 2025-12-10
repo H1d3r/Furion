@@ -36,10 +36,8 @@ public partial class ChineseNameValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="ChineseNameValidator" />
     /// </summary>
-    public ChineseNameValidator()
-        : base(() => ValidationMessages.ChineseNameValidator_ValidationError)
-    {
-    }
+    public ChineseNameValidator() =>
+        UseResourceKey(() => nameof(ValidationMessages.ChineseNameValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

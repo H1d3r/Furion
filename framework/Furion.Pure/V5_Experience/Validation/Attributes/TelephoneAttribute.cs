@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     座机（电话）验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class TelephoneAttribute : ValidationAttribute
+public class TelephoneAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="TelephoneAttribute" />
     /// </summary>
     public TelephoneAttribute()
-        : base(() => ValidationMessages.TelephoneValidator_ValidationError) =>
+    {
         Validator = new TelephoneValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.TelephoneValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="TelephoneValidator" />

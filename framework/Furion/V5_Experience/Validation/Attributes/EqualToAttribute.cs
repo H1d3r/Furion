@@ -33,17 +33,18 @@ namespace System.ComponentModel.DataAnnotations;
 ///     相等验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class EqualToAttribute : ValidationAttribute
+public class EqualToAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="EqualToAttribute" />
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public EqualToAttribute(object? compareValue)
-        : base(() => ValidationMessages.EqualToValidator_ValidationError)
     {
         CompareValue = compareValue;
         Validator = new EqualToValidator(compareValue);
+
+        UseResourceKey(() => nameof(ValidationMessages.EqualToValidator_ValidationError));
     }
 
     /// <summary>

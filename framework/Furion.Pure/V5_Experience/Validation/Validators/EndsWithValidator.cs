@@ -47,12 +47,13 @@ public class EndsWithValidator : ValidatorBase
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public EndsWithValidator(string searchValue)
-        : base(() => ValidationMessages.EndsWithValidator_ValidationError)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrEmpty(searchValue);
 
         SearchValue = searchValue;
+
+        UseResourceKey(() => nameof(ValidationMessages.EndsWithValidator_ValidationError));
     }
 
     /// <summary>

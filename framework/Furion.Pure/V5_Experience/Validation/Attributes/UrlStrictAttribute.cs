@@ -32,7 +32,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     URL 地址增强版验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class UrlStrictAttribute : ValidationAttribute
+public class UrlStrictAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="UrlStrictAttribute" />
@@ -40,7 +40,8 @@ public class UrlStrictAttribute : ValidationAttribute
     public UrlStrictAttribute()
     {
         Validator = new UrlValidator();
-        this.SetErrorMessageResourceAccessor(GetErrorMessage);
+
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
@@ -66,13 +67,13 @@ public class UrlStrictAttribute : ValidationAttribute
     public override bool IsValid(object? value) => Validator.IsValid(value);
 
     /// <summary>
-    ///     获取错误信息
+    ///     获取错误信息对应的资源键
     /// </summary>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string GetErrorMessage() =>
+    internal string GetResourceKey() =>
         SupportsFtp
-            ? ValidationMessages.UrlValidator_ValidationError_SupportsFtp
-            : ValidationMessages.UrlValidator_ValidationError;
+            ? nameof(ValidationMessages.UrlValidator_ValidationError_SupportsFtp)
+            : nameof(ValidationMessages.UrlValidator_ValidationError);
 }

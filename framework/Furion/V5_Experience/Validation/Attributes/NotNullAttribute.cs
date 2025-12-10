@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     非 <c>null</c> 验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class NotNullAttribute : ValidationAttribute
+public class NotNullAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="NotNullAttribute" />
     /// </summary>
     public NotNullAttribute()
-        : base(() => ValidationMessages.NotNullValidator_ValidationError) =>
+    {
         Validator = new NotNullValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.NotNullValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="NotNullValidator" />

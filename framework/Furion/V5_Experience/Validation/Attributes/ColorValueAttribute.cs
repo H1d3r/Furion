@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     颜色值验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class ColorValueAttribute : ValidationAttribute
+public class ColorValueAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="ColorValueAttribute" />
     /// </summary>
     public ColorValueAttribute()
-        : base(() => ValidationMessages.ColorValueValidator_ValidationError) =>
+    {
         Validator = new ColorValueValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.ColorValueValidator_ValidationError));
+    }
 
     /// <summary>
     ///     是否启用完整模式

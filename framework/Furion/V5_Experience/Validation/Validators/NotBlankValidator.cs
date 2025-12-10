@@ -35,10 +35,7 @@ public class NotBlankValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="NotBlankValidator" />
     /// </summary>
-    public NotBlankValidator()
-        : base(() => ValidationMessages.NotBlankValidator_ValidationError)
-    {
-    }
+    public NotBlankValidator() => UseResourceKey(() => nameof(ValidationMessages.NotBlankValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) =>

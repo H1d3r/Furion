@@ -24,14 +24,17 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Furion.Validation.Resources;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
-namespace System.ComponentModel.DataAnnotations;
+namespace Furion.Validation;
 
 /// <summary>
-///     <see cref="ValidationAttribute" /> 拓展类
+///     验证特性抽象基类
 /// </summary>
-public static class ValidationAttributeExtensions
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+public abstract class ValidationBaseAttribute : ValidationAttribute
 {
     /// <summary>
     ///     ErrorMessageResourceAccessor 属性设置其
@@ -41,21 +44,41 @@ public static class ValidationAttributeExtensions
             typeof(ValidationAttribute).GetProperty("ErrorMessageResourceAccessor",
                 BindingFlags.Instance | BindingFlags.NonPublic)!));
 
+    /// <inheritdoc />
+    protected ValidationBaseAttribute()
+    {
+    }
+
+    /// <inheritdoc />
+    protected ValidationBaseAttribute(string errorMessage)
+        : base(errorMessage)
+    {
+    }
+
+    /// <inheritdoc />
+    protected ValidationBaseAttribute(Func<string> errorMessageAccessor)
+        : base(errorMessageAccessor)
+    {
+    }
+
     /// <summary>
-    ///     设置 ErrorMessageResourceAccessor 属性值
+    ///     使用指定资源键设置验证错误消息
     /// </summary>
-    /// <remarks>建议在构造函数中调用。</remarks>
-    /// <param name="attribute">
-    ///     <see cref="ValidationAttribute" />
-    /// </param>
-    /// <param name="errorMessageAccessor">错误信息资源访问器</param>
-    public static void SetErrorMessageResourceAccessor(this ValidationAttribute attribute,
-        Func<string> errorMessageAccessor)
+    /// <remarks>支持用户程序集覆盖。</remarks>
+    /// <param name="resourceKeyResolver">返回 <see cref="ValidationMessages" /> 中属性名的委托</param>
+    protected void UseResourceKey(Func<string> resourceKeyResolver)
     {
         // 空检查
-        ArgumentNullException.ThrowIfNull(attribute);
-        ArgumentNullException.ThrowIfNull(errorMessageAccessor);
+        ArgumentNullException.ThrowIfNull(resourceKeyResolver);
 
-        _errorMessageResourceAccessorSetter.Value(attribute, errorMessageAccessor);
+        // 创建委托的本地副本
+        var capturedResourceKeyResolver = resourceKeyResolver;
+        _errorMessageResourceAccessorSetter.Value(this, () =>
+        {
+            // 获取 ValidationMessages 中的属性名
+            var resourceKey = capturedResourceKeyResolver();
+
+            return ValidatorBase.GetResourceString(resourceKey) ?? $"[{resourceKey}]";
+        });
     }
 }

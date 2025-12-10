@@ -33,7 +33,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     包含特定字符/字符串的验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class StringContainsAttribute : ValidationAttribute
+public class StringContainsAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="StringContainsAttribute" />
@@ -49,10 +49,11 @@ public class StringContainsAttribute : ValidationAttribute
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public StringContainsAttribute(string searchValue)
-        : base(() => ValidationMessages.StringContainsValidator_ValidationError)
     {
         SearchValue = searchValue;
         Validator = new StringContainsValidator(searchValue);
+
+        UseResourceKey(() => nameof(ValidationMessages.StringContainsValidator_ValidationError));
     }
 
     /// <summary>

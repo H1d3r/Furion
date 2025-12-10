@@ -37,7 +37,7 @@ public class MinValidator : ComparisonValidator
     /// </summary>
     /// <param name="minimum">允许的最小字段值</param>
     public MinValidator(IComparable minimum)
-        : base(minimum, () => ValidationMessages.MinValidator_ValidationError)
+        : base(minimum, nameof(ValidationMessages.MinValidator_ValidationError))
     {
     }
 

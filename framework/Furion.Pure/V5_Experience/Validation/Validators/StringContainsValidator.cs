@@ -47,12 +47,13 @@ public class StringContainsValidator : ValidatorBase
     /// </summary>
     /// <param name="searchValue">检索的值</param>
     public StringContainsValidator(string searchValue)
-        : base(() => ValidationMessages.StringContainsValidator_ValidationError)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrEmpty(searchValue);
 
         SearchValue = searchValue;
+
+        UseResourceKey(() => nameof(ValidationMessages.StringContainsValidator_ValidationError));
     }
 
     /// <summary>

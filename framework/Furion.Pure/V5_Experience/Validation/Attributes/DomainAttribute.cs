@@ -33,14 +33,17 @@ namespace System.ComponentModel.DataAnnotations;
 /// </summary>
 /// <remarks>不含协议（如 https/http）。</remarks>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class DomainAttribute : ValidationAttribute
+public class DomainAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="DomainAttribute" />
     /// </summary>
     public DomainAttribute()
-        : base(() => ValidationMessages.DomainValidator_ValidationError) =>
+    {
         Validator = new DomainValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.DomainValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="DomainValidator" />

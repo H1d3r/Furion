@@ -167,6 +167,7 @@ public class PropertyAnnotationValidator<T> : ValidatorBase<T>, IValidatorInitia
         }
 
         _items = items;
+
         ErrorMessageResourceAccessor = () => null!;
     }
 

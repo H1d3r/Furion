@@ -32,14 +32,17 @@ namespace System.ComponentModel.DataAnnotations;
 ///     中文姓名验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class ChineseNameAttribute : ValidationAttribute
+public class ChineseNameAttribute : ValidationBaseAttribute
 {
     /// <summary>
     ///     <inheritdoc cref="ChineseNameAttribute" />
     /// </summary>
     public ChineseNameAttribute()
-        : base(() => ValidationMessages.ChineseNameValidator_ValidationError) =>
+    {
         Validator = new ChineseNameValidator();
+
+        UseResourceKey(() => nameof(ValidationMessages.ChineseNameValidator_ValidationError));
+    }
 
     /// <summary>
     ///     <inheritdoc cref="ChineseNameValidator" />

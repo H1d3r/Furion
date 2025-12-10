@@ -36,10 +36,7 @@ public class SingleValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="SingleValidator" />
     /// </summary>
-    public SingleValidator()
-        : base(() => ValidationMessages.SingleValidator_ValidationError)
-    {
-    }
+    public SingleValidator() => UseResourceKey(() => nameof(ValidationMessages.SingleValidator_ValidationError));
 
     /// <inheritdoc />
     public override bool IsValid(object? value) => value is null || (value.TryGetCount(out var count) && count == 1);
