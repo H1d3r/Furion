@@ -162,8 +162,11 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
+        // 解析验证时使用的规则集列表
+        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
+
         // 检查是否应该对该对象执行验证
-        if (!ShouldValidate(instance, ruleSets))
+        if (!ShouldValidate(instance, resolvedRuleSets))
         {
             return true;
         }
@@ -175,7 +178,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
             return false;
         }
 
-        return Validators.All(u => u.IsValid(instance, ruleSets));
+        return Validators.All(u => u.IsValid(instance, resolvedRuleSets));
     }
 
     /// <inheritdoc />
@@ -184,8 +187,11 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
+        // 解析验证时使用的规则集列表
+        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
+
         // 检查是否应该对该对象执行验证
-        if (!ShouldValidate(instance, ruleSets))
+        if (!ShouldValidate(instance, resolvedRuleSets))
         {
             return null;
         }
@@ -202,7 +208,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
 
         // 获取所有属性验证器验证结果集合
         validationResults.AddRange(
-            Validators.SelectMany(u => u.GetValidationResults(instance, ruleSets) ?? []));
+            Validators.SelectMany(u => u.GetValidationResults(instance, resolvedRuleSets) ?? []));
 
         return validationResults.ToResults();
     }
@@ -213,8 +219,11 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
+        // 解析验证时使用的规则集列表
+        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
+
         // 检查是否应该对该对象执行验证
-        if (!ShouldValidate(instance, ruleSets))
+        if (!ShouldValidate(instance, resolvedRuleSets))
         {
             return;
         }
@@ -229,7 +238,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 遍历属性验证器集合
         foreach (var validator in Validators)
         {
-            validator.Validate(instance, ruleSets);
+            validator.Validate(instance, resolvedRuleSets);
         }
     }
 
@@ -264,8 +273,8 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
 
-        // 解析当前有效的规则集列表
-        var effectiveRuleSets = ResolveEffectiveRuleSets(ruleSets);
+        // 获取当前规则集作用域中的规则集列表
+        var effectiveRuleSets = GetCurrentRuleSetScope(ruleSets);
 
         // 初始化 PropertyValidator 实例
         var propertyValidator = new PropertyValidator<T, TProperty>(selector, this) { RuleSets = effectiveRuleSets };
@@ -295,8 +304,8 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
 
-        // 解析当前有效的规则集列表
-        var effectiveRuleSets = ResolveEffectiveRuleSets(ruleSets);
+        // 获取当前规则集作用域中的规则集列表
+        var effectiveRuleSets = GetCurrentRuleSetScope(ruleSets);
 
         // 初始化 CollectionPropertyValidator 实例
         var propertyValidator =
@@ -557,6 +566,16 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     internal bool ShouldRunAnnotationValidation() => !Options.SuppressAnnotationValidation;
 
     /// <summary>
+    ///     解析验证时使用的规则集列表
+    /// </summary>
+    /// <param name="explicitRuleSets">规则集列表</param>
+    /// <returns><see cref="string" />列表</returns>
+    internal string?[]? ResolveValidationRuleSets(string?[]? explicitRuleSets) =>
+        // 优先使用显式传入的规则集，否则从验证数据上下文中解析
+        explicitRuleSets ?? (_serviceProvider?.Invoke(typeof(IValidationDataContext)) as IValidationDataContext)
+        ?.GetValidationOptions()?.RuleSets;
+
+    /// <summary>
     ///     订阅 <see cref="Options" /> 属性变更事件
     /// </summary>
     /// <param name="sender">事件源</param>
@@ -573,12 +592,12 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
     }
 
     /// <summary>
-    ///     解析当前有效的规则集列表
+    ///     获取当前规则集作用域中的规则集列表
     /// </summary>
     /// <param name="ruleSets">规则集列表</param>
     /// <returns><see cref="string" />列表</returns>
-    internal string?[]? ResolveEffectiveRuleSets(params string?[]? ruleSets) =>
-        // 优先使用规则集上下文栈顶的规则集；否则依次尝试使用传入的规则集列表或从父级继承的规则集列表
+    internal string?[]? GetCurrentRuleSetScope(params string?[]? ruleSets) =>
+        // 优先使用规则集上下文栈顶的规则集（即当前 RuleSet() 作用域）
         _ruleSetStack is { Count: > 0 }
             ? [_ruleSetStack.Peek()]
             : ruleSets is not null && ruleSets.Length > 0
@@ -586,8 +605,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IDisposable
                 : _inheritedRuleSets;
 
     /// <summary>
-    ///     设置从父级继承的规则集（仅当尚未设置时）
+    ///     设置从父级继承的规则集
     /// </summary>
+    /// <remarks>仅当尚未设置时。</remarks>
     /// <param name="inheritedRuleSets">从父级继承的规则集列表</param>
     internal void SetInheritedRuleSetsIfNotSet(string?[]? inheritedRuleSets) =>
         _inheritedRuleSets ??= inheritedRuleSets?.Select(u => u?.Trim()).ToArray();
