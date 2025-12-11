@@ -29,6 +29,11 @@ namespace Furion.Validation;
 internal sealed class ValidationDataContext : IValidationDataContext
 {
     /// <summary>
+    ///     验证选项键
+    /// </summary>
+    internal static readonly object ValidationOptionsKey = new();
+
+    /// <summary>
     ///     存储验证数据的内部字典
     /// </summary>
     internal readonly Dictionary<object, object?> _items = new();
@@ -53,4 +58,26 @@ internal sealed class ValidationDataContext : IValidationDataContext
 
         return _items.TryGetValue(key, out value);
     }
+
+    /// <inheritdoc />
+    public bool ContainsKey(object key)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(key);
+
+        return _items.ContainsKey(key);
+    }
+
+    /// <inheritdoc />
+    public ValidationOptionsMetadata? GetValidationOptions() =>
+        TryGetValue(ValidationOptionsKey, out var metadata) &&
+        metadata is ValidationOptionsMetadata validationOptions
+            ? validationOptions
+            : null;
+
+    /// <inheritdoc />
+    public void SetValidationOptions(ValidationOptionsMetadata metadata) => SetValue(ValidationOptionsKey, metadata);
+
+    /// <inheritdoc />
+    public bool HasValidationOptions() => ContainsKey(ValidationOptionsKey);
 }

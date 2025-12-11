@@ -68,29 +68,9 @@ public static class ValidationExtensions
         // 空检查
         ArgumentNullException.ThrowIfNull(validationContext);
 
-        validationContext.Items[Constants.RULESETS_KEY] = ruleSets;
+        validationContext.Items[ValidationDataContext.ValidationOptionsKey] = new ValidationOptionsMetadata(ruleSets);
 
         return validationContext;
-    }
-
-    /// <summary>
-    ///     获取验证上下文数据
-    /// </summary>
-    /// <param name="validationContext">
-    ///     <see cref="ValidationContext" />
-    /// </param>
-    /// <param name="key">键</param>
-    /// <param name="value">数据</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public static bool TryGetValue(this ValidationContext validationContext, object key, out object? value)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(validationContext);
-        ArgumentNullException.ThrowIfNull(key);
-
-        return validationContext.Items.TryGetValue(key, out value);
     }
 
     /// <summary>
@@ -155,22 +135,17 @@ public static class ValidationExtensions
         // 同步 IServiceProvider 委托
         objectValidator.InitializeServiceProvider(validationContext.GetService);
 
-        // 首先尝试从 ValidationContext.Items 中获取
-        string?[]? ruleSets = null;
-        if (validationContext.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsObj))
-        {
-            ruleSets = ruleSetsObj as string?[] ?? (ruleSetsObj is string ruleSet ? [ruleSet] : null);
-        }
-        // 如果未找到，尝试从 IValidationDataContext 中获取
-        else
-        {
-            // 尝试从验证数据上下文服务中读取
-            if (validationContext.GetService<IValidationDataContext>()
-                    ?.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsData) == true)
-            {
-                ruleSets = ruleSetsData as string?[] ?? (ruleSetsData is string ruleSet ? [ruleSet] : null);
-            }
-        }
+        // 解析验证上下文中的规则集列表
+        var ruleSets =
+            // 首先尝试从 ValidationContext.Items 中获取
+            validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var optionsObj)
+                ? optionsObj switch
+                {
+                    ValidationOptionsMetadata metadata => metadata.RuleSets,
+                    _ => null
+                }
+                // 如果未找到，尝试从 IValidationDataContext 中获取
+                : validationContext.GetService<IValidationDataContext>()?.GetValidationOptions()?.RuleSets;
 
         // 初始化验证结果集合
         List<ValidationResult>? validationResults;
