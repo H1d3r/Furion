@@ -135,17 +135,13 @@ public static class ValidationExtensions
         // 同步 IServiceProvider 委托
         objectValidator.InitializeServiceProvider(validationContext.GetService);
 
-        // 解析验证上下文中的规则集列表
-        var ruleSets =
-            // 首先尝试从 ValidationContext.Items 中获取
-            validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var optionsObj)
-                ? optionsObj switch
-                {
-                    ValidationOptionsMetadata metadata => metadata.RuleSets,
-                    _ => null
-                }
-                // 如果未找到，尝试从 IValidationDataContext 中获取
-                : validationContext.GetService<IValidationDataContext>()?.GetValidationOptions()?.RuleSets;
+        // 尝试从 ValidationContext.Items 中解析验证选项中的规则集列表
+        string?[]? ruleSets = null;
+        if (validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var optionsObj) &&
+            optionsObj is ValidationOptionsMetadata metadata)
+        {
+            ruleSets = metadata.RuleSets;
+        }
 
         // 初始化验证结果集合
         List<ValidationResult>? validationResults;
