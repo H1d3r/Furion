@@ -132,6 +132,16 @@ public sealed class ValidationBuilder
     /// </param>
     internal void Build(IServiceCollection services)
     {
+        /*
+         * 防止重复注册验证服务：ValidationBuilder 可能被多次构建，
+         * 而 BuildObjectValidatorServices 内部会注册 IValidationDataContext 服务，
+         * 多次注册会导致验证器重复创建和 ServiceProvider 同步冲突。
+         */
+        if (services.Any(u => u.ServiceType == typeof(IValidationDataContext)))
+        {
+            return;
+        }
+
         // 注册验证数据上下文服务
         services.TryAddScoped<IValidationDataContext, ValidationDataContext>();
 

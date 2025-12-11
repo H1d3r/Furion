@@ -23,18 +23,28 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.ComponentModel.DataAnnotations;
-
 namespace Furion.Validation;
 
 /// <summary>
-///     数据验证模块常量配置
+///     验证选项特性
 /// </summary>
-internal static class Constants
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class ValidationOptionsAttribute : Attribute
 {
     /// <summary>
-    ///     规则集列表键
+    ///     <inheritdoc cref="ValidationOptionsAttribute" />
     /// </summary>
-    /// <remarks>被用于从 <see cref="ValidationContext" /> 的 <c>Items</c> 属性中读取。</remarks>
-    internal const string RULESETS_KEY = "__VALIDATION_RULESETS__";
+    /// <param name="ruleSets">规则集列表</param>
+    public ValidationOptionsAttribute(params string?[] ruleSets)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(ruleSets);
+
+        RuleSets = ruleSets;
+    }
+
+    /// <summary>
+    ///     规则集列表
+    /// </summary>
+    public string?[]? RuleSets { get; init; }
 }
