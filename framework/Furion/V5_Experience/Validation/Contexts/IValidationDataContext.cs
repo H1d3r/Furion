@@ -83,5 +83,8 @@ public interface IValidationDataContext
     ///     检查是否已设置验证选项
     /// </summary>
     /// <remarks>结合 <see cref="ValidationOptionsAttribute" /> 使用。</remarks>
+    /// <remarks>
+    ///     <see cref="bool" />
+    /// </remarks>
     bool HasValidationOptions();
 }
