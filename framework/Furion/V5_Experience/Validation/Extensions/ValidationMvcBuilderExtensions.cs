@@ -38,13 +38,15 @@ public static class ValidationMvcBuilderExtensions
     /// <param name="mvcBuilder">
     ///     <see cref="IMvcBuilder" />
     /// </param>
+    /// <param name="configure">自定义配置委托</param>
     /// <returns>
     ///     <see cref="IMvcBuilder" />
     /// </returns>
-    public static IMvcBuilder AddValidationOptions(this IMvcBuilder mvcBuilder)
+    public static IMvcBuilder AddValidationOptions(this IMvcBuilder mvcBuilder,
+        Action<ValidationBuilder>? configure = null)
     {
         // 添加数据验证服务
-        mvcBuilder.Services.AddObjectValidation();
+        mvcBuilder.Services.AddObjectValidation(configure);
 
         // 添加验证选项模型验证器提供器
         mvcBuilder.AddMvcOptions(options =>
