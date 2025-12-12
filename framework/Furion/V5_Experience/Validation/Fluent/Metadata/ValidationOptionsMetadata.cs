@@ -34,11 +34,11 @@ public sealed class ValidationOptionsMetadata
     /// <summary>
     ///     <inheritdoc cref="ValidationOptionsMetadata" />
     /// </summary>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     internal ValidationOptionsMetadata(string?[]? ruleSets) => RuleSets = ruleSets;
 
     /// <summary>
-    ///     规则集列表
+    ///     规则集
     /// </summary>
     public string?[]? RuleSets { get; }
 }
