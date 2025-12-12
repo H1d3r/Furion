@@ -71,7 +71,7 @@ public partial class PropertyValidator<T, TProperty> :
     }
 
     /// <summary>
-    ///     规则集列表
+    ///     规则集
     /// </summary>
     internal string?[]? RuleSets { get; init; }
 
@@ -117,7 +117,7 @@ public partial class PropertyValidator<T, TProperty> :
     void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
 
     /// <inheritdoc />
-    public virtual bool IsValid(T? instance, params string?[]? ruleSets)
+    public virtual bool IsValid(T? instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -148,7 +148,7 @@ public partial class PropertyValidator<T, TProperty> :
     }
 
     /// <inheritdoc />
-    public virtual List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets)
+    public virtual List<ValidationResult>? GetValidationResults(T? instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -187,7 +187,7 @@ public partial class PropertyValidator<T, TProperty> :
     }
 
     /// <inheritdoc />
-    public virtual void Validate(T? instance, params string?[]? ruleSets)
+    public virtual void Validate(T? instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -272,7 +272,7 @@ public partial class PropertyValidator<T, TProperty> :
             return this;
         }
 
-        // 继承当前规则集列表
+        // 继承当前规则集
         _propertyValidator.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托
@@ -442,16 +442,16 @@ public partial class PropertyValidator<T, TProperty> :
     ///     检查是否应该对该属性执行验证
     /// </summary>
     /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal bool ShouldValidate(T instance, params string?[]? ruleSets)
+    internal bool ShouldValidate(T instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        // 检查传入的规则集列表是否与指定的规则集列表匹配
+        // 检查传入的规则集是否与指定的规则集匹配
         if (!MatchesRuleSet(ruleSets))
         {
             return false;
@@ -491,31 +491,31 @@ public partial class PropertyValidator<T, TProperty> :
     }
 
     /// <summary>
-    ///     检查传入的规则集列表是否与指定的规则集列表匹配
+    ///     检查传入的规则集是否与指定的规则集匹配
     /// </summary>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal bool MatchesRuleSet(params string?[]? ruleSets)
+    internal bool MatchesRuleSet(string?[]? ruleSets = null)
     {
-        // 规范化规则集列表
+        // 规范化规则集
         var current = (RuleSets ?? []).Select(NormalizeRuleSet).ToArray();
         var input = (ruleSets ?? []).Select(NormalizeRuleSet).ToArray();
 
-        // 当前实例未定义规则集列表时
+        // 当前实例未定义规则集时
         if (current is { Length: 0 })
         {
             return input is { Length: 0 } || input.Contains("*") || input.Contains(null);
         }
 
-        // 当前实例有规则集列表但无传入规则集列表时
+        // 当前实例有规则集但无传入规则集时
         if (input is { Length: 0 })
         {
             return current.Contains("*") || current.Contains(null);
         }
 
-        // 当双方均有规则集列表时
+        // 当双方均有规则集时
         return input.Contains("*") || current.Contains("*") || current.Intersect(input).Any();
 
         // 规范化规则集：去除前后空格

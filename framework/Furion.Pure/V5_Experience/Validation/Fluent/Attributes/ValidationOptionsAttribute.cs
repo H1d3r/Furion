@@ -34,17 +34,11 @@ public sealed class ValidationOptionsAttribute : Attribute
     /// <summary>
     ///     <inheritdoc cref="ValidationOptionsAttribute" />
     /// </summary>
-    /// <param name="ruleSets">规则集列表</param>
-    public ValidationOptionsAttribute(params string?[] ruleSets)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(ruleSets);
-
-        RuleSets = ruleSets;
-    }
+    /// <param name="ruleSets">规则集</param>
+    public ValidationOptionsAttribute(string?[]? ruleSets = null) => RuleSets = ruleSets;
 
     /// <summary>
-    ///     规则集列表
+    ///     规则集
     /// </summary>
-    public string?[]? RuleSets { get; init; }
+    public string?[]? RuleSets { get; }
 }

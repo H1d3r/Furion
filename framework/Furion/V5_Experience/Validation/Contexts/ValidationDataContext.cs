@@ -31,6 +31,7 @@ internal sealed class ValidationDataContext : IValidationDataContext
     /// <summary>
     ///     验证选项键
     /// </summary>
+    /// <remarks>用于 <see cref="ValidationContext" /> 或 <c>ValidationOptionsModelValidator</c> 中写入规则集配置。</remarks>
     internal static readonly object ValidationOptionsKey = new();
 
     /// <summary>
@@ -70,13 +71,18 @@ internal sealed class ValidationDataContext : IValidationDataContext
 
     /// <inheritdoc />
     public ValidationOptionsMetadata? GetValidationOptions() =>
-        TryGetValue(ValidationOptionsKey, out var metadata) &&
-        metadata is ValidationOptionsMetadata validationOptions
-            ? validationOptions
+        TryGetValue(ValidationOptionsKey, out var metadataObj) && metadataObj is ValidationOptionsMetadata metadata
+            ? metadata
             : null;
 
     /// <inheritdoc />
-    public void SetValidationOptions(ValidationOptionsMetadata metadata) => SetValue(ValidationOptionsKey, metadata);
+    public void SetValidationOptions(ValidationOptionsMetadata metadata)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(metadata);
+
+        SetValue(ValidationOptionsKey, metadata);
+    }
 
     /// <inheritdoc />
     public bool HasValidationOptions() => ContainsKey(ValidationOptionsKey);

@@ -23,7 +23,6 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 
 namespace Furion.Validation;
@@ -54,16 +53,16 @@ public static class ValidationExtensions
         validationResults?.ToList().ToResults();
 
     /// <summary>
-    ///     设置规则集列表
+    ///     设置规则集
     /// </summary>
     /// <param name="validationContext">
     ///     <see cref="ValidationContext" />
     /// </param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="ValidationContext" />
     /// </returns>
-    public static ValidationContext WithRuleSets(this ValidationContext validationContext, params string?[]? ruleSets)
+    public static ValidationContext WithRuleSets(this ValidationContext validationContext, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validationContext);
@@ -135,10 +134,10 @@ public static class ValidationExtensions
         // 同步 IServiceProvider 委托
         objectValidator.InitializeServiceProvider(validationContext.GetService);
 
-        // 尝试从 ValidationContext.Items 中解析验证选项中的规则集列表
+        // 尝试从 ValidationContext.Items 中解析验证选项中的规则集
         string?[]? ruleSets = null;
-        if (validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var optionsObj) &&
-            optionsObj is ValidationOptionsMetadata metadata)
+        if (validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var metadataObj) &&
+            metadataObj is ValidationOptionsMetadata metadata)
         {
             ruleSets = metadata.RuleSets;
         }

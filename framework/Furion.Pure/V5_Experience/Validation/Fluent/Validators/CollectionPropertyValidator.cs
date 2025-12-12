@@ -52,7 +52,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     internal Func<TElement, ValidationContext<T>, bool>? ElementFilter { get; private set; }
 
     /// <inheritdoc />
-    public override bool IsValid(T? instance, params string?[]? ruleSets)
+    public override bool IsValid(T? instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -63,7 +63,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     }
 
     /// <inheritdoc />
-    public override List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets)
+    public override List<ValidationResult>? GetValidationResults(T? instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -85,7 +85,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     }
 
     /// <inheritdoc />
-    public override void Validate(T? instance, params string?[]? ruleSets)
+    public override void Validate(T? instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -167,7 +167,7 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
             return this;
         }
 
-        // 继承当前规则集列表
+        // 继承当前规则集
         _elementValidator.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托

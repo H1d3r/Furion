@@ -42,26 +42,26 @@ public interface IObjectValidator<in T> : IObjectValidator
     ///     检查对象合法性
     /// </summary>
     /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    bool IsValid(T? instance, params string?[]? ruleSets);
+    bool IsValid(T? instance, string?[]? ruleSets = null);
 
     /// <summary>
     ///     获取对象验证结果集合
     /// </summary>
     /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="List{T}" />
     /// </returns>
-    List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets);
+    List<ValidationResult>? GetValidationResults(T? instance, string?[]? ruleSets = null);
 
     /// <summary>
     ///     验证指定的对象
     /// </summary>
     /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
-    void Validate(T? instance, params string?[]? ruleSets);
+    /// <param name="ruleSets">规则集</param>
+    void Validate(T? instance, string?[]? ruleSets = null);
 }
