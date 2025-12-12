@@ -23,7 +23,6 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 
 namespace Furion.Validation;
@@ -54,43 +53,23 @@ public static class ValidationExtensions
         validationResults?.ToList().ToResults();
 
     /// <summary>
-    ///     设置规则集列表
+    ///     设置规则集
     /// </summary>
     /// <param name="validationContext">
     ///     <see cref="ValidationContext" />
     /// </param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="ValidationContext" />
     /// </returns>
-    public static ValidationContext WithRuleSets(this ValidationContext validationContext, params string?[]? ruleSets)
+    public static ValidationContext WithRuleSets(this ValidationContext validationContext, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validationContext);
 
-        validationContext.Items[Constants.RULESETS_KEY] = ruleSets;
+        validationContext.Items[ValidationDataContext.ValidationOptionsKey] = new ValidationOptionsMetadata(ruleSets);
 
         return validationContext;
-    }
-
-    /// <summary>
-    ///     获取验证上下文数据
-    /// </summary>
-    /// <param name="validationContext">
-    ///     <see cref="ValidationContext" />
-    /// </param>
-    /// <param name="key">键</param>
-    /// <param name="value">数据</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    public static bool TryGetValue(this ValidationContext validationContext, object key, out object? value)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(validationContext);
-        ArgumentNullException.ThrowIfNull(key);
-
-        return validationContext.Items.TryGetValue(key, out value);
     }
 
     /// <summary>
@@ -155,21 +134,12 @@ public static class ValidationExtensions
         // 同步 IServiceProvider 委托
         objectValidator.InitializeServiceProvider(validationContext.GetService);
 
-        // 首先尝试从 ValidationContext.Items 中获取
+        // 尝试从 ValidationContext.Items 中解析验证选项中的规则集
         string?[]? ruleSets = null;
-        if (validationContext.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsObj))
+        if (validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var metadataObj) &&
+            metadataObj is ValidationOptionsMetadata metadata)
         {
-            ruleSets = ruleSetsObj as string?[] ?? (ruleSetsObj is string ruleSet ? [ruleSet] : null);
-        }
-        // 如果未找到，尝试从 IValidationDataContext 中获取
-        else
-        {
-            // 尝试从验证数据上下文服务中读取
-            if (validationContext.GetService<IValidationDataContext>()
-                    ?.TryGetValue(Constants.RULESETS_KEY, out var ruleSetsData) == true)
-            {
-                ruleSets = ruleSetsData as string?[] ?? (ruleSetsData is string ruleSet ? [ruleSet] : null);
-            }
+            ruleSets = metadata.RuleSets;
         }
 
         // 初始化验证结果集合

@@ -39,16 +39,52 @@ public interface IValidationDataContext
     ///     设置或更新验证数据
     /// </summary>
     /// <param name="key">键</param>
-    /// <param name="value">数据</param>
+    /// <param name="value">值</param>
     void SetValue(object key, object? value);
 
     /// <summary>
     ///     尝试获取验证数据
     /// </summary>
     /// <param name="key">键</param>
-    /// <param name="value">数据</param>
+    /// <param name="value">值</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
     bool TryGetValue(object key, out object? value);
+
+    /// <summary>
+    ///     判断键是否定义
+    /// </summary>
+    /// <param name="key">键</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    bool ContainsKey(object key);
+
+    /// <summary>
+    ///     获取当前验证选项
+    /// </summary>
+    /// <remarks>结合 <see cref="ValidationOptionsAttribute" /> 使用。</remarks>
+    /// <returns>
+    ///     <see cref="ValidationOptionsMetadata" />
+    /// </returns>
+    ValidationOptionsMetadata? GetValidationOptions();
+
+    /// <summary>
+    ///     设置当前验证选项
+    /// </summary>
+    /// <remarks>结合 <see cref="ValidationOptionsAttribute" /> 使用。</remarks>
+    /// <param name="metadata">
+    ///     <see cref="ValidationOptionsMetadata" />
+    /// </param>
+    void SetValidationOptions(ValidationOptionsMetadata metadata);
+
+    /// <summary>
+    ///     检查是否已设置验证选项
+    /// </summary>
+    /// <remarks>结合 <see cref="ValidationOptionsAttribute" /> 使用。</remarks>
+    /// <remarks>
+    ///     <see cref="bool" />
+    /// </remarks>
+    bool HasValidationOptions();
 }

@@ -37,12 +37,12 @@ public static class ObjectValidatorEnumerableExtensions
     /// </summary>
     /// <param name="validators"><see cref="IObjectValidator{T}" /> 集合</param>
     /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
     public static bool IsValid<T>(this IEnumerable<IObjectValidator<T>> validators, T? instance,
-        params string?[]? ruleSets)
+        string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validators);
@@ -55,12 +55,12 @@ public static class ObjectValidatorEnumerableExtensions
     /// </summary>
     /// <param name="validators"><see cref="IObjectValidator{T}" /> 集合</param>
     /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="List{T}" />
     /// </returns>
     public static List<ValidationResult>? GetValidationResults<T>(this IEnumerable<IObjectValidator<T>> validators,
-        T? instance, params string?[]? ruleSets)
+        T? instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validators);
@@ -73,9 +73,9 @@ public static class ObjectValidatorEnumerableExtensions
     /// </summary>
     /// <param name="validators"><see cref="IObjectValidator{T}" /> 集合</param>
     /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     public static void Validate<T>(this IEnumerable<IObjectValidator<T>> validators, T? instance,
-        params string?[]? ruleSets)
+        string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validators);
