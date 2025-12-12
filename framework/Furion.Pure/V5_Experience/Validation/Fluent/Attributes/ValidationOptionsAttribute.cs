@@ -23,45 +23,22 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.ComponentModel.DataAnnotations;
-
 namespace Furion.Validation;
 
 /// <summary>
-///     对象验证器服务
+///     验证选项特性
 /// </summary>
-public interface IObjectValidator : IValidatorInitializer;
-
-/// <summary>
-///     <inheritdoc cref="IObjectValidator" />
-/// </summary>
-/// <typeparam name="T">对象类型</typeparam>
-public interface IObjectValidator<in T> : IObjectValidator
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class ValidationOptionsAttribute : Attribute
 {
     /// <summary>
-    ///     检查对象合法性
+    ///     <inheritdoc cref="ValidationOptionsAttribute" />
     /// </summary>
-    /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    bool IsValid(T? instance, params string?[]? ruleSets);
+    /// <param name="ruleSets">规则集</param>
+    public ValidationOptionsAttribute(string?[]? ruleSets = null) => RuleSets = ruleSets;
 
     /// <summary>
-    ///     获取对象验证结果集合
+    ///     规则集
     /// </summary>
-    /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
-    /// <returns>
-    ///     <see cref="List{T}" />
-    /// </returns>
-    List<ValidationResult>? GetValidationResults(T? instance, params string?[]? ruleSets);
-
-    /// <summary>
-    ///     验证指定的对象
-    /// </summary>
-    /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集列表</param>
-    void Validate(T? instance, params string?[]? ruleSets);
+    public string?[]? RuleSets { get; }
 }

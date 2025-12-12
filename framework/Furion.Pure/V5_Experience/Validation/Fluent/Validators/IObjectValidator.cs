@@ -28,13 +28,40 @@ using System.ComponentModel.DataAnnotations;
 namespace Furion.Validation;
 
 /// <summary>
-///     数据验证模块常量配置
+///     对象验证器服务
 /// </summary>
-internal static class Constants
+public interface IObjectValidator : IValidatorInitializer;
+
+/// <summary>
+///     <inheritdoc cref="IObjectValidator" />
+/// </summary>
+/// <typeparam name="T">对象类型</typeparam>
+public interface IObjectValidator<in T> : IObjectValidator
 {
     /// <summary>
-    ///     规则集列表键
+    ///     检查对象合法性
     /// </summary>
-    /// <remarks>被用于从 <see cref="ValidationContext" /> 的 <c>Items</c> 属性中读取。</remarks>
-    internal const string RULESETS_KEY = "__VALIDATION_RULESETS__";
+    /// <param name="instance">对象</param>
+    /// <param name="ruleSets">规则集</param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    bool IsValid(T? instance, string?[]? ruleSets = null);
+
+    /// <summary>
+    ///     获取对象验证结果集合
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <param name="ruleSets">规则集</param>
+    /// <returns>
+    ///     <see cref="List{T}" />
+    /// </returns>
+    List<ValidationResult>? GetValidationResults(T? instance, string?[]? ruleSets = null);
+
+    /// <summary>
+    ///     验证指定的对象
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <param name="ruleSets">规则集</param>
+    void Validate(T? instance, string?[]? ruleSets = null);
 }

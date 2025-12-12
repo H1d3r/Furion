@@ -284,25 +284,25 @@ public partial class PropertyValidator<T, TProperty>
     ///     为指定属性配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <typeparam name="TOtherProperty">属性类型</typeparam>
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
     public PropertyValidator<T, TOtherProperty> RuleFor<TOtherProperty>(Expression<Func<T, TOtherProperty?>> selector,
-        params string?[]? ruleSets) => _objectValidator.RuleFor(selector, ruleSets);
+        string?[]? ruleSets = null) => _objectValidator.RuleFor(selector, ruleSets);
 
     /// <summary>
     ///     为集合类型属性中的每一个元素配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <typeparam name="TOtherElement">元素类型</typeparam>
     /// <returns>
     ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
     public CollectionPropertyValidator<T, TOtherElement> RuleForEach<TOtherElement>(
-        Expression<Func<T, IEnumerable<TOtherElement>?>> selector, params string?[]? ruleSets)
+        Expression<Func<T, IEnumerable<TOtherElement>?>> selector, string?[]? ruleSets = null)
         where TOtherElement : class =>
         _objectValidator.RuleForEach(selector, ruleSets);
 
@@ -318,9 +318,9 @@ public partial class PropertyValidator<T, TProperty>
         _objectValidator.RuleSet(ruleSet, setAction);
 
     /// <summary>
-    ///     在指定规则集列表上下文中为指定属性配置验证规则
+    ///     在指定规则集上下文中为指定属性配置验证规则
     /// </summary>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <param name="setAction">自定义配置委托</param>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
@@ -340,9 +340,9 @@ public partial class PropertyValidator<T, TProperty>
         _objectValidator.RuleSet(ruleSet, setAction);
 
     /// <summary>
-    ///     在指定规则集列表上下文中为指定属性配置验证规则
+    ///     在指定规则集上下文中为指定属性配置验证规则
     /// </summary>
-    /// <param name="ruleSets">规则集列表</param>
+    /// <param name="ruleSets">规则集</param>
     /// <param name="setAction">自定义配置委托</param>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
