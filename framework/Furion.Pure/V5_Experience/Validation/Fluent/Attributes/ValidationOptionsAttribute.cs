@@ -28,6 +28,10 @@ namespace Furion.Validation;
 /// <summary>
 ///     验证选项特性
 /// </summary>
+/// <remarks>
+///     要在项目中启用 <see cref="ValidationOptionsAttribute" /> 支持，需在配置服务时调用：
+///     <c>services.AddControllers().AddValidationOptions()</c>。
+/// </remarks>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class ValidationOptionsAttribute : Attribute
 {
