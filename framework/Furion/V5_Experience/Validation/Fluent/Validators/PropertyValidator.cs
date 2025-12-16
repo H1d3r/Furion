@@ -25,6 +25,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace Furion.Validation;
 
@@ -492,6 +493,37 @@ public partial class PropertyValidator<T, TProperty> :
 
         return this;
     }
+
+    /// <summary>
+    ///     设置成员名称
+    /// </summary>
+    /// <param name="jsonNamingPolicy">
+    ///     <see cref="JsonNamingPolicy" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> WithMemberName(JsonNamingPolicy jsonNamingPolicy)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(jsonNamingPolicy);
+
+        MemberName = jsonNamingPolicy.ConvertName(_annotationValidator.GetMemberName());
+
+        return this;
+    }
+
+    /// <summary>
+    ///     设置成员名称
+    /// </summary>
+    /// <param name="jsonNamingPolicy">
+    ///     <see cref="JsonNamingPolicy" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> WithName(JsonNamingPolicy jsonNamingPolicy) =>
+        WithMemberName(jsonNamingPolicy);
 
     /// <summary>
     ///     设置成员名称
