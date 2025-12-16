@@ -126,7 +126,8 @@ public abstract class ValidatorBase
     ///     外部程序集用于覆盖默认验证消息的【强制约定类型全名】
     /// </summary>
     /// <remarks>TODO: 未来可考虑使用 <see cref="AppContext" /> 配置。</remarks>
-    internal const string ExternalValidationMessagesFullTypeName = "Furion.Validation.Resources.Overrides.ValidationMessages";
+    internal const string ExternalValidationMessagesFullTypeName =
+        "Furion.Validation.Resources.Overrides.ValidationMessages";
 
     /// <summary>
     ///     错误信息
