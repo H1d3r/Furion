@@ -164,7 +164,11 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
         _rollingFileNames.Clear();
 
         // 释放内部文件写入器
-        Task.Run(_fileLoggingWriter.CloseAsync);
+        try
+        {
+            _fileLoggingWriter?.CloseAsync().Wait(1500);
+        }
+        catch { }
     }
 
     /// <summary>
