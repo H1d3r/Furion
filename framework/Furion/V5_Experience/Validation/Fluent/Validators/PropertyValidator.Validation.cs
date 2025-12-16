@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 
 namespace Furion.Validation;
@@ -349,4 +350,27 @@ public partial class PropertyValidator<T, TProperty>
     /// </returns>
     public ObjectValidator<T> RuleSet(string?[]? ruleSets, Action<ObjectValidator<T>> setAction) =>
         _objectValidator.RuleSet(ruleSets, setAction);
+
+    /// <summary>
+    ///     获取对象验证结果集合
+    /// </summary>
+    /// <param name="disposeAfterValidation">是否在验证完成后自动释放当前实例。默认值为：<c>true</c></param>
+    /// <returns>
+    ///     <see cref="List{T}" />
+    /// </returns>
+    public List<ValidationResult> ToResults(bool disposeAfterValidation = true) =>
+        _objectValidator.ToResults(disposeAfterValidation);
+
+    /// <summary>
+    ///     获取对象验证结果集合
+    /// </summary>
+    /// <param name="validationContext">
+    ///     <see cref="ValidationContext" />
+    /// </param>
+    /// <param name="disposeAfterValidation">是否在验证完成后自动释放当前实例。默认值为：<c>true</c></param>
+    /// <returns>
+    ///     <see cref="List{T}" />
+    /// </returns>
+    public List<ValidationResult> ToResults(ValidationContext validationContext, bool disposeAfterValidation = true) =>
+        _objectValidator.ToResults(validationContext, disposeAfterValidation);
 }
