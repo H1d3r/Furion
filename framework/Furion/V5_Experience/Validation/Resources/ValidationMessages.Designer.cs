@@ -133,6 +133,15 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
+        ///   查找类似 &apos;{0}&apos; and &apos;{1}&apos; do not match. 的本地化字符串。
+        /// </summary>
+        internal static string CompareValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("CompareValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The field {0} must be a valid date. 的本地化字符串。
         /// </summary>
         internal static string DateOnlyValidator_ValidationError {
