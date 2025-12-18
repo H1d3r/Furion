@@ -96,10 +96,10 @@ public sealed partial class HttpRequestBuilder
         EnablePerformanceOptimization(httpRequestMessage);
 
         // 追加请求标头
-        AppendHeaders(httpRequestMessage);
+        AppendHeaders(httpRequestMessage, httpRemoteOptions.Configuration);
 
         // 追加 Cookies
-        AppendCookies(httpRequestMessage);
+        AppendCookies(httpRequestMessage, httpRemoteOptions.Configuration);
 
         // 移除 Cookies
         RemoveCookies(httpRequestMessage);
@@ -319,7 +319,10 @@ public sealed partial class HttpRequestBuilder
     /// <param name="httpRequestMessage">
     ///     <see cref="HttpRequestMessage" />
     /// </param>
-    internal void AppendHeaders(HttpRequestMessage httpRequestMessage)
+    /// <param name="configuration">
+    ///     <see cref="IConfiguration" />
+    /// </param>
+    internal void AppendHeaders(HttpRequestMessage httpRequestMessage, IConfiguration? configuration)
     {
         // 添加 Host 标头
         if (AutoSetHostHeaderEnabled)
@@ -369,7 +372,9 @@ public sealed partial class HttpRequestBuilder
                 continue;
             }
 
-            httpRequestMessage.Headers.TryAddWithoutValidation(key, values);
+            // 替换配置参数并追加
+            httpRequestMessage.Headers.TryAddWithoutValidation(key,
+                values.Select(v => v.ReplacePlaceholders(configuration)));
         }
     }
 
@@ -468,7 +473,10 @@ public sealed partial class HttpRequestBuilder
     /// <param name="httpRequestMessage">
     ///     <see cref="HttpRequestMessage" />
     /// </param>
-    internal void AppendCookies(HttpRequestMessage httpRequestMessage)
+    /// <param name="configuration">
+    ///     <see cref="IConfiguration" />
+    /// </param>
+    internal void AppendCookies(HttpRequestMessage httpRequestMessage, IConfiguration? configuration)
     {
         // 空检查
         if (Cookies.IsNullOrEmpty())
@@ -476,8 +484,10 @@ public sealed partial class HttpRequestBuilder
             return;
         }
 
+        // 替换配置参数并追加
         httpRequestMessage.Headers.TryAddWithoutValidation(HeaderNames.Cookie,
-            string.Join("; ", Cookies.Select(u => $"{u.Key}={u.Value?.EscapeDataString(true)}")));
+            string.Join("; ",
+                Cookies.Select(u => $"{u.Key}={u.Value?.ReplacePlaceholders(configuration)?.EscapeDataString(true)}")));
     }
 
     /// <summary>
