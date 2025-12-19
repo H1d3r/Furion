@@ -174,6 +174,10 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
         }
     }
 
+    /// <inheritdoc />
+    void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        InitializeServiceProvider(serviceProvider);
+
     /// <summary>
     ///     为当前值自身配置验证规则
     /// </summary>
@@ -366,4 +370,14 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     ///     <see cref="string" />
     /// </returns>
     internal string GetDisplayName() => DisplayName ?? "Value";
+
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal new void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    {
+        // 同步基类 IServiceProvider 委托
+        base.InitializeServiceProvider(serviceProvider);
+
+        // 同步 _valueValidator 实例 IServiceProvider 委托
+        _valueValidator?.InitializeServiceProvider(serviceProvider);
+    }
 }
