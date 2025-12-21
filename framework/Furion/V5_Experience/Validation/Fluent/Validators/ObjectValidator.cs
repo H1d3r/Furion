@@ -33,7 +33,7 @@ namespace Furion.Validation;
 ///     对象验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IRuleSetContextProvider, IDisposable
+public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IRuleSetContextProvider
 {
     /// <summary>
     ///     验证上下文键
@@ -69,39 +69,30 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     ///     <inheritdoc cref="ObjectValidator{T}" />
     /// </summary>
     public ObjectValidator()
-        : this(new ValidatorOptions(), null, null)
+        : this(null, null)
     {
     }
 
     /// <summary>
     ///     <inheritdoc cref="ObjectValidator{T}" />
     /// </summary>
-    /// <param name="options">
-    ///     <see cref="ValidatorOptions" />
-    /// </param>
     /// <param name="items">验证上下文数据</param>
-    public ObjectValidator(ValidatorOptions options, IDictionary<object, object?>? items)
-        : this(options, null, items)
+    public ObjectValidator(IDictionary<object, object?>? items)
+        : this(null, items)
     {
     }
 
     /// <summary>
     ///     <inheritdoc cref="ObjectValidator{T}" />
     /// </summary>
-    /// <param name="options">
-    ///     <see cref="ValidatorOptions" />
-    /// </param>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
     /// <param name="items">验证上下文数据</param>
-    public ObjectValidator(ValidatorOptions options, IServiceProvider? serviceProvider,
-        IDictionary<object, object?>? items)
+    public ObjectValidator(IServiceProvider? serviceProvider, IDictionary<object, object?>? items)
     {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(options);
-
-        Options = options;
+        // 初始化 ValidatorOptions 实例
+        Options = new ValidatorOptions();
 
         // 空检查
         if (serviceProvider is not null)
@@ -114,7 +105,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         // 初始化 ObjectAnnotationValidator 实例
         _annotationValidator = new ObjectAnnotationValidator(serviceProvider, items)
         {
-            ValidateAllProperties = options.ValidateAllProperties
+            ValidateAllProperties = Options.ValidateAllProperties
         };
 
         Validators = [];
@@ -125,7 +116,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     }
 
     /// <inheritdoc cref="ValidatorOptions" />
-    public ValidatorOptions Options { get; }
+    internal ValidatorOptions Options { get; }
 
     /// <summary>
     ///     验证条件
@@ -157,6 +148,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     internal string?[]? InheritedRuleSets { get; set => field = value?.Select(u => u?.Trim()).ToArray(); }
 
     /// <inheritdoc />
+    void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
+
+    /// <inheritdoc />
     public void Dispose()
     {
         Dispose(true);
@@ -164,16 +158,10 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     }
 
     /// <inheritdoc />
-    void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
-
-    /// <inheritdoc />
     public virtual bool IsValid(T? instance, string?[]? ruleSets = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
-
-        // 解析验证时使用的规则集
-        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
 
         // 检查是否应该对该对象执行验证
         if (!ShouldValidate(instance))
@@ -187,6 +175,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         {
             return false;
         }
+
+        // 解析验证时使用的规则集
+        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
 
         // 检查是否设置了对象级别验证器
         if (_objectValidator is not null && !_objectValidator.IsValid(instance, ruleSets))
@@ -203,9 +194,6 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        // 解析验证时使用的规则集
-        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
-
         // 检查是否应该对该对象执行验证
         if (!ShouldValidate(instance))
         {
@@ -221,6 +209,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         {
             validationResults.AddRange(_annotationValidator.GetValidationResults(instance, null!) ?? []);
         }
+
+        // 解析验证时使用的规则集
+        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
 
         // 检查是否设置了对象级别验证器
         if (_objectValidator is not null)
@@ -241,9 +232,6 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        // 解析验证时使用的规则集
-        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
-
         // 检查是否应该对该对象执行验证
         if (!ShouldValidate(instance))
         {
@@ -256,6 +244,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         {
             _annotationValidator.Validate(instance, null!);
         }
+
+        // 解析验证时使用的规则集
+        var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
 
         // 检查是否设置了对象级别验证器
         // ReSharper disable once UseNullPropagation
@@ -287,6 +278,48 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         {
             // 同步 IServiceProvider 委托
             propertyValidator.InitializeServiceProvider(serviceProvider);
+        }
+    }
+
+    /// <inheritdoc />
+    bool IObjectValidator.IsValid(object? instance, string?[]? ruleSets) => IsValid((T?)instance, ruleSets);
+
+    /// <inheritdoc />
+    List<ValidationResult>? IObjectValidator.GetValidationResults(object? instance, string?[]? ruleSets) =>
+        GetValidationResults((T?)instance, ruleSets);
+
+    /// <inheritdoc />
+    void IObjectValidator.Validate(object? instance, string?[]? ruleSets) => Validate((T?)instance, ruleSets);
+
+    /// <inheritdoc />
+    public List<ValidationResult> ToResults(ValidationContext validationContext, bool disposeAfterValidation = true)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validationContext);
+
+        // 同步 IServiceProvider 委托
+        InitializeServiceProvider(validationContext.GetService);
+
+        // 尝试从 ValidationContext.Items 中解析验证选项中的规则集
+        string?[]? ruleSets = null;
+        if (validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var metadataObj) &&
+            metadataObj is ValidationOptionsMetadata metadata)
+        {
+            ruleSets = metadata.RuleSets;
+        }
+
+        try
+        {
+            // 获取对象验证结果集合
+            return GetValidationResults((T)validationContext.ObjectInstance, ruleSets) ?? [];
+        }
+        finally
+        {
+            // 自动释放资源
+            if (disposeAfterValidation)
+            {
+                Dispose();
+            }
         }
     }
 
@@ -454,6 +487,26 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     }
 
     /// <summary>
+    ///     配置 <see cref="ValidatorOptions" /> 示例
+    /// </summary>
+    /// <param name="options">
+    ///     <see cref="ValidatorOptions" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="ObjectValidator{T}" />
+    /// </returns>
+    public ObjectValidator<T> ConfigureOptions(ValidatorOptions options)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(options);
+
+        Options.SuppressAnnotationValidation = options.SuppressAnnotationValidation;
+        Options.ValidateAllProperties = options.ValidateAllProperties;
+
+        return this;
+    }
+
+    /// <summary>
     ///     设置验证条件
     /// </summary>
     /// <remarks>当条件满足时才验证。</remarks>
@@ -603,47 +656,6 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
 
         throw new InvalidOperationException(
             "The parameterless 'ToResults()' method can only be used when the validator is created via 'ValidationContext.ContinueWith<T>()'. Ensure you are calling it inside 'IValidatableObject.Validate' and have used 'ContinueWith' to configure inline validation rules.");
-    }
-
-    /// <summary>
-    ///     获取对象验证结果集合
-    /// </summary>
-    /// <param name="validationContext">
-    ///     <see cref="ValidationContext" />
-    /// </param>
-    /// <param name="disposeAfterValidation">是否在验证完成后自动释放当前实例。默认值为：<c>true</c></param>
-    /// <returns>
-    ///     <see cref="List{T}" />
-    /// </returns>
-    public List<ValidationResult> ToResults(ValidationContext validationContext, bool disposeAfterValidation = true)
-    {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(validationContext);
-
-        // 同步 IServiceProvider 委托
-        InitializeServiceProvider(validationContext.GetService);
-
-        // 尝试从 ValidationContext.Items 中解析验证选项中的规则集
-        string?[]? ruleSets = null;
-        if (validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var metadataObj) &&
-            metadataObj is ValidationOptionsMetadata metadata)
-        {
-            ruleSets = metadata.RuleSets;
-        }
-
-        try
-        {
-            // 获取对象验证结果集合
-            return GetValidationResults((T)validationContext.ObjectInstance, ruleSets) ?? [];
-        }
-        finally
-        {
-            // 自动释放资源
-            if (disposeAfterValidation)
-            {
-                Dispose();
-            }
-        }
     }
 
     /// <summary>
