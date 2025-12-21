@@ -529,6 +529,15 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
+        ///   查找类似 The field {0} must not contain the string &apos;{1}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string StringNotContainsValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("StringNotContainsValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The field {0} is not a valid telephone. 的本地化字符串。
         /// </summary>
         internal static string TelephoneValidator_ValidationError {
