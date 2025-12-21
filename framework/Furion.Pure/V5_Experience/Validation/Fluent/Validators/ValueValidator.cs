@@ -46,6 +46,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     internal Func<T, T>? _preProcessor;
 
     /// <inheritdoc cref="ValueValidator{T}" />
+    /// <remarks>单个值级别验证器。</remarks>
     internal ValueValidator<T>? _valueValidator;
 
     /// <summary>
@@ -112,7 +113,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
             return true;
         }
 
-        // 检查是否设置单个值验证器
+        // 检查是否设置单个值级别验证器
         if (_valueValidator is not null && !_valueValidator.IsValid(resolvedValue, ruleSets))
         {
             return false;
@@ -137,7 +138,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
         var displayName = GetDisplayName();
         var validationResults = new List<ValidationResult>();
 
-        // 检查是否设置单个值验证器
+        // 检查是否设置单个值级别验证器
         if (_valueValidator is not null)
         {
             validationResults.AddRange(_valueValidator.GetValidationResults(resolvedValue, ruleSets) ?? []);
@@ -165,7 +166,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
         // 获取显示名称
         var displayName = GetDisplayName();
 
-        // 检查是否设置单个值验证器
+        // 检查是否设置单个值级别验证器
         // ReSharper disable once UseNullPropagation
         if (_valueValidator is not null)
         {
@@ -418,7 +419,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
             }
         }
 
-        // 释放单个值验证器资源
+        // 释放单个值级别验证器资源
         if (_valueValidator is IDisposable valueValidatorDisposable)
         {
             valueValidatorDisposable.Dispose();
