@@ -126,8 +126,7 @@ public abstract class ValidatorBase
     ///     外部程序集用于覆盖默认验证消息的【强制约定类型全名】
     /// </summary>
     /// <remarks>TODO: 未来可考虑使用 <see cref="AppContext" /> 配置。</remarks>
-    internal const string ExternalValidationMessagesFullTypeName =
-        "Furion.Validation.Resources.Overrides.ValidationMessages";
+    internal const string ExternalValidationMessagesFullTypeName = "Furion.Validation.Resources.Overrides.ValidationMessages";
 
     /// <summary>
     ///     错误信息
@@ -175,6 +174,22 @@ public abstract class ValidatorBase
 
         // ReSharper disable once SuspiciousTypeConversion.Global
         SupportsAsync = this is IAsyncValidator;
+    }
+
+    /// <summary>
+    ///     规则集
+    /// </summary>
+    /// <remarks>实现内部规则集功能。</remarks>
+    internal string?[]? RuleSets
+    {
+        get;
+        set
+        {
+            field = value;
+
+            // 触发属性变更事件
+            OnPropertyChanged(value);
+        }
     }
 
     /// <summary>

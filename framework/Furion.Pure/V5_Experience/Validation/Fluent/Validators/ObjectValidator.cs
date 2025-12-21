@@ -33,7 +33,7 @@ namespace Furion.Validation;
 ///     对象验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IDisposable
+public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IRuleSetContextProvider, IDisposable
 {
     /// <summary>
     ///     验证上下文键
@@ -172,7 +172,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, ID
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
 
         // 检查是否应该对该对象执行验证
-        if (!ShouldValidate(instance, resolvedRuleSets))
+        if (!ShouldValidate(instance))
         {
             return true;
         }
@@ -197,7 +197,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, ID
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
 
         // 检查是否应该对该对象执行验证
-        if (!ShouldValidate(instance, resolvedRuleSets))
+        if (!ShouldValidate(instance))
         {
             return null;
         }
@@ -229,7 +229,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, ID
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
 
         // 检查是否应该对该对象执行验证
-        if (!ShouldValidate(instance, resolvedRuleSets))
+        if (!ShouldValidate(instance))
         {
             return;
         }
@@ -264,6 +264,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, ID
         }
     }
 
+    /// <inheritdoc />
+    string?[]? IRuleSetContextProvider.GetCurrentRuleSets() => GetCurrentRuleSets();
+
     /// <summary>
     ///     为指定属性配置验证规则
     /// </summary>
@@ -277,11 +280,8 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, ID
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
 
-        // 获取当前规则集作用域中的规则集
-        var effectiveRuleSets = GetCurrentRuleSetScope();
-
         // 初始化 PropertyValidator 实例
-        var propertyValidator = new PropertyValidator<T, TProperty>(selector, this) { RuleSets = effectiveRuleSets };
+        var propertyValidator = new PropertyValidator<T, TProperty>(selector, this) { RuleSets = GetCurrentRuleSets() };
 
         // 将实例添加到集合中
         Validators.Add(propertyValidator);
@@ -307,12 +307,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, ID
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
 
-        // 获取当前规则集作用域中的规则集
-        var effectiveRuleSets = GetCurrentRuleSetScope();
-
         // 初始化 CollectionPropertyValidator 实例
         var propertyValidator =
-            new CollectionPropertyValidator<T, TElement>(selector, this) { RuleSets = effectiveRuleSets };
+            new CollectionPropertyValidator<T, TElement>(selector, this) { RuleSets = GetCurrentRuleSets() };
 
         // 将实例添加到集合中
         Validators.Add(propertyValidator);
@@ -597,16 +594,13 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, ID
     ///     检查是否应该对该对象执行验证
     /// </summary>
     /// <param name="instance">对象</param>
-    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal bool ShouldValidate(T instance, string?[]? ruleSets = null)
+    internal bool ShouldValidate(T instance)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
-
-        // 检查当前规则集：暂无需要实现的逻辑
 
         // 检查正向条件（When）
         if (WhenCondition is not null && !WhenCondition(instance))
@@ -658,12 +652,8 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, ID
         }
     }
 
-    /// <summary>
-    ///     获取当前规则集作用域中的规则集
-    /// </summary>
-    /// <returns><see cref="string" />列表</returns>
-    internal string?[]? GetCurrentRuleSetScope() =>
-        // 优先使用规则集上下文栈顶的规则集（即当前 RuleSet() 作用域）
+    /// <inheritdoc cref="IRuleSetContextProvider.GetCurrentRuleSets" />
+    internal string?[]? GetCurrentRuleSets() =>
         _ruleSetStack is { Count: > 0 } ? [_ruleSetStack.Peek()] : InheritedRuleSets;
 
     /// <summary>
