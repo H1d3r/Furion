@@ -163,6 +163,13 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
         // 空检查 
         ArgumentNullException.ThrowIfNull(validator);
 
+        // 检查派生类型是否实现 IRuleSetContextProvider 接口
+        if (this is IRuleSetContextProvider ruleSetProvider)
+        {
+            // 获取当前上下文中的规则集并设置
+            validator.RuleSets = ruleSetProvider.GetCurrentRuleSets();
+        }
+
         // 检查是否是高优先级验证器
         if (validator is IHighPriorityValidator highPriorityValidator)
         {
@@ -940,6 +947,18 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// </returns>
     public virtual TSelf StringLength(int minimumLength, int maximumLength) =>
         AddValidator(new StringLengthValidator(maximumLength) { MinimumLength = minimumLength });
+
+    /// <summary>
+    ///     添加不包含特定字符/字符串的验证器
+    /// </summary>
+    /// <param name="searchValue">检索的值</param>
+    /// <param name="comparison"><see cref="StringComparison" />，默认值为：<see cref="StringComparison.Ordinal" /></param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf
+        StringNotContains(string searchValue, StringComparison comparison = StringComparison.Ordinal) =>
+        AddValidator(new StringNotContainsValidator(searchValue) { Comparison = comparison });
 
     /// <summary>
     ///     添加强密码模式验证器

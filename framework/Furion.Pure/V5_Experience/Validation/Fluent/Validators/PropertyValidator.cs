@@ -36,8 +36,7 @@ namespace Furion.Validation;
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
 public partial class PropertyValidator<T, TProperty> :
-    FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>, IObjectValidator<T>, IMemberPathRepairable,
-    IDisposable
+    FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>, IObjectValidator<T>, IMemberPathRepairable
 {
     /// <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
     internal readonly PropertyAnnotationValidator<T, TProperty> _annotationValidator;
@@ -50,7 +49,13 @@ public partial class PropertyValidator<T, TProperty> :
     /// </summary>
     internal readonly Expression<Func<T, TProperty?>> _selector;
 
-    /// <inheritdoc cref="IObjectValidator{T}" />
+    /// <summary>
+    ///     属性验证前的预处理器
+    /// </summary>
+    /// <remarks>该预处理器仅用于验证，不会修改原始属性的值。</remarks>
+    internal Func<TProperty, TProperty>? _preProcessor;
+
+    /// <inheritdoc cref="ObjectValidator{T}" />
     /// <remarks>属性级别对象验证器。</remarks>
     internal ObjectValidator<TProperty>? _propertyValidator;
 
@@ -115,14 +120,14 @@ public partial class PropertyValidator<T, TProperty> :
     internal Func<TProperty, ValidationContext<T>, bool>? UnlessCondition { get; private set; }
 
     /// <inheritdoc />
+    void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
+
+    /// <inheritdoc />
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
-
-    /// <inheritdoc />
-    void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
 
     /// <inheritdoc />
     public virtual bool IsValid(T? instance, string?[]? ruleSets = null)
@@ -142,8 +147,8 @@ public partial class PropertyValidator<T, TProperty> :
             return false;
         }
 
-        // 获取属性值
-        var propertyValue = GetValue(instance);
+        // 获取用于验证的属性值
+        var propertyValue = GetValueForValidation(instance);
 
         // 检查是否设置了属性级别对象验证器
         if (propertyValue is not null && _propertyValidator is not null &&
@@ -152,7 +157,7 @@ public partial class PropertyValidator<T, TProperty> :
             return false;
         }
 
-        return Validators.All(u => u.IsValid(GetValidationValue(instance, u, propertyValue)));
+        return Validators.All(u => u.IsValid(GetValidatedObject(instance, u, propertyValue)));
     }
 
     /// <inheritdoc />
@@ -178,8 +183,8 @@ public partial class PropertyValidator<T, TProperty> :
                                        []);
         }
 
-        // 获取属性值
-        var propertyValue = GetValue(instance);
+        // 获取用于验证的属性值
+        var propertyValue = GetValueForValidation(instance);
 
         // 检查是否设置了属性级别对象验证器
         if (propertyValue is not null && _propertyValidator is not null)
@@ -189,7 +194,7 @@ public partial class PropertyValidator<T, TProperty> :
 
         // 获取所有验证器验证结果集合
         validationResults.AddRange(Validators.SelectMany(u =>
-            u.GetValidationResults(GetValidationValue(instance, u, propertyValue), displayName, [memberPath]) ?? []));
+            u.GetValidationResults(GetValidatedObject(instance, u, propertyValue), displayName, [memberPath]) ?? []));
 
         return validationResults.ToResults();
     }
@@ -215,8 +220,8 @@ public partial class PropertyValidator<T, TProperty> :
             _annotationValidator.Validate(instance, displayName, [memberPath]);
         }
 
-        // 获取属性值
-        var propertyValue = GetValue(instance);
+        // 获取用于验证的属性值
+        var propertyValue = GetValueForValidation(instance);
 
         // 检查是否设置了属性级别对象验证器
         if (propertyValue is not null && _propertyValidator is not null)
@@ -227,13 +232,23 @@ public partial class PropertyValidator<T, TProperty> :
         // 遍历验证器集合
         foreach (var validator in Validators)
         {
-            validator.Validate(GetValidationValue(instance, validator, propertyValue), displayName, [memberPath]);
+            validator.Validate(GetValidatedObject(instance, validator, propertyValue), displayName, [memberPath]);
         }
     }
 
     /// <inheritdoc />
     void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
         InitializeServiceProvider(serviceProvider);
+
+    /// <inheritdoc />
+    bool IObjectValidator.IsValid(object? instance, string?[]? ruleSets) => IsValid((T?)instance, ruleSets);
+
+    /// <inheritdoc />
+    List<ValidationResult>? IObjectValidator.GetValidationResults(object? instance, string?[]? ruleSets) =>
+        GetValidationResults((T?)instance, ruleSets);
+
+    /// <inheritdoc />
+    void IObjectValidator.Validate(object? instance, string?[]? ruleSets) => Validate((T?)instance, ruleSets);
 
     /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
     internal new void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
@@ -328,7 +343,8 @@ public partial class PropertyValidator<T, TProperty> :
         return SetValidator((ruleSets, items, options) =>
         {
             // 初始化属性级别对象验证器实例
-            var propertyValidator = new ObjectValidator<TProperty>(options, null, items, ruleSets);
+            var propertyValidator =
+                new ObjectValidator<TProperty>(items) { InheritedRuleSets = ruleSets }.ConfigureOptions(options);
 
             // 调用自定义配置委托
             configure(propertyValidator);
@@ -468,6 +484,21 @@ public partial class PropertyValidator<T, TProperty> :
     }
 
     /// <summary>
+    ///     设置属性验证前的预处理器
+    /// </summary>
+    /// <remarks>该预处理器仅用于验证，不会修改原始属性的值。</remarks>
+    /// <param name="preProcess">预处理器（函数）</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T, TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> PreProcess(Func<TProperty, TProperty>? preProcess)
+    {
+        _preProcessor = preProcess;
+
+        return this;
+    }
+
+    /// <summary>
     ///     设置显示名称
     /// </summary>
     /// <param name="displayName">显示名称</param>
@@ -576,20 +607,22 @@ public partial class PropertyValidator<T, TProperty> :
         ArgumentNullException.ThrowIfNull(instance);
 
         // 检查传入的规则集是否与指定的规则集匹配
-        if (!MatchesRuleSet(ruleSets))
+        if (!RuleSetMatcher.Matches(RuleSets, ruleSets))
         {
             return false;
         }
 
         // 检查正向条件（When）
-        if (WhenCondition is not null && !WhenCondition(GetValue(instance), CreateValidationContext(instance)))
+        if (WhenCondition is not null &&
+            !WhenCondition(GetValueForValidation(instance), CreateValidationContext(instance)))
         {
             return false;
         }
 
         // 检查逆向条件（Unless）
         // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (UnlessCondition is not null && UnlessCondition(GetValue(instance), CreateValidationContext(instance)))
+        if (UnlessCondition is not null &&
+            UnlessCondition(GetValueForValidation(instance), CreateValidationContext(instance)))
         {
             return false;
         }
@@ -615,40 +648,9 @@ public partial class PropertyValidator<T, TProperty> :
     }
 
     /// <summary>
-    ///     检查传入的规则集是否与指定的规则集匹配
+    ///     获取用于验证的对象
     /// </summary>
-    /// <param name="ruleSets">规则集</param>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    internal bool MatchesRuleSet(string?[]? ruleSets = null)
-    {
-        // 规范化规则集
-        var current = (RuleSets ?? []).Select(NormalizeRuleSet).ToArray();
-        var input = (ruleSets ?? []).Select(NormalizeRuleSet).ToArray();
-
-        // 当前实例未定义规则集时
-        if (current is { Length: 0 })
-        {
-            return input is { Length: 0 } || input.Contains("*") || input.Contains(null);
-        }
-
-        // 当前实例有规则集但无传入规则集时
-        if (input is { Length: 0 })
-        {
-            return current.Contains("*") || current.Contains(null);
-        }
-
-        // 当双方均有规则集时
-        return input.Contains("*") || current.Contains("*") || current.Intersect(input).Any();
-
-        // 规范化规则集：去除前后空格
-        static string? NormalizeRuleSet(string? ruleSet) => ruleSet?.Trim();
-    }
-
-    /// <summary>
-    ///     获取用于验证的值
-    /// </summary>
+    /// <remarks>用于确定在 <see cref="ValidatorBase" /> 中实际被验证的对象（即验证的主体）。</remarks>
     /// <param name="instance">对象</param>
     /// <param name="validator">
     ///     <see cref="ValidatorBase" />
@@ -657,7 +659,7 @@ public partial class PropertyValidator<T, TProperty> :
     /// <returns>
     ///     <see cref="object" />
     /// </returns>
-    internal static object? GetValidationValue(T instance, ValidatorBase validator, TProperty propertyValue)
+    internal static object? GetValidatedObject(T instance, ValidatorBase validator, TProperty propertyValue)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -683,6 +685,21 @@ public partial class PropertyValidator<T, TProperty> :
     ///     <typeparamref name="TProperty" />
     /// </returns>
     internal TProperty GetValue(T instance) => _annotationValidator.GetValue(instance)!;
+
+    /// <summary>
+    ///     获取用于验证的属性值
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <returns>
+    ///     <typeparamref name="TProperty" />
+    /// </returns>
+    internal TProperty GetValueForValidation(T instance)
+    {
+        // 获取属性值
+        var propertyValue = GetValue(instance);
+
+        return _preProcessor is not null ? _preProcessor(propertyValue) : propertyValue;
+    }
 
     /// <summary>
     ///     获取显示名称
@@ -772,15 +789,11 @@ public partial class PropertyValidator<T, TProperty> :
         // 设置当前子验证器的完整成员路径
         _propertyValidator.MemberPath = GetEffectiveMemberName();
 
-        // 递归修复所有子属性验证器
-        foreach (var childValidator in _propertyValidator.Validators)
+        // 检查属性级别对象验证器是否实现 IMemberPathRepairable 接口
+        if (_propertyValidator is IMemberPathRepairable repairable)
         {
-            // 检查验证器是否实现 IMemberPathRepairable 接口
-            if (childValidator is IMemberPathRepairable repairable)
-            {
-                // 修复验证器及其子验证器的成员路径
-                repairable.RepairMemberPaths();
-            }
+            // 修复验证器及其子验证器的成员路径
+            repairable.RepairMemberPaths();
         }
     }
 }

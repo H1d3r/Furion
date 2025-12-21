@@ -36,7 +36,7 @@ namespace Furion.Validation;
 public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator<T, IEnumerable<TElement>?>
     where TElement : class
 {
-    /// <inheritdoc cref="IObjectValidator{T}" />
+    /// <inheritdoc cref="ObjectValidator{T}" />
     /// <remarks>集合元素对象验证器。</remarks>
     internal ObjectValidator<TElement>? _elementValidator;
 
@@ -215,7 +215,8 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         return SetValidator((ruleSets, items, options) =>
         {
             // 初始化集合元素对象验证器实例
-            var elementValidator = new ObjectValidator<TElement>(options, null, items, ruleSets);
+            var elementValidator =
+                new ObjectValidator<TElement>(items) { InheritedRuleSets = ruleSets }.ConfigureOptions(options);
 
             // 调用自定义配置委托
             configure(elementValidator);
@@ -282,8 +283,8 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
             return true;
         }
 
-        // 获取属性值
-        var propertyValue = GetValue(instance);
+        // 获取用于验证的属性值
+        var propertyValue = GetValueForValidation(instance);
         if (propertyValue is null)
         {
             return true;
@@ -342,15 +343,11 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
         // 设置元素验证器的基础路径
         _elementValidator.MemberPath = GetEffectiveMemberName();
 
-        // 递归修复元素验证器内部的所有子验证器
-        foreach (var childValidator in _elementValidator.Validators)
+        // 检查集合元素对象验证器是否实现 IMemberPathRepairable 接口
+        if (_elementValidator is IMemberPathRepairable repairable)
         {
-            // 检查验证器是否实现 IMemberPathRepairable 接口
-            if (childValidator is IMemberPathRepairable repairable)
-            {
-                // 修复验证器及其子验证器的成员路径
-                repairable.RepairMemberPaths();
-            }
+            // 修复验证器及其子验证器的成员路径
+            repairable.RepairMemberPaths();
         }
     }
 }

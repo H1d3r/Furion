@@ -31,6 +31,10 @@ namespace Furion.Validation;
 /// <inheritdoc cref="PropertyValidator{T,TProperty}" />
 public partial class PropertyValidator<T, TProperty>
 {
+    /// <inheritdoc />
+    public List<ValidationResult> ToResults(ValidationContext validationContext, bool disposeAfterValidation = true) =>
+        _objectValidator.ToResults(validationContext, disposeAfterValidation);
+
     /// <summary>
     ///     配置是否启用该属性上的验证特性验证
     /// </summary>
@@ -85,6 +89,36 @@ public partial class PropertyValidator<T, TProperty>
 
         return ValidatorProxy<ConditionalValidator<TProperty>>(context =>
             [new Action<ConditionBuilder<TProperty>>(u => buildConditions(u, context))]);
+    }
+
+    /// <summary>
+    ///     添加比较两个属性验证器
+    /// </summary>
+    /// <param name="selector">属性选择器</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> Compare(Expression<Func<T, object?>> selector)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(selector);
+
+        return ValidatorProxy<CompareValidator<T, TProperty>>(_ => [_selector, selector], instance => instance);
+    }
+
+    /// <summary>
+    ///     添加比较两个属性验证器
+    /// </summary>
+    /// <param name="propertyName">其他属性的名称</param>
+    /// <returns>
+    ///     <see cref="PropertyValidator{T,TProperty}" />
+    /// </returns>
+    public PropertyValidator<T, TProperty> Compare(string propertyName)
+    {
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
+
+        return ValidatorProxy<CompareValidator<T, TProperty>>(_ => [_selector, propertyName], instance => instance);
     }
 
     /// <summary>
@@ -231,6 +265,7 @@ public partial class PropertyValidator<T, TProperty>
     ///     添加验证器代理
     /// </summary>
     /// <param name="constructorArgsFactory"><typeparamref name="TValidator" /> 构造函数参数工厂</param>
+    /// <param name="validatedObjectProvider">被验证对象的提供器</param>
     /// <param name="configure">配置验证器实例</param>
     /// <typeparam name="TValidator">
     ///     <see cref="ValidatorBase" />
@@ -239,11 +274,13 @@ public partial class PropertyValidator<T, TProperty>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
     public PropertyValidator<T, TProperty> ValidatorProxy<TValidator>(
-        Func<ValidationContext<T>, object?[]?>? constructorArgsFactory, Action<TValidator>? configure = null)
+        Func<ValidationContext<T>, object?[]?>? constructorArgsFactory = null,
+        Func<T, object?>? validatedObjectProvider = null, Action<TValidator>? configure = null)
         where TValidator : ValidatorBase
     {
         // 初始化 ValidatorProxy<T, TValidator> 实例
-        var validatorProxy = new ValidatorProxy<T, TValidator>(instance => GetValue(instance),
+        var validatorProxy = new ValidatorProxy<T, TValidator>(
+            validatedObjectProvider ?? (instance => GetValueForValidation(instance)),
             constructorArgsFactory is null
                 ? null
                 : instance => constructorArgsFactory(CreateValidationContext(instance)));
@@ -285,27 +322,24 @@ public partial class PropertyValidator<T, TProperty>
     ///     为指定属性配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <param name="ruleSets">规则集</param>
     /// <typeparam name="TOtherProperty">属性类型</typeparam>
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TOtherProperty> RuleFor<TOtherProperty>(Expression<Func<T, TOtherProperty?>> selector,
-        string?[]? ruleSets = null) => _objectValidator.RuleFor(selector, ruleSets);
+    public PropertyValidator<T, TOtherProperty>
+        RuleFor<TOtherProperty>(Expression<Func<T, TOtherProperty?>> selector) => _objectValidator.RuleFor(selector);
 
     /// <summary>
     ///     为集合类型属性中的每一个元素配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <param name="ruleSets">规则集</param>
     /// <typeparam name="TOtherElement">元素类型</typeparam>
     /// <returns>
     ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
     public CollectionPropertyValidator<T, TOtherElement> RuleForEach<TOtherElement>(
-        Expression<Func<T, IEnumerable<TOtherElement>?>> selector, string?[]? ruleSets = null)
-        where TOtherElement : class =>
-        _objectValidator.RuleForEach(selector, ruleSets);
+        Expression<Func<T, IEnumerable<TOtherElement>?>> selector) where TOtherElement : class =>
+        _objectValidator.RuleForEach(selector);
 
     /// <summary>
     ///     在指定规则集上下文中为指定属性配置验证规则
@@ -360,17 +394,4 @@ public partial class PropertyValidator<T, TProperty>
     /// </returns>
     public List<ValidationResult> ToResults(bool disposeAfterValidation = true) =>
         _objectValidator.ToResults(disposeAfterValidation);
-
-    /// <summary>
-    ///     获取对象验证结果集合
-    /// </summary>
-    /// <param name="validationContext">
-    ///     <see cref="ValidationContext" />
-    /// </param>
-    /// <param name="disposeAfterValidation">是否在验证完成后自动释放当前实例。默认值为：<c>true</c></param>
-    /// <returns>
-    ///     <see cref="List{T}" />
-    /// </returns>
-    public List<ValidationResult> ToResults(ValidationContext validationContext, bool disposeAfterValidation = true) =>
-        _objectValidator.ToResults(validationContext, disposeAfterValidation);
 }

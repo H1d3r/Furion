@@ -48,23 +48,17 @@ public static class Validators
     /// <summary>
     ///     创建对象验证器
     /// </summary>
-    /// <param name="options">
-    ///     <see cref="ValidatorOptions" />
-    /// </param>
     /// <param name="items">验证上下文数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public static ObjectValidator<T> Object<T>(ValidatorOptions options, IDictionary<object, object?>? items)
-        where T : class => new(options, items);
+    public static ObjectValidator<T> Object<T>(IDictionary<object, object?>? items)
+        where T : class => new(items);
 
     /// <summary>
     ///     创建对象验证器
     /// </summary>
-    /// <param name="options">
-    ///     <see cref="ValidatorOptions" />
-    /// </param>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
@@ -73,9 +67,8 @@ public static class Validators
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public static ObjectValidator<T> Object<T>(ValidatorOptions options, IServiceProvider? serviceProvider,
-        IDictionary<object, object?>? items)
-        where T : class => new(options, serviceProvider, items);
+    public static ObjectValidator<T> Object<T>(IServiceProvider? serviceProvider, IDictionary<object, object?>? items)
+        where T : class => new(serviceProvider, items);
 
     /// <summary>
     ///     创建单个值验证器
@@ -884,6 +877,17 @@ public static class Validators
         new(maximumLength) { MinimumLength = minimumLength };
 
     /// <summary>
+    ///     创建不包含特定字符/字符串的验证器
+    /// </summary>
+    /// <param name="searchValue">检索的值</param>
+    /// <param name="comparison"><see cref="StringComparison" />，默认值为：<see cref="StringComparison.Ordinal" /></param>
+    /// <returns>
+    ///     <see cref="StringNotContainsValidator" />
+    /// </returns>
+    public static StringNotContainsValidator StringNotContains(string searchValue,
+        StringComparison comparison = StringComparison.Ordinal) => new(searchValue) { Comparison = comparison };
+
+    /// <summary>
     ///     创建强密码模式验证器
     /// </summary>
     /// <returns>
@@ -954,7 +958,7 @@ public static class Validators
     /// <summary>
     ///     创建验证器代理
     /// </summary>
-    /// <param name="valueTransformer">验证前值转换器</param>
+    /// <param name="validatedObjectProvider">被验证对象的提供器</param>
     /// <param name="constructorArgsFactory"><typeparamref name="TValidator" /> 构造函数参数工厂</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <typeparam name="TValidator">
@@ -963,10 +967,10 @@ public static class Validators
     /// <returns>
     ///     <see cref="ValidatorProxy{T1,T2}" />
     /// </returns>
-    public static ValidatorProxy<T, TValidator> ValidatorProxy<T, TValidator>(Func<T, object?> valueTransformer,
+    public static ValidatorProxy<T, TValidator> ValidatorProxy<T, TValidator>(Func<T, object?> validatedObjectProvider,
         Func<T, object?[]?>? constructorArgsFactory = null)
         where TValidator : ValidatorBase =>
-        new(valueTransformer, constructorArgsFactory);
+        new(validatedObjectProvider, constructorArgsFactory);
 
     /// <summary>
     ///     创建单个值验证特性验证器
