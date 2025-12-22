@@ -28,11 +28,12 @@ using System.Linq.Expressions;
 
 namespace Furion.Validation;
 
-/// <inheritdoc cref="PropertyValidator{T,TProperty}" />
-public partial class PropertyValidator<T, TProperty>
+/// <inheritdoc cref="PropertyValidator{T,TProperty,TSelf}" />
+public abstract partial class PropertyValidator<T, TProperty, TSelf>
 {
     /// <inheritdoc />
-    public List<ValidationResult> ToResults(ValidationContext validationContext, bool disposeAfterValidation = true) =>
+    public virtual List<ValidationResult> ToResults(ValidationContext validationContext,
+        bool disposeAfterValidation = true) =>
         _objectValidator.ToResults(validationContext, disposeAfterValidation);
 
     /// <summary>
@@ -40,48 +41,48 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="enabled">是否启用</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> UseAnnotationValidation(bool? enabled)
+    public virtual TSelf UseAnnotationValidation(bool? enabled)
     {
         SuppressAnnotationValidation = !enabled;
 
-        return this;
+        return This;
     }
 
     /// <summary>
     ///     配置启用该属性上的验证特性验证
     /// </summary>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> UseAnnotationValidation() => UseAnnotationValidation(true);
+    public virtual TSelf UseAnnotationValidation() => UseAnnotationValidation(true);
 
     /// <summary>
     ///     配置跳过该属性上的验证特性验证
     /// </summary>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> SkipAnnotationValidation() => UseAnnotationValidation(false);
+    public virtual TSelf SkipAnnotationValidation() => UseAnnotationValidation(false);
 
     /// <summary>
     ///     配置跳过该属性上的验证特性验证
     /// </summary>
     /// <remarks>仅验证自定义规则。</remarks>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> CustomOnly() => UseAnnotationValidation(false);
+    public virtual TSelf CustomOnly() => UseAnnotationValidation(false);
 
     /// <summary>
     ///     添加条件验证器
     /// </summary>
     /// <param name="buildConditions">条件构建器配置委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Conditional(
+    public virtual TSelf Conditional(
         Action<ConditionBuilder<TProperty>, ValidationContext<T>> buildConditions)
     {
         // 空检查
@@ -96,9 +97,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="selector">属性选择器</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Compare(Expression<Func<T, object?>> selector)
+    public virtual TSelf Compare(Expression<Func<T, object?>> selector)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
@@ -111,9 +112,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="propertyName">其他属性的名称</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Compare(string propertyName)
+    public virtual TSelf Compare(string propertyName)
     {
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
@@ -126,9 +127,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="compareValueAccessor">比较的值访问器</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> EqualTo(Func<ValidationContext<T>, object?> compareValueAccessor)
+    public virtual TSelf EqualTo(Func<ValidationContext<T>, object?> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
@@ -141,9 +142,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="compareValueAccessor">比较的值访问器</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> GreaterThanOrEqualTo(
+    public virtual TSelf GreaterThanOrEqualTo(
         Func<ValidationContext<T>, IComparable> compareValueAccessor)
     {
         // 空检查
@@ -157,9 +158,10 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="compareValueAccessor">比较的值访问器</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> GreaterThan(Func<ValidationContext<T>, IComparable> compareValueAccessor)
+    public virtual TSelf GreaterThan(
+        Func<ValidationContext<T>, IComparable> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
@@ -172,9 +174,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="compareValueAccessor">比较的值访问器</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> LessThanOrEqualTo(
+    public virtual TSelf LessThanOrEqualTo(
         Func<ValidationContext<T>, IComparable> compareValueAccessor)
     {
         // 空检查
@@ -188,9 +190,10 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="compareValueAccessor">比较的值访问器</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> LessThan(Func<ValidationContext<T>, IComparable> compareValueAccessor)
+    public virtual TSelf LessThan(
+        Func<ValidationContext<T>, IComparable> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
@@ -203,9 +206,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> MustUnless(Func<TProperty, ValidationContext<T>, bool> condition)
+    public virtual TSelf MustUnless(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -219,9 +222,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> MustUnless_(Func<TProperty, ValidationContext<T>, bool> condition) =>
+    public virtual TSelf MustUnless_(Func<TProperty, ValidationContext<T>, bool> condition) =>
         MustUnless(condition);
 
     /// <summary>
@@ -229,9 +232,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Must(Func<TProperty, ValidationContext<T>, bool> condition)
+    public virtual TSelf Must(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -245,9 +248,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Must_(Func<TProperty, ValidationContext<T>, bool> condition) =>
+    public virtual TSelf Must_(Func<TProperty, ValidationContext<T>, bool> condition) =>
         Must(condition);
 
     /// <summary>
@@ -257,9 +260,9 @@ public partial class PropertyValidator<T, TProperty>
     /// <param name="condition">条件委托</param>
     /// <typeparam name="TElement">元素类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> MustAny<TElement>(IEnumerable<TElement> enumerable,
+    public virtual TSelf MustAny<TElement>(IEnumerable<TElement> enumerable,
         Func<TProperty, ValidationContext<T>, TElement, bool> condition)
     {
         // 空检查
@@ -277,9 +280,9 @@ public partial class PropertyValidator<T, TProperty>
     /// <param name="condition">条件委托</param>
     /// <typeparam name="TElement">元素类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> MustAny_<TElement>(IEnumerable<TElement> enumerable,
+    public virtual TSelf MustAny_<TElement>(IEnumerable<TElement> enumerable,
         Func<TProperty, ValidationContext<T>, TElement, bool> condition) =>
         MustAny(enumerable, condition);
 
@@ -288,9 +291,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="compareValueAccessor">比较的值访问器</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> NotEqualTo(Func<ValidationContext<T>, object?> compareValueAccessor)
+    public virtual TSelf NotEqualTo(Func<ValidationContext<T>, object?> compareValueAccessor)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(compareValueAccessor);
@@ -303,9 +306,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Predicate(Func<TProperty, ValidationContext<T>, bool> condition)
+    public virtual TSelf Predicate(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -319,9 +322,9 @@ public partial class PropertyValidator<T, TProperty>
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Predicate_(Func<TProperty, ValidationContext<T>, bool> condition) =>
+    public virtual TSelf Predicate_(Func<TProperty, ValidationContext<T>, bool> condition) =>
         Predicate(condition);
 
     /// <summary>
@@ -334,9 +337,9 @@ public partial class PropertyValidator<T, TProperty>
     ///     <see cref="ValidatorBase" />
     /// </typeparam>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> ValidatorProxy<TValidator>(
+    public virtual TSelf ValidatorProxy<TValidator>(
         Func<ValidationContext<T>, object?[]?>? constructorArgsFactory = null,
         Func<T, object?>? validatedObjectProvider = null, Action<TValidator>? configure = null)
         where TValidator : ValidatorBase
@@ -363,7 +366,7 @@ public partial class PropertyValidator<T, TProperty>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> And() => _objectValidator;
+    public virtual ObjectValidator<T> And() => _objectValidator;
 
     /// <summary>
     ///     结束当前属性验证器的配置，返回到对象验证器以继续链式操作
@@ -371,7 +374,7 @@ public partial class PropertyValidator<T, TProperty>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> Then() => _objectValidator;
+    public virtual ObjectValidator<T> Then() => _objectValidator;
 
     /// <summary>
     ///     结束当前属性验证器的配置，返回到对象验证器以继续链式操作
@@ -379,29 +382,29 @@ public partial class PropertyValidator<T, TProperty>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> End() => _objectValidator;
+    public virtual ObjectValidator<T> End() => _objectValidator;
 
     /// <summary>
     ///     为指定属性配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <typeparam name="TOtherProperty">属性类型</typeparam>
+    /// <typeparam name="TProperty1">属性类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <see cref="PropertyValidator{T,TProperty1}" />
     /// </returns>
-    public PropertyValidator<T, TOtherProperty>
-        RuleFor<TOtherProperty>(Expression<Func<T, TOtherProperty?>> selector) => _objectValidator.RuleFor(selector);
+    public PropertyValidator<T, TProperty1> RuleFor<TProperty1>(Expression<Func<T, TProperty1?>> selector) =>
+        _objectValidator.RuleFor(selector);
 
     /// <summary>
     ///     为集合类型属性中的每一个元素配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <typeparam name="TOtherElement">元素类型</typeparam>
+    /// <typeparam name="TElement">元素类型</typeparam>
     /// <returns>
     ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
-    public CollectionPropertyValidator<T, TOtherElement> RuleForEach<TOtherElement>(
-        Expression<Func<T, IEnumerable<TOtherElement>?>> selector) where TOtherElement : class =>
+    public CollectionPropertyValidator<T, TElement>
+        RuleForEach<TElement>(Expression<Func<T, IEnumerable<TElement?>?>> selector) where TElement : class =>
         _objectValidator.RuleForEach(selector);
 
     /// <summary>
@@ -455,6 +458,6 @@ public partial class PropertyValidator<T, TProperty>
     /// <returns>
     ///     <see cref="List{T}" />
     /// </returns>
-    public List<ValidationResult> ToResults(bool disposeAfterValidation = true) =>
+    public virtual List<ValidationResult> ToResults(bool disposeAfterValidation = true) =>
         _objectValidator.ToResults(disposeAfterValidation);
 }
