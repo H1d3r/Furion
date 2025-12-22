@@ -35,8 +35,24 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TProperty">属性类型</typeparam>
-public partial class PropertyValidator<T, TProperty> :
-    FluentValidatorBuilder<TProperty, PropertyValidator<T, TProperty>>, IObjectValidator<T>, IMemberPathRepairable
+public class PropertyValidator<T, TProperty> : PropertyValidator<T, TProperty, PropertyValidator<T, TProperty>>
+{
+    /// <inheritdoc />
+    public PropertyValidator(Expression<Func<T, TProperty?>> selector, ObjectValidator<T> objectValidator) : base(
+        selector, objectValidator)
+    {
+    }
+}
+
+/// <summary>
+///     属性验证器
+/// </summary>
+/// <typeparam name="T">对象类型</typeparam>
+/// <typeparam name="TProperty">属性类型</typeparam>
+/// <typeparam name="TSelf">派生类型自身类型</typeparam>
+public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentValidatorBuilder<TProperty, TSelf>,
+    IObjectValidator<T>, IMemberPathRepairable
+    where TSelf : PropertyValidator<T, TProperty, TSelf>
 {
     /// <inheritdoc cref="PropertyAnnotationValidator{T,TProperty}" />
     internal readonly PropertyAnnotationValidator<T, TProperty> _annotationValidator;
@@ -270,10 +286,10 @@ public partial class PropertyValidator<T, TProperty> :
     ///     <see cref="ObjectValidator{T}" /> 工厂委托
     /// </param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public PropertyValidator<T, TProperty> SetValidator(
+    public virtual TSelf SetValidator(
         Func<string?[]?, IDictionary<object, object?>?, ValidatorOptions, ObjectValidator<TProperty>?> validatorFactory)
     {
         // 空检查
@@ -292,7 +308,7 @@ public partial class PropertyValidator<T, TProperty> :
         // 空检查
         if (_propertyValidator is null)
         {
-            return this;
+            return This;
         }
 
         // 继承当前规则集
@@ -304,7 +320,7 @@ public partial class PropertyValidator<T, TProperty> :
         // 修复整个子验证器树的成员路径
         RepairMemberPaths();
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -314,10 +330,10 @@ public partial class PropertyValidator<T, TProperty> :
     ///     <see cref="ObjectValidator{T}" />
     /// </param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public PropertyValidator<T, TProperty> SetValidator(ObjectValidator<TProperty>? validator) =>
+    public virtual TSelf SetValidator(ObjectValidator<TProperty>? validator) =>
         SetValidator((_, _, _) => validator);
 
     /// <summary>
@@ -325,10 +341,10 @@ public partial class PropertyValidator<T, TProperty> :
     /// </summary>
     /// <param name="configure">自定义配置委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public PropertyValidator<T, TProperty> ChildRules(Action<ObjectValidator<TProperty>> configure)
+    public virtual TSelf ChildRules(Action<ObjectValidator<TProperty>> configure)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
@@ -363,7 +379,7 @@ public partial class PropertyValidator<T, TProperty> :
     ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public CollectionPropertyValidator<T, TElement> Each<TElement>(Action<ObjectValidator<TElement>> configure)
+    public virtual CollectionPropertyValidator<T, TElement> Each<TElement>(Action<ObjectValidator<TElement>> configure)
         where TElement : class
     {
         // 空检查
@@ -417,16 +433,16 @@ public partial class PropertyValidator<T, TProperty> :
     /// <remarks>当条件满足时才验证。</remarks>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> When(Func<TProperty, bool> condition)
+    public virtual TSelf When(Func<TProperty, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
         WhenCondition = (p, _) => condition(p);
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -435,16 +451,16 @@ public partial class PropertyValidator<T, TProperty> :
     /// <remarks>当条件不满足时才验证。</remarks>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Unless(Func<TProperty, bool> condition)
+    public virtual TSelf Unless(Func<TProperty, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
         UnlessCondition = (p, _) => condition(p);
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -453,16 +469,16 @@ public partial class PropertyValidator<T, TProperty> :
     /// <remarks>当条件满足时才验证。</remarks>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> When(Func<TProperty, ValidationContext<T>, bool> condition)
+    public virtual TSelf When(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
         WhenCondition = condition;
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -471,16 +487,16 @@ public partial class PropertyValidator<T, TProperty> :
     /// <remarks>当条件不满足时才验证。</remarks>
     /// <param name="condition">条件委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> Unless(Func<TProperty, ValidationContext<T>, bool> condition)
+    public virtual TSelf Unless(Func<TProperty, ValidationContext<T>, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
 
         UnlessCondition = condition;
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -491,11 +507,11 @@ public partial class PropertyValidator<T, TProperty> :
     /// <returns>
     ///     <see cref="PropertyValidator{T, TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> PreProcess(Func<TProperty, TProperty>? preProcess)
+    public virtual TSelf PreProcess(Func<TProperty, TProperty>? preProcess)
     {
         _preProcessor = preProcess;
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -503,13 +519,13 @@ public partial class PropertyValidator<T, TProperty> :
     /// </summary>
     /// <param name="displayName">显示名称</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> WithDisplayName(string? displayName)
+    public virtual TSelf WithDisplayName(string? displayName)
     {
         DisplayName = displayName;
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -517,13 +533,13 @@ public partial class PropertyValidator<T, TProperty> :
     /// </summary>
     /// <param name="memberName">成员名称</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> WithMemberName(string? memberName)
+    public virtual TSelf WithMemberName(string? memberName)
     {
         MemberName = memberName;
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -531,9 +547,9 @@ public partial class PropertyValidator<T, TProperty> :
     /// </summary>
     /// <param name="memberName">成员名称</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> WithName(string? memberName) => WithMemberName(memberName);
+    public virtual TSelf WithName(string? memberName) => WithMemberName(memberName);
 
     /// <summary>
     ///     设置成员名称
@@ -542,16 +558,16 @@ public partial class PropertyValidator<T, TProperty> :
     ///     <see cref="JsonNamingPolicy" />
     /// </param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> WithMemberName(JsonNamingPolicy jsonNamingPolicy)
+    public virtual TSelf WithMemberName(JsonNamingPolicy jsonNamingPolicy)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(jsonNamingPolicy);
 
         MemberName = jsonNamingPolicy.ConvertName(_annotationValidator.GetMemberName());
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -561,9 +577,9 @@ public partial class PropertyValidator<T, TProperty> :
     ///     <see cref="JsonNamingPolicy" />
     /// </param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> WithName(JsonNamingPolicy jsonNamingPolicy) =>
+    public virtual TSelf WithName(JsonNamingPolicy jsonNamingPolicy) =>
         WithMemberName(jsonNamingPolicy);
 
     /// <summary>
@@ -571,16 +587,16 @@ public partial class PropertyValidator<T, TProperty> :
     /// </summary>
     /// <param name="memberNameProvider">成员名称获取委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> WithMemberName(Func<PropertyInfo, string?> memberNameProvider)
+    public virtual TSelf WithMemberName(Func<PropertyInfo, string?> memberNameProvider)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(memberNameProvider);
 
         MemberName = memberNameProvider(_annotationValidator.Property);
 
-        return this;
+        return This;
     }
 
     /// <summary>
@@ -588,9 +604,9 @@ public partial class PropertyValidator<T, TProperty> :
     /// </summary>
     /// <param name="memberNameProvider">成员名称获取委托</param>
     /// <returns>
-    ///     <see cref="PropertyValidator{T,TProperty}" />
+    ///     <typeparamref name="TSelf" />
     /// </returns>
-    public PropertyValidator<T, TProperty> WithName(Func<PropertyInfo, string?> memberNameProvider) =>
+    public virtual TSelf WithName(Func<PropertyInfo, string?> memberNameProvider) =>
         WithMemberName(memberNameProvider);
 
     /// <summary>

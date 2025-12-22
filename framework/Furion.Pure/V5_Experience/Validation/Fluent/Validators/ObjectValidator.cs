@@ -144,7 +144,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     /// <summary>
     ///     从父级继承的规则集
     /// </summary>
-    /// <remarks>用于 <see cref="PropertyValidator{T,TProperty}.ChildRules" /> 场景。</remarks>
+    /// <remarks>用于 <see cref="PropertyValidator{T,TProperty,TSelf}.ChildRules" /> 场景。</remarks>
     internal string?[]? InheritedRuleSets { get; set => field = value?.Select(u => u?.Trim()).ToArray(); }
 
     /// <inheritdoc />
@@ -292,7 +292,8 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     void IObjectValidator.Validate(object? instance, string?[]? ruleSets) => Validate((T?)instance, ruleSets);
 
     /// <inheritdoc />
-    public List<ValidationResult> ToResults(ValidationContext validationContext, bool disposeAfterValidation = true)
+    public virtual List<ValidationResult> ToResults(ValidationContext validationContext,
+        bool disposeAfterValidation = true)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validationContext);
@@ -514,7 +515,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> When(Func<T, bool> condition)
+    public virtual ObjectValidator<T> When(Func<T, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -532,7 +533,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> Unless(Func<T, bool> condition)
+    public virtual ObjectValidator<T> Unless(Func<T, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -552,7 +553,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public ObjectValidator<T> SetValidator(
+    public virtual ObjectValidator<T> SetValidator(
         Func<IDictionary<object, object?>?, ValidatorOptions, ObjectValidator<T>?> validatorFactory)
     {
         // 空检查
@@ -596,7 +597,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public ObjectValidator<T> SetValidator(ObjectValidator<T>? validator) =>
+    public virtual ObjectValidator<T> SetValidator(ObjectValidator<T>? validator) =>
         SetValidator((_, _) => validator);
 
     /// <summary>
@@ -606,7 +607,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> UseAnnotationValidation(bool enabled)
+    public virtual ObjectValidator<T> UseAnnotationValidation(bool enabled)
     {
         Options.SuppressAnnotationValidation = !enabled;
 
@@ -619,7 +620,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> UseAnnotationValidation() => UseAnnotationValidation(true);
+    public virtual ObjectValidator<T> UseAnnotationValidation() => UseAnnotationValidation(true);
 
     /// <summary>
     ///     配置跳过对象属性验证特性验证
@@ -627,7 +628,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> SkipAnnotationValidation() => UseAnnotationValidation(false);
+    public virtual ObjectValidator<T> SkipAnnotationValidation() => UseAnnotationValidation(false);
 
     /// <summary>
     ///     配置跳过对象属性验证特性验证
@@ -636,7 +637,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
-    public ObjectValidator<T> CustomOnly() => UseAnnotationValidation(false);
+    public virtual ObjectValidator<T> CustomOnly() => UseAnnotationValidation(false);
 
     /// <summary>
     ///     获取对象验证结果集合
@@ -645,7 +646,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     /// <returns>
     ///     <see cref="List{T}" />
     /// </returns>
-    public List<ValidationResult> ToResults(bool disposeAfterValidation = true)
+    public virtual List<ValidationResult> ToResults(bool disposeAfterValidation = true)
     {
         // 查找验证上下文数据中是否包含 ValidationContextsKey 键数据
         if (_items?.TryGetValue(ValidationContextsKey, out var validationContextObject) == true &&
