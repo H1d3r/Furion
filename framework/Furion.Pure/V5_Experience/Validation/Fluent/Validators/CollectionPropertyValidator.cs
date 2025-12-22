@@ -33,7 +33,9 @@ namespace Furion.Validation;
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
 /// <typeparam name="TElement">元素类型</typeparam>
-public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator<T, IEnumerable<TElement>?>
+public sealed class
+    CollectionPropertyValidator<T, TElement> : PropertyValidator<T, IEnumerable<TElement>?,
+    CollectionPropertyValidator<T, TElement>>
     where TElement : class
 {
     /// <inheritdoc cref="ObjectValidator{T}" />
@@ -41,8 +43,8 @@ public sealed class CollectionPropertyValidator<T, TElement> : PropertyValidator
     internal ObjectValidator<TElement>? _elementValidator;
 
     /// <inheritdoc />
-    internal CollectionPropertyValidator(Expression<Func<T, IEnumerable<TElement>?>> selector,
-        ObjectValidator<T> objectValidator) : base(selector, objectValidator)
+    internal CollectionPropertyValidator(Expression<Func<T, IEnumerable<TElement?>?>> selector,
+        ObjectValidator<T> objectValidator) : base(selector!, objectValidator)
     {
     }
 
