@@ -80,7 +80,7 @@ public static partial class HttpContextExtensions
         Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        Forward(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method),
+        httpContext.Forward(Helpers.ParseHttpMethod(httpContext?.Request.Method),
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute), configure,
             completionOption, forwardOptions);
 
@@ -106,7 +106,7 @@ public static partial class HttpContextExtensions
         string? requestUri = null, Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        Forward(httpContext, httpMethod,
+        httpContext.Forward(httpMethod,
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute), configure,
             completionOption, forwardOptions);
 
@@ -131,7 +131,7 @@ public static partial class HttpContextExtensions
         Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        Forward(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method), requestUri,
+        httpContext.Forward(Helpers.ParseHttpMethod(httpContext?.Request.Method), requestUri,
             configure, completionOption, forwardOptions);
 
     /// <summary>
@@ -196,7 +196,7 @@ public static partial class HttpContextExtensions
         Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        ForwardAsync(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method),
+        httpContext.ForwardAsync(Helpers.ParseHttpMethod(httpContext?.Request.Method),
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute), configure,
             completionOption, forwardOptions);
 
@@ -222,7 +222,7 @@ public static partial class HttpContextExtensions
         string? requestUri = null, Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        ForwardAsync(httpContext, httpMethod,
+        httpContext.ForwardAsync(httpMethod,
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute), configure,
             completionOption, forwardOptions);
 
@@ -247,7 +247,7 @@ public static partial class HttpContextExtensions
         Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        ForwardAsync(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method), requestUri,
+        httpContext.ForwardAsync(Helpers.ParseHttpMethod(httpContext?.Request.Method), requestUri,
             configure, completionOption, forwardOptions);
 
     /// <summary>
@@ -313,7 +313,7 @@ public static partial class HttpContextExtensions
         Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        Forward<TResult>(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method),
+        httpContext.Forward<TResult>(Helpers.ParseHttpMethod(httpContext?.Request.Method),
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute), configure,
             completionOption, forwardOptions);
 
@@ -340,7 +340,7 @@ public static partial class HttpContextExtensions
         string? requestUri = null, Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        Forward<TResult>(httpContext, httpMethod,
+        httpContext.Forward<TResult>(httpMethod,
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute), configure,
             completionOption, forwardOptions);
 
@@ -366,7 +366,7 @@ public static partial class HttpContextExtensions
         Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        Forward<TResult>(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method), requestUri,
+        httpContext.Forward<TResult>(Helpers.ParseHttpMethod(httpContext?.Request.Method), requestUri,
             configure, completionOption, forwardOptions);
 
     /// <summary>
@@ -432,7 +432,7 @@ public static partial class HttpContextExtensions
         string? requestUri = null, Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        ForwardAsync<TResult>(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method),
+        httpContext.ForwardAsync<TResult>(Helpers.ParseHttpMethod(httpContext?.Request.Method),
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute), configure,
             completionOption, forwardOptions);
 
@@ -459,7 +459,7 @@ public static partial class HttpContextExtensions
         HttpMethod httpMethod, string? requestUri = null, Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        ForwardAsync<TResult>(httpContext, httpMethod,
+        httpContext.ForwardAsync<TResult>(httpMethod,
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute), configure,
             completionOption, forwardOptions);
 
@@ -485,7 +485,7 @@ public static partial class HttpContextExtensions
         Uri? requestUri = null, Action<HttpRequestBuilder>? configure = null,
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         HttpContextForwardOptions? forwardOptions = null) =>
-        ForwardAsync<TResult>(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method), requestUri,
+        httpContext.ForwardAsync<TResult>(Helpers.ParseHttpMethod(httpContext?.Request.Method), requestUri,
             configure, completionOption, forwardOptions);
 
     /// <summary>
@@ -546,7 +546,7 @@ public static partial class HttpContextExtensions
     /// </returns>
     public static HttpContextForwardBuilder CreateForwardBuilder(this HttpContext? httpContext, HttpMethod httpMethod,
         string? requestUri = null, HttpContextForwardOptions? forwardOptions = null) =>
-        CreateForwardBuilder(httpContext, httpMethod,
+        httpContext.CreateForwardBuilder(httpMethod,
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute),
             forwardOptions);
 
@@ -566,7 +566,7 @@ public static partial class HttpContextExtensions
     public static HttpContextForwardBuilder CreateForwardBuilder(this HttpContext? httpContext,
         string? requestUri = null,
         HttpContextForwardOptions? forwardOptions = null) =>
-        CreateForwardBuilder(httpContext, Helpers.ParseHttpMethod(httpContext?.Request.Method),
+        httpContext.CreateForwardBuilder(Helpers.ParseHttpMethod(httpContext?.Request.Method),
             string.IsNullOrWhiteSpace(requestUri) ? null : new Uri(requestUri, UriKind.RelativeOrAbsolute),
             forwardOptions);
 
@@ -711,7 +711,7 @@ public static partial class HttpContextExtensions
             HttpContextForwardOptions? forwardOptions = null)
     {
         // 创建 HttpContextForwardBuilder 实例
-        var httpContextForwardBuilder = CreateForwardBuilder(httpContext, httpMethod, requestUri, forwardOptions);
+        var httpContextForwardBuilder = httpContext.CreateForwardBuilder(httpMethod, requestUri, forwardOptions);
 
         // 构建 HttpRequestBuilder 实例
         var httpRequestBuilder = httpContextForwardBuilder.Build(configure);
@@ -745,7 +745,7 @@ public static partial class HttpContextExtensions
             Action<HttpRequestBuilder>? configure = null, HttpContextForwardOptions? forwardOptions = null)
     {
         // 创建 HttpContextForwardBuilder 实例
-        var httpContextForwardBuilder = CreateForwardBuilder(httpContext, httpMethod, requestUri, forwardOptions);
+        var httpContextForwardBuilder = httpContext.CreateForwardBuilder(httpMethod, requestUri, forwardOptions);
 
         // 构建 HttpRequestBuilder 实例
         var httpRequestBuilder = await httpContextForwardBuilder.BuildAsync(configure);
