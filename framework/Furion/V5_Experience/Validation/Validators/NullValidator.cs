@@ -23,45 +23,24 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Validation;
+using Furion.Validation.Resources;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace Furion.Validation;
 
 /// <summary>
-///     数据验证模块 <see cref="IMvcBuilder" /> 拓展类
+///     <c>null</c> 验证器
 /// </summary>
-public static class ValidationMvcBuilderExtensions
+public class NullValidator : ValidatorBase, IHighPriorityValidator
 {
     /// <summary>
-    ///     添加验证选项配置
+    ///     <inheritdoc cref="NullValidator" />
     /// </summary>
-    /// <param name="mvcBuilder">
-    ///     <see cref="IMvcBuilder" />
-    /// </param>
-    /// <param name="configure">自定义配置委托</param>
-    /// <returns>
-    ///     <see cref="IMvcBuilder" />
-    /// </returns>
-    public static IMvcBuilder AddValidationOptions(this IMvcBuilder mvcBuilder,
-        Action<ValidationBuilder>? configure = null)
-    {
-        // 添加数据验证服务
-        mvcBuilder.Services.AddValidationCore(configure);
+    public NullValidator() => UseResourceKey(() => nameof(ValidationMessages.NullValidator_ValidationError));
 
-        // 添加验证选项模型验证器提供器
-        mvcBuilder.AddMvcOptions(options =>
-        {
-            if (!options.ModelValidatorProviders.OfType<ValidationOptionsModelValidatorProvider>().Any())
-            {
-                options.ModelValidatorProviders.Insert(0, new ValidationOptionsModelValidatorProvider());
-            }
+    /// <inheritdoc />
+    /// <remarks>默认值为：0。</remarks>
+    public int Priority => 0;
 
-            if (!options.Filters.OfType<ValidationOptionsAsyncPageFilter>().Any())
-            {
-                options.Filters.Add(new ValidationOptionsAsyncPageFilter());
-            }
-        });
-
-        return mvcBuilder;
-    }
+    /// <inheritdoc />
+    public override bool IsValid(object? value) => value is null;
 }
