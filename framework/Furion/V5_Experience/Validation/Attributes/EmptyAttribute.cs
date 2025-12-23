@@ -24,44 +24,31 @@
 // ------------------------------------------------------------------------
 
 using Furion.Validation;
+using Furion.Validation.Resources;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace System.ComponentModel.DataAnnotations;
 
 /// <summary>
-///     数据验证模块 <see cref="IMvcBuilder" /> 拓展类
+///     空集合、数组和字符串验证特性
 /// </summary>
-public static class ValidationMvcBuilderExtensions
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
+public class EmptyAttribute : ValidationBaseAttribute
 {
     /// <summary>
-    ///     添加验证选项配置
+    ///     <inheritdoc cref="EmptyAttribute" />
     /// </summary>
-    /// <param name="mvcBuilder">
-    ///     <see cref="IMvcBuilder" />
-    /// </param>
-    /// <param name="configure">自定义配置委托</param>
-    /// <returns>
-    ///     <see cref="IMvcBuilder" />
-    /// </returns>
-    public static IMvcBuilder AddValidationOptions(this IMvcBuilder mvcBuilder,
-        Action<ValidationBuilder>? configure = null)
+    public EmptyAttribute()
     {
-        // 添加数据验证服务
-        mvcBuilder.Services.AddValidationCore(configure);
+        Validator = new EmptyValidator();
 
-        // 添加验证选项模型验证器提供器
-        mvcBuilder.AddMvcOptions(options =>
-        {
-            if (!options.ModelValidatorProviders.OfType<ValidationOptionsModelValidatorProvider>().Any())
-            {
-                options.ModelValidatorProviders.Insert(0, new ValidationOptionsModelValidatorProvider());
-            }
-
-            if (!options.Filters.OfType<ValidationOptionsAsyncPageFilter>().Any())
-            {
-                options.Filters.Add(new ValidationOptionsAsyncPageFilter());
-            }
-        });
-
-        return mvcBuilder;
+        UseResourceKey(() => nameof(ValidationMessages.EmptyValidator_ValidationError));
     }
+
+    /// <summary>
+    ///     <inheritdoc cref="EmptyValidator" />
+    /// </summary>
+    protected EmptyValidator Validator { get; }
+
+    /// <inheritdoc />
+    public override bool IsValid(object? value) => Validator.IsValid(value);
 }
