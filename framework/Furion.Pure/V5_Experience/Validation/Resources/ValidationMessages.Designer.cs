@@ -214,11 +214,38 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
+        ///   查找类似 The field {0} must be empty. 的本地化字符串。
+        /// </summary>
+        internal static string EmptyValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("EmptyValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The field {0} does not end with the string &apos;{1}&apos;. 的本地化字符串。
         /// </summary>
         internal static string EndsWithValidator_ValidationError {
             get {
                 return ResourceManager.GetString("EndsWithValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The field {0} must be a defined value of enum {1}. 的本地化字符串。
+        /// </summary>
+        internal static string EnumValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("EnumValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The field {0} must be a valid combination of values defined in enum {1}. 的本地化字符串。
+        /// </summary>
+        internal static string EnumValidator_ValidationError_SupportFlags {
+            get {
+                return ResourceManager.GetString("EnumValidator_ValidationError_SupportFlags", resourceCulture);
             }
         }
         
@@ -390,6 +417,15 @@ namespace Furion.Validation.Resources {
         internal static string NotNullValidator_ValidationError {
             get {
                 return ResourceManager.GetString("NotNullValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The field {0} must be null. 的本地化字符串。
+        /// </summary>
+        internal static string NullValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("NullValidator_ValidationError", resourceCulture);
             }
         }
         
