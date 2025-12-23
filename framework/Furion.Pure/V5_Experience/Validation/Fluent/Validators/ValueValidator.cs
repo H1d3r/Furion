@@ -31,7 +31,7 @@ namespace Furion.Validation;
 ///     单个值验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, IObjectValidator<T>,
+public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, IValueValidator<T>, IObjectValidator<T>,
     IRuleSetContextProvider
 {
     /// <summary>
@@ -205,7 +205,8 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     void IObjectValidator.Validate(object? instance, string?[]? ruleSets) => Validate((T?)instance, ruleSets);
 
     /// <inheritdoc />
-    public List<ValidationResult> ToResults(ValidationContext validationContext, bool disposeAfterValidation = true)
+    public virtual List<ValidationResult> ToResults(ValidationContext validationContext,
+        bool disposeAfterValidation = true)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validationContext);
@@ -347,7 +348,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <returns>
     ///     <see cref="ValueValidator{T}" />
     /// </returns>
-    public ValueValidator<T> When(Func<T, bool> condition)
+    public virtual ValueValidator<T> When(Func<T, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -365,7 +366,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <returns>
     ///     <see cref="ValueValidator{T}" />
     /// </returns>
-    public ValueValidator<T> Unless(Func<T, bool> condition)
+    public virtual ValueValidator<T> Unless(Func<T, bool> condition)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(condition);
@@ -383,7 +384,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <returns>
     ///     <see cref="ValueValidator{T}" />
     /// </returns>
-    public ValueValidator<T> PreProcess(Func<T, T>? preProcess)
+    public virtual ValueValidator<T> PreProcess(Func<T, T>? preProcess)
     {
         _preProcessor = preProcess;
 
@@ -400,7 +401,8 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     ///     <see cref="ValueValidator{T}" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public ValueValidator<T> SetValidator(Func<IDictionary<object, object?>?, ValueValidator<T>?> validatorFactory)
+    public virtual ValueValidator<T> SetValidator(
+        Func<IDictionary<object, object?>?, ValueValidator<T>?> validatorFactory)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validatorFactory);
@@ -437,7 +439,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     ///     <see cref="ValueValidator{T}" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public ValueValidator<T> SetValidator(ValueValidator<T>? validator) =>
+    public virtual ValueValidator<T> SetValidator(ValueValidator<T>? validator) =>
         SetValidator(_ => validator);
 
     /// <summary>
@@ -447,7 +449,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <returns>
     ///     <see cref="ValueValidator{T}" />
     /// </returns>
-    public ValueValidator<T> WithDisplayName(string? displayName)
+    public virtual ValueValidator<T> WithDisplayName(string? displayName)
     {
         DisplayName = displayName;
 
