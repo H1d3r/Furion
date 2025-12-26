@@ -24,7 +24,6 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
-using System.Globalization;
 using System.Net.Mime;
 using System.Reflection;
 using System.Text;
@@ -135,12 +134,12 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
             // 添加流
             case Stream stream:
                 httpMultipartFormDataBuilder.AddStream(stream, name, multipartAttribute.FileName,
-                    multipartAttribute.ContentType ?? MediaTypeNames.Application.Octet, contentEncoding);
+                    multipartAttribute.ContentType, contentEncoding);
                 break;
             // 添加字节数组
             case byte[] byteArray:
                 httpMultipartFormDataBuilder.AddByteArray(byteArray, name, multipartAttribute.FileName,
-                    multipartAttribute.ContentType ?? MediaTypeNames.Application.Octet, contentEncoding);
+                    multipartAttribute.ContentType, contentEncoding);
                 break;
             // 添加 MultipartFile
             case MultipartFile multipartFile:
@@ -182,7 +181,7 @@ internal sealed class MultipartDeclarativeExtractor : IFrozenHttpDeclarativeExtr
         ArgumentException.ThrowIfNullOrWhiteSpace(fileSource);
 
         // 获取内容类型
-        var contentType = multipartAttribute.ContentType ?? MediaTypeNames.Application.Octet;
+        var contentType = multipartAttribute.ContentType;
 
         // 获取文件的名称
         var fileName = multipartAttribute.FileName;
