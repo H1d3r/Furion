@@ -38,6 +38,11 @@ public sealed class
     CollectionPropertyValidator<T, TElement>>
     where TElement : class
 {
+    /// <summary>
+    ///     元素过滤委托
+    /// </summary>
+    internal Func<TElement, ValidationContext<T>, bool>? _elementFilter;
+
     /// <inheritdoc cref="ObjectValidator{T}" />
     /// <remarks>集合元素对象验证器。</remarks>
     internal ObjectValidator<TElement>? _elementValidator;
@@ -47,11 +52,6 @@ public sealed class
         ObjectValidator<T> objectValidator) : base(selector!, objectValidator)
     {
     }
-
-    /// <summary>
-    ///     元素过滤委托
-    /// </summary>
-    internal Func<TElement, ValidationContext<T>, bool>? ElementFilter { get; private set; }
 
     /// <inheritdoc />
     public override bool IsValid(T? instance, string?[]? ruleSets = null)
@@ -115,7 +115,7 @@ public sealed class
         // 空检查
         ArgumentNullException.ThrowIfNull(filter);
 
-        ElementFilter = (element, _) => filter(element);
+        _elementFilter = (element, _) => filter(element);
 
         return this;
     }
@@ -132,7 +132,7 @@ public sealed class
         // 空检查
         ArgumentNullException.ThrowIfNull(filter);
 
-        ElementFilter = filter;
+        _elementFilter = filter;
 
         return this;
     }
@@ -253,7 +253,7 @@ public sealed class
     internal IEnumerable<TElement> GetValidatedElements(IEnumerable<TElement> elements, T instance)
     {
         // 空检查
-        if (ElementFilter is null)
+        if (_elementFilter is null)
         {
             return elements;
         }
@@ -261,7 +261,7 @@ public sealed class
         // 创建 ValidationContext<T> 实例
         var context = CreateValidationContext(instance);
 
-        return elements.Where(element => ElementFilter(element, context));
+        return elements.Where(element => _elementFilter(element, context));
     }
 
     /// <summary>
@@ -351,5 +351,38 @@ public sealed class
             // 修复验证器及其子验证器的成员路径
             repairable.RepairMemberPaths();
         }
+    }
+
+    /// <inheritdoc cref="IPropertyValidatorCloneable{T}.Clone" />
+    internal new IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(objectValidator);
+
+        // 初始化 PropertyValidator 实例
+        var propertyValidator = new CollectionPropertyValidator<T, TElement>(_selector!, objectValidator)
+        {
+            RuleSets = RuleSets,
+            SuppressAnnotationValidation = SuppressAnnotationValidation,
+            DisplayName = DisplayName,
+            MemberName = MemberName,
+            WhenCondition = WhenCondition,
+            UnlessCondition = UnlessCondition,
+            _elementFilter = _elementFilter
+        };
+
+        // 同步字段
+        propertyValidator._allowEmptyStrings = _allowEmptyStrings;
+        propertyValidator._preProcessor = _preProcessor;
+        propertyValidator._propertyValidator = _propertyValidator;
+        propertyValidator._elementValidator = _elementValidator;
+
+        // 同步已设置的验证器
+        propertyValidator.AddValidators(Validators);
+
+        // 同步 IServiceProvider 委托
+        propertyValidator.InitializeServiceProvider(objectValidator._serviceProvider);
+
+        return propertyValidator;
     }
 }
