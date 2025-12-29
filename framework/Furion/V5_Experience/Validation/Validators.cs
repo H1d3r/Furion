@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Extensions;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -515,6 +516,15 @@ public static class Validators
     public static GreaterThanValidator GreaterThan(IComparable compareValue) => new(compareValue);
 
     /// <summary>
+    ///     创建固定长度验证器
+    /// </summary>
+    /// <param name="length">长度</param>
+    /// <returns>
+    ///     <see cref="HaveLengthValidator" />
+    /// </returns>
+    public static HaveLengthValidator HaveLength(int length) => new(length);
+
+    /// <summary>
     ///     创建身份证号验证器
     /// </summary>
     /// <returns>
@@ -634,6 +644,40 @@ public static class Validators
     ///     <see cref="MustValidator{T}" />
     /// </returns>
     public static MustValidator<T> Must<T>(Func<T, bool> condition) => new(condition);
+
+    /// <summary>
+    ///     创建自定义条件成立时委托验证器
+    /// </summary>
+    /// <remarks>仅当被验证的值不为 <c>null</c> 时才执行验证逻辑。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="MustValidator{T}" />
+    /// </returns>
+    public static MustValidator<T> MustIfNotNull<T>(Func<T, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return new MustValidator<T>(u => u is null || condition(u));
+    }
+
+    /// <summary>
+    ///     创建自定义条件成立时委托验证器
+    /// </summary>
+    /// <remarks>仅当被验证的值不为 <c>null</c>、非空集合、数组和字符串时才执行验证逻辑。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="MustValidator{T}" />
+    /// </returns>
+    public static MustValidator<T> MustIfNotNullOrEmpty<T>(Func<T, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return new MustValidator<T>(u => u is null || (u.TryGetCount(out var count) && count == 0) || condition(u));
+    }
 
     /// <summary>
     ///     创建自定义条件成立时委托验证器
