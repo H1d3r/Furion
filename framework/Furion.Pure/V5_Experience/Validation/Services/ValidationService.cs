@@ -23,9 +23,35 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 
 namespace Furion.Validation;
+
+/// <inheritdoc />
+internal sealed class ValidationService : IValidationService
+{
+    /// <inheritdoc cref="IServiceProvider" />
+    internal readonly IServiceProvider _serviceProvider;
+
+    /// <summary>
+    ///     <inheritdoc cref="ValidationService{T}" />
+    /// </summary>
+    /// <param name="serviceProvider">
+    ///     <see cref="IServiceProvider" />
+    /// </param>
+    public ValidationService(IServiceProvider serviceProvider)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
+        _serviceProvider = serviceProvider;
+    }
+
+    /// <inheritdoc />
+    public IValidationService<T> For<T>() where T : class =>
+        _serviceProvider.GetRequiredService<IValidationService<T>>();
+}
 
 /// <inheritdoc />
 internal sealed class ValidationService<T> : IValidationService<T>
