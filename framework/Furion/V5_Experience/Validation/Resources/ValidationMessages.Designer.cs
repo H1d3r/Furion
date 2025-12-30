@@ -286,6 +286,15 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
+        ///   查找类似 The field {0} must be empty or have a length of exactly &apos;{1}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string HaveLengthValidator_ValidationError_AllowEmpty {
+            get {
+                return ResourceManager.GetString("HaveLengthValidator_ValidationError_AllowEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The field {0} is not a valid Id card number format. 的本地化字符串。
         /// </summary>
         internal static string IDCardValidator_ValidationError {
