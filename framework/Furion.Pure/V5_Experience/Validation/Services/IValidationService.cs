@@ -23,55 +23,41 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Extensions;
-using Furion.Validation.Resources;
-using System.Globalization;
+using System.ComponentModel.DataAnnotations;
 
 namespace Furion.Validation;
 
 /// <summary>
-///     固定长度验证器
+///     数据验证服务
 /// </summary>
-public class HaveLengthValidator : ValidatorBase
+/// <typeparam name="T">对象类型</typeparam>
+public interface IValidationService<in T>
+    where T : class
 {
     /// <summary>
-    ///     <inheritdoc cref="HaveLengthValidator" />
+    ///     检查对象合法性
     /// </summary>
-    /// <param name="length">长度</param>
-    public HaveLengthValidator(int length)
-    {
-        Length = length;
-
-        UseResourceKey(GetResourceKey);
-    }
-
-    /// <summary>
-    ///     长度
-    /// </summary>
-    public int Length { get; }
-
-    /// <summary>
-    ///     是否允许空集合、数组和字符串
-    /// </summary>
-    /// <remarks>默认值为：<c>false</c>。</remarks>
-    public bool AllowEmpty { get; set; }
-
-    /// <inheritdoc />
-    public override bool IsValid(object? value) =>
-        value is null || (value.TryGetCount(out var count) && ((AllowEmpty && count == 0) || count == Length));
-
-    /// <inheritdoc />
-    public override string FormatErrorMessage(string name) =>
-        string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, Length);
-
-    /// <summary>
-    ///     获取错误信息对应的资源键
-    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
-    ///     <see cref="string" />
+    ///     <see cref="bool" />
     /// </returns>
-    internal string GetResourceKey() =>
-        AllowEmpty
-            ? nameof(ValidationMessages.HaveLengthValidator_ValidationError_AllowEmpty)
-            : nameof(ValidationMessages.HaveLengthValidator_ValidationError);
+    bool IsValid(T? instance, string?[]? ruleSets = null);
+
+    /// <summary>
+    ///     获取对象验证结果集合
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <param name="ruleSets">规则集</param>
+    /// <returns>
+    ///     <see cref="List{T}" />
+    /// </returns>
+    List<ValidationResult>? GetValidationResults(T? instance, string?[]? ruleSets = null);
+
+    /// <summary>
+    ///     验证指定的对象
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <param name="ruleSets">规则集</param>
+    void Validate(T? instance, string?[]? ruleSets = null);
 }
