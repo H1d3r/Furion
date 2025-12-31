@@ -126,8 +126,7 @@ public abstract class ValidatorBase
     ///     外部程序集用于覆盖默认验证消息的【强制约定类型全名】
     /// </summary>
     /// <remarks>TODO: 未来可考虑使用 <see cref="AppContext" /> 配置。</remarks>
-    internal const string ExternalValidationMessagesFullTypeName =
-        "Furion.Validation.Resources.Overrides.ValidationMessages";
+    internal const string ExternalValidationMessagesFullTypeName = "Furion.Validation.Resources.Overrides.ValidationMessages";
 
     /// <summary>
     ///     错误信息
@@ -406,14 +405,14 @@ public abstract class ValidatorBase
         if ((resourceNameSet && errorMessageSet) || !(resourceNameSet || errorMessageSet))
         {
             throw new InvalidOperationException(
-                "Either ErrorMessageString or ErrorMessageResourceName must be set, but not both.");
+                $"Either {nameof(ErrorMessageString)} or {nameof(ErrorMessageResourceName)} must be set, but not both.");
         }
 
         // 必须同时设置或都不设置 ErrorMessageResourceType 和 ErrorMessageResourceName 属性
         if (resourceTypeSet != resourceNameSet)
         {
             throw new InvalidOperationException(
-                "Both ErrorMessageResourceType and ErrorMessageResourceName need to be set on this validator.");
+                $"Both {nameof(ErrorMessageResourceType)} and {nameof(ErrorMessageResourceName)} need to be set on this validator.");
         }
 
         // 如果设置了错误信息资源类型及其资源名称，那么就去查找该资源对应的值并设置错误信息资源访问器
