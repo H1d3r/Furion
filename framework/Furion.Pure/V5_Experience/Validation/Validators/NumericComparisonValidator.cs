@@ -43,7 +43,7 @@ public abstract class NumericComparisonValidator : ComparisonValidator
     }
 
     /// <inheritdoc />
-    protected sealed override bool IsValid(IComparable value) =>
+    protected sealed override bool IsValid(IComparable value, IValidationContext? validationContext) =>
         IsValid(Convert.ToDecimal(value), Convert.ToDecimal(CompareValue));
 
     /// <summary>

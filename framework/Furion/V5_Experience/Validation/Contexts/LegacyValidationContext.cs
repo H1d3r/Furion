@@ -23,40 +23,47 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Validation.Resources;
-using System.Text.RegularExpressions;
-
 namespace Furion.Validation;
 
-/// <summary>
-///     用户名验证器
-/// </summary>
-/// <remarks>
-///     长度 4-16 位，以字母开头，支持字母、数字、下划线、减号组合。
-///     不允许包含空格或其他特殊字符，禁止连续特殊字符（如 __）。
-/// </remarks>
-public partial class UserNameValidator : ValidatorBase
+/// <inheritdoc />
+/// <remarks>用于兼容旧版本 <see cref="ValidatorBase" /> 相关方法。</remarks>
+internal sealed class LegacyValidationContext : IValidationContext
 {
     /// <summary>
-    ///     <inheritdoc cref="UserNameValidator" />
+    ///     <inheritdoc cref="LegacyValidationContext" />
     /// </summary>
-    public UserNameValidator() => UseResourceKey(() => nameof(ValidationMessages.UserNameValidator_ValidationError));
-
-    /// <inheritdoc />
-    public override bool IsValid(object? value, IValidationContext? validationContext) =>
-        value switch
-        {
-            null => true,
-            string text => !string.IsNullOrWhiteSpace(text) && Regex().IsMatch(text),
-            _ => false
-        };
+    internal LegacyValidationContext()
+    {
+    }
 
     /// <summary>
-    ///     用户名正则表达式
+    ///     <inheritdoc cref="LegacyValidationContext" />
     /// </summary>
-    /// <returns>
-    ///     <see cref="System.Text.RegularExpressions.Regex" />
-    /// </returns>
-    [GeneratedRegex(@"^[a-zA-Z](?!.*[_-]{2})[\w-]{2,14}[a-zA-Z0-9]$")]
-    private static partial Regex Regex();
+    /// <param name="instance">对象</param>
+    /// <param name="displayName">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
+    internal LegacyValidationContext(object? instance, string displayName, IEnumerable<string>? memberNames)
+    {
+        Instance = instance;
+        DisplayName = displayName;
+        MemberNames = memberNames;
+    }
+
+    /// <inheritdoc />
+    public object? Instance { get; set; }
+
+    /// <inheritdoc />
+    public string DisplayName { get; set; } = null!;
+
+    /// <inheritdoc />
+    public IEnumerable<string>? MemberNames { get; set; }
+
+    /// <inheritdoc />
+    public string?[]? RuleSets { get; set; }
+
+    /// <inheritdoc />
+    public IDictionary<object, object?> Items { get; set; } = new Dictionary<object, object?>();
+
+    /// <inheritdoc />
+    public object? GetService(Type serviceType) => null!;
 }

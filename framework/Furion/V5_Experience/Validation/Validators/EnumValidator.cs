@@ -80,7 +80,7 @@ public class EnumValidator : ValidatorBase
     public bool SupportFlags { get; set; }
 
     /// <inheritdoc />
-    public override bool IsValid(object? value) =>
+    public override bool IsValid(object? value, IValidationContext? validationContext) =>
         value switch
         {
             null => true,

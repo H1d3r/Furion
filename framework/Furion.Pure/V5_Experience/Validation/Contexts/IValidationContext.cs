@@ -26,14 +26,32 @@
 namespace Furion.Validation;
 
 /// <summary>
-///     自定义条件不成立时委托验证器
+///     验证上下文
 /// </summary>
-/// <typeparam name="T">对象类型</typeparam>
-public class MustUnlessValidator<T> : PredicateValidator<T>
+public interface IValidationContext : IServiceProvider
 {
-    /// <inheritdoc />
-    public MustUnlessValidator(Func<T, bool> condition)
-        : base((Func<T, bool>?)condition is null ? null! : u => !condition(u))
-    {
-    }
+    /// <summary>
+    ///     对象
+    /// </summary>
+    object? Instance { get; }
+
+    /// <summary>
+    ///     显示名称
+    /// </summary>
+    string DisplayName { get; }
+
+    /// <summary>
+    ///     成员名称列表
+    /// </summary>
+    IEnumerable<string>? MemberNames { get; }
+
+    /// <summary>
+    ///     规则集
+    /// </summary>
+    string?[]? RuleSets { get; }
+
+    /// <summary>
+    ///     共享数据
+    /// </summary>
+    IDictionary<object, object?> Items { get; }
 }
