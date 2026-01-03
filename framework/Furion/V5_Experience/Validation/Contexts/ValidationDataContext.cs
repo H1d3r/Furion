@@ -34,13 +34,8 @@ internal sealed class ValidationDataContext : IValidationDataContext
     /// <remarks>用于 <see cref="ValidationContext" /> 或 <c>ValidationOptionsModelValidator</c> 中写入规则集配置。</remarks>
     internal static readonly object ValidationOptionsKey = new();
 
-    /// <summary>
-    ///     存储验证数据的内部字典
-    /// </summary>
-    internal readonly Dictionary<object, object?> _items = new();
-
     /// <inheritdoc />
-    public IDictionary<object, object?> Items => _items;
+    public IDictionary<object, object?> Items { get; } = new Dictionary<object, object?>();
 
     /// <inheritdoc />
     public void SetValue(object key, object? value)
@@ -48,7 +43,7 @@ internal sealed class ValidationDataContext : IValidationDataContext
         // 空检查
         ArgumentNullException.ThrowIfNull(key);
 
-        _items[key] = value;
+        Items[key] = value;
     }
 
     /// <inheritdoc />
@@ -57,7 +52,7 @@ internal sealed class ValidationDataContext : IValidationDataContext
         // 空检查
         ArgumentNullException.ThrowIfNull(key);
 
-        return _items.TryGetValue(key, out value);
+        return Items.TryGetValue(key, out value);
     }
 
     /// <inheritdoc />
@@ -66,7 +61,7 @@ internal sealed class ValidationDataContext : IValidationDataContext
         // 空检查
         ArgumentNullException.ThrowIfNull(key);
 
-        return _items.ContainsKey(key);
+        return Items.ContainsKey(key);
     }
 
     /// <inheritdoc />

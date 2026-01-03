@@ -47,7 +47,7 @@ public partial class IpAddressValidator : ValidatorBase
     public bool AllowIPv6 { get; set; }
 
     /// <inheritdoc />
-    public override bool IsValid(object? value) =>
+    public override bool IsValid(object? value, IValidationContext? validationContext) =>
         value switch
         {
             null => true,

@@ -36,4 +36,10 @@ public class MustValidator<T> : PredicateValidator<T>
         : base(condition)
     {
     }
+
+    /// <inheritdoc />
+    public MustValidator(Func<T, ValidationContext<T>, bool> condition)
+        : base(condition)
+    {
+    }
 }

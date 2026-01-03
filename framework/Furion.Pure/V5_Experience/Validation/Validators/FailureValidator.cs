@@ -32,5 +32,5 @@ namespace Furion.Validation;
 public sealed class FailureValidator : ValidatorBase
 {
     /// <inheritdoc />
-    public override bool IsValid(object? value) => false;
+    public override bool IsValid(object? value, IValidationContext? validationContext) => false;
 }
