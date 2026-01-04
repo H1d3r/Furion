@@ -26,7 +26,7 @@
 namespace Furion.Validation;
 
 /// <summary>
-///     标记为高优先级的验证器
+///     高优先级的验证器接口
 /// </summary>
 /// <remarks>会在验证流程中优先执行。</remarks>
 public interface IHighPriorityValidator
