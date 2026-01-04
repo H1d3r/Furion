@@ -25,7 +25,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace Furion.Validation.Fluent.Proxies;
+namespace Furion.Validation;
 
 /// <summary>
 ///     对象验证器代理

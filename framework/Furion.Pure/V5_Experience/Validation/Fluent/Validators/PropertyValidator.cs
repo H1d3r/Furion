@@ -99,9 +99,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
 
         // 初始化 PropertyAnnotationValidator 实例
         _annotationValidator = new PropertyAnnotationValidator<T, TProperty>(selector!, null, objectValidator.Items);
-
-        // 同步 IServiceProvider 委托（已在 RuleFor 创建时同步）
-        // InitializeServiceProvider(objectValidator._serviceProvider);
     }
 
     /// <summary>
@@ -150,6 +147,9 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
+        // 修复验证器及其子验证器的成员路径
+        RepairMemberPaths();
+
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
 
@@ -188,6 +188,9 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
+
+        // 修复验证器及其子验证器的成员路径
+        RepairMemberPaths();
 
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
@@ -233,6 +236,9 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
+
+        // 修复验证器及其子验证器的成员路径
+        RepairMemberPaths();
 
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
@@ -292,7 +298,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     void IValidationAnnotationsConfigurable.UseAnnotationValidation(bool enabled) => UseAnnotationValidation(enabled);
 
     /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
-    internal new void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    internal override void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
         // 同步基类 IServiceProvider 委托
         base.InitializeServiceProvider(serviceProvider);
@@ -341,9 +347,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
 
         // 同步 IServiceProvider 委托
         _propertyValidator.InitializeServiceProvider(_serviceProvider);
-
-        // 修复整个子验证器树的成员路径
-        RepairMemberPaths();
 
         return This;
     }
@@ -681,7 +684,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     }
 
     /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
-    internal void RepairMemberPaths()
+    internal virtual void RepairMemberPaths()
     {
         // 空检查
         if (_propertyValidator is null)
@@ -701,7 +704,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     }
 
     /// <inheritdoc cref="IPropertyValidatorCloneable{T}.Clone" />
-    internal IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator)
+    internal virtual IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(objectValidator);

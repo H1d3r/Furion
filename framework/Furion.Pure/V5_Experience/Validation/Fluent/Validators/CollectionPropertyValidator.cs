@@ -229,9 +229,6 @@ public sealed class
         // 同步 IServiceProvider 委托
         _elementValidator.InitializeServiceProvider(_serviceProvider);
 
-        // 修复整个子验证器树的成员路径
-        RepairMemberPaths();
-
         return this;
     }
 
@@ -322,9 +319,6 @@ public sealed class
 
         // 同步 IServiceProvider 委托
         _valueValidator.InitializeServiceProvider(_serviceProvider);
-
-        // 修复整个子验证器树的成员路径
-        RepairMemberPaths();
 
         return this;
     }
@@ -507,7 +501,7 @@ public sealed class
     }
 
     /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
-    internal new void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    internal override void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
         // 同步基类 IServiceProvider 委托
         base.InitializeServiceProvider(serviceProvider);
@@ -520,8 +514,11 @@ public sealed class
     }
 
     /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
-    internal new void RepairMemberPaths()
+    internal override void RepairMemberPaths()
     {
+        // 调用基类的修复验证器及其子验证器的成员路径
+        base.RepairMemberPaths();
+
         // 检查是否设置了集合元素对象验证器
         if (_elementValidator is not null)
         {
@@ -546,7 +543,7 @@ public sealed class
     }
 
     /// <inheritdoc cref="IPropertyValidatorCloneable{T}.Clone" />
-    internal new IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator)
+    internal override IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(objectValidator);
@@ -562,12 +559,13 @@ public sealed class
         };
 
         // 同步字段
-        propertyValidator._elementFilter = _elementFilter;
         propertyValidator._allowEmptyStrings = _allowEmptyStrings;
         propertyValidator._preProcessor = _preProcessor;
         propertyValidator._propertyValidator = _propertyValidator;
+
         propertyValidator._elementValidator = _elementValidator;
         propertyValidator._valueValidator = _valueValidator;
+        propertyValidator._elementFilter = _elementFilter;
 
         // 同步已设置的验证器
         propertyValidator.AddValidators(Validators);
