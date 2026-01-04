@@ -43,7 +43,7 @@ public partial class UserNameValidator : ValidatorBase
     public UserNameValidator() => UseResourceKey(() => nameof(ValidationMessages.UserNameValidator_ValidationError));
 
     /// <inheritdoc />
-    public override bool IsValid(object? value) =>
+    public override bool IsValid(object? value, IValidationContext? validationContext) =>
         value switch
         {
             null => true,

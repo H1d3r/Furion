@@ -80,7 +80,7 @@ public sealed class
                    }
 
                    return true;
-               });
+               }, ruleSets);
     }
 
     /// <inheritdoc />
@@ -110,7 +110,7 @@ public sealed class
             }
 
             return true;
-        });
+        }, ruleSets);
 
         return validationResults.ToResults();
     }
@@ -140,7 +140,7 @@ public sealed class
             }
 
             return true;
-        });
+        }, ruleSets);
     }
 
     /// <summary>
@@ -214,8 +214,8 @@ public sealed class
                 $"Cannot configure object validator because a value validator has already been configured via `{nameof(EachRules)}` or `{nameof(SetValidator)}` (value validator).");
         }
 
-        // 调用工厂方法，传入当前 RuleSets、_items 和 Options
-        _elementValidator = validatorFactory(RuleSets, _objectValidator._items, _objectValidator.Options);
+        // 调用工厂方法，传入当前 RuleSets、Items 和 Options
+        _elementValidator = validatorFactory(RuleSets, _objectValidator.Items, _objectValidator.Options);
 
         // 空检查
         if (_elementValidator is null)
@@ -228,9 +228,6 @@ public sealed class
 
         // 同步 IServiceProvider 委托
         _elementValidator.InitializeServiceProvider(_serviceProvider);
-
-        // 修复整个子验证器树的成员路径
-        RepairMemberPaths();
 
         return this;
     }
@@ -297,13 +294,6 @@ public sealed class
         // 空检查
         ArgumentNullException.ThrowIfNull(validatorFactory);
 
-        // 检查 TElement 是否是值类型或可空值类型
-        if (typeof(TElement).IsClass && typeof(TElement) != typeof(string))
-        {
-            throw new InvalidOperationException(
-                $"Collection element type '{typeof(TElement)}' is a reference type. `{nameof(SetValidator)}` (value validator) and `{nameof(EachRules)}` are only supported for value types or string. For class types, use `{nameof(ChildRules)}` or `{nameof(SetValidator)}` (object validator) instead.");
-        }
-
         // 空检查
         if (_valueValidator is not null)
         {
@@ -318,8 +308,8 @@ public sealed class
                 $"Cannot configure value validator because an object validator has already been configured via `{nameof(ChildRules)}` or `{nameof(SetValidator)}` (object validator).");
         }
 
-        // 调用工厂方法，传入当前 _items 
-        _valueValidator = validatorFactory(_objectValidator._items);
+        // 调用工厂方法，传入当前 Items 
+        _valueValidator = validatorFactory(_objectValidator.Items);
 
         // 空检查
         if (_valueValidator is null)
@@ -329,9 +319,6 @@ public sealed class
 
         // 同步 IServiceProvider 委托
         _valueValidator.InitializeServiceProvider(_serviceProvider);
-
-        // 修复整个子验证器树的成员路径
-        RepairMemberPaths();
 
         return this;
     }
@@ -406,22 +393,22 @@ public sealed class
     /// <param name="elements">
     ///     <see cref="IEnumerable{T}" />
     /// </param>
-    /// <param name="instance">对象</param>
+    /// <param name="validationContext">
+    ///     <see cref="ValidationContext{T}" />
+    /// </param>
     /// <returns>
     ///     <see cref="IEnumerable{T}" />
     /// </returns>
-    internal IEnumerable<TElement> GetValidatedElements(IEnumerable<TElement> elements, T instance)
+    internal IEnumerable<TElement> GetValidatedElements(IEnumerable<TElement> elements,
+        ValidationContext<T> validationContext)
     {
         // 空检查
-        if (_elementFilter is null)
-        {
-            return elements;
-        }
+        ArgumentNullException.ThrowIfNull(validationContext);
 
-        // 创建 ValidationContext<T> 实例
-        var context = CreateValidationContext(instance);
-
-        return elements.Where(element => _elementFilter(element, context));
+        // 空检查
+        return _elementFilter is null
+            ? elements
+            : elements.Where(element => _elementFilter(element, validationContext));
     }
 
     /// <summary>
@@ -430,10 +417,11 @@ public sealed class
     /// <remarks>内部为每个元素设置带索引的成员路径（如 "Addresses[0]"），然后执行验证操作。支持短路退出：若操作返回 <c>false</c>，则立即终止遍历。</remarks>
     /// <param name="instance">对象</param>
     /// <param name="action">元素处理委托</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
-    internal bool ForEachValidatedElement(T instance, Func<TElement, bool> action)
+    internal bool ForEachValidatedElement(T instance, Func<TElement, bool> action, string?[]? ruleSets)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
@@ -457,7 +445,7 @@ public sealed class
 
         // 遍历用于验证的集合元素
         var index = 0;
-        foreach (var element in GetValidatedElements(propertyValue, instance))
+        foreach (var element in GetValidatedElements(propertyValue, CreateValidationContext(instance, ruleSets)))
         {
             // 检查是否设置了集合元素对象验证器
             if (_elementValidator is not null)
@@ -513,7 +501,7 @@ public sealed class
     }
 
     /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
-    internal new void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    internal override void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
         // 同步基类 IServiceProvider 委托
         base.InitializeServiceProvider(serviceProvider);
@@ -526,8 +514,11 @@ public sealed class
     }
 
     /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
-    internal new void RepairMemberPaths()
+    internal override void RepairMemberPaths()
     {
+        // 调用基类的修复验证器及其子验证器的成员路径
+        base.RepairMemberPaths();
+
         // 检查是否设置了集合元素对象验证器
         if (_elementValidator is not null)
         {
@@ -552,7 +543,7 @@ public sealed class
     }
 
     /// <inheritdoc cref="IPropertyValidatorCloneable{T}.Clone" />
-    internal new IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator)
+    internal override IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(objectValidator);
@@ -564,17 +555,17 @@ public sealed class
             SuppressAnnotationValidation = SuppressAnnotationValidation,
             DisplayName = DisplayName,
             MemberName = MemberName,
-            WhenCondition = WhenCondition,
-            UnlessCondition = UnlessCondition,
-            _elementFilter = _elementFilter
+            WhenCondition = WhenCondition
         };
 
         // 同步字段
         propertyValidator._allowEmptyStrings = _allowEmptyStrings;
         propertyValidator._preProcessor = _preProcessor;
         propertyValidator._propertyValidator = _propertyValidator;
+
         propertyValidator._elementValidator = _elementValidator;
         propertyValidator._valueValidator = _valueValidator;
+        propertyValidator._elementFilter = _elementFilter;
 
         // 同步已设置的验证器
         propertyValidator.AddValidators(Validators);

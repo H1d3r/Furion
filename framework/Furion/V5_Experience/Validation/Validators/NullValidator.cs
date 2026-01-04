@@ -42,5 +42,5 @@ public class NullValidator : ValidatorBase, IHighPriorityValidator
     public int Priority => 0;
 
     /// <inheritdoc />
-    public override bool IsValid(object? value) => value is null;
+    public override bool IsValid(object? value, IValidationContext? validationContext) => value is null;
 }

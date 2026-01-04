@@ -49,7 +49,7 @@ public static class Validators
     /// <summary>
     ///     创建对象验证器
     /// </summary>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
@@ -63,7 +63,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="ObjectValidator{T}" />
@@ -83,7 +83,7 @@ public static class Validators
     /// <summary>
     ///     创建单个值验证器
     /// </summary>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="ValueValidator{T}" />
@@ -96,7 +96,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="ValueValidator{T}" />
@@ -628,14 +628,14 @@ public static class Validators
     public static MinValidator Min(IComparable minimum) => new(minimum);
 
     /// <summary>
-    ///     创建自定义条件不成立时委托验证器
+    ///     创建自定义条件成立时委托验证器
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
-    ///     <see cref="MustUnlessValidator{T}" />
+    ///     <see cref="MustValidator{T}" />
     /// </returns>
-    public static MustUnlessValidator<T> MustUnless<T>(Func<T, bool> condition) => new(condition);
+    public static MustValidator<T> Must<T>(Func<T, bool> condition) => new(condition);
 
     /// <summary>
     ///     创建自定义条件成立时委托验证器
@@ -645,7 +645,7 @@ public static class Validators
     /// <returns>
     ///     <see cref="MustValidator{T}" />
     /// </returns>
-    public static MustValidator<T> Must<T>(Func<T, bool> condition) => new(condition);
+    public static MustValidator<T> Must<T>(Func<T, ValidationContext<T>, bool> condition) => new(condition);
 
     /// <summary>
     ///     创建自定义条件成立时委托验证器
@@ -667,6 +667,23 @@ public static class Validators
     /// <summary>
     ///     创建自定义条件成立时委托验证器
     /// </summary>
+    /// <remarks>仅当被验证的值不为 <c>null</c> 时才执行验证逻辑。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="MustValidator{T}" />
+    /// </returns>
+    public static MustValidator<T> MustIfNotNull<T>(Func<T, ValidationContext<T>, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return new MustValidator<T>((u, c) => u is null || condition(u, c));
+    }
+
+    /// <summary>
+    ///     创建自定义条件成立时委托验证器
+    /// </summary>
     /// <remarks>仅当被验证的值不为 <c>null</c>、非空集合、数组和字符串时才执行验证逻辑。</remarks>
     /// <param name="condition">条件委托</param>
     /// <typeparam name="T">对象类型</typeparam>
@@ -679,6 +696,24 @@ public static class Validators
         ArgumentNullException.ThrowIfNull(condition);
 
         return new MustValidator<T>(u => u is null || (u.TryGetCount(out var count) && count == 0) || condition(u));
+    }
+
+    /// <summary>
+    ///     创建自定义条件成立时委托验证器
+    /// </summary>
+    /// <remarks>仅当被验证的值不为 <c>null</c>、非空集合、数组和字符串时才执行验证逻辑。</remarks>
+    /// <param name="condition">条件委托</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="MustValidator{T}" />
+    /// </returns>
+    public static MustValidator<T> MustIfNotNullOrEmpty<T>(Func<T, ValidationContext<T>, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return new MustValidator<T>((u, c) =>
+            u is null || (u.TryGetCount(out var count) && count == 0) || condition(u, c));
     }
 
     /// <summary>
@@ -711,6 +746,26 @@ public static class Validators
     /// <returns>
     ///     <see cref="MustValidator{T}" />
     /// </returns>
+    public static MustValidator<T> MustAny<T, TElement>(IEnumerable<TElement> enumerable,
+        Func<T, TElement, ValidationContext<T>, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(enumerable);
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return new MustValidator<T>((u, c) => enumerable.Any(x => condition(u, x, c)));
+    }
+
+    /// <summary>
+    ///     创建自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="enumerable">集合</param>
+    /// <param name="condition">条件委托</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <typeparam name="TElement">元素类型</typeparam>
+    /// <returns>
+    ///     <see cref="MustValidator{T}" />
+    /// </returns>
     public static MustValidator<T> MustAll<T, TElement>(IEnumerable<TElement> enumerable,
         Func<T, TElement, bool> condition)
     {
@@ -719,6 +774,26 @@ public static class Validators
         ArgumentNullException.ThrowIfNull(condition);
 
         return new MustValidator<T>(u => enumerable.All(x => condition(u, x)));
+    }
+
+    /// <summary>
+    ///     创建自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="enumerable">集合</param>
+    /// <param name="condition">条件委托</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <typeparam name="TElement">元素类型</typeparam>
+    /// <returns>
+    ///     <see cref="MustValidator{T}" />
+    /// </returns>
+    public static MustValidator<T> MustAll<T, TElement>(IEnumerable<TElement> enumerable,
+        Func<T, TElement, ValidationContext<T>, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(enumerable);
+        ArgumentNullException.ThrowIfNull(condition);
+
+        return new MustValidator<T>((u, c) => enumerable.All(x => condition(u, x, c)));
     }
 
     /// <summary>
@@ -775,7 +850,7 @@ public static class Validators
     ///     创建对象验证特性验证器
     /// </summary>
     /// <remarks>支持使用 <c>[ValidateNever]</c> 特性来跳过对特定属性的验证，仅限于 ASP.NET Core 应用项目。</remarks>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <returns>
     ///     <see cref="ObjectAnnotationValidator" />
     /// </returns>
@@ -788,7 +863,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <returns>
     ///     <see cref="ObjectAnnotationValidator" />
     /// </returns>
@@ -831,6 +906,16 @@ public static class Validators
     public static PredicateValidator<T> Predicate<T>(Func<T, bool> condition) => new(condition);
 
     /// <summary>
+    ///     创建自定义条件成立时委托验证器
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="PredicateValidator{T}" />
+    /// </returns>
+    public static PredicateValidator<T> Predicate<T>(Func<T, ValidationContext<T>, bool> condition) => new(condition);
+
+    /// <summary>
     ///     创建属性验证特性验证器
     /// </summary>
     /// <param name="selector">属性选择器</param>
@@ -845,7 +930,7 @@ public static class Validators
     ///     创建属性验证特性验证器
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="PropertyAnnotationValidator{T}" />
@@ -861,7 +946,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
     ///     <see cref="PropertyAnnotationValidator{T}" />
@@ -887,7 +972,7 @@ public static class Validators
     ///     创建属性验证特性验证器
     /// </summary>
     /// <param name="selector">属性选择器</param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <typeparam name="TProperty">属性类型</typeparam>
     /// <returns>
@@ -904,7 +989,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <typeparam name="TProperty">属性类型</typeparam>
     /// <returns>
@@ -1212,7 +1297,7 @@ public static class Validators
     ///     <see cref="ValidatorProxy{T1,T2}" />
     /// </returns>
     public static ValidatorProxy<T, TValidator> ValidatorProxy<T, TValidator>(Func<T, object?> validatedObjectProvider,
-        Func<T, object?[]?>? constructorArgsFactory = null)
+        Func<T, ValidationContext<T>, object?[]?>? constructorArgsFactory = null)
         where TValidator : ValidatorBase =>
         new(validatedObjectProvider, constructorArgsFactory);
 
@@ -1229,7 +1314,7 @@ public static class Validators
     ///     创建单个值验证特性验证器
     /// </summary>
     /// <param name="attributes">验证特性列表</param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <returns>
     ///     <see cref="ValueAnnotationValidator" />
     /// </returns>
@@ -1243,7 +1328,7 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <param name="items">验证上下文数据</param>
+    /// <param name="items">共享数据</param>
     /// <returns>
     ///     <see cref="ValueAnnotationValidator" />
     /// </returns>

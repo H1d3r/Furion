@@ -39,7 +39,7 @@ public partial class IDCardValidator : ValidatorBase
     public IDCardValidator() => UseResourceKey(() => nameof(ValidationMessages.IDCardValidator_ValidationError));
 
     /// <inheritdoc />
-    public override bool IsValid(object? value) =>
+    public override bool IsValid(object? value, IValidationContext? validationContext) =>
         value switch
         {
             null => true,
