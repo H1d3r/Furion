@@ -347,17 +347,22 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     ///     为指定属性配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
+    /// <param name="configure">自定义配置委托</param>
     /// <typeparam name="TProperty">属性类型</typeparam>
     /// <returns>
     ///     <see cref="PropertyValidator{T,TProperty}" />
     /// </returns>
-    public PropertyValidator<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty?>> selector)
+    public PropertyValidator<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty?>> selector,
+        Action<PropertyValidator<T, TProperty>>? configure = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
 
         // 初始化 PropertyValidator 实例
         var propertyValidator = new PropertyValidator<T, TProperty>(selector, this) { RuleSets = GetCurrentRuleSets() };
+
+        // 调用自定义配置委托
+        configure?.Invoke(propertyValidator);
 
         // 将实例添加到集合中
         Validators.Add(propertyValidator);
@@ -372,12 +377,14 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     ///     为集合类型属性中的每一个元素配置验证规则
     /// </summary>
     /// <param name="selector">属性选择器</param>
+    /// <param name="configure">自定义配置委托</param>
     /// <typeparam name="TElement">元素类型</typeparam>
     /// <returns>
     ///     <see cref="CollectionPropertyValidator{T,TElement}" />
     /// </returns>
     public CollectionPropertyValidator<T, TElement> RuleForCollection<TElement>(
-        Expression<Func<T, IEnumerable<TElement?>?>> selector)
+        Expression<Func<T, IEnumerable<TElement?>?>> selector,
+        Action<CollectionPropertyValidator<T, TElement>>? configure = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(selector);
@@ -385,6 +392,9 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         // 初始化 CollectionPropertyValidator 实例
         var propertyValidator =
             new CollectionPropertyValidator<T, TElement>(selector, this) { RuleSets = GetCurrentRuleSets() };
+
+        // 调用自定义配置委托
+        configure?.Invoke(propertyValidator);
 
         // 将实例添加到集合中
         Validators.Add(propertyValidator);
