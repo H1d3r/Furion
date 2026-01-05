@@ -270,11 +270,14 @@ internal sealed class EventBusHostedService : BackgroundService
             // 创建新的线程执行
             taskFactory.StartNew(async () =>
             {
+                // 创建本次事件运行唯一标识
+                var runId = $"{Guid.NewGuid()}";
+
                 // 获取特性信息，可能为 null
                 var eventSubscribeAttribute = eventHandlerThatShouldRun.Attribute;
 
                 // 创建执行前上下文
-                var eventHandlerExecutingContext = new EventHandlerExecutingContext(eventSource, properties, eventHandlerThatShouldRun.HandlerMethod, eventSubscribeAttribute)
+                var eventHandlerExecutingContext = new EventHandlerExecutingContext(eventSource, properties, eventHandlerThatShouldRun.HandlerMethod, eventSubscribeAttribute, runId)
                 {
                     ExecutingTime = UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now
                 };
@@ -357,7 +360,7 @@ internal sealed class EventBusHostedService : BackgroundService
                     if (Monitor != default)
                     {
                         // 创建执行后上下文
-                        var eventHandlerExecutedContext = new EventHandlerExecutedContext(eventSource, properties, eventHandlerThatShouldRun.HandlerMethod, eventSubscribeAttribute)
+                        var eventHandlerExecutedContext = new EventHandlerExecutedContext(eventSource, properties, eventHandlerThatShouldRun.HandlerMethod, eventSubscribeAttribute, runId)
                         {
                             ExecutedTime = UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now,
                             Exception = executionException
