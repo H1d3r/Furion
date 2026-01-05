@@ -28,47 +28,42 @@ using System.Diagnostics.CodeAnalysis;
 namespace Furion.Validation;
 
 /// <summary>
-///     <see cref="MustValidator{T}" /> 内部静态类
+///     验证器异常类
 /// </summary>
-/// <remarks>可通过 <see cref="Must.False" /> 设置不满足条件时的异常消息。</remarks>
-public static class Must
+public sealed class ValidatorException : Exception
 {
+    /// <summary>
+    ///     <inheritdoc cref="ValidationException" />
+    /// </summary>
+    public ValidatorException()
+    {
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="ValidationException" />
+    /// </summary>
+    /// <param name="message">错误信息</param>
+    public ValidatorException(string message)
+        : base(message)
+    {
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="ValidationException" />
+    /// </summary>
+    /// <param name="message">错误信息</param>
+    /// <param name="innerException">
+    ///     <see cref="Exception" />
+    /// </param>
+    public ValidatorException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+
     /// <summary>
     ///     抛出 <see cref="ValidatorException" /> 异常
     /// </summary>
-    /// <param name="message">错误消息</param>
+    /// <param name="message">错误信息</param>
     [DoesNotReturn]
-    public static void False(string message) => ValidatorException.Throw(message);
-
-    /// <summary>
-    ///     抛出 <see cref="ValidatorException" /> 异常
-    /// </summary>
-    /// <param name="condition">条件</param>
-    /// <param name="message">错误消息</param>
-    public static void FalseIf(bool condition, string message)
-    {
-        if (condition)
-        {
-            ValidatorException.Throw(message);
-        }
-    }
-}
-
-/// <summary>
-///     自定义条件成立时委托验证器
-/// </summary>
-/// <typeparam name="T">对象类型</typeparam>
-public class MustValidator<T> : PredicateValidator<T>
-{
-    /// <inheritdoc />
-    public MustValidator(Func<T, bool> condition)
-        : base(condition)
-    {
-    }
-
-    /// <inheritdoc />
-    public MustValidator(Func<T, ValidationContext<T>, bool> condition)
-        : base(condition)
-    {
-    }
+    public static void Throw(string message) => throw new ValidatorException(message);
 }
