@@ -132,7 +132,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     internal Func<TProperty, ValidationContext<T>, bool>? WhenCondition { get; set; }
 
     /// <inheritdoc />
-    void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
+    void IMemberPathRepairable.RepairMemberPaths(string? memberPath) => RepairMemberPaths(memberPath);
 
     /// <inheritdoc />
     public void Dispose()
@@ -148,7 +148,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         ArgumentNullException.ThrowIfNull(instance);
 
         // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
+        RepairMemberPaths(GetEffectiveMemberName());
 
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
@@ -190,7 +190,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         ArgumentNullException.ThrowIfNull(instance);
 
         // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
+        RepairMemberPaths(GetEffectiveMemberName());
 
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
@@ -238,7 +238,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         ArgumentNullException.ThrowIfNull(instance);
 
         // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
+        RepairMemberPaths(GetEffectiveMemberName());
 
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
@@ -677,31 +677,11 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         }
 
         // 释放属性级别对象验证器资源
-        if (_propertyValidator is IDisposable propertyValidatorDisposable)
-        {
-            propertyValidatorDisposable.Dispose();
-        }
+        _propertyValidator?.Dispose();
     }
 
     /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
-    internal virtual void RepairMemberPaths()
-    {
-        // 空检查
-        if (_propertyValidator is null)
-        {
-            return;
-        }
-
-        // 设置当前子验证器的完整成员路径
-        _propertyValidator.MemberPath = GetEffectiveMemberName();
-
-        // 检查属性级别对象验证器是否实现 IMemberPathRepairable 接口
-        if (_propertyValidator is IMemberPathRepairable repairable)
-        {
-            // 修复验证器及其子验证器的成员路径
-            repairable.RepairMemberPaths();
-        }
-    }
+    internal virtual void RepairMemberPaths(string? memberPath) => _propertyValidator?.RepairMemberPaths(memberPath);
 
     /// <inheritdoc cref="IPropertyValidatorCloneable{T}.Clone" />
     internal virtual IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator)
