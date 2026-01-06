@@ -112,6 +112,12 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     internal bool? SuppressAnnotationValidation { get; set; }
 
     /// <summary>
+    ///     <inheritdoc cref="CompositeMode" />
+    /// </summary>
+    /// <remarks>默认值为：<see cref="CompositeMode.FailFast" />。</remarks>
+    internal CompositeMode Mode { get; set; } = CompositeMode.FailFast;
+
+    /// <summary>
     ///     显示名称
     /// </summary>
     internal string? DisplayName { get; set; }
@@ -439,21 +445,12 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf WithMemberName(string? memberName)
+    public virtual TSelf WithName(string? memberName)
     {
         MemberName = memberName;
 
         return This;
     }
-
-    /// <summary>
-    ///     设置成员名称
-    /// </summary>
-    /// <param name="memberName">成员名称</param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public virtual TSelf WithName(string? memberName) => WithMemberName(memberName);
 
     /// <summary>
     ///     设置成员名称
@@ -464,7 +461,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf WithMemberName(JsonNamingPolicy jsonNamingPolicy)
+    public virtual TSelf WithName(JsonNamingPolicy jsonNamingPolicy)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(jsonNamingPolicy);
@@ -477,23 +474,11 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     /// <summary>
     ///     设置成员名称
     /// </summary>
-    /// <param name="jsonNamingPolicy">
-    ///     <see cref="JsonNamingPolicy" />
-    /// </param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public virtual TSelf WithName(JsonNamingPolicy jsonNamingPolicy) =>
-        WithMemberName(jsonNamingPolicy);
-
-    /// <summary>
-    ///     设置成员名称
-    /// </summary>
     /// <param name="memberNameProvider">成员名称获取委托</param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf WithMemberName(Func<PropertyInfo, string?> memberNameProvider)
+    public virtual TSelf WithName(Func<PropertyInfo, string?> memberNameProvider)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(memberNameProvider);
@@ -504,14 +489,20 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     }
 
     /// <summary>
-    ///     设置成员名称
+    ///     设置验证模式
     /// </summary>
-    /// <param name="memberNameProvider">成员名称获取委托</param>
+    /// <param name="mode">
+    ///     <see cref="CompositeMode" />
+    /// </param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf WithName(Func<PropertyInfo, string?> memberNameProvider) =>
-        WithMemberName(memberNameProvider);
+    public virtual TSelf UseMode(CompositeMode mode)
+    {
+        Mode = mode;
+
+        return This;
+    }
 
     /// <summary>
     ///     检查是否应该对该属性执行验证
