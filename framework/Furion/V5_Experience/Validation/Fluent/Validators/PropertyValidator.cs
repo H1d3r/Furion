@@ -304,7 +304,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         ArgumentNullException.ThrowIfNull(validatorFactory);
 
         // 空检查
-        if (Validators.OfType<ObjectValidatorProxy<TProperty>>().Any())
+        if (Validators.OfType<ObjectValidator<TProperty>>().Any())
         {
             throw new InvalidOperationException(
                 $"An object validator has already been assigned to this property. Only one object validator is allowed per property. To define nested rules, use `{nameof(ChildRules)}` within a single validator.");
@@ -325,7 +325,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         // 同步 IServiceProvider 委托
         objectValidator.InitializeServiceProvider(_serviceProvider);
 
-        return AddValidator(new ObjectValidatorProxy<TProperty>(objectValidator));
+        return AddValidator(objectValidator);
     }
 
     /// <summary>
@@ -353,13 +353,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
-
-        // 空检查
-        if (Validators.OfType<ObjectValidatorProxy<TProperty>>().Any())
-        {
-            throw new InvalidOperationException(
-                $"An object validator has already been assigned to this property. `{nameof(ChildRules)}` cannot be applied after `{nameof(SetValidator)}` or another `{nameof(ChildRules)}` call.");
-        }
 
         return SetValidator((ruleSets, items, options) =>
         {
