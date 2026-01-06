@@ -76,10 +76,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     /// <remarks>该预处理器仅用于验证，不会修改原始属性的值。</remarks>
     internal Func<TProperty, TProperty>? _preProcessor;
 
-    /// <inheritdoc cref="ObjectValidator{T}" />
-    /// <remarks>属性级别对象验证器。</remarks>
-    internal ObjectValidator<TProperty>? _propertyValidator;
-
     /// <summary>
     ///     <inheritdoc cref="PropertyValidator{T,TProperty}" />
     /// </summary>
@@ -132,7 +128,10 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     internal Func<TProperty, ValidationContext<T>, bool>? WhenCondition { get; set; }
 
     /// <inheritdoc />
-    void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
+    string? IMemberPathRepairable.MemberPath { get; set; }
+
+    /// <inheritdoc />
+    void IMemberPathRepairable.RepairMemberPaths(string? memberPath) => RepairMemberPaths(memberPath);
 
     /// <inheritdoc />
     public void Dispose()
@@ -148,7 +147,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         ArgumentNullException.ThrowIfNull(instance);
 
         // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
+        RepairMemberPaths(GetEffectiveMemberName());
 
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
@@ -168,13 +167,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
             return false;
         }
 
-        // 检查是否设置了属性级别对象验证器
-        if (propertyValue is not null && _propertyValidator is not null &&
-            !_propertyValidator.IsValid(propertyValue, ruleSets))
-        {
-            return false;
-        }
-
         // 创建 ValidationContext 实例（属性）
         var validationContextForProperty = CreateValidationContext(propertyValue, ruleSets);
 
@@ -190,7 +182,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         ArgumentNullException.ThrowIfNull(instance);
 
         // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
+        RepairMemberPaths(GetEffectiveMemberName());
 
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
@@ -213,12 +205,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
             validationResults.AddRange(_annotationValidator.GetValidationResults(instance, validationContext) ?? []);
         }
 
-        // 检查是否设置了属性级别对象验证器
-        if (propertyValue is not null && _propertyValidator is not null)
-        {
-            validationResults.AddRange(_propertyValidator.GetValidationResults(propertyValue, ruleSets) ?? []);
-        }
-
         // 创建 ValidationContext 实例（属性）
         var validationContextForProperty = CreateValidationContext(propertyValue, ruleSets);
 
@@ -238,7 +224,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         ArgumentNullException.ThrowIfNull(instance);
 
         // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
+        RepairMemberPaths(GetEffectiveMemberName());
 
         // 获取用于验证的属性值
         var propertyValue = GetValueForValidation(instance);
@@ -256,12 +242,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         if (ShouldRunAnnotationValidation())
         {
             _annotationValidator.Validate(instance, validationContext);
-        }
-
-        // 检查是否设置了属性级别对象验证器
-        if (propertyValue is not null && _propertyValidator is not null)
-        {
-            _propertyValidator.Validate(propertyValue, ruleSets);
         }
 
         // 创建 ValidationContext 实例（属性）
@@ -305,9 +285,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
 
         // 同步 _annotationValidator 实例 IServiceProvider 委托
         _annotationValidator.InitializeServiceProvider(serviceProvider);
-
-        // 同步 _propertyValidator 实例 IServiceProvider 委托
-        _propertyValidator?.InitializeServiceProvider(serviceProvider);
     }
 
     /// <summary>
@@ -327,28 +304,28 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         ArgumentNullException.ThrowIfNull(validatorFactory);
 
         // 空检查
-        if (_propertyValidator is not null)
+        if (Validators.OfType<ObjectValidator<TProperty>>().Any())
         {
             throw new InvalidOperationException(
                 $"An object validator has already been assigned to this property. Only one object validator is allowed per property. To define nested rules, use `{nameof(ChildRules)}` within a single validator.");
         }
 
         // 调用工厂方法，传入当前 RuleSets、Items 和 Options
-        _propertyValidator = validatorFactory(RuleSets, _objectValidator.Items, _objectValidator.Options);
+        var objectValidator = validatorFactory(RuleSets, _objectValidator.Items, _objectValidator.Options);
 
         // 空检查
-        if (_propertyValidator is null)
+        if (objectValidator is null)
         {
             return This;
         }
 
         // 继承当前规则集
-        _propertyValidator.SetInheritedRuleSetsIfNotSet(RuleSets);
+        objectValidator.SetInheritedRuleSetsIfNotSet(RuleSets);
 
         // 同步 IServiceProvider 委托
-        _propertyValidator.InitializeServiceProvider(_serviceProvider);
+        objectValidator.InitializeServiceProvider(_serviceProvider);
 
-        return This;
+        return AddValidator(objectValidator);
     }
 
     /// <summary>
@@ -376,13 +353,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
-
-        // 空检查
-        if (_propertyValidator is not null)
-        {
-            throw new InvalidOperationException(
-                $"An object validator has already been assigned to this property. `{nameof(ChildRules)}` cannot be applied after `{nameof(SetValidator)}` or another `{nameof(ChildRules)}` call.");
-        }
 
         return SetValidator((ruleSets, items, options) =>
         {
@@ -469,21 +439,12 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf WithMemberName(string? memberName)
+    public virtual TSelf WithName(string? memberName)
     {
         MemberName = memberName;
 
         return This;
     }
-
-    /// <summary>
-    ///     设置成员名称
-    /// </summary>
-    /// <param name="memberName">成员名称</param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public virtual TSelf WithName(string? memberName) => WithMemberName(memberName);
 
     /// <summary>
     ///     设置成员名称
@@ -494,7 +455,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf WithMemberName(JsonNamingPolicy jsonNamingPolicy)
+    public virtual TSelf WithName(JsonNamingPolicy jsonNamingPolicy)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(jsonNamingPolicy);
@@ -507,23 +468,11 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     /// <summary>
     ///     设置成员名称
     /// </summary>
-    /// <param name="jsonNamingPolicy">
-    ///     <see cref="JsonNamingPolicy" />
-    /// </param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public virtual TSelf WithName(JsonNamingPolicy jsonNamingPolicy) =>
-        WithMemberName(jsonNamingPolicy);
-
-    /// <summary>
-    ///     设置成员名称
-    /// </summary>
     /// <param name="memberNameProvider">成员名称获取委托</param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf WithMemberName(Func<PropertyInfo, string?> memberNameProvider)
+    public virtual TSelf WithName(Func<PropertyInfo, string?> memberNameProvider)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(memberNameProvider);
@@ -532,16 +481,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
 
         return This;
     }
-
-    /// <summary>
-    ///     设置成员名称
-    /// </summary>
-    /// <param name="memberNameProvider">成员名称获取委托</param>
-    /// <returns>
-    ///     <typeparamref name="TSelf" />
-    /// </returns>
-    public virtual TSelf WithName(Func<PropertyInfo, string?> memberNameProvider) =>
-        WithMemberName(memberNameProvider);
 
     /// <summary>
     ///     检查是否应该对该属性执行验证
@@ -643,7 +582,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     {
         // 获取属性（成员）名称和父级属性路径
         var memberName = _annotationValidator.GetMemberName();
-        var parentPath = _objectValidator.MemberPath;
+        var parentPath = _objectValidator._memberPath;
 
         return string.IsNullOrWhiteSpace(parentPath) ? memberName : $"{parentPath}.{memberName}";
     }
@@ -667,7 +606,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
             return;
         }
 
-        // 释放所有验证器资源
+        // 遍历所有验证器
         foreach (var validator in Validators)
         {
             if (validator is IDisposable disposable)
@@ -675,31 +614,18 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
                 disposable.Dispose();
             }
         }
-
-        // 释放属性级别对象验证器资源
-        if (_propertyValidator is IDisposable propertyValidatorDisposable)
-        {
-            propertyValidatorDisposable.Dispose();
-        }
     }
 
     /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
-    internal virtual void RepairMemberPaths()
+    internal virtual void RepairMemberPaths(string? memberPath)
     {
-        // 空检查
-        if (_propertyValidator is null)
+        // 遍历所有验证器
+        foreach (var validator in Validators)
         {
-            return;
-        }
-
-        // 设置当前子验证器的完整成员路径
-        _propertyValidator.MemberPath = GetEffectiveMemberName();
-
-        // 检查属性级别对象验证器是否实现 IMemberPathRepairable 接口
-        if (_propertyValidator is IMemberPathRepairable repairable)
-        {
-            // 修复验证器及其子验证器的成员路径
-            repairable.RepairMemberPaths();
+            if (validator is IMemberPathRepairable memberPathRepairable)
+            {
+                memberPathRepairable.RepairMemberPaths(memberPath);
+            }
         }
     }
 
@@ -722,7 +648,6 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         // 同步字段
         propertyValidator._allowEmptyStrings = _allowEmptyStrings;
         propertyValidator._preProcessor = _preProcessor;
-        propertyValidator._propertyValidator = _propertyValidator;
 
         // 同步已设置的验证器
         propertyValidator.AddValidators(Validators);

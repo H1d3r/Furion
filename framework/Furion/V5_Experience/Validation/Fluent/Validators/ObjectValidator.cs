@@ -33,7 +33,7 @@ namespace Furion.Validation;
 ///     对象验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IRuleSetContextProvider,
+public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMemberPathRepairable, IRuleSetContextProvider,
     IValidationAnnotationsConfigurable
 {
     /// <summary>
@@ -51,6 +51,11 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     ///     当前规则集上下文栈
     /// </summary>
     internal readonly Stack<string?> _ruleSetStack;
+
+    /// <summary>
+    ///     对象图中的属性路径
+    /// </summary>
+    internal string? _memberPath;
 
     /// <inheritdoc cref="ObjectValidator{T}" />
     /// <remarks>对象级别验证器。</remarks>
@@ -109,6 +114,8 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
 
         // 订阅 ValidatorOptions 属性变更事件
         Options.PropertyChanged += OptionsOnPropertyChanged;
+
+        ErrorMessageResourceAccessor = () => null!;
     }
 
     /// <summary>
@@ -131,19 +138,20 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     internal List<IPropertyValidator<T>> Validators { get; }
 
     /// <summary>
-    ///     当前验证器在对象图中的属性路径（如 "User.Address"）
-    /// </summary>
-    /// <remarks>仅在作为嵌套验证器时由父验证器设置。</remarks>
-    internal string? MemberPath { get; set; }
-
-    /// <summary>
     ///     从父级继承的规则集
     /// </summary>
     /// <remarks>用于 <see cref="PropertyValidator{T,TProperty,TSelf}.ChildRules" /> 场景。</remarks>
     internal string?[]? InheritedRuleSets { get; set => field = value?.Select(u => u?.Trim()).ToArray(); }
 
     /// <inheritdoc />
-    void IMemberPathRepairable.RepairMemberPaths() => RepairMemberPaths();
+    string? IMemberPathRepairable.MemberPath
+    {
+        get => _memberPath;
+        set => _memberPath = value;
+    }
+
+    /// <inheritdoc />
+    void IMemberPathRepairable.RepairMemberPaths(string? memberPath) => RepairMemberPaths(memberPath);
 
     /// <inheritdoc />
     public void Dispose()
@@ -157,9 +165,6 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
-
-        // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
 
         // 解析验证时使用的规则集
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
@@ -181,7 +186,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         }
 
         // 检查是否设置了对象级别验证器
-        if (_objectValidator is not null && !_objectValidator.IsValid(instance, ruleSets))
+        if (_objectValidator is not null && !_objectValidator.IsValid(instance, resolvedRuleSets))
         {
             return false;
         }
@@ -194,9 +199,6 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
-
-        // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
 
         // 解析验证时使用的规则集
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
@@ -223,7 +225,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         // 检查是否设置了对象级别验证器
         if (_objectValidator is not null)
         {
-            validationResults.AddRange(_objectValidator.GetValidationResults(instance, ruleSets) ?? []);
+            validationResults.AddRange(_objectValidator.GetValidationResults(instance, resolvedRuleSets) ?? []);
         }
 
         // 获取所有属性验证器验证结果集合
@@ -238,9 +240,6 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
-
-        // 修复验证器及其子验证器的成员路径
-        RepairMemberPaths();
 
         // 解析验证时使用的规则集
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
@@ -265,7 +264,7 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         // ReSharper disable once UseNullPropagation
         if (_objectValidator is not null)
         {
-            _objectValidator.Validate(instance, ruleSets);
+            _objectValidator.Validate(instance, resolvedRuleSets);
         }
 
         // 遍历属性验证器集合
@@ -342,6 +341,24 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
 
     /// <inheritdoc />
     void IValidationAnnotationsConfigurable.UseAnnotationValidation(bool enabled) => UseAnnotationValidation(enabled);
+
+    /// <inheritdoc />
+    public override bool IsValid(T? instance, ValidationContext<T> validationContext) =>
+        instance is null || IsValid(instance, validationContext.RuleSets);
+
+    /// <inheritdoc />
+    public override List<ValidationResult>? GetValidationResults(T? instance, ValidationContext<T> validationContext) =>
+        instance is null ? null : GetValidationResults(instance, validationContext.RuleSets);
+
+    /// <inheritdoc />
+    public override void Validate(T? instance, ValidationContext<T> validationContext)
+    {
+        // 空检查
+        if (instance is not null)
+        {
+            Validate(instance, validationContext.RuleSets);
+        }
+    }
 
     /// <summary>
     ///     为指定属性配置验证规则
@@ -747,17 +764,11 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
         // 释放所有属性验证器资源
         foreach (var propertyValidator in Validators)
         {
-            if (propertyValidator is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
+            propertyValidator.Dispose();
         }
 
         // 释放对象级别验证器资源
-        if (_objectValidator is IDisposable objectValidatorDisposable)
-        {
-            objectValidatorDisposable.Dispose();
-        }
+        _objectValidator?.Dispose();
     }
 
     /// <summary>
@@ -832,34 +843,17 @@ public class ObjectValidator<T> : IObjectValidator<T>, IMemberPathRepairable, IR
     internal void SetInheritedRuleSetsIfNotSet(string?[]? inheritedRuleSets) => InheritedRuleSets ??= inheritedRuleSets;
 
     /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
-    internal virtual void RepairMemberPaths()
+    internal virtual void RepairMemberPaths(string? memberPath)
     {
+        _memberPath = memberPath;
+
         // 递归修复所有子属性验证器
-        foreach (var childValidator in Validators)
+        foreach (var propertyValidator in Validators)
         {
-            // 检查验证器是否实现 IMemberPathRepairable 接口
-            if (childValidator is IMemberPathRepairable repairable)
-            {
-                // 修复验证器及其子验证器的成员路径
-                repairable.RepairMemberPaths();
-            }
+            propertyValidator.RepairMemberPaths(memberPath);
         }
 
-        // 空检查
-        if (_objectValidator is null)
-        {
-            return;
-        }
-
-        // 设置当前对象级别验证器的完整成员路径
-        _objectValidator.MemberPath = MemberPath;
-
-        // 检查对象级别验证器是否实现 IMemberPathRepairable 接口
-        if (_objectValidator is IMemberPathRepairable objectValidatorRepairable)
-        {
-            // 修复验证器及其子验证器的成员路径
-            objectValidatorRepairable.RepairMemberPaths();
-        }
+        _objectValidator?.RepairMemberPaths(memberPath);
     }
 
     /// <summary>
