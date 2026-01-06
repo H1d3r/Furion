@@ -26,19 +26,7 @@
 namespace Furion.Validation;
 
 /// <summary>
-///     定义属性验证器可克隆行为
+///     集合验证器服务
 /// </summary>
-/// <typeparam name="T">对象类型</typeparam>
-public interface IPropertyValidatorCloneable<T>
-{
-    /// <summary>
-    ///     克隆
-    /// </summary>
-    /// <param name="objectValidator">
-    ///     <see cref="ObjectValidator{T}" />
-    /// </param>
-    /// <returns>
-    ///     <see cref="IPropertyValidator{T}" />
-    /// </returns>
-    IPropertyValidator<T> Clone(ObjectValidator<T> objectValidator);
-}
+/// <typeparam name="TElement">元素类型</typeparam>
+public interface ICollectionValidator<in TElement> : IObjectValidator<IEnumerable<TElement>>, IMemberPathRepairable;
