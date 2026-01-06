@@ -23,44 +23,47 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Furion.Validation;
 
 /// <summary>
-///     自定义条件成立时委托验证器
+///     验证器异常类
 /// </summary>
-/// <typeparam name="T">对象类型</typeparam>
-public class PredicateValidator<T> : ValidatorBase<T>
+public sealed class ValidatorException : Exception
 {
     /// <summary>
-    ///     <inheritdoc cref="PredicateValidator{T}" />
+    ///     <inheritdoc cref="ValidationException" />
     /// </summary>
-    /// <param name="condition">条件委托</param>
-    public PredicateValidator(Func<T, bool> condition)
+    public ValidatorException()
     {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        Condition = (instance, _) => condition(instance);
     }
 
     /// <summary>
-    ///     <inheritdoc cref="PredicateValidator{T}" />
+    ///     <inheritdoc cref="ValidationException" />
     /// </summary>
-    /// <param name="condition">条件委托</param>
-    public PredicateValidator(Func<T, ValidationContext<T>, bool> condition)
+    /// <param name="message">错误信息</param>
+    public ValidatorException(string message)
+        : base(message)
     {
-        // 空检查
-        ArgumentNullException.ThrowIfNull(condition);
-
-        Condition = condition;
     }
 
     /// <summary>
-    ///     条件委托
+    ///     <inheritdoc cref="ValidationException" />
     /// </summary>
-    public Func<T, ValidationContext<T>, bool> Condition { get; }
+    /// <param name="message">错误信息</param>
+    /// <param name="innerException">
+    ///     <see cref="Exception" />
+    /// </param>
+    public ValidatorException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
 
-    /// <inheritdoc />
-    public override bool IsValid(T? instance, ValidationContext<T> validationContext) =>
-        Condition(instance!, validationContext);
+    /// <summary>
+    ///     抛出 <see cref="ValidatorException" /> 异常
+    /// </summary>
+    /// <param name="message">错误信息</param>
+    [DoesNotReturn]
+    public static void Throw(string message) => throw new ValidatorException(message);
 }

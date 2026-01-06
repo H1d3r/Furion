@@ -31,23 +31,24 @@ namespace Furion.Validation;
 ///     对象验证器代理
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class ObjectValidatorProxy<T> : ValidatorBase<T>, IValidatorInitializer, IDisposable
+public class ObjectValidatorProxy<T> : ValidatorBase<T>, IValidatorInitializer, IMemberPathRepairable,
+    IDisposable
 {
-    /// <inheritdoc cref="ObjectValidator{T}" />
-    internal readonly ObjectValidator<T> _validator;
+    /// <inheritdoc cref="IObjectValidator{T}" />
+    internal readonly IObjectValidator<T> _objectValidator;
 
     /// <summary>
     ///     <inheritdoc cref="ObjectValidatorProxy{T}" />
     /// </summary>
-    /// <param name="validator">
-    ///     <see cref="ObjectValidator{T}" />
+    /// <param name="objectValidator">
+    ///     <see cref="IObjectValidator{T}" />
     /// </param>
-    public ObjectValidatorProxy(ObjectValidator<T> validator)
+    public ObjectValidatorProxy(IObjectValidator<T> objectValidator)
     {
         // 空检查
-        ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(objectValidator);
 
-        _validator = validator;
+        _objectValidator = objectValidator;
 
         ErrorMessageResourceAccessor = () => null!;
     }
@@ -58,6 +59,12 @@ public class ObjectValidatorProxy<T> : ValidatorBase<T>, IValidatorInitializer, 
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+    /// <inheritdoc />
+    string? IMemberPathRepairable.MemberPath { get; set; }
+
+    /// <inheritdoc />
+    void IMemberPathRepairable.RepairMemberPaths(string? memberPath) => RepairMemberPaths(memberPath);
 
     /// <inheritdoc />
     void IValidatorInitializer.InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
@@ -74,37 +81,31 @@ public class ObjectValidatorProxy<T> : ValidatorBase<T>, IValidatorInitializer, 
             return;
         }
 
-        // 释放验证器资源
-        if (_validator is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
+        _objectValidator.Dispose();
     }
 
     /// <inheritdoc />
     public override bool IsValid(T? instance, ValidationContext<T> validationContext) =>
-        _validator.IsValid(instance, validationContext.RuleSets);
+        _objectValidator.IsValid(instance, validationContext.RuleSets);
 
     /// <inheritdoc />
     public override List<ValidationResult>? GetValidationResults(T? instance, ValidationContext<T> validationContext) =>
-        _validator.GetValidationResults(instance, validationContext.RuleSets);
+        _objectValidator.GetValidationResults(instance, validationContext.RuleSets);
 
     /// <inheritdoc />
     public override void Validate(T? instance, ValidationContext<T> validationContext) =>
-        _validator.Validate(instance, validationContext.RuleSets);
-
-    /// <inheritdoc />
-    public override string? FormatErrorMessage(string name) =>
-        (string?)ErrorMessageString is null ? null : base.FormatErrorMessage(name);
+        _objectValidator.Validate(instance, validationContext.RuleSets);
 
     /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
-    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider) =>
+        _objectValidator.InitializeServiceProvider(serviceProvider);
+
+    /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
+    internal virtual void RepairMemberPaths(string? memberPath)
     {
-        // 检查验证器是否实现 IValidatorInitializer 接口
-        if (_validator is IValidatorInitializer initializer)
+        if (_objectValidator is IMemberPathRepairable memberPathRepairable)
         {
-            // 同步 IServiceProvider 委托
-            initializer.InitializeServiceProvider(serviceProvider);
+            memberPathRepairable.RepairMemberPaths(memberPath);
         }
     }
 }

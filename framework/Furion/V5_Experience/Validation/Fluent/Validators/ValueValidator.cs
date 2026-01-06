@@ -44,14 +44,15 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     internal bool? _allowEmptyStrings;
 
     /// <summary>
+    ///     对象图中的属性路径
+    /// </summary>
+    internal string? _memberPath;
+
+    /// <summary>
     ///     值验证前的预处理器
     /// </summary>
     /// <remarks>该预处理器仅用于验证，不会修改原始的值。</remarks>
     internal Func<T, T>? _preProcessor;
-
-    /// <inheritdoc cref="ValueValidator{T}" />
-    /// <remarks>单个值级别验证器。</remarks>
-    internal ValueValidator<T>? _valueValidator;
 
     /// <summary>
     ///     <inheritdoc cref="ValueValidator{T}" />
@@ -97,11 +98,12 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <remarks>当条件满足时才进行验证。</remarks>
     internal Func<T, ValidationContext<T>, bool>? WhenCondition { get; private set; }
 
-    /// <summary>
-    ///     当前验证器在对象图中的属性路径（如 "User.Address"）
-    /// </summary>
-    /// <remarks>仅在作为嵌套验证器时由父验证器设置。</remarks>
-    internal string? MemberPath { get; set; }
+    /// <inheritdoc />
+    string? IMemberPathRepairable.MemberPath
+    {
+        get => _memberPath;
+        set => _memberPath = value;
+    }
 
     /// <inheritdoc />
     public void Dispose()
@@ -128,12 +130,6 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
             return true;
         }
 
-        // 检查是否设置单个值级别验证器
-        if (_valueValidator is not null && !_valueValidator.IsValid(resolvedValue, resolvedRuleSets))
-        {
-            return false;
-        }
-
         return Validators.Where(u => RuleSetMatcher.Matches(u.RuleSets, resolvedRuleSets))
             .All(u => u.IsValid(resolvedValue, validationContext));
     }
@@ -156,20 +152,8 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
             return null;
         }
 
-        // 初始化验证结果集合
-        var validationResults = new List<ValidationResult>();
-
-        // 检查是否设置单个值级别验证器
-        if (_valueValidator is not null)
-        {
-            validationResults.AddRange(_valueValidator.GetValidationResults(resolvedValue, resolvedRuleSets) ?? []);
-        }
-
-        // 获取所有验证器验证结果集合
-        validationResults.AddRange(Validators.Where(u => RuleSetMatcher.Matches(u.RuleSets, resolvedRuleSets))
-            .SelectMany(u => u.GetValidationResults(resolvedValue, validationContext) ?? []));
-
-        return validationResults.ToResults();
+        return Validators.Where(u => RuleSetMatcher.Matches(u.RuleSets, resolvedRuleSets))
+            .SelectMany(u => u.GetValidationResults(resolvedValue, validationContext) ?? []).ToResults();
     }
 
     /// <inheritdoc />
@@ -188,13 +172,6 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
         if (!ShouldValidate(resolvedValue, validationContext))
         {
             return;
-        }
-
-        // 检查是否设置单个值级别验证器
-        // ReSharper disable once UseNullPropagation
-        if (_valueValidator is not null)
-        {
-            _valueValidator.Validate(resolvedValue, resolvedRuleSets);
         }
 
         // 遍历验证器集合
@@ -256,6 +233,9 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
 
     /// <inheritdoc />
     string?[]? IRuleSetContextProvider.GetCurrentRuleSets() => GetCurrentRuleSets();
+
+    /// <inheritdoc />
+    void IMemberPathRepairable.RepairMemberPaths(string? memberPath) => RepairMemberPaths(memberPath);
 
     /// <summary>
     ///     为当前值自身配置验证规则
@@ -422,25 +402,25 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
         ArgumentNullException.ThrowIfNull(validatorFactory);
 
         // 空检查
-        if (_valueValidator is not null)
+        if (Validators.OfType<ObjectValidatorProxy<T>>().Any())
         {
             throw new InvalidOperationException(
                 "An value validator has already been assigned to this value. Only one value validator is allowed per value.");
         }
 
         // 调用工厂方法，传入当前 Items
-        _valueValidator = validatorFactory(Items);
+        var valueValidator = validatorFactory(Items);
 
         // 空检查
-        if (_valueValidator is null)
+        if (valueValidator is null)
         {
             return this;
         }
 
         // 同步 IServiceProvider 委托
-        _valueValidator.InitializeServiceProvider(_serviceProvider);
+        valueValidator.InitializeServiceProvider(_serviceProvider);
 
-        return this;
+        return AddValidator(new ObjectValidatorProxy<T>(valueValidator));
     }
 
     /// <summary>
@@ -477,21 +457,12 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <returns>
     ///     <see cref="ValueValidator{T}" />
     /// </returns>
-    public virtual ValueValidator<T> WithMemberName(string? memberName)
+    public virtual ValueValidator<T> WithName(string? memberName)
     {
         MemberName = memberName;
 
         return This;
     }
-
-    /// <summary>
-    ///     设置成员名称
-    /// </summary>
-    /// <param name="memberName">成员名称</param>
-    /// <returns>
-    ///     <see cref="ValueValidator{T}" />
-    /// </returns>
-    public virtual ValueValidator<T> WithName(string? memberName) => WithMemberName(memberName);
 
     /// <summary>
     ///     配置是否允许空字符串
@@ -525,12 +496,6 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
             {
                 disposable.Dispose();
             }
-        }
-
-        // 释放单个值级别验证器资源
-        if (_valueValidator is IDisposable valueValidatorDisposable)
-        {
-            valueValidatorDisposable.Dispose();
         }
     }
 
@@ -588,7 +553,7 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    internal string? GetEffectiveMemberName() => MemberName ?? MemberPath;
+    internal string? GetEffectiveMemberName() => MemberName ?? _memberPath;
 
     /// <summary>
     ///     解析验证时使用的规则集
@@ -600,18 +565,23 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
         ruleSets ?? (_serviceProvider?.Invoke(typeof(IValidationDataContext)) as IValidationDataContext)
         ?.GetValidationOptions()?.RuleSets;
 
-    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
-    internal override void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
-    {
-        // 同步基类 IServiceProvider 委托
-        base.InitializeServiceProvider(serviceProvider);
-
-        // 同步 _valueValidator 实例 IServiceProvider 委托
-        _valueValidator?.InitializeServiceProvider(serviceProvider);
-    }
-
     /// <inheritdoc cref="IRuleSetContextProvider.GetCurrentRuleSets" />
     internal string?[]? GetCurrentRuleSets() => _ruleSetStack is { Count: > 0 } ? [_ruleSetStack.Peek()] : null;
+
+    /// <inheritdoc cref="IMemberPathRepairable.RepairMemberPaths" />
+    internal virtual void RepairMemberPaths(string? memberPath)
+    {
+        _memberPath = memberPath;
+
+        // 遍历所有验证器
+        foreach (var validator in Validators)
+        {
+            if (validator is IMemberPathRepairable memberPathRepairable)
+            {
+                memberPathRepairable.RepairMemberPaths(memberPath);
+            }
+        }
+    }
 
     /// <summary>
     ///     创建 <see cref="ValidationContext{T}" /> 实例

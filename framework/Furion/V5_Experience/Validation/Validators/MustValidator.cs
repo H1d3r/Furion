@@ -23,23 +23,123 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+
 namespace Furion.Validation;
+
+/// <summary>
+///     <see cref="MustValidator{T}" /> 内部静态类
+/// </summary>
+/// <remarks>可通过 <see cref="Must.WithMessage" /> 设置不满足条件时的异常消息。</remarks>
+public static class Must
+{
+    /// <summary>
+    ///     设置错误信息
+    /// </summary>
+    /// <param name="message">错误消息</param>
+    [DoesNotReturn]
+    public static void WithMessage(string message) => ValidatorException.Throw(message);
+}
 
 /// <summary>
 ///     自定义条件成立时委托验证器
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class MustValidator<T> : PredicateValidator<T>
+public class MustValidator<T> : ValidatorBase<T>
 {
-    /// <inheritdoc />
+    /// <summary>
+    ///     <inheritdoc cref="MustValidator{T}" />
+    /// </summary>
+    /// <param name="condition">条件委托</param>
     public MustValidator(Func<T, bool> condition)
-        : base(condition)
     {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        Condition = (instance, _) => condition(instance);
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="MustValidator{T}" />
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    public MustValidator(Func<T, ValidationContext<T>, bool> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        Condition = condition;
+    }
+
+    /// <summary>
+    ///     条件委托
+    /// </summary>
+    public Func<T, ValidationContext<T>, bool> Condition { get; }
+
+    /// <inheritdoc />
+    public override bool IsValid(T? instance, ValidationContext<T> validationContext)
+    {
+        try
+        {
+            return Condition(instance!, validationContext);
+        }
+        // 检查是否是 ValidatorException 异常
+        catch (ValidatorException)
+        {
+            return false;
+        }
     }
 
     /// <inheritdoc />
-    public MustValidator(Func<T, ValidationContext<T>, bool> condition)
-        : base(condition)
+    public override List<ValidationResult>? GetValidationResults(T? instance, ValidationContext<T> validationContext)
     {
+        try
+        {
+            // 检查条件是否成立
+            if (Condition(instance!, validationContext))
+            {
+                return null;
+            }
+
+            return
+            [
+                new ValidationResult(FormatErrorMessage(validationContext.DisplayName), validationContext.MemberNames)
+            ];
+        }
+        // 检查是否是 ValidatorException 异常
+        catch (ValidatorException e)
+        {
+            return
+            [
+                new ValidationResult(
+                    string.Format(CultureInfo.CurrentCulture, e.Message, validationContext.DisplayName),
+                    validationContext.MemberNames)
+            ];
+        }
+    }
+
+    /// <inheritdoc />
+    public override void Validate(T? instance, ValidationContext<T> validationContext)
+    {
+        try
+        {
+            // 检查条件是否成立
+            if (!Condition(instance!, validationContext))
+            {
+                throw new ValidationException(
+                    new ValidationResult(FormatErrorMessage(validationContext.DisplayName),
+                        validationContext.MemberNames), null, instance);
+            }
+        }
+        // 检查是否是 ValidatorException 异常
+        catch (ValidatorException e)
+        {
+            throw new ValidationException(
+                new ValidationResult(
+                    string.Format(CultureInfo.CurrentCulture, e.Message, validationContext.DisplayName),
+                    validationContext.MemberNames), null, instance);
+        }
     }
 }
