@@ -186,7 +186,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
         }
 
         // 检查是否设置了对象级别验证器
-        if (_objectValidator is not null && !_objectValidator.IsValid(instance, ruleSets))
+        if (_objectValidator is not null && !_objectValidator.IsValid(instance, resolvedRuleSets))
         {
             return false;
         }
@@ -225,7 +225,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
         // 检查是否设置了对象级别验证器
         if (_objectValidator is not null)
         {
-            validationResults.AddRange(_objectValidator.GetValidationResults(instance, ruleSets) ?? []);
+            validationResults.AddRange(_objectValidator.GetValidationResults(instance, resolvedRuleSets) ?? []);
         }
 
         // 获取所有属性验证器验证结果集合
@@ -264,7 +264,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
         // ReSharper disable once UseNullPropagation
         if (_objectValidator is not null)
         {
-            _objectValidator.Validate(instance, ruleSets);
+            _objectValidator.Validate(instance, resolvedRuleSets);
         }
 
         // 遍历属性验证器集合
