@@ -106,7 +106,8 @@ public sealed class
         // 同步 IServiceProvider 委托
         objectValidator.InitializeServiceProvider(_serviceProvider);
 
-        return AddValidator(new CollectionValidator<TElement>(objectValidator).Where(_elementFilter));
+        return AddValidator(
+            new CollectionValidator<TElement>(objectValidator) { IsNested = true /*标记为嵌套验证器*/ }.Where(_elementFilter));
     }
 
     /// <summary>
@@ -179,7 +180,8 @@ public sealed class
         // 同步 IServiceProvider 委托
         valueValidator.InitializeServiceProvider(_serviceProvider);
 
-        return AddValidator(new CollectionValidator<TElement>(valueValidator).Where(_elementFilter));
+        return AddValidator(
+            new CollectionValidator<TElement>(valueValidator) { IsNested = true /*标记为嵌套验证器*/ }.Where(_elementFilter));
     }
 
     /// <summary>
