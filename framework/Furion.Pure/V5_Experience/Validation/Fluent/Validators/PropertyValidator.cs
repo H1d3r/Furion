@@ -410,7 +410,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
     ///     设置属性验证前的预处理器
     /// </summary>
     /// <remarks>该预处理器仅用于验证，不会修改原始属性的值。</remarks>
-    /// <param name="preProcess">预处理器（函数）</param>
+    /// <param name="preProcess">预处理器</param>
     /// <returns>
     ///     <see cref="PropertyValidator{T, TProperty}" />
     /// </returns>
@@ -510,7 +510,7 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
             return false;
         }
 
-        // 检查正向条件（When）
+        // 检查 When 条件
         if (WhenCondition is not null && !WhenCondition(propertyValue, validationContext))
         {
             return false;
