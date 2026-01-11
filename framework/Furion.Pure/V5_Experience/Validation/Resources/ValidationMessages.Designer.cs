@@ -259,6 +259,15 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
+        ///   查找类似 The {0} field only accepts files with the following extensions: {1}. 的本地化字符串。
+        /// </summary>
+        internal static string FileExtensionsValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("FileExtensionsValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The field {0} must be greater than or equal to &apos;{1}&apos;. 的本地化字符串。
         /// </summary>
         internal static string GreaterThanOrEqualToValidator_ValidationError {
