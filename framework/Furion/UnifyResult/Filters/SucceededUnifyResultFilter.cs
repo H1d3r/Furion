@@ -127,7 +127,7 @@ public class SucceededUnifyResultFilter : IAsyncActionFilter, IOrderedFilter
                 _ => (null, null, false)
             };
 
-            if (isTargetType)
+            if (isTargetType && serializerSettings is not null)
             {
                 actionExecutedContext.Result = new JsonResult(extractedValue, serializerSettings);
             }
