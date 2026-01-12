@@ -42,10 +42,10 @@ internal sealed class LegacyValidationContext : IValidationContext
     /// <param name="instance">对象</param>
     /// <param name="displayName">显示名称</param>
     /// <param name="memberNames">成员名称列表</param>
-    internal LegacyValidationContext(object? instance, string displayName, IEnumerable<string>? memberNames)
+    internal LegacyValidationContext(object? instance, string? displayName, IEnumerable<string>? memberNames)
     {
         Instance = instance;
-        DisplayName = displayName;
+        DisplayName = displayName ?? instance?.GetType().Name!;
         MemberNames = memberNames;
     }
 
@@ -65,5 +65,5 @@ internal sealed class LegacyValidationContext : IValidationContext
     public IDictionary<object, object?> Items { get; set; } = new Dictionary<object, object?>();
 
     /// <inheritdoc />
-    public object? GetService(Type serviceType) => null!;
+    public object? GetService(Type serviceType) => null;
 }
