@@ -105,6 +105,19 @@ public static class Validators
         new(serviceProvider, items);
 
     /// <summary>
+    ///     创建集合验证器
+    /// </summary>
+    /// <param name="elementValidator">
+    ///     <see cref="IObjectValidator{T}" />
+    /// </param>
+    /// <typeparam name="TElement">元素类型</typeparam>
+    /// <returns>
+    ///     <see cref="CollectionValidator{TElement}" />
+    /// </returns>
+    public static CollectionValidator<TElement> Collection<TElement>(IObjectValidator<TElement> elementValidator) =>
+        new(elementValidator);
+
+    /// <summary>
     ///     创建年龄（0-120 岁）验证器
     /// </summary>
     /// <param name="isAdultOnly">是否仅验证成年人（18 岁及以上），默认值为：<c>false</c></param>
@@ -382,6 +395,15 @@ public static class Validators
     ///     <see cref="FailureValidator" />
     /// </returns>
     public static FailureValidator Failure() => new();
+
+    /// <summary>
+    ///     创建文件拓展名验证器
+    /// </summary>
+    /// <param name="extensions">文件拓展名</param>
+    /// <returns>
+    ///     <see cref="FileExtensionsValidator" />
+    /// </returns>
+    public static FileExtensionsValidator FileExtensions(string extensions) => new(extensions);
 
     /// <summary>
     ///     创建大于等于验证器
