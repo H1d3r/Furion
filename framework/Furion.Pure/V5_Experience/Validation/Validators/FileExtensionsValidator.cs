@@ -35,9 +35,9 @@ namespace Furion.Validation;
 public class FileExtensionsValidator : ValidatorBase
 {
     /// <summary>
-    ///     <inheritdoc cref="ValueAnnotationValidator" />
+    ///     <inheritdoc cref="AttributeValueValidator" />
     /// </summary>
-    internal readonly ValueAnnotationValidator _validator;
+    internal readonly AttributeValueValidator _validator;
 
     /// <summary>
     ///     <inheritdoc cref="FileExtensionsValidator" />
@@ -50,7 +50,7 @@ public class FileExtensionsValidator : ValidatorBase
 
         Extensions = extensions;
 
-        _validator = new ValueAnnotationValidator(new FileExtensionsAttribute { Extensions = extensions });
+        _validator = new AttributeValueValidator(new FileExtensionsAttribute { Extensions = extensions });
 
         UseResourceKey(() => nameof(ValidationMessages.FileExtensionsValidator_ValidationError));
     }
