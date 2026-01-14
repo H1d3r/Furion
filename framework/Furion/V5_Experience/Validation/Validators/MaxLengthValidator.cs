@@ -35,9 +35,9 @@ namespace Furion.Validation;
 public class MaxLengthValidator : ValidatorBase
 {
     /// <summary>
-    ///     <inheritdoc cref="ValueAnnotationValidator" />
+    ///     <inheritdoc cref="AttributeValueValidator" />
     /// </summary>
-    internal readonly ValueAnnotationValidator _validator;
+    internal readonly AttributeValueValidator _validator;
 
     /// <summary>
     ///     <inheritdoc cref="MaxLengthValidator" />
@@ -46,7 +46,7 @@ public class MaxLengthValidator : ValidatorBase
     public MaxLengthValidator(int length)
     {
         Length = length;
-        _validator = new ValueAnnotationValidator(new MaxLengthAttribute(Length));
+        _validator = new AttributeValueValidator(new MaxLengthAttribute(Length));
 
         UseResourceKey(() => nameof(ValidationMessages.MaxLengthValidator_ValidationError));
     }
