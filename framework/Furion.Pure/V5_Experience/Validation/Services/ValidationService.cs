@@ -29,17 +29,25 @@ using System.ComponentModel.DataAnnotations;
 namespace Furion.Validation;
 
 /// <inheritdoc />
-internal sealed class ValidationService : IValidationService
+public sealed class ValidationService : IValidationService
 {
     /// <inheritdoc cref="IServiceProvider" />
-    internal readonly IServiceProvider _serviceProvider;
+    internal readonly IServiceProvider? _serviceProvider;
 
     /// <summary>
-    ///     <inheritdoc cref="ValidationService{T}" />
+    ///     <inheritdoc cref="ValidationService" />
+    /// </summary>
+    public ValidationService()
+    {
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="ValidationService" />
     /// </summary>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
+    [ActivatorUtilitiesConstructor]
     public ValidationService(IServiceProvider serviceProvider)
     {
         // 空检查
@@ -50,15 +58,24 @@ internal sealed class ValidationService : IValidationService
 
     /// <inheritdoc />
     public IValidationService<T> For<T>() where T : class =>
-        _serviceProvider.GetRequiredService<IValidationService<T>>();
+        _serviceProvider is not null
+            ? _serviceProvider.GetRequiredService<IValidationService<T>>()
+            : new ValidationService<T>();
 }
 
 /// <inheritdoc />
-internal sealed class ValidationService<T> : IValidationService<T>
+public sealed class ValidationService<T> : IValidationService<T>
     where T : class
 {
     /// <inheritdoc cref="IServiceProvider" />
-    internal readonly IServiceProvider _serviceProvider;
+    internal readonly IServiceProvider? _serviceProvider;
+
+    /// <summary>
+    ///     <inheritdoc cref="ValidationService{T}" />
+    /// </summary>
+    public ValidationService()
+    {
+    }
 
     /// <summary>
     ///     <inheritdoc cref="ValidationService{T}" />
@@ -66,6 +83,7 @@ internal sealed class ValidationService<T> : IValidationService<T>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
+    [ActivatorUtilitiesConstructor]
     public ValidationService(IServiceProvider serviceProvider)
     {
         // 空检查
