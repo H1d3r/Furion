@@ -750,9 +750,9 @@ public static class Validators
     /// </summary>
     /// <remarks>支持使用 <c>[ValidateNever]</c> 特性来跳过对特定属性的验证，仅限于 ASP.NET Core 应用项目。</remarks>
     /// <returns>
-    ///     <see cref="ObjectAnnotationValidator" />
+    ///     <see cref="AttributeObjectValidator" />
     /// </returns>
-    public static ObjectAnnotationValidator ObjectAnnotation() => new();
+    public static AttributeObjectValidator AttributeObject() => new();
 
     /// <summary>
     ///     创建对象验证特性验证器
@@ -760,9 +760,9 @@ public static class Validators
     /// <remarks>支持使用 <c>[ValidateNever]</c> 特性来跳过对特定属性的验证，仅限于 ASP.NET Core 应用项目。</remarks>
     /// <param name="items">共享数据</param>
     /// <returns>
-    ///     <see cref="ObjectAnnotationValidator" />
+    ///     <see cref="AttributeObjectValidator" />
     /// </returns>
-    public static ObjectAnnotationValidator ObjectAnnotation(IDictionary<object, object?>? items) => new(items);
+    public static AttributeObjectValidator AttributeObject(IDictionary<object, object?>? items) => new(items);
 
     /// <summary>
     ///     创建对象验证特性验证器
@@ -773,9 +773,9 @@ public static class Validators
     /// </param>
     /// <param name="items">共享数据</param>
     /// <returns>
-    ///     <see cref="ObjectAnnotationValidator" />
+    ///     <see cref="AttributeObjectValidator" />
     /// </returns>
-    public static ObjectAnnotationValidator ObjectAnnotation(IServiceProvider? serviceProvider,
+    public static AttributeObjectValidator AttributeObject(IServiceProvider? serviceProvider,
         IDictionary<object, object?>? items) => new(serviceProvider, items);
 
     /// <summary>
@@ -809,9 +809,9 @@ public static class Validators
     /// <param name="selector">属性选择器</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyAnnotationValidator{T}" />
+    ///     <see cref="AttributePropertyValidator{T}" />
     /// </returns>
-    public static PropertyAnnotationValidator<T> PropertyAnnotation<T>(Expression<Func<T, object?>> selector)
+    public static AttributePropertyValidator<T> AttributeProperty<T>(Expression<Func<T, object?>> selector)
         where T : class => new(selector);
 
     /// <summary>
@@ -821,9 +821,9 @@ public static class Validators
     /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyAnnotationValidator{T}" />
+    ///     <see cref="AttributePropertyValidator{T}" />
     /// </returns>
-    public static PropertyAnnotationValidator<T> PropertyAnnotation<T>(Expression<Func<T, object?>> selector,
+    public static AttributePropertyValidator<T> AttributeProperty<T>(Expression<Func<T, object?>> selector,
         IDictionary<object, object?>? items)
         where T : class => new(selector, items);
 
@@ -837,9 +837,9 @@ public static class Validators
     /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyAnnotationValidator{T}" />
+    ///     <see cref="AttributePropertyValidator{T}" />
     /// </returns>
-    public static PropertyAnnotationValidator<T> PropertyAnnotation<T>(Expression<Func<T, object?>> selector,
+    public static AttributePropertyValidator<T> AttributeProperty<T>(Expression<Func<T, object?>> selector,
         IServiceProvider? serviceProvider, IDictionary<object, object?>? items)
         where T : class => new(selector, serviceProvider, items);
 
@@ -850,9 +850,9 @@ public static class Validators
     /// <typeparam name="T">对象类型</typeparam>
     /// <typeparam name="TProperty">属性类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyAnnotationValidator{T,TProperty}" />
+    ///     <see cref="AttributePropertyValidator{T,TProperty}" />
     /// </returns>
-    public static PropertyAnnotationValidator<T, TProperty> PropertyAnnotation<T, TProperty>(
+    public static AttributePropertyValidator<T, TProperty> AttributeProperty<T, TProperty>(
         Expression<Func<T, TProperty>> selector) where T : class =>
         new(selector);
 
@@ -864,9 +864,9 @@ public static class Validators
     /// <typeparam name="T">对象类型</typeparam>
     /// <typeparam name="TProperty">属性类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyAnnotationValidator{T,TProperty}" />
+    ///     <see cref="AttributePropertyValidator{T,TProperty}" />
     /// </returns>
-    public static PropertyAnnotationValidator<T, TProperty> PropertyAnnotation<T, TProperty>(
+    public static AttributePropertyValidator<T, TProperty> AttributeProperty<T, TProperty>(
         Expression<Func<T, TProperty>> selector, IDictionary<object, object?>? items) where T : class =>
         new(selector, items);
 
@@ -881,9 +881,9 @@ public static class Validators
     /// <typeparam name="T">对象类型</typeparam>
     /// <typeparam name="TProperty">属性类型</typeparam>
     /// <returns>
-    ///     <see cref="PropertyAnnotationValidator{T,TProperty}" />
+    ///     <see cref="AttributePropertyValidator{T,TProperty}" />
     /// </returns>
-    public static PropertyAnnotationValidator<T, TProperty> PropertyAnnotation<T, TProperty>(
+    public static AttributePropertyValidator<T, TProperty> AttributeProperty<T, TProperty>(
         Expression<Func<T, TProperty>> selector, IServiceProvider? serviceProvider,
         IDictionary<object, object?>? items) where T : class => new(selector, serviceProvider, items);
 
@@ -1194,9 +1194,9 @@ public static class Validators
     /// </summary>
     /// <param name="attributes">验证特性列表</param>
     /// <returns>
-    ///     <see cref="ValueAnnotationValidator" />
+    ///     <see cref="AttributeValueValidator" />
     /// </returns>
-    public static ValueAnnotationValidator ValueAnnotation(params ValidationAttribute[] attributes) => new(attributes);
+    public static AttributeValueValidator AttributeValue(params ValidationAttribute[] attributes) => new(attributes);
 
     /// <summary>
     ///     创建单个值验证特性验证器
@@ -1204,9 +1204,9 @@ public static class Validators
     /// <param name="attributes">验证特性列表</param>
     /// <param name="items">共享数据</param>
     /// <returns>
-    ///     <see cref="ValueAnnotationValidator" />
+    ///     <see cref="AttributeValueValidator" />
     /// </returns>
-    public static ValueAnnotationValidator ValueAnnotation(ValidationAttribute[] attributes,
+    public static AttributeValueValidator AttributeValue(ValidationAttribute[] attributes,
         IDictionary<object, object?>? items) => new(attributes, items);
 
     /// <summary>
@@ -1218,9 +1218,23 @@ public static class Validators
     /// </param>
     /// <param name="items">共享数据</param>
     /// <returns>
-    ///     <see cref="ValueAnnotationValidator" />
+    ///     <see cref="AttributeValueValidator" />
     /// </returns>
-    public static ValueAnnotationValidator ValueAnnotation(ValidationAttribute[] attributes,
+    public static AttributeValueValidator AttributeValue(ValidationAttribute[] attributes,
         IServiceProvider? serviceProvider, IDictionary<object, object?>? items) =>
         new(attributes, serviceProvider, items);
+
+    /// <summary>
+    ///     创建指定对象类型的数据验证服务
+    /// </summary>
+    /// <param name="serviceProvider">
+    ///     <see cref="IServiceProvider" />
+    /// </param>
+    /// <typeparam name="T">对象类型</typeparam>
+    /// <returns>
+    ///     <see cref="IValidationService{T}" />
+    /// </returns>
+    public static IValidationService<T> For<T>(IServiceProvider? serviceProvider = null)
+        where T : class =>
+        serviceProvider is null ? new ValidationService<T>() : new ValidationService<T>(serviceProvider);
 }
