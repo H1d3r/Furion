@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.ComponentModel.DataAnnotations;
+
 namespace Furion.Validation;
 
 /// <summary>
@@ -30,6 +32,15 @@ namespace Furion.Validation;
 /// </summary>
 internal static class Constants
 {
+    /// <summary>
+    ///     验证选项键
+    /// </summary>
+    /// <remarks>
+    ///     用于 <see cref="ValidationContext" />、<c>ValidationOptionsModelValidator</c> 和
+    ///     <c>ValidationOptionsAsyncPageFilter</c> 中写入规则集配置。
+    /// </remarks>
+    internal static readonly object ValidationOptionsKey = new();
+
     /// <summary>
     ///     验证上下文键
     /// </summary>
