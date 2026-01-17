@@ -29,12 +29,12 @@ using System.ComponentModel.DataAnnotations;
 namespace Furion.Validation;
 
 /// <summary>
-///     指定参数使用指定的验证器进行验证
+///     指定对象验证器验证特性
 /// </summary>
 /// <typeparam name="TValidator">
 ///     <see cref="IObjectValidator" />
 /// </typeparam>
-[AttributeUsage(AttributeTargets.Parameter)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class ValidateWithAttribute<TValidator> : ValidationAttribute
     where TValidator : IObjectValidator
 {
