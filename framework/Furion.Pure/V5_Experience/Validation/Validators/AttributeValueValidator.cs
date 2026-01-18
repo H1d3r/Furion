@@ -28,7 +28,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Furion.Validation;
 
 /// <summary>
-///     单个值验证特性验证器
+///     单值验证特性验证器
 /// </summary>
 public class AttributeValueValidator : ValidatorBase, IValidatorInitializer
 {

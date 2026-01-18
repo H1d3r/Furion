@@ -26,7 +26,7 @@
 namespace Furion.Validation;
 
 /// <summary>
-///     单个值验证器服务
+///     单值验证器服务
 /// </summary>
 public interface IValueValidator;
 

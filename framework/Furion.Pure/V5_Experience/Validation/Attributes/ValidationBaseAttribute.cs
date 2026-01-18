@@ -79,7 +79,7 @@ public abstract class ValidationBaseAttribute : ValidationAttribute
             // 获取 ValidationMessages 中的属性名
             var resourceKey = capturedResourceKeyResolver();
 
-            return ValidatorBase.GetResourceString(resourceKey) ?? $"[{resourceKey}]";
+            return ValidatorBase.GetResourceString(resourceKey) ?? resourceKey;
         });
     }
 }
