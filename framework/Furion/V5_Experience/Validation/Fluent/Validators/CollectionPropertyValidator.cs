@@ -23,7 +23,6 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 
 namespace Furion.Validation;
@@ -49,7 +48,7 @@ public sealed class
     }
 
     /// <summary>
-    ///     筛选用于验证的集合元素
+    ///     筛选用于执行验证的集合元素
     /// </summary>
     /// <param name="elementFilter">元素过滤委托</param>
     /// <returns>

@@ -184,8 +184,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <summary>
     ///     添加年龄（0-120 岁）验证器
     /// </summary>
-    /// <param name="isAdultOnly">是否仅验证成年人（18 岁及以上），默认值为：<c>false</c></param>
-    /// <param name="allowStringValues">允许字符串数值，默认值为：<c>false</c></param>
+    /// <param name="isAdultOnly">是否仅允许成年人（18 岁及以上），默认值为：<c>false</c></param>
+    /// <param name="allowStringValues">是否允许字符串数值，默认值为：<c>false</c></param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
@@ -237,7 +237,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     ///     添加颜色值验证器
     /// </summary>
     /// <param name="fullMode">
-    ///     是否启用完整模式。在完整模式下，支持的颜色格式包括：十六进制颜色、RGB、RGBA、HSL 和 HSLA。若未启用，则仅支持：十六进制颜色、RGB 和 RGBA。默认值为：<c>false</c>
+    ///     是否启用完整模式。在完整模式下，支持的颜色格式包括：十六进制颜色、RGB、RGBA、HSL 和 HSLA；若未启用，则仅支持十六进制颜色、RGB 和 RGBA。默认值为：<c>false</c>
     /// </param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
@@ -320,6 +320,19 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
         Conditional(builder => builder.When(condition).ThenMessage(resourceType, resourceName));
 
     /// <summary>
+    ///     添加自定义验证特性验证器
+    /// </summary>
+    /// <param name="validatorType">执行自定义验证的类型</param>
+    /// <param name="method">验证方法</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf CustomValidation(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
+        Type validatorType, string method) =>
+        AddValidator(new CustomValidationValidator(validatorType, method));
+
+    /// <summary>
     ///     添加 <see cref="System.DateOnly" /> 验证器
     /// </summary>
     /// <param name="formats">允许的日期格式（如 "yyyy-MM-dd"）</param>
@@ -367,7 +380,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     ///     添加验证数值的小数位数验证器
     /// </summary>
     /// <param name="maxDecimalPlaces">允许的最大有效小数位数</param>
-    /// <param name="allowStringValues">允许字符串数值，默认值为：<c>false</c></param>
+    /// <param name="allowStringValues">是否允许字符串数值，默认值为：<c>false</c></param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>

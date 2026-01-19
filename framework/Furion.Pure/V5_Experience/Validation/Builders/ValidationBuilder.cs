@@ -37,6 +37,16 @@ namespace Furion.Validation;
 public sealed class ValidationBuilder
 {
     /// <summary>
+    ///     <see cref="AbstractValidator{T}" /> 泛型定义
+    /// </summary>
+    internal static readonly Type AbstractValidatorDefinition = typeof(AbstractValidator<>);
+
+    /// <summary>
+    ///     <see cref="AbstractValueValidator{T}" /> 泛型定义
+    /// </summary>
+    internal static readonly Type AbstractValueValidatorDefinition = typeof(AbstractValueValidator<>);
+
+    /// <summary>
     ///     <see cref="IObjectValidator{T}" /> 类型集合
     /// </summary>
     internal Dictionary<Type, Type>? _validatorTypes;
@@ -73,6 +83,12 @@ public sealed class ValidationBuilder
         // 空检查
         ArgumentNullException.ThrowIfNull(validatorType);
 
+        // 检查验证器是否已添加
+        if (_validatorTypes is not null && _validatorTypes.ContainsKey(validatorType))
+        {
+            return this;
+        }
+
         // 检查类型是否可实例化
         if (!validatorType.IsInstantiable())
         {
@@ -82,17 +98,17 @@ public sealed class ValidationBuilder
                 nameof(validatorType));
         }
 
-        // 检查是否继承自 AbstractValidator<T> 抽象基类
-        if (!TryGetValidatedType(validatorType, typeof(AbstractValidator<>), out var modelType))
+        // 尝试从指定类型中提取其作为 AbstractValidator<T> 或 AbstractValueValidator<T> 泛型子类时所验证的目标模型类型
+        if (!TryGetModelTypeFromValidator(validatorType, AbstractValidatorDefinition, out var modelType) &&
+            !TryGetModelTypeFromValidator(validatorType, AbstractValueValidatorDefinition, out modelType))
         {
             throw new ArgumentException(
                 // ReSharper disable once LocalizableElement
-                $"Type `{validatorType}` is not a valid validator; it does not derive from `AbstractValidator<>`.",
+                $"Type `{validatorType}` is not a valid validator; it does not derive from `AbstractValidator<>` or `AbstractValueValidator<>`.",
                 nameof(validatorType));
         }
 
         _validatorTypes ??= new Dictionary<Type, Type>();
-
         _validatorTypes[validatorType] = modelType;
 
         return this;
@@ -133,12 +149,92 @@ public sealed class ValidationBuilder
         // 空检查
         ArgumentNullException.ThrowIfNull(assemblies);
 
-        // 初始化对象验证器泛型基类定义类型
-        var baseGenericTypeDefinition = typeof(AbstractValidator<>);
+        // 扫描程序集中所有继承自 AbstractValidator<T> 或 AbstractValueValidator<T> 泛型的验证器类型
+        var candidateTypes = assemblies.SelectMany(ass => (ass?.GetTypes() ?? Enumerable.Empty<Type>()).Where(t =>
+            t.IsInstantiable() && (TryGetModelTypeFromValidator(t, AbstractValidatorDefinition, out _) ||
+                                   TryGetModelTypeFromValidator(t, AbstractValueValidatorDefinition, out _))));
 
-        return AddValidators(assemblies.SelectMany(ass =>
-            (ass?.GetTypes() ?? Enumerable.Empty<Type>()).Where(t =>
-                t.IsInstantiable() && TryGetValidatedType(t, baseGenericTypeDefinition, out _))));
+        return AddValidators(candidateTypes);
+    }
+
+    /// <summary>
+    ///     配置验证消息的全局覆盖项
+    /// </summary>
+    /// <remarks>用于在运行时替换框架内置的默认验证错误消息。</remarks>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="ValidationBuilder" />
+    /// </returns>
+    public ValidationBuilder ConfigureValidationMessages(Action<Dictionary<string, string>> configure)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(configure);
+
+        // 初始化包含资源键到消息模板映射的字典
+        var overrides = new Dictionary<string, string>();
+
+        // 调用自定义配置委托
+        configure(overrides);
+
+        // 批量注册多个验证消息覆盖项
+        ValidationMessageProvider.AddOverrides(overrides);
+
+        return this;
+    }
+
+    /// <summary>
+    ///     启用标准中文验证错误消息
+    /// </summary>
+    /// <remarks>用于在运行时替换框架内置的默认验证错误消息。</remarks>
+    /// <returns>
+    ///     <see cref="ValidationBuilder" />
+    /// </returns>
+    public ValidationBuilder UseChineseValidationMessages()
+    {
+        // 使用标准中文验证消息替换框架内置的默认验证错误消息
+        ValidationMessageProvider.UseChineseMessages();
+
+        return this;
+    }
+
+    /// <summary>
+    ///     配置 .NET 内置验证特性验证消息的全局覆盖项
+    /// </summary>
+    /// <remarks>用于在运行时替换 .NET 内置验证特性默认验证错误消息。</remarks>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="ValidationBuilder" />
+    /// </returns>
+    public ValidationBuilder ConfigureDataAnnotationValidationMessages(Action<Dictionary<string, string>> configure)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(configure);
+
+        // 初始化包含资源键到消息模板映射的字典
+        var overrides = new Dictionary<string, string>();
+
+        // 调用自定义配置委托
+        configure(overrides);
+
+        // 批量注册多个验证消息覆盖项
+        DataAnnotationMessageProvider.AddOverrides(overrides);
+
+        return this;
+    }
+
+    /// <summary>
+    ///     启用 .NET 内置验证特性标准中文验证错误消息
+    /// </summary>
+    /// <remarks>用于在运行时替换 .NET 内置验证特性默认验证错误消息。</remarks>
+    /// <returns>
+    ///     <see cref="ValidationBuilder" />
+    /// </returns>
+    public ValidationBuilder UseChineseDataAnnotationMessages()
+    {
+        // 使用标准中文验证消息替换 .NET 内置验证特性默认验证错误消息
+        DataAnnotationMessageProvider.UseChineseMessages();
+
+        return this;
     }
 
     /// <summary>
@@ -165,7 +261,6 @@ public sealed class ValidationBuilder
 
         // 注册数据验证服务
         services.TryAddTransient<IValidationService, ValidationService>();
-        services.TryAddTransient(typeof(IValidationService<>), typeof(ValidationService<>));
 
         // 构建验证器服务
         BuildValidatorServices(services);
@@ -199,21 +294,22 @@ public sealed class ValidationBuilder
             services.Add(ServiceDescriptor.Transient(typeof(IObjectValidator),
                 provider => CreateValidator(provider, validatorType)));
 
-            // 检查是否是单个值验证器
-            // if (typeof(IValueValidator).IsAssignableFrom(validatorType))
-            // {
-            //     // 注册 IValueValidator<T> 泛型接口
-            //     services.Add(ServiceDescriptor.Transient(typeof(IValueValidator<>).MakeGenericType(modelType),
-            //         provider => CreateValidator(provider, validatorType)));
-            //
-            //     // 注册 IValueValidator 非泛型接口
-            //     services.Add(ServiceDescriptor.Transient(typeof(IValueValidator),
-            //         provider => CreateValidator(provider, validatorType)));
-            // }
-
             // 注册验证器自身
             services.Add(ServiceDescriptor.Transient(validatorType,
                 provider => CreateValidator(provider, validatorType)));
+
+            // 检查是否是单值验证器
+            // ReSharper disable once InvertIf
+            if (typeof(IValueValidator).IsAssignableFrom(validatorType))
+            {
+                // 注册 IValueValidator<T> 泛型接口
+                services.Add(ServiceDescriptor.Transient(typeof(IValueValidator<>).MakeGenericType(modelType),
+                    provider => CreateValidator(provider, validatorType)));
+
+                // 注册 IValueValidator 非泛型接口
+                services.Add(ServiceDescriptor.Transient(typeof(IValueValidator),
+                    provider => CreateValidator(provider, validatorType)));
+            }
         }
     }
 
@@ -247,48 +343,45 @@ public sealed class ValidationBuilder
     }
 
     /// <summary>
-    ///     检查是否继承自 <paramref name="baseGenericTypeDefinition" /> 抽象基类
+    ///     尝试从指定类型中提取其作为 <paramref name="genericTypeDefinition" /> 泛型子类时所验证的目标模型类型
     /// </summary>
-    /// <param name="type">类型</param>
-    /// <param name="baseGenericTypeDefinition">泛型基类定义类型</param>
+    /// <param name="validatorType">验证器类型</param>
+    /// <param name="genericTypeDefinition">验证器基类的泛型定义</param>
     /// <param name="modelType">被验证的模型类型</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
     /// <exception cref="ArgumentException"></exception>
-    internal static bool TryGetValidatedType(Type type, Type baseGenericTypeDefinition,
+    internal static bool TryGetModelTypeFromValidator(Type validatorType, Type genericTypeDefinition,
         [NotNullWhen(true)] out Type? modelType)
     {
         // 空检查
-        ArgumentNullException.ThrowIfNull(type);
-        ArgumentNullException.ThrowIfNull(baseGenericTypeDefinition);
+        ArgumentNullException.ThrowIfNull(validatorType);
+        ArgumentNullException.ThrowIfNull(genericTypeDefinition);
 
         // 泛型定义检查
-        if (!baseGenericTypeDefinition.IsGenericTypeDefinition)
+        if (!genericTypeDefinition.IsGenericTypeDefinition)
         {
-            if (!baseGenericTypeDefinition.IsGenericTypeDefinition)
-            {
-                throw new ArgumentException(
-                    // ReSharper disable once LocalizableElement
-                    $"The type '{baseGenericTypeDefinition}' is not a generic type definition; expected an open generic such as AbstractValidator<>.",
-                    nameof(baseGenericTypeDefinition));
-            }
+            throw new ArgumentException(
+                // ReSharper disable once LocalizableElement
+                $"The type '{genericTypeDefinition}' is not a generic type definition; expected an open generic such as `AbstractValidator<>` or `AbstractValueValidator<>`.",
+                nameof(genericTypeDefinition));
         }
 
         // 初始化被验证的模型类型
         modelType = null;
 
         // 必须是类且不能是抽象类
-        if (!type.IsClass || type.IsAbstract)
+        if (!validatorType.IsClass || validatorType.IsAbstract)
         {
             return false;
         }
 
         // 沿着继承链向上遍历
-        for (var current = type; current != null; current = current.BaseType)
+        for (var current = validatorType; current != null; current = current.BaseType)
         {
-            // 检查当前类型是否是泛型并且泛型定义为 baseGenericTypeDefinition
-            if (!current.IsGenericType || current.GetGenericTypeDefinition() != baseGenericTypeDefinition)
+            // 检查当前类型是否是泛型并且泛型定义为 genericTypeDefinition
+            if (!current.IsGenericType || current.GetGenericTypeDefinition() != genericTypeDefinition)
             {
                 continue;
             }

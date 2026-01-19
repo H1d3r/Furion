@@ -37,6 +37,12 @@ namespace Furion.Validation;
 public static class Validators
 {
     /// <summary>
+    ///     默认的 <see cref="IValidationService" /> 实例
+    /// </summary>
+    /// <remarks>避免重复创建实例。</remarks>
+    internal static readonly IValidationService _defaultValidationService = new ValidationService();
+
+    /// <summary>
     ///     创建对象验证器
     /// </summary>
     /// <typeparam name="T">对象类型</typeparam>
@@ -72,7 +78,7 @@ public static class Validators
         where T : class => new(serviceProvider, items);
 
     /// <summary>
-    ///     创建单个值验证器
+    ///     创建单值验证器
     /// </summary>
     /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
@@ -81,7 +87,7 @@ public static class Validators
     public static ValueValidator<T> Value<T>() => new();
 
     /// <summary>
-    ///     创建单个值验证器
+    ///     创建单值验证器
     /// </summary>
     /// <param name="items">共享数据</param>
     /// <typeparam name="T">对象类型</typeparam>
@@ -91,7 +97,7 @@ public static class Validators
     public static ValueValidator<T> Value<T>(IDictionary<object, object?>? items) => new(items);
 
     /// <summary>
-    ///     创建单个值验证器
+    ///     创建单值验证器
     /// </summary>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
@@ -120,8 +126,8 @@ public static class Validators
     /// <summary>
     ///     创建年龄（0-120 岁）验证器
     /// </summary>
-    /// <param name="isAdultOnly">是否仅验证成年人（18 岁及以上），默认值为：<c>false</c></param>
-    /// <param name="allowStringValues">允许字符串数值，默认值为：<c>false</c></param>
+    /// <param name="isAdultOnly">是否仅允许成年人（18 岁及以上），默认值为：<c>false</c></param>
+    /// <param name="allowStringValues">是否允许字符串数值，默认值为：<c>false</c></param>
     /// <returns>
     ///     <see cref="AgeValidator" />
     /// </returns>
@@ -173,7 +179,7 @@ public static class Validators
     ///     创建颜色值验证器
     /// </summary>
     /// <param name="fullMode">
-    ///     是否启用完整模式。在完整模式下，支持的颜色格式包括：十六进制颜色、RGB、RGBA、HSL 和 HSLA。若未启用，则仅支持：十六进制颜色、RGB 和 RGBA。默认值为：<c>false</c>
+    ///     是否启用完整模式。在完整模式下，支持的颜色格式包括：十六进制颜色、RGB、RGBA、HSL 和 HSLA；若未启用，则仅支持十六进制颜色、RGB 和 RGBA。默认值为：<c>false</c>
     /// </param>
     /// <returns>
     ///     <see cref="ColorValueValidator" />
@@ -260,6 +266,19 @@ public static class Validators
         Conditional<T>(builder => builder.When(condition).ThenMessage(resourceType, resourceName));
 
     /// <summary>
+    ///     创建自定义验证特性验证器
+    /// </summary>
+    /// <param name="validatorType">执行自定义验证的类型</param>
+    /// <param name="method">验证方法</param>
+    /// <returns>
+    ///     <see cref="CustomValidationValidator" />
+    /// </returns>
+    public static CustomValidationValidator CustomValidation(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
+        Type validatorType, string method) =>
+        new(validatorType, method);
+
+    /// <summary>
     ///     创建 <see cref="System.DateOnly" /> 验证器
     /// </summary>
     /// <param name="formats">允许的日期格式（如 "yyyy-MM-dd"）</param>
@@ -305,7 +324,7 @@ public static class Validators
     ///     创建验证数值的小数位数验证器
     /// </summary>
     /// <param name="maxDecimalPlaces">允许的最大有效小数位数</param>
-    /// <param name="allowStringValues">允许字符串数值，默认值为：<c>false</c></param>
+    /// <param name="allowStringValues">是否允许字符串数值，默认值为：<c>false</c></param>
     /// <returns>
     ///     <see cref="DecimalPlacesValidator" />
     /// </returns>
@@ -1175,7 +1194,7 @@ public static class Validators
     /// <summary>
     ///     创建验证器代理
     /// </summary>
-    /// <param name="validatedObjectProvider">被验证对象的提供器</param>
+    /// <param name="validatingObjectFactory">用于执行验证的对象工厂</param>
     /// <param name="constructorArgsFactory"><typeparamref name="TValidator" /> 构造函数参数工厂</param>
     /// <typeparam name="T">对象类型</typeparam>
     /// <typeparam name="TValidator">
@@ -1184,13 +1203,13 @@ public static class Validators
     /// <returns>
     ///     <see cref="ValidatorProxy{T1,T2}" />
     /// </returns>
-    public static ValidatorProxy<T, TValidator> ValidatorProxy<T, TValidator>(Func<T, object?> validatedObjectProvider,
+    public static ValidatorProxy<T, TValidator> ValidatorProxy<T, TValidator>(Func<T, object?> validatingObjectFactory,
         Func<T, ValidationContext<T>, object?[]?>? constructorArgsFactory = null)
         where TValidator : ValidatorBase =>
-        new(validatedObjectProvider, constructorArgsFactory);
+        new(validatingObjectFactory, constructorArgsFactory);
 
     /// <summary>
-    ///     创建单个值验证特性验证器
+    ///     创建单值验证特性验证器
     /// </summary>
     /// <param name="attributes">验证特性列表</param>
     /// <returns>
@@ -1199,7 +1218,7 @@ public static class Validators
     public static AttributeValueValidator AttributeValue(params ValidationAttribute[] attributes) => new(attributes);
 
     /// <summary>
-    ///     创建单个值验证特性验证器
+    ///     创建单值验证特性验证器
     /// </summary>
     /// <param name="attributes">验证特性列表</param>
     /// <param name="items">共享数据</param>
@@ -1210,7 +1229,7 @@ public static class Validators
         IDictionary<object, object?>? items) => new(attributes, items);
 
     /// <summary>
-    ///     创建单个值验证特性验证器
+    ///     创建单值验证特性验证器
     /// </summary>
     /// <param name="attributes">验证特性列表</param>
     /// <param name="serviceProvider">
@@ -1230,11 +1249,9 @@ public static class Validators
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
     /// </param>
-    /// <typeparam name="T">对象类型</typeparam>
     /// <returns>
-    ///     <see cref="IValidationService{T}" />
+    ///     <see cref="IValidationService" />
     /// </returns>
-    public static IValidationService<T> For<T>(IServiceProvider? serviceProvider = null)
-        where T : class =>
-        serviceProvider is null ? new ValidationService<T>() : new ValidationService<T>(serviceProvider);
+    public static IValidationService Service(IServiceProvider? serviceProvider = null) =>
+        serviceProvider is null ? _defaultValidationService : new ValidationService(serviceProvider);
 }

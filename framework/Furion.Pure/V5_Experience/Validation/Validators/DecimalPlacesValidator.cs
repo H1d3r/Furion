@@ -59,7 +59,7 @@ public class DecimalPlacesValidator : ValidatorBase
     public int MaxDecimalPlaces { get; }
 
     /// <summary>
-    ///     允许字符串数值
+    ///     是否允许字符串数值
     /// </summary>
     /// <remarks>默认值为：<c>false</c>。</remarks>
     public bool AllowStringValues { get; set; }
@@ -75,7 +75,7 @@ public class DecimalPlacesValidator : ValidatorBase
 
         decimal decimalValue;
 
-        // 检查是否允许字符串数值
+        // 检查是否是否允许字符串数值
         if (AllowStringValues && value is string stringValue)
         {
             if (!decimal.TryParse(stringValue, NumberStyles.Number, CultureInfo.InvariantCulture, out decimalValue))

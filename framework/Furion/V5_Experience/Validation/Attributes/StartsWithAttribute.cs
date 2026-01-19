@@ -35,6 +35,9 @@ namespace System.ComponentModel.DataAnnotations;
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class StartsWithAttribute : ValidationBaseAttribute
 {
+    /// <inheritdoc cref="StartsWithValidator" />
+    internal readonly StartsWithValidator _validator;
+
     /// <summary>
     ///     <inheritdoc cref="StartsWithAttribute" />
     /// </summary>
@@ -51,7 +54,7 @@ public class StartsWithAttribute : ValidationBaseAttribute
     public StartsWithAttribute(string searchValue)
     {
         SearchValue = searchValue;
-        Validator = new StartsWithValidator(searchValue);
+        _validator = new StartsWithValidator(searchValue);
 
         UseResourceKey(() => nameof(ValidationMessages.StartsWithValidator_ValidationError));
     }
@@ -71,17 +74,12 @@ public class StartsWithAttribute : ValidationBaseAttribute
         set
         {
             field = value;
-            Validator.Comparison = value;
+            _validator.Comparison = value;
         }
     } = StringComparison.Ordinal;
 
-    /// <summary>
-    ///     <inheritdoc cref="StartsWithValidator" />
-    /// </summary>
-    protected StartsWithValidator Validator { get; }
-
     /// <inheritdoc />
-    public override bool IsValid(object? value) => Validator.IsValid(value);
+    public override bool IsValid(object? value) => _validator.IsValid(value);
 
     /// <inheritdoc />
     public override string FormatErrorMessage(string name) =>

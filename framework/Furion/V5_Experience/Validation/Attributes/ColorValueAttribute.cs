@@ -34,12 +34,15 @@ namespace System.ComponentModel.DataAnnotations;
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class ColorValueAttribute : ValidationBaseAttribute
 {
+    /// <inheritdoc cref="ColorValueValidator" />
+    internal readonly ColorValueValidator _validator;
+
     /// <summary>
     ///     <inheritdoc cref="ColorValueAttribute" />
     /// </summary>
     public ColorValueAttribute()
     {
-        Validator = new ColorValueValidator();
+        _validator = new ColorValueValidator();
 
         UseResourceKey(() => nameof(ValidationMessages.ColorValueValidator_ValidationError));
     }
@@ -47,22 +50,17 @@ public class ColorValueAttribute : ValidationBaseAttribute
     /// <summary>
     ///     是否启用完整模式
     /// </summary>
-    /// <remarks>在完整模式下，支持的颜色格式包括：十六进制颜色、RGB、RGBA、HSL 和 HSLA。若未启用，则仅支持：十六进制颜色、RGB 和 RGBA。默认值为：<c>false</c>。</remarks>
+    /// <remarks>在完整模式下，支持的颜色格式包括：十六进制颜色、RGB、RGBA、HSL 和 HSLA；若未启用，则仅支持十六进制颜色、RGB 和 RGBA。默认值为：<c>false</c>。</remarks>
     public bool FullMode
     {
         get;
         set
         {
             field = value;
-            Validator.FullMode = value;
+            _validator.FullMode = value;
         }
     }
 
-    /// <summary>
-    ///     <inheritdoc cref="ColorValueValidator" />
-    /// </summary>
-    protected ColorValueValidator Validator { get; }
-
     /// <inheritdoc />
-    public override bool IsValid(object? value) => Validator.IsValid(value);
+    public override bool IsValid(object? value) => _validator.IsValid(value);
 }

@@ -29,24 +29,35 @@ using System.ComponentModel.DataAnnotations;
 namespace Furion.Validation;
 
 /// <summary>
-///     指定参数使用指定的验证器进行验证
+///     指定对象验证器验证特性
 /// </summary>
 /// <typeparam name="TValidator">
 ///     <see cref="IObjectValidator" />
 /// </typeparam>
-[AttributeUsage(AttributeTargets.Parameter)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class ValidateWithAttribute<TValidator> : ValidationAttribute
     where TValidator : IObjectValidator
 {
+    /// <summary>
+    ///     规则集
+    /// </summary>
+    public string?[]? RuleSets { get; set; }
+
     /// <inheritdoc />
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
+        // 空检查
+        if (RuleSets is not null)
+        {
+            validationContext.WithRuleSets(RuleSets);
+        }
+
         // 创建 TValidator 实例
         var validator = validationContext.GetService<IServiceProvider>() is null
             ? Activator.CreateInstance<TValidator>()
             : ActivatorUtilities.CreateInstance<TValidator>(validationContext);
 
-        // 获取对象验证结果集合
+        // 获取对象验证结果列表
         var validationResults = validator.ToResults(validationContext);
 
         return validationResults is { Count: > 0 } ? validationResults[0] : ValidationResult.Success;

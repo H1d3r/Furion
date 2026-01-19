@@ -28,7 +28,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Furion.Validation;
 
 /// <summary>
-///     单个值验证特性验证器
+///     单值验证特性验证器
 /// </summary>
 public class AttributeValueValidator : ValidatorBase, IValidatorInitializer
 {
@@ -114,7 +114,7 @@ public class AttributeValueValidator : ValidatorBase, IValidatorInitializer
     public override bool IsValid(object? value, IValidationContext? validationContext) =>
         Validator.TryValidateValue(value,
             CreateValidationContext(value, validationContext?.DisplayName,
-                validationContext?.MemberNames?.FirstOrDefault()), null, Attributes);
+                validationContext?.MemberNames?.FirstOrDefault(), validationContext?.RuleSets), null, Attributes);
 
     /// <inheritdoc />
     public override List<ValidationResult>? GetValidationResults(object? value, IValidationContext? validationContext)
@@ -124,7 +124,8 @@ public class AttributeValueValidator : ValidatorBase, IValidatorInitializer
 
         Validator.TryValidateValue(value,
             CreateValidationContext(value, validationContext?.DisplayName,
-                validationContext?.MemberNames?.FirstOrDefault()), validationResults, Attributes);
+                validationContext?.MemberNames?.FirstOrDefault(), validationContext?.RuleSets), validationResults,
+            Attributes);
 
         // 如果验证未通过且配置了自定义错误信息，则在首部添加自定义错误信息
         if (validationResults.Count > 0 && (string?)ErrorMessageString is not null)
@@ -144,7 +145,7 @@ public class AttributeValueValidator : ValidatorBase, IValidatorInitializer
         {
             Validator.ValidateValue(value,
                 CreateValidationContext(value, validationContext?.DisplayName,
-                    validationContext?.MemberNames?.FirstOrDefault()), Attributes);
+                    validationContext?.MemberNames?.FirstOrDefault(), validationContext?.RuleSets), Attributes);
         }
         // 如果验证未通过且配置了自定义错误信息，则重新抛出异常
         catch (ValidationException e) when (ErrorMessageString is not null)
@@ -156,16 +157,21 @@ public class AttributeValueValidator : ValidatorBase, IValidatorInitializer
         }
     }
 
+    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
+    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
+
     /// <summary>
     ///     创建 <see cref="ValidationContext" /> 实例
     /// </summary>
     /// <param name="value">对象</param>
     /// <param name="name">显示名称</param>
     /// <param name="memberName">成员名称</param>
+    /// <param name="ruleSets">规则集</param>
     /// <returns>
     ///     <see cref="ValidationContext" />
     /// </returns>
-    internal ValidationContext CreateValidationContext(object? value, string? name, string? memberName)
+    internal ValidationContext CreateValidationContext(object? value, string? name, string? memberName,
+        string?[]? ruleSets)
     {
         // 初始化 ValidationContext 实例
         var validationContext = new ValidationContext(value ?? _sentinel, Items) { MemberName = memberName };
@@ -176,12 +182,16 @@ public class AttributeValueValidator : ValidatorBase, IValidatorInitializer
             validationContext.DisplayName = name;
         }
 
+        // 空检查
+        if (ruleSets is not null)
+        {
+            // 设置规则集
+            validationContext.WithRuleSets(ruleSets);
+        }
+
         // 同步 IServiceProvider 委托
         validationContext.InitializeServiceProvider(_serviceProvider!);
 
         return validationContext;
     }
-
-    /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
-    internal void InitializeServiceProvider(Func<Type, object?>? serviceProvider) => _serviceProvider = serviceProvider;
 }
