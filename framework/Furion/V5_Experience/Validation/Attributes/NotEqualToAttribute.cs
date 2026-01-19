@@ -35,6 +35,9 @@ namespace System.ComponentModel.DataAnnotations;
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class NotEqualToAttribute : ValidationBaseAttribute
 {
+    /// <inheritdoc cref="NotEqualToValidator" />
+    internal readonly NotEqualToValidator _validator;
+
     /// <summary>
     ///     <inheritdoc cref="NotEqualToAttribute" />
     /// </summary>
@@ -42,7 +45,7 @@ public class NotEqualToAttribute : ValidationBaseAttribute
     public NotEqualToAttribute(object? compareValue)
     {
         CompareValue = compareValue;
-        Validator = new NotEqualToValidator(compareValue);
+        _validator = new NotEqualToValidator(compareValue);
 
         UseResourceKey(() => nameof(ValidationMessages.NotEqualToValidator_ValidationError));
     }
@@ -52,13 +55,8 @@ public class NotEqualToAttribute : ValidationBaseAttribute
     /// </summary>
     public object? CompareValue { get; }
 
-    /// <summary>
-    ///     <inheritdoc cref="NotEqualToValidator" />
-    /// </summary>
-    protected NotEqualToValidator Validator { get; }
-
     /// <inheritdoc />
-    public override bool IsValid(object? value) => Validator.IsValid(value);
+    public override bool IsValid(object? value) => _validator.IsValid(value);
 
     /// <inheritdoc />
     public override string FormatErrorMessage(string name) =>
