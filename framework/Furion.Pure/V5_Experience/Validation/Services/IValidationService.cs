@@ -33,7 +33,7 @@ namespace Furion.Validation;
 public interface IValidationService
 {
     /// <summary>
-    ///     检查对象合法性
+    ///     检查对象是否合法
     /// </summary>
     /// <param name="instance">对象</param>
     /// <param name="ruleSets">规则集</param>
@@ -43,7 +43,7 @@ public interface IValidationService
     bool IsValid(object? instance, string?[]? ruleSets = null);
 
     /// <summary>
-    ///     获取对象验证结果集合
+    ///     获取对象验证结果列表
     /// </summary>
     /// <param name="instance">对象</param>
     /// <param name="ruleSets">规则集</param>
@@ -53,7 +53,7 @@ public interface IValidationService
     List<ValidationResult>? GetValidationResults(object? instance, string?[]? ruleSets = null);
 
     /// <summary>
-    ///     验证对象
+    ///     执行验证
     /// </summary>
     /// <remarks>失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
     /// <param name="instance">对象</param>
@@ -72,7 +72,7 @@ public interface IValidationService
     bool IsValid(IEnumerable<object?> instances, string?[]? ruleSets = null);
 
     /// <summary>
-    ///     获取多个对象验证结果集合
+    ///     获取多个对象验证结果列表
     /// </summary>
     /// <param name="instances">对象集合</param>
     /// <param name="ruleSets">规则集</param>

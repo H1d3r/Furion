@@ -64,7 +64,7 @@ public abstract class ValidatorBase<T> : ValidatorBase
     }
 
     /// <summary>
-    ///     检查对象合法性
+    ///     检查对象是否合法
     /// </summary>
     /// <param name="instance">对象</param>
     /// <param name="validationContext">
@@ -76,7 +76,7 @@ public abstract class ValidatorBase<T> : ValidatorBase
     public abstract bool IsValid(T? instance, ValidationContext<T> validationContext);
 
     /// <summary>
-    ///     获取对象验证结果集合
+    ///     获取对象验证结果列表
     /// </summary>
     /// <param name="instance">对象</param>
     /// <param name="validationContext">
@@ -91,7 +91,7 @@ public abstract class ValidatorBase<T> : ValidatorBase
             : [new ValidationResult(FormatErrorMessage(validationContext.DisplayName), validationContext.MemberNames)];
 
     /// <summary>
-    ///     验证对象
+    ///     执行验证
     /// </summary>
     /// <remarks>失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
     /// <param name="instance">对象</param>
@@ -101,7 +101,7 @@ public abstract class ValidatorBase<T> : ValidatorBase
     /// <exception cref="ValidationException"></exception>
     public virtual void Validate(T? instance, ValidationContext<T> validationContext)
     {
-        // 检查对象合法性
+        // 检查对象是否合法
         if (!IsValid(instance, validationContext))
         {
             throw new ValidationException(
@@ -354,7 +354,7 @@ public abstract class ValidatorBase
     protected event EventHandler<ValidationPropertyChangedEventArgs>? PropertyChanged;
 
     /// <summary>
-    ///     检查对象合法性
+    ///     检查对象是否合法
     /// </summary>
     /// <param name="value">对象</param>
     /// <returns>
@@ -363,7 +363,7 @@ public abstract class ValidatorBase
     public virtual bool IsValid(object? value) => IsValid(value, null);
 
     /// <summary>
-    ///     检查对象合法性
+    ///     检查对象是否合法
     /// </summary>
     /// <param name="value">对象</param>
     /// <param name="validationContext">
@@ -375,7 +375,7 @@ public abstract class ValidatorBase
     public abstract bool IsValid(object? value, IValidationContext? validationContext);
 
     /// <summary>
-    ///     获取对象验证结果集合
+    ///     获取对象验证结果列表
     /// </summary>
     /// <param name="value">对象</param>
     /// <param name="name">显示名称</param>
@@ -388,7 +388,7 @@ public abstract class ValidatorBase
         GetValidationResults(value, new LegacyValidationContext(value, name, memberNames));
 
     /// <summary>
-    ///     获取对象验证结果集合
+    ///     获取对象验证结果列表
     /// </summary>
     /// <param name="value">对象</param>
     /// <param name="validationContext">
@@ -407,7 +407,7 @@ public abstract class ValidatorBase
             ];
 
     /// <summary>
-    ///     验证对象
+    ///     执行验证
     /// </summary>
     /// <remarks>失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
     /// <param name="value">对象</param>
@@ -418,7 +418,7 @@ public abstract class ValidatorBase
         Validate(value, new LegacyValidationContext(value, name, memberNames));
 
     /// <summary>
-    ///     验证对象
+    ///     执行验证
     /// </summary>
     /// <remarks>失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
     /// <param name="value">对象</param>
@@ -428,7 +428,7 @@ public abstract class ValidatorBase
     /// <exception cref="ValidationException"></exception>
     public virtual void Validate(object? value, IValidationContext? validationContext)
     {
-        // 检查对象合法性
+        // 检查对象是否合法
         if (!IsValid(value, validationContext))
         {
             throw new ValidationException(
@@ -438,7 +438,7 @@ public abstract class ValidatorBase
     }
 
     /// <summary>
-    ///     错误信息格式化设置
+    ///     格式化错误消息
     /// </summary>
     /// <param name="name">显示名称</param>
     /// <returns>
