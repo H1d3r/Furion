@@ -88,7 +88,7 @@ public class CollectionValidator<TElement> : ValidatorBase<IEnumerable<TElement>
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        return GetValidatedElements(instance).All(u => _elementValidator.IsValid(u, ruleSets));
+        return GetValidatingElements(instance).All(u => _elementValidator.IsValid(u, ruleSets));
     }
 
     /// <inheritdoc />
@@ -100,9 +100,9 @@ public class CollectionValidator<TElement> : ValidatorBase<IEnumerable<TElement>
         // 初始化验证结果集合
         var validationResults = new List<ValidationResult>();
 
-        // 遍历用于验证的集合元素
+        // 遍历用于执行验证的集合元素
         var index = 0;
-        foreach (var element in GetValidatedElements(instance))
+        foreach (var element in GetValidatingElements(instance))
         {
             // 获取原始属性路径
             var originalPath = _memberPathRepairable?.MemberPath;
@@ -132,9 +132,9 @@ public class CollectionValidator<TElement> : ValidatorBase<IEnumerable<TElement>
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        // 遍历用于验证的集合元素
+        // 遍历用于执行验证的集合元素
         var index = 0;
-        foreach (var element in GetValidatedElements(instance))
+        foreach (var element in GetValidatingElements(instance))
         {
             // 获取原始属性路径
             var originalPath = _memberPathRepairable?.MemberPath;
@@ -198,7 +198,7 @@ public class CollectionValidator<TElement> : ValidatorBase<IEnumerable<TElement>
 
         try
         {
-            // 获取对象验证结果集合
+            // 获取对象验证结果列表
             return GetValidationResults((IEnumerable<TElement>)validationContext.ObjectInstance, ruleSets) ?? [];
         }
         finally
@@ -251,7 +251,7 @@ public class CollectionValidator<TElement> : ValidatorBase<IEnumerable<TElement>
     }
 
     /// <summary>
-    ///     筛选用于验证的集合元素
+    ///     筛选用于执行验证的集合元素
     /// </summary>
     /// <param name="elementFilter">元素过滤委托</param>
     /// <returns>
@@ -279,7 +279,7 @@ public class CollectionValidator<TElement> : ValidatorBase<IEnumerable<TElement>
     }
 
     /// <summary>
-    ///     筛选用于验证的集合元素
+    ///     筛选用于执行验证的集合元素
     /// </summary>
     /// <param name="elements">
     ///     <see cref="IEnumerable{T}" />
@@ -287,7 +287,7 @@ public class CollectionValidator<TElement> : ValidatorBase<IEnumerable<TElement>
     /// <returns>
     ///     <see cref="IEnumerable{T}" />
     /// </returns>
-    internal IEnumerable<TElement> GetValidatedElements(IEnumerable<TElement> elements)
+    internal IEnumerable<TElement> GetValidatingElements(IEnumerable<TElement> elements)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(elements);

@@ -115,8 +115,8 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <inheritdoc />
     public virtual bool IsValid(T? value, string?[]? ruleSets = null)
     {
-        // 获取用于验证的值
-        var resolvedValue = GetValueForValidation(value!);
+        // 获取用于执行验证的值
+        var resolvedValue = GetValidatingValue(value!);
 
         // 解析验证时使用的规则集
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
@@ -137,8 +137,8 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <inheritdoc />
     public virtual List<ValidationResult>? GetValidationResults(T? value, string?[]? ruleSets = null)
     {
-        // 获取用于验证的值
-        var resolvedValue = GetValueForValidation(value!);
+        // 获取用于执行验证的值
+        var resolvedValue = GetValidatingValue(value!);
 
         // 解析验证时使用的规则集
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
@@ -159,8 +159,8 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     /// <inheritdoc />
     public virtual void Validate(T? value, string?[]? ruleSets = null)
     {
-        // 获取用于验证的值
-        var resolvedValue = GetValueForValidation(value!);
+        // 获取用于执行验证的值
+        var resolvedValue = GetValidatingValue(value!);
 
         // 解析验证时使用的规则集
         var resolvedRuleSets = ResolveValidationRuleSets(ruleSets);
@@ -215,10 +215,10 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
 
         try
         {
-            // 获取用于验证的值（解决 null 值时 ObjectInstance 为 object 实例问题）
+            // 获取用于执行验证的值（解决 null 值时 ObjectInstance 为 object 实例问题）
             var instance = validationContext.ObjectInstance is T value ? value : default;
 
-            // 设置显示名称并返回对象验证结果集合
+            // 设置显示名称并返回对象验证结果列表
             return WithDisplayName(validationContext.DisplayName).GetValidationResults(instance, ruleSets) ?? [];
         }
         finally
@@ -531,13 +531,13 @@ public class ValueValidator<T> : FluentValidatorBuilder<T, ValueValidator<T>>, I
     }
 
     /// <summary>
-    ///     获取用于验证的值
+    ///     获取用于执行验证的值
     /// </summary>
     /// <param name="value">对象</param>
     /// <returns>
     ///     <typeparamref name="T" />
     /// </returns>
-    internal T GetValueForValidation(T value) => _preProcessor is not null ? _preProcessor(value) : value;
+    internal T GetValidatingValue(T value) => _preProcessor is not null ? _preProcessor(value) : value;
 
     /// <summary>
     ///     获取显示名称
