@@ -35,6 +35,9 @@ namespace System.ComponentModel.DataAnnotations;
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class StringNotContainsAttribute : ValidationBaseAttribute
 {
+    /// <inheritdoc cref="StringNotContainsValidator" />
+    internal readonly StringNotContainsValidator _validator;
+
     /// <summary>
     ///     <inheritdoc cref="StringNotContainsAttribute" />
     /// </summary>
@@ -51,7 +54,7 @@ public class StringNotContainsAttribute : ValidationBaseAttribute
     public StringNotContainsAttribute(string searchValue)
     {
         SearchValue = searchValue;
-        Validator = new StringNotContainsValidator(searchValue);
+        _validator = new StringNotContainsValidator(searchValue);
 
         UseResourceKey(() => nameof(ValidationMessages.StringNotContainsValidator_ValidationError));
     }
@@ -71,17 +74,12 @@ public class StringNotContainsAttribute : ValidationBaseAttribute
         set
         {
             field = value;
-            Validator.Comparison = value;
+            _validator.Comparison = value;
         }
     } = StringComparison.Ordinal;
 
-    /// <summary>
-    ///     <inheritdoc cref="StringNotContainsValidator" />
-    /// </summary>
-    protected StringNotContainsValidator Validator { get; }
-
     /// <inheritdoc />
-    public override bool IsValid(object? value) => Validator.IsValid(value);
+    public override bool IsValid(object? value) => _validator.IsValid(value);
 
     /// <inheritdoc />
     public override string FormatErrorMessage(string name) =>
