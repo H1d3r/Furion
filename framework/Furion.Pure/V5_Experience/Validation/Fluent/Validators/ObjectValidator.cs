@@ -36,14 +36,6 @@ namespace Furion.Validation;
 public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMemberPathRepairable, IRuleSetContextProvider,
     IValidationAttributeConfigurable
 {
-    /// <summary>
-    ///     验证上下文键
-    /// </summary>
-    /// <remarks>
-    ///     用于使用 <![CDATA[ValidationContext.With<T>()]]> 时设置。
-    /// </remarks>
-    internal static readonly object ValidationContextsKey = new();
-
     /// <inheritdoc cref="AttributeObjectValidator" />
     internal readonly AttributeObjectValidator _attributeValidator;
 
@@ -316,7 +308,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
 
         // 尝试从 ValidationContext.Items 中解析验证选项中的规则集
         string?[]? ruleSets = null;
-        if (validationContext.Items.TryGetValue(ValidationDataContext.ValidationOptionsKey, out var metadataObj) &&
+        if (validationContext.Items.TryGetValue(Constants.ValidationOptionsKey, out var metadataObj) &&
             metadataObj is ValidationOptionsMetadata metadata)
         {
             ruleSets = metadata.RuleSets;
@@ -324,7 +316,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
 
         try
         {
-            // 获取对象验证结果集合
+            // 获取对象验证结果列表
             return GetValidationResults((T)validationContext.ObjectInstance, ruleSets) ?? [];
         }
         finally
@@ -744,7 +736,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
     public virtual ObjectValidator<T> CustomOnly() => UseAttributeValidation(false);
 
     /// <summary>
-    ///     获取对象验证结果集合
+    ///     获取对象验证结果列表
     /// </summary>
     /// <param name="disposeAfterValidation">是否在验证完成后自动释放当前实例。默认值为：<c>true</c></param>
     /// <returns>
@@ -752,8 +744,8 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
     /// </returns>
     public virtual List<ValidationResult> ToResults(bool disposeAfterValidation = true)
     {
-        // 查找共享数据中是否包含 ValidationContextsKey 键数据
-        if (Items.TryGetValue(ValidationContextsKey, out var validationContextObject) &&
+        // 查找共享数据中是否包含 Constants.ValidationContextKey 键数据
+        if (Items.TryGetValue(Constants.ValidationContextKey, out var validationContextObject) &&
             validationContextObject is ValidationContext validationContext)
         {
             return ToResults(validationContext, disposeAfterValidation);

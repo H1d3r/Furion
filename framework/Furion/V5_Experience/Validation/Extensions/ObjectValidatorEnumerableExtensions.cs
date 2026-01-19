@@ -33,7 +33,7 @@ namespace Furion.Validation;
 public static class ObjectValidatorEnumerableExtensions
 {
     /// <summary>
-    ///     检查对象合法性
+    ///     检查对象是否合法
     /// </summary>
     /// <param name="validators"><see cref="IObjectValidator{T}" /> 集合</param>
     /// <param name="instance">对象</param>
@@ -51,7 +51,7 @@ public static class ObjectValidatorEnumerableExtensions
     }
 
     /// <summary>
-    ///     获取对象验证结果集合
+    ///     获取对象验证结果列表
     /// </summary>
     /// <param name="validators"><see cref="IObjectValidator{T}" /> 集合</param>
     /// <param name="instance">对象</param>
@@ -69,7 +69,7 @@ public static class ObjectValidatorEnumerableExtensions
     }
 
     /// <summary>
-    ///     验证对象
+    ///     执行验证
     /// </summary>
     /// <remarks>失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
     /// <param name="validators"><see cref="IObjectValidator{T}" /> 集合</param>

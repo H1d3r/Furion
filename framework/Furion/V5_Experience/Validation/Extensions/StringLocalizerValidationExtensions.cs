@@ -23,45 +23,39 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Validation;
+using Microsoft.Extensions.Localization;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace Furion.Validation;
 
 /// <summary>
-///     数据验证模块 <see cref="IMvcBuilder" /> 拓展类
+///     <see cref="IStringLocalizer" /> 拓展类
 /// </summary>
-public static class ValidationMvcBuilderExtensions
+public static class StringLocalizerValidationExtensions
 {
     /// <summary>
-    ///     添加验证选项配置
+    ///     获取具有给定名称的字符串资源
     /// </summary>
-    /// <param name="mvcBuilder">
-    ///     <see cref="IMvcBuilder" />
+    /// <param name="localizer">
+    ///     <see cref="IStringLocalizer" />
     /// </param>
-    /// <param name="configure">自定义配置委托</param>
+    /// <param name="name">字符串资源的名称</param>
     /// <returns>
-    ///     <see cref="IMvcBuilder" />
+    ///     <see cref="LocalizedString" />
     /// </returns>
-    public static IMvcBuilder AddValidationOptions(this IMvcBuilder mvcBuilder,
-        Action<ValidationBuilder>? configure = null)
-    {
-        // 添加数据验证服务
-        mvcBuilder.Services.AddValidationCore(configure);
+    public static LocalizedString GetString(this IStringLocalizer? localizer, string name) =>
+        localizer is null ? new LocalizedString(name, name) : localizer[name];
 
-        // 添加验证选项模型验证器提供器
-        mvcBuilder.AddMvcOptions(options =>
-        {
-            if (!options.ModelValidatorProviders.OfType<ValidationOptionsModelValidatorProvider>().Any())
-            {
-                options.ModelValidatorProviders.Insert(0, new ValidationOptionsModelValidatorProvider());
-            }
-
-            if (!options.Filters.OfType<ValidationOptionsAsyncPageFilter>().Any())
-            {
-                options.Filters.Add(new ValidationOptionsAsyncPageFilter());
-            }
-        });
-
-        return mvcBuilder;
-    }
+    /// <summary>
+    ///     获取具有给定名称的字符串资源
+    /// </summary>
+    /// <param name="localizer">
+    ///     <see cref="IStringLocalizer" />
+    /// </param>
+    /// <param name="name">字符串资源的名称</param>
+    /// <param name="arguments">用于设置字符串格式的值</param>
+    /// <returns>
+    ///     <see cref="LocalizedString" />
+    /// </returns>
+    public static LocalizedString GetString(this IStringLocalizer? localizer, string name, params object[] arguments) =>
+        localizer is null ? new LocalizedString(name, string.Format(name, arguments)) : localizer[name, arguments];
 }

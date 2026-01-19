@@ -38,7 +38,7 @@ public class TestTaskQueue : IDynamicApiController, IDisposable
         _taskQueue.Enqueue(provider =>
         {
             Console.WriteLine("我是同步的，但我延迟了 3 秒");
-        }, 3000);
+        }, task => task.WithDelay(3000));
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ public class TestTaskQueue : IDynamicApiController, IDisposable
         _taskQueue.Enqueue(provider =>
         {
             Console.WriteLine("我是同步的，但我延迟了 3 秒");
-        }, 3000, runOnceIfDelaySet: true);
+        }, task => task.WithDelay(3000).WithRunOnceIfDelaySet(true));
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public class TestTaskQueue : IDynamicApiController, IDisposable
         {
             Console.WriteLine("我是异步的，但我延迟了 3 秒");
             await ValueTask.CompletedTask;
-        }, 3000);
+        }, task => task.WithDelay(3000));
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public class TestTaskQueue : IDynamicApiController, IDisposable
         {
             Console.WriteLine("我是异步的，但我延迟了 3 秒");
             await ValueTask.CompletedTask;
-        }, 3000, runOnceIfDelaySet: true);
+        }, task => task.WithDelay(3000).WithRunOnceIfDelaySet(true));
     }
 
     public void 测试异常()
@@ -118,7 +118,7 @@ public class TestTaskQueue : IDynamicApiController, IDisposable
                     await Task.Delay(5000);
                 }
                 Log.Information($"这是{s}结束时间：" + DateTime.Now);
-            }, concurrent: false);
+            }, task => task.WithConcurrent(false));
         }
     }
 
@@ -128,7 +128,7 @@ public class TestTaskQueue : IDynamicApiController, IDisposable
         {
             Console.WriteLine("我是异步的");
             await ValueTask.CompletedTask;
-        }, channel: "abc");
+        }, task => task.WithChannel("abc"));
     }
 
     public void Dispose()
