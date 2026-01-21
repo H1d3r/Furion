@@ -113,7 +113,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     public IDictionary<object, object?> Items { get; }
 
     /// <summary>
-    ///     验证器集合
+    ///     验证器列表
     /// </summary>
     internal List<ValidatorBase> Validators { get; }
 
@@ -122,7 +122,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
         InitializeServiceProvider(serviceProvider);
 
     /// <summary>
-    ///     获取验证器集合
+    ///     获取验证器列表
     /// </summary>
     /// <returns>
     ///     <see cref="IReadOnlyList{T}" />
@@ -330,7 +330,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     public virtual TSelf CustomValidation(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
         Type validatorType, string method) =>
-        AddValidator(new CustomValidationValidator(validatorType, method));
+        WithAttributes(new CustomValidationAttribute(validatorType, method));
 
     /// <summary>
     ///     添加 <see cref="System.DateOnly" /> 验证器
@@ -474,11 +474,21 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <summary>
     ///     添加文件拓展名验证器
     /// </summary>
+    /// <remarks>默认文件拓展名为：<c>png,jpg,jpeg,gif</c>。</remarks>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf FileExtensions() => AddValidator(new FileExtensionsValidator());
+
+    /// <summary>
+    ///     添加文件拓展名验证器
+    /// </summary>
     /// <param name="extensions">文件拓展名</param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf FileExtensions(string extensions) => AddValidator(new FileExtensionsValidator(extensions));
+    public virtual TSelf FileExtensions(string extensions) =>
+        AddValidator(new FileExtensionsValidator { Extensions = extensions });
 
     /// <summary>
     ///     添加大于等于验证器
@@ -567,6 +577,14 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     ///     <typeparamref name="TSelf" />
     /// </returns>
     public virtual TSelf LessThan(IComparable compareValue) => AddValidator(new LessThanValidator(compareValue));
+
+    /// <summary>
+    ///     添加最大长度验证器
+    /// </summary>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf MaxLength() => AddValidator(new MaxLengthValidator());
 
     /// <summary>
     ///     添加最大长度验证器
@@ -925,7 +943,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf RegularExpression(string pattern, int matchTimeoutInMilliseconds = 2000) =>
+    public virtual TSelf RegularExpression([StringSyntax(StringSyntaxAttribute.Regex)] string pattern,
+        int matchTimeoutInMilliseconds = 2000) =>
         AddValidator(
             new RegularExpressionValidator(pattern) { MatchTimeoutInMilliseconds = matchTimeoutInMilliseconds });
 
@@ -937,7 +956,8 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
-    public virtual TSelf Matches(string pattern, int matchTimeoutInMilliseconds = 2000) =>
+    public virtual TSelf Matches([StringSyntax(StringSyntaxAttribute.Regex)] string pattern,
+        int matchTimeoutInMilliseconds = 2000) =>
         AddValidator(
             new RegularExpressionValidator(pattern) { MatchTimeoutInMilliseconds = matchTimeoutInMilliseconds });
 
@@ -1097,6 +1117,15 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <summary>
     ///     添加验证特性验证器
     /// </summary>
+    /// <param name="attribute">验证特性</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf WithAttribute(ValidationAttribute attribute) => WithAttributes(attribute);
+
+    /// <summary>
+    ///     添加验证特性验证器
+    /// </summary>
     /// <param name="attributes">验证特性列表</param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
@@ -1107,7 +1136,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     /// <summary>
     ///     批量添加添加验证器
     /// </summary>
-    /// <param name="validators">验证器集合</param>
+    /// <param name="validators">验证器列表</param>
     /// <returns>
     ///     <typeparamref name="TSelf" />
     /// </returns>
@@ -1210,7 +1239,7 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
     }
 
     /// <summary>
-    ///     构建验证器集合
+    ///     构建验证器列表
     /// </summary>
     /// <param name="configure">验证器配置委托</param>
     /// <returns>
