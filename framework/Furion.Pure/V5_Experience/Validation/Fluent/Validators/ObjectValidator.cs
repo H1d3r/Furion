@@ -119,13 +119,19 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
     internal ValidatorOptions Options { get; }
 
     /// <summary>
+    ///     <inheritdoc cref="CompositeMode" />
+    /// </summary>
+    /// <remarks>默认值为：<see cref="CompositeMode.All" />。</remarks>
+    public CompositeMode Mode { get; set; } = CompositeMode.All;
+
+    /// <summary>
     ///     验证条件
     /// </summary>
     /// <remarks>当条件满足时才进行验证。</remarks>
     internal Func<T, ValidationContext<T>, bool>? WhenCondition { get; private set; }
 
     /// <summary>
-    ///     属性验证器集合
+    ///     属性验证器列表
     /// </summary>
     internal List<IPropertyValidator<T>> Validators { get; }
 
@@ -205,7 +211,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
             return null;
         }
 
-        // 初始化验证结果集合
+        // 初始化验证结果列表
         var validationResults = new List<ValidationResult>();
 
         // 检查是否启用对象属性验证特性验证
@@ -215,7 +221,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
             validationResults.AddRange(_attributeValidator.GetValidationResults(instance, validationContext) ?? []);
         }
 
-        // 获取所有属性验证器验证结果集合
+        // 获取所有属性验证器验证结果列表
         validationResults.AddRange(
             Validators.SelectMany(u => u.GetValidationResults(instance, resolvedRuleSets) ?? []));
 
@@ -253,7 +259,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
             _attributeValidator.Validate(instance, validationContext);
         }
 
-        // 遍历属性验证器集合
+        // 遍历属性验证器列表
         foreach (var validator in Validators)
         {
             validator.Validate(instance, resolvedRuleSets);
@@ -734,6 +740,22 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
     ///     <see cref="ObjectValidator{T}" />
     /// </returns>
     public virtual ObjectValidator<T> CustomOnly() => UseAttributeValidation(false);
+
+    /// <summary>
+    ///     设置验证模式
+    /// </summary>
+    /// <param name="mode">
+    ///     <see cref="CompositeMode" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="ObjectValidator{T}" />
+    /// </returns>
+    public virtual ObjectValidator<T> UseMode(CompositeMode mode)
+    {
+        Mode = mode;
+
+        return this;
+    }
 
     /// <summary>
     ///     获取对象验证结果列表
