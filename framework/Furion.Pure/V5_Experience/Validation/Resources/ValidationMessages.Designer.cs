@@ -142,15 +142,6 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
-        ///   查找类似 {0} is not valid. 的本地化字符串。
-        /// </summary>
-        internal static string CustomValidationValidator_ValidationError {
-            get {
-                return ResourceManager.GetString("CustomValidationValidator_ValidationError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 The field {0} must be a valid date. 的本地化字符串。
         /// </summary>
         internal static string DateOnlyValidator_ValidationError {

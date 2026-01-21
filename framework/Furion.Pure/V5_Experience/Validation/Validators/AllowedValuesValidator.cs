@@ -24,7 +24,6 @@
 // ------------------------------------------------------------------------
 
 using Furion.Validation.Resources;
-using System.ComponentModel.DataAnnotations;
 
 namespace Furion.Validation;
 
@@ -33,11 +32,6 @@ namespace Furion.Validation;
 /// </summary>
 public class AllowedValuesValidator : ValidatorBase
 {
-    /// <summary>
-    ///     <inheritdoc cref="AttributeValueValidator" />
-    /// </summary>
-    internal readonly AttributeValueValidator _validator;
-
     /// <summary>
     ///     <inheritdoc cref="AllowedValuesValidator" />
     /// </summary>
@@ -48,7 +42,6 @@ public class AllowedValuesValidator : ValidatorBase
         ArgumentNullException.ThrowIfNull(values);
 
         Values = values;
-        _validator = new AttributeValueValidator(new AllowedValuesAttribute(values));
 
         UseResourceKey(() => nameof(ValidationMessages.AllowedValuesValidator_ValidationError));
     }
@@ -60,5 +53,5 @@ public class AllowedValuesValidator : ValidatorBase
 
     /// <inheritdoc />
     public override bool IsValid(object? value, IValidationContext? validationContext) =>
-        _validator.IsValid(value, validationContext);
+        Values.Any(allowed => allowed?.Equals(value) ?? value is null);
 }
