@@ -24,7 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Validation.Resources;
-using System.ComponentModel.DataAnnotations;
+using System.Buffers.Text;
 
 namespace Furion.Validation;
 
@@ -34,21 +34,20 @@ namespace Furion.Validation;
 public class Base64StringValidator : ValidatorBase
 {
     /// <summary>
-    ///     <inheritdoc cref="AttributeValueValidator" />
-    /// </summary>
-    internal readonly AttributeValueValidator _validator;
-
-    /// <summary>
     ///     <inheritdoc cref="Base64StringValidator" />
     /// </summary>
-    public Base64StringValidator()
-    {
-        _validator = new AttributeValueValidator(new Base64StringAttribute());
-
+    public Base64StringValidator() =>
         UseResourceKey(() => nameof(ValidationMessages.Base64StringValidator_ValidationError));
-    }
 
     /// <inheritdoc />
-    public override bool IsValid(object? value, IValidationContext? validationContext) =>
-        _validator.IsValid(value, validationContext);
+    public override bool IsValid(object? value, IValidationContext? validationContext)
+    {
+        // 空检查
+        if (value is null)
+        {
+            return true;
+        }
+
+        return value is string valueAsString && Base64.IsValid(valueAsString);
+    }
 }

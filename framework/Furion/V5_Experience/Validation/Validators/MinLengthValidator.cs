@@ -23,8 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Extensions;
 using Furion.Validation.Resources;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 
 namespace Furion.Validation;
@@ -35,18 +35,12 @@ namespace Furion.Validation;
 public class MinLengthValidator : ValidatorBase
 {
     /// <summary>
-    ///     <inheritdoc cref="AttributeValueValidator" />
-    /// </summary>
-    internal readonly AttributeValueValidator _validator;
-
-    /// <summary>
     ///     <inheritdoc cref="MinLengthValidator" />
     /// </summary>
     /// <param name="length">最小允许长度</param>
     public MinLengthValidator(int length)
     {
         Length = length;
-        _validator = new AttributeValueValidator(new MinLengthAttribute(Length));
 
         UseResourceKey(() => nameof(ValidationMessages.MinLengthValidator_ValidationError));
     }
@@ -57,10 +51,40 @@ public class MinLengthValidator : ValidatorBase
     public int Length { get; }
 
     /// <inheritdoc />
-    public override bool IsValid(object? value, IValidationContext? validationContext) =>
-        _validator.IsValid(value, validationContext);
+    public override bool IsValid(object? value, IValidationContext? validationContext)
+    {
+        // 验证长度参数的合法性
+        EnsureLegalLengths();
+
+        // 空检查
+        if (value == null)
+        {
+            return true;
+        }
+
+        // 尝试获取对象长度
+        if (!value.TryGetCount(out var length))
+        {
+            throw new InvalidCastException(string.Format(CultureInfo.CurrentCulture,
+                "The field of type {0} must be a string, array or ICollection type.", value.GetType()));
+        }
+
+        return length >= Length;
+    }
 
     /// <inheritdoc />
     public override string FormatErrorMessage(string name) =>
         string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, Length);
+
+    /// <summary>
+    ///     验证长度参数的合法性
+    /// </summary>
+    /// <exception cref="InvalidOperationException"></exception>
+    internal void EnsureLegalLengths()
+    {
+        if (Length < 0)
+        {
+            throw new InvalidOperationException("MinLengthValidator must have a Length value that is zero or greater.");
+        }
+    }
 }
