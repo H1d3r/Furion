@@ -178,11 +178,10 @@ public class CompositeValidator<T> : ValidatorBase<T>, IValidatorInitializer, ID
     ///     <see cref="ValidatorBase" />
     /// </param>
     /// <param name="validationContext">
-    ///     <see cref="IValidationContext" />
+    ///     <see cref="ValidationContext{T}" />
     /// </param>
     /// <exception cref="ValidationException"></exception>
-    internal void ThrowValidationException(T? instance, ValidatorBase validator,
-        IValidationContext? validationContext)
+    internal void ThrowValidationException(T? instance, ValidatorBase validator, ValidationContext<T> validationContext)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(validator);
@@ -195,8 +194,8 @@ public class CompositeValidator<T> : ValidatorBase<T>, IValidatorInitializer, ID
         else
         {
             throw new ValidationException(
-                new ValidationResult(FormatErrorMessage(validationContext?.DisplayName!),
-                    validationContext?.MemberNames), null, instance);
+                new ValidationResult(FormatErrorMessage(validationContext.DisplayName), validationContext.MemberNames),
+                null, instance);
         }
     }
 
