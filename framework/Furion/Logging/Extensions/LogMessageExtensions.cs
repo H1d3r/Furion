@@ -30,7 +30,7 @@ using System.Text.Json;
 namespace Furion.Logging;
 
 /// <summary>
-/// <see cref="LogMessage"/> 拓展
+/// <see cref="LogMessage"/> 扩展
 /// </summary>
 [SuppressSniffer]
 public static class LogMessageExtensions

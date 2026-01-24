@@ -37,7 +37,7 @@ using System.Reflection;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// 动态接口控制器拓展类
+/// 动态接口控制器扩展类
 /// </summary>
 [SuppressSniffer]
 public static class DynamicApiControllerServiceCollectionExtensions

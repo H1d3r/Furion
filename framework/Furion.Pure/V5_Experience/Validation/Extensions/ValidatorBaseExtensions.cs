@@ -28,7 +28,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Furion.Validation;
 
 /// <summary>
-///     <see cref="ValidatorBase" /> 拓展类
+///     <see cref="ValidatorBase" /> 扩展类
 /// </summary>
 public static class ValidatorBaseExtensions
 {

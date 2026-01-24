@@ -138,7 +138,7 @@ public class TestLoggerServices : IDynamicApiController
         }).Start();
     }
 
-    public void 测试字符串拓展日志()
+    public void 测试字符串扩展日志()
     {
         "This is log".LogInformation<TestLoggerServices>();
     }

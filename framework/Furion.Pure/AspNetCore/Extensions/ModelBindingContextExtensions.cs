@@ -29,7 +29,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Microsoft.AspNetCore.Mvc.ModelBinding;
 
 /// <summary>
-/// <see cref="ModelBindingContext"/> 拓展
+/// <see cref="ModelBindingContext"/> 扩展
 /// </summary>
 [SuppressSniffer]
 public static class ModelBindingContextExtensions

@@ -30,7 +30,7 @@ using System.Text;
 namespace Microsoft.AspNetCore.Http;
 
 /// <summary>
-/// Http 拓展类
+/// Http 扩展类
 /// </summary>
 [SuppressSniffer]
 public static class HttpContextExtensions

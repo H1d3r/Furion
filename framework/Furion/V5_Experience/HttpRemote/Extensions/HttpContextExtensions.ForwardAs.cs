@@ -30,7 +30,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Furion.HttpRemote.Extensions;
 
 /// <summary>
-///     <see cref="HttpContext" /> 拓展类
+///     <see cref="HttpContext" /> 扩展类
 /// </summary>
 public static partial class HttpContextExtensions
 {

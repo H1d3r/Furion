@@ -28,7 +28,7 @@ using Furion.Shapeless;
 namespace Microsoft.AspNetCore.Mvc;
 
 /// <summary>
-///     <see cref="Controller" /> 拓展类
+///     <see cref="Controller" /> 扩展类
 /// </summary>
 public static class ControllerExtensions
 {

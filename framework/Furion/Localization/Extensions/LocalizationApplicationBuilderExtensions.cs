@@ -30,13 +30,13 @@ using Microsoft.Extensions.Options;
 namespace Microsoft.AspNetCore.Builder;
 
 /// <summary>
-/// 多语言中间件拓展
+/// 多语言中间件扩展
 /// </summary>
 [SuppressSniffer]
 public static class LocalizationApplicationBuilderExtensions
 {
     /// <summary>
-    /// 配置多语言中间件拓展
+    /// 配置多语言中间件扩展
     /// </summary>
     /// <param name="app"></param>
     /// <param name="customizeConfigure"></param>

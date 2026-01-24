@@ -31,7 +31,7 @@ using Microsoft.Extensions.Options;
 namespace Furion.Logging;
 
 /// <summary>
-/// 控制台默认格式化程序拓展
+/// 控制台默认格式化程序扩展
 /// </summary>
 [SuppressSniffer]
 public sealed class ConsoleFormatterExtend : ConsoleFormatter, IDisposable

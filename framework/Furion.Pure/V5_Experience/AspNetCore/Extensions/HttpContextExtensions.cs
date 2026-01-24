@@ -31,7 +31,7 @@ using System.Text;
 namespace Furion.AspNetCore.Extensions;
 
 /// <summary>
-///     <see cref="HttpContext" /> 拓展类
+///     <see cref="HttpContext" /> 扩展类
 /// </summary>
 public static class HttpContextExtensions
 {

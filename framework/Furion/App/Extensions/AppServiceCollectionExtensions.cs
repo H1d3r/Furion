@@ -32,7 +32,7 @@ using System.Text;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// 应用服务集合拓展类（由框架内部调用）
+/// 应用服务集合扩展类（由框架内部调用）
 /// </summary>
 [SuppressSniffer]
 public static class AppServiceCollectionExtensions

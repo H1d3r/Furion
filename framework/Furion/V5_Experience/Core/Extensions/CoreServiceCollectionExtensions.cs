@@ -31,7 +31,7 @@ using System.Reflection;
 namespace Furion.Extensions;
 
 /// <summary>
-///     核心模块 <see cref="IServiceCollection" /> 拓展类
+///     核心模块 <see cref="IServiceCollection" /> 扩展类
 /// </summary>
 public static class CoreServiceCollectionExtensions
 {

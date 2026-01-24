@@ -29,7 +29,7 @@ using System.Reflection;
 namespace Furion.Extensions;
 
 /// <summary>
-///     <see cref="MethodInfo" /> 拓展类
+///     <see cref="MethodInfo" /> 扩展类
 /// </summary>
 internal static class MethodInfoExtensions
 {

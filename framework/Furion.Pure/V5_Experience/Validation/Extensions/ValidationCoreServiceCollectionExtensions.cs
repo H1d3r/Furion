@@ -28,7 +28,7 @@ using Furion.Validation;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-///     数据验证模块 <see cref="IServiceCollection" /> 拓展类
+///     数据验证模块 <see cref="IServiceCollection" /> 扩展类
 /// </summary>
 public static class ValidationCoreServiceCollectionExtensions
 {

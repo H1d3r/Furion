@@ -29,7 +29,7 @@ using System.Reflection;
 namespace Furion.Extensions;
 
 /// <summary>
-///     <see cref="Expression" /> 拓展类
+///     <see cref="Expression" /> 扩展类
 /// </summary>
 internal static class LinqExpressionExtensions
 {

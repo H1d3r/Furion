@@ -28,7 +28,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Furion.Validation;
 
 /// <summary>
-///     <![CDATA[IEnumerable<IObjectValidator<T>>]]> 拓展类
+///     <![CDATA[IEnumerable<IObjectValidator<T>>]]> 扩展类
 /// </summary>
 public static class ObjectValidatorEnumerableExtensions
 {

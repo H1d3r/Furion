@@ -415,7 +415,7 @@
           "properties": {
             "FileName": {
               "type": "string",
-              "description": "日志文件完整路径或文件名，推荐 .log 作为拓展名",
+              "description": "日志文件完整路径或文件名，推荐 .log 作为扩展名",
               "default": "application.log"
             },
             "Append": {

@@ -26,7 +26,7 @@
 namespace Furion.Extensions;
 
 /// <summary>
-///     数值类型拓展类
+///     数值类型扩展类
 /// </summary>
 public static class NumberExtensions
 {

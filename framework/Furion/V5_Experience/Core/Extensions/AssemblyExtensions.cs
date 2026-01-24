@@ -28,7 +28,7 @@ using System.Reflection;
 namespace Furion.Extensions;
 
 /// <summary>
-///     <see cref="Assembly" /> 拓展类
+///     <see cref="Assembly" /> 扩展类
 /// </summary>
 internal static class AssemblyExtensions
 {

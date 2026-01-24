@@ -28,7 +28,7 @@ using Furion.UnifyResult;
 namespace Microsoft.AspNetCore.Builder;
 
 /// <summary>
-/// 状态码中间件拓展
+/// 状态码中间件扩展
 /// </summary>
 [SuppressSniffer]
 public static class UnifyResultMiddlewareExtensions

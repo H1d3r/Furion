@@ -29,7 +29,7 @@ using Furion.Localization;
 namespace Microsoft.AspNetCore.Mvc.Localization;
 
 /// <summary>
-/// IHtmlLocalizerFactory 拓展类
+/// IHtmlLocalizerFactory 扩展类
 /// </summary>
 [SuppressSniffer]
 public static class IHtmlLocalizerFactoryExtensions

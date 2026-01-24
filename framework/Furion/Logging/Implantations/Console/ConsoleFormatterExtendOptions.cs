@@ -30,7 +30,7 @@ using System.Globalization;
 namespace Furion.Logging;
 
 /// <summary>
-/// 控制台默认格式化选项拓展
+/// 控制台默认格式化选项扩展
 /// </summary>
 [SuppressSniffer]
 public sealed class ConsoleFormatterExtendOptions : ConsoleFormatterOptions

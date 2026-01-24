@@ -30,7 +30,7 @@ using System.Linq.Expressions;
 namespace Furion.DatabaseAccessor.Extensions;
 
 /// <summary>
-/// 实体多数据库上下文拓展类
+/// 实体多数据库上下文扩展类
 /// </summary>
 [SuppressSniffer]
 public static class IEntityWithDbContextLocatorExtensions
