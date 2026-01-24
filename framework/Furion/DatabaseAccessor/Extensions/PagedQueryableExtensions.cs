@@ -28,13 +28,13 @@ using Microsoft.EntityFrameworkCore;
 namespace Furion.DatabaseAccessor;
 
 /// <summary>
-/// 分页拓展类
+/// 分页扩展类
 /// </summary>
 [SuppressSniffer]
 public static class PagedQueryableExtensions
 {
     /// <summary>
-    /// 分页拓展
+    /// 分页扩展
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     /// <param name="entities"></param>
@@ -66,7 +66,7 @@ public static class PagedQueryableExtensions
     }
 
     /// <summary>
-    /// 分页拓展
+    /// 分页扩展
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
     /// <param name="entities"></param>

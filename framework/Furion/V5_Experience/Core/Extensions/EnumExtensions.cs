@@ -29,7 +29,7 @@ using System.Reflection;
 namespace Furion.Extensions;
 
 /// <summary>
-///     枚举拓展类
+///     枚举扩展类
 /// </summary>
 internal static class EnumExtensions
 {

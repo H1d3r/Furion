@@ -29,7 +29,7 @@ using System.Linq.Expressions;
 namespace Furion.LinqBuilder;
 
 /// <summary>
-/// 表达式拓展类
+/// 表达式扩展类
 /// </summary>
 [SuppressSniffer]
 public static class ExpressionExtensions

@@ -29,7 +29,7 @@ using Furion.Localization;
 namespace Microsoft.Extensions.Localization;
 
 /// <summary>
-/// IStringLocalizerFactory 拓展类
+/// IStringLocalizerFactory 扩展类
 /// </summary>
 [SuppressSniffer]
 public static class IStringLocalizerFactoryExtensions

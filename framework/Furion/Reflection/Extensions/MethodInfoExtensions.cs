@@ -28,7 +28,7 @@ using System.Reflection;
 namespace Furion.Reflection.Extensions;
 
 /// <summary>
-/// Method Info 拓展
+/// Method Info 扩展
 /// </summary>
 [SuppressSniffer]
 public static class MethodInfoExtensions

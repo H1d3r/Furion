@@ -31,7 +31,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// 规范化接口服务拓展类
+/// 规范化接口服务扩展类
 /// </summary>
 [SuppressSniffer]
 public static class SpecificationDocumentServiceCollectionExtensions

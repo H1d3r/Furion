@@ -28,7 +28,7 @@ using Furion.HttpRemote;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-///     HTTP 远程请求模块 <see cref="IServiceCollection" /> 拓展类
+///     HTTP 远程请求模块 <see cref="IServiceCollection" /> 扩展类
 /// </summary>
 public static class HttpRemoteServiceCollectionExtensions
 {

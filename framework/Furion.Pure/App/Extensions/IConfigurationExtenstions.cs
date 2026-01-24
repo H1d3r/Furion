@@ -28,7 +28,7 @@ using Furion;
 namespace Microsoft.Extensions.Configuration;
 
 /// <summary>
-/// <see cref="IConfiguration"/> 拓展
+/// <see cref="IConfiguration"/> 扩展
 /// </summary>
 public static class IConfigurationExtenstions
 {

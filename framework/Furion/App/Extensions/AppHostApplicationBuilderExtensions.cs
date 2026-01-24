@@ -29,7 +29,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Microsoft.Extensions.Hosting;
 
 /// <summary>
-/// HostApplication 拓展
+/// HostApplication 扩展
 /// </summary>
 public static class AppHostApplicationBuilderExtensions
 {

@@ -28,7 +28,7 @@ using System.Linq.Expressions;
 namespace Furion.LinqBuilder;
 
 /// <summary>
-/// EF Core Linq 拓展
+/// EF Core Linq 扩展
 /// </summary>
 [SuppressSniffer]
 public static class LinqExpression

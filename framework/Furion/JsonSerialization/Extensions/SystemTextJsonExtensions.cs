@@ -30,7 +30,7 @@ using System.Text.Json.Serialization;
 namespace System.Text.Json;
 
 /// <summary>
-/// System.Text.Json 拓展
+/// System.Text.Json 扩展
 /// </summary>
 [SuppressSniffer]
 public static class SystemTextJsonExtensions

@@ -35,7 +35,7 @@ using System.Text.RegularExpressions;
 namespace Furion.Extensions;
 
 /// <summary>
-///     <see cref="string" /> 拓展类
+///     <see cref="string" /> 扩展类
 /// </summary>
 internal static partial class StringExtensions
 {

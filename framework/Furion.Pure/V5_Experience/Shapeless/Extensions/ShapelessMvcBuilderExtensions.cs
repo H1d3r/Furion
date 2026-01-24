@@ -30,7 +30,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-///     流变对象模块 <see cref="IMvcBuilder" /> 拓展类
+///     流变对象模块 <see cref="IMvcBuilder" /> 扩展类
 /// </summary>
 public static class ShapelessMvcBuilderExtensions
 {

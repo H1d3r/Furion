@@ -28,7 +28,7 @@ using System.Data;
 namespace Furion.Extensions;
 
 /// <summary>
-///     <see cref="DataTable" /> 和 <see cref="DataSet" /> 拓展类
+///     <see cref="DataTable" /> 和 <see cref="DataSet" /> 扩展类
 /// </summary>
 internal static class DataTableAndSetExtensions
 {

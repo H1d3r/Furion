@@ -31,13 +31,13 @@ using System.Text.RegularExpressions;
 namespace Furion.DataValidation;
 
 /// <summary>
-/// 数据验证拓展类
+/// 数据验证扩展类
 /// </summary>
 [SuppressSniffer]
 public static class DataValidationExtensions
 {
     /// <summary>
-    /// 拓展方法，验证类类型对象
+    /// 扩展方法，验证类类型对象
     /// </summary>
     /// <param name="obj">对象实例</param>
     /// <param name="validateAllProperties">是否验证所有属性</param>
@@ -49,7 +49,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证类类型对象
+    /// 扩展方法，验证类类型对象
     /// </summary>
     /// <param name="obj">对象实例</param>
     /// <param name="serviceProvider">服务提供器</param>
@@ -60,7 +60,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="validationAttributes">验证特性</param>
@@ -71,7 +71,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="validationAttributes">验证特性</param>
@@ -83,7 +83,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="validationTypes">验证类型</param>
@@ -94,7 +94,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="validationOptionss">验证逻辑</param>
@@ -106,7 +106,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证类类型对象
+    /// 扩展方法，验证类类型对象
     /// </summary>
     /// <param name="obj">对象实例</param>
     /// <param name="validateAllProperties">是否验证所有属性</param>
@@ -117,7 +117,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="validationAttributes">验证特性</param>
@@ -127,7 +127,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="validationAttributes">验证特性</param>
@@ -138,7 +138,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="validationTypes">验证类型</param>
@@ -148,7 +148,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="validationOptionss">验证逻辑</param>
@@ -159,7 +159,7 @@ public static class DataValidationExtensions
     }
 
     /// <summary>
-    /// 拓展方法，验证单个值
+    /// 扩展方法，验证单个值
     /// </summary>
     /// <param name="value">单个值</param>
     /// <param name="regexPattern">正则表达式</param>

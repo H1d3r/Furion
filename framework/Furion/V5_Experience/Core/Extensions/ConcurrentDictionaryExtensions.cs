@@ -28,7 +28,7 @@ using System.Collections.Concurrent;
 namespace Furion.Extensions;
 
 /// <summary>
-///     <see cref="ConcurrentDictionary{TKey, TValue}" /> 拓展类
+///     <see cref="ConcurrentDictionary{TKey, TValue}" /> 扩展类
 /// </summary>
 internal static class ConcurrentDictionaryExtensions
 {

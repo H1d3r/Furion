@@ -26,7 +26,7 @@
 namespace Furion.Extensions;
 
 /// <summary>
-///     委托拓展类
+///     委托扩展类
 /// </summary>
 internal static class DelegateExtensions
 {

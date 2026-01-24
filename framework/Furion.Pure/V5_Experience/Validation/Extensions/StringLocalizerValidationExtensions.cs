@@ -28,7 +28,7 @@ using Microsoft.Extensions.Localization;
 namespace Furion.Validation;
 
 /// <summary>
-///     <see cref="IStringLocalizer" /> 拓展类
+///     <see cref="IStringLocalizer" /> 扩展类
 /// </summary>
 public static class StringLocalizerValidationExtensions
 {

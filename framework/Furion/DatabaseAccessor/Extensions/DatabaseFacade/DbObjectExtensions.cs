@@ -35,7 +35,7 @@ using System.Text;
 namespace Furion.DatabaseAccessor;
 
 /// <summary>
-/// DatabaseFacade 拓展类
+/// DatabaseFacade 扩展类
 /// </summary>
 [SuppressSniffer]
 public static class DbObjectExtensions

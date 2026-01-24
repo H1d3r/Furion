@@ -31,7 +31,7 @@ using Swashbuckle.AspNetCore.SwaggerUI;
 namespace Microsoft.AspNetCore.Builder;
 
 /// <summary>
-/// 规范化文档中间件拓展
+/// 规范化文档中间件扩展
 /// </summary>
 [SuppressSniffer]
 public static class SpecificationDocumentApplicationBuilderExtensions

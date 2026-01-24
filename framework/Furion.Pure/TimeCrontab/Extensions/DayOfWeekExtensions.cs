@@ -26,7 +26,7 @@
 namespace Furion.TimeCrontab;
 
 /// <summary>
-/// <see cref="DayOfWeek"/> 拓展类
+/// <see cref="DayOfWeek"/> 扩展类
 /// </summary>
 internal static class DayOfWeekExtensions
 {

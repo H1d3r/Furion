@@ -31,7 +31,7 @@ using Microsoft.AspNetCore.Hosting;
 namespace Microsoft.Extensions.Hosting;
 
 /// <summary>
-/// 主机构建器拓展类
+/// 主机构建器扩展类
 /// </summary>
 [SuppressSniffer]
 public static class HostBuilderExtensions

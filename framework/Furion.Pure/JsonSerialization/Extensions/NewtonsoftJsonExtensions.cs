@@ -28,7 +28,7 @@ using Furion.JsonSerialization;
 namespace Newtonsoft.Json;
 
 /// <summary>
-/// Newtonsoft.Json 拓展
+/// Newtonsoft.Json 扩展
 /// </summary>
 [SuppressSniffer]
 public static class NewtonsoftJsonExtensions

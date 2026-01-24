@@ -34,7 +34,7 @@ using System.Text.RegularExpressions;
 namespace Furion.Extensions;
 
 /// <summary>
-/// 对象拓展类
+/// 对象扩展类
 /// </summary>
 [SuppressSniffer]
 public static class ObsoleteObjectExtensions

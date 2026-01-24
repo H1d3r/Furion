@@ -32,7 +32,7 @@ using System.Text.Json;
 namespace Furion.Extensions;
 
 /// <summary>
-///     <see cref="object" /> 拓展类
+///     <see cref="object" /> 扩展类
 /// </summary>
 internal static class ObjectExtensions
 {

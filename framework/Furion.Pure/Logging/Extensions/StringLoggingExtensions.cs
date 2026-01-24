@@ -28,7 +28,7 @@ using Microsoft.Extensions.Logging;
 namespace Furion.Logging.Extensions;
 
 /// <summary>
-/// 字符串日志输出拓展
+/// 字符串日志输出扩展
 /// </summary>
 [SuppressSniffer]
 public static class StringLoggingExtensions

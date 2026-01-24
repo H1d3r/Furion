@@ -269,7 +269,7 @@ internal static class Penetrates
     }
 
     /// <summary>
-    /// 拓展 StringBuilder 增加带颜色写入
+    /// 扩展 StringBuilder 增加带颜色写入
     /// </summary>
     /// <param name="message"></param>
     /// <param name="colors"></param>

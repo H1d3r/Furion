@@ -28,7 +28,7 @@ using Microsoft.AspNetCore.Http;
 namespace Furion.FriendlyException;
 
 /// <summary>
-/// 异常拓展
+/// 异常扩展
 /// </summary>
 [SuppressSniffer]
 public static class AppFriendlyExceptionExtensions

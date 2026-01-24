@@ -28,7 +28,7 @@ using Furion.ViewEngine;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// 视图引擎服务拓展类
+/// 视图引擎服务扩展类
 /// </summary>
 [SuppressSniffer]
 public static class ViewEngineServiceCollectionExtensions

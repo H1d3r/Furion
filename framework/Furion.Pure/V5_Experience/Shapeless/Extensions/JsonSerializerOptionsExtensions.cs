@@ -28,7 +28,7 @@ using System.Text.Json;
 namespace Furion.Shapeless.Extensions;
 
 /// <summary>
-///     <see cref="JsonSerializerOptions" /> 拓展类
+///     <see cref="JsonSerializerOptions" /> 扩展类
 /// </summary>
 public static class JsonSerializerOptionsExtensions
 {

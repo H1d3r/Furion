@@ -29,7 +29,7 @@ using System.Text.RegularExpressions;
 namespace Furion.Templates.Extensions;
 
 /// <summary>
-/// 字符串渲染模板拓展类
+/// 字符串渲染模板扩展类
 /// </summary>
 [SuppressSniffer]
 public static class StringRenderExtensions

@@ -35,7 +35,7 @@ using System.Reflection;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// Sqlite 数据库服务拓展
+/// Sqlite 数据库服务扩展
 /// </summary>
 [SuppressSniffer]
 public static class DatabaseProviderServiceCollectionExtensions
@@ -347,7 +347,7 @@ public static class DatabaseProviderServiceCollectionExtensions
             // 加载对应的数据库提供器程序集
             var databaseProviderAssembly = Reflect.GetAssembly(providerName);
 
-            // 数据库提供器服务拓展类型名
+            // 数据库提供器服务扩展类型名
             var databaseProviderServiceExtensionTypeName = providerName switch
             {
                 DbProvider.SqlServer => "SqlServerDbContextOptionsExtensions",
@@ -364,7 +364,7 @@ public static class DatabaseProviderServiceCollectionExtensions
                 _ => null
             };
 
-            // 加载拓展类型
+            // 加载扩展类型
             var databaseProviderServiceExtensionType = Reflect.GetType(databaseProviderAssembly, $"Microsoft.EntityFrameworkCore.{databaseProviderServiceExtensionTypeName}");
 
             // useXXX方法名
