@@ -191,7 +191,7 @@ public abstract class ValidatorBase<T> : ValidatorBase
 public abstract class ValidatorBase
 {
     /// <summary>
-    ///     外部程序集用于覆盖默认验证消息的【强制约定类型全名】
+    ///     外部程序集用于覆盖默认验证信息的【强制约定类型全名】
     /// </summary>
     internal const string ExternalValidationMessagesFullTypeName = "Furion.Validation.Resources.Overrides.ValidationMessages";
 
@@ -462,7 +462,7 @@ public abstract class ValidatorBase
         // 空检查
         ArgumentException.ThrowIfNullOrWhiteSpace(resourceKey);
 
-        // 优先使用：尝试根据资源键获取已注册的覆盖消息
+        // 优先使用：尝试根据资源键获取已注册的覆盖信息
         var overrideMessage = ValidationMessageProvider.TryGetOverride(resourceKey);
 
         // 空检查
@@ -480,22 +480,22 @@ public abstract class ValidatorBase
     /// <summary>
     ///     获取资源字符串
     /// </summary>
-    /// <param name="resourceType">资源类型</param>
-    /// <param name="resourceKey">资源属性名</param>
+    /// <param name="resourceType">错误信息资源类型</param>
+    /// <param name="resourceName">错误信息资源名称</param>
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
     public static string? GetResourceString(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties |
                                     DynamicallyAccessedMemberTypes.NonPublicProperties)]
-        Type resourceType, string resourceKey)
+        Type resourceType, string resourceName)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(resourceType);
-        ArgumentException.ThrowIfNullOrWhiteSpace(resourceKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(resourceName);
 
         // 查找用户自定义资源类型
-        var property = TryGetPropertyFromAssembly(resourceType.Assembly, resourceType.FullName!, resourceKey);
+        var property = TryGetPropertyFromAssembly(resourceType.Assembly, resourceType.FullName!, resourceName);
 
         return property?.GetValue(null, null) as string;
     }

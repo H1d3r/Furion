@@ -158,7 +158,7 @@ public sealed class ValidationBuilder
     }
 
     /// <summary>
-    ///     配置验证消息的全局覆盖项
+    ///     配置验证信息的全局覆盖项
     /// </summary>
     /// <remarks>用于在运行时替换框架内置的默认验证错误信息。</remarks>
     /// <param name="configure">自定义配置委托</param>
@@ -170,13 +170,13 @@ public sealed class ValidationBuilder
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
 
-        // 初始化包含资源键到消息模板映射的字典
+        // 初始化包含资源键到信息模板映射的字典
         var overrides = new Dictionary<string, string>();
 
         // 调用自定义配置委托
         configure(overrides);
 
-        // 批量注册多个验证消息覆盖项
+        // 批量注册多个验证信息覆盖项
         ValidationMessageProvider.AddOverrides(overrides);
 
         return this;
@@ -191,14 +191,14 @@ public sealed class ValidationBuilder
     /// </returns>
     public ValidationBuilder UseChineseValidationMessages()
     {
-        // 使用标准中文验证消息替换框架内置的默认验证错误信息
+        // 使用标准中文验证信息替换框架内置的默认验证错误信息
         ValidationMessageProvider.UseChineseMessages();
 
         return this;
     }
 
     /// <summary>
-    ///     配置 .NET 内置验证特性验证消息的全局覆盖项
+    ///     配置 .NET 内置验证特性验证信息的全局覆盖项
     /// </summary>
     /// <remarks>用于在运行时替换 .NET 内置验证特性默认验证错误信息。</remarks>
     /// <param name="configure">自定义配置委托</param>
@@ -210,13 +210,13 @@ public sealed class ValidationBuilder
         // 空检查
         ArgumentNullException.ThrowIfNull(configure);
 
-        // 初始化包含资源键到消息模板映射的字典
+        // 初始化包含资源键到信息模板映射的字典
         var overrides = new Dictionary<string, string>();
 
         // 调用自定义配置委托
         configure(overrides);
 
-        // 批量注册多个验证消息覆盖项
+        // 批量注册多个验证信息覆盖项
         DataAnnotationMessageProvider.AddOverrides(overrides);
 
         return this;
@@ -231,7 +231,7 @@ public sealed class ValidationBuilder
     /// </returns>
     public ValidationBuilder UseChineseDataAnnotationMessages()
     {
-        // 使用标准中文验证消息替换 .NET 内置验证特性默认验证错误信息
+        // 使用标准中文验证信息替换 .NET 内置验证特性默认验证错误信息
         DataAnnotationMessageProvider.UseChineseMessages();
 
         return this;
