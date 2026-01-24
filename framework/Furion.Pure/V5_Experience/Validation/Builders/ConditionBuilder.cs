@@ -89,10 +89,10 @@ public class ConditionBuilder<T>
         When(condition).Then(thenConfigure);
 
     /// <summary>
-    ///     定义满足指定条件时返回指定的错误消息
+    ///     定义满足指定条件时返回指定的错误信息
     /// </summary>
     /// <param name="condition">条件委托</param>
-    /// <param name="errorMessage">错误消息</param>
+    /// <param name="errorMessage">错误信息</param>
     /// <returns>
     ///     <see cref="ConditionThenBuilder{T}" />
     /// </returns>
@@ -100,7 +100,7 @@ public class ConditionBuilder<T>
         When(condition).ThenMessage(errorMessage);
 
     /// <summary>
-    ///     定义满足指定条件时返回指定的错误消息
+    ///     定义满足指定条件时返回指定的错误信息
     /// </summary>
     /// <param name="condition">条件委托</param>
     /// <param name="resourceType">错误信息资源类型</param>
@@ -132,10 +132,10 @@ public class ConditionBuilder<T>
     }
 
     /// <summary>
-    ///     配置默认错误消息
+    ///     配置默认错误信息
     /// </summary>
     /// <remarks>当所有条件均不满足时直接返回该消息，不执行任何验证逻辑。</remarks>
-    /// <param name="errorMessage">错误消息</param>
+    /// <param name="errorMessage">错误信息</param>
     /// <returns>
     ///     <see cref="ConditionBuilder{T}" />
     /// </returns>
@@ -147,7 +147,7 @@ public class ConditionBuilder<T>
     }
 
     /// <summary>
-    ///     配置默认错误消息
+    ///     配置默认错误信息
     /// </summary>
     /// <remarks>当所有条件均不满足时直接返回该消息，不执行任何验证逻辑。</remarks>
     /// <param name="resourceType">错误信息资源类型</param>
@@ -231,10 +231,10 @@ public sealed class ConditionThenBuilder<T>
     }
 
     /// <summary>
-    ///     配置满足条件时直接返回指定的错误消息
+    ///     配置满足条件时直接返回指定的错误信息
     /// </summary>
     /// <remarks>不执行任何验证逻辑，仅用于输出错误提示。</remarks>
-    /// <param name="errorMessage">错误消息</param>
+    /// <param name="errorMessage">错误信息</param>
     /// <returns>
     ///     <see cref="ConditionBuilder{T}" />
     /// </returns>
@@ -247,7 +247,7 @@ public sealed class ConditionThenBuilder<T>
     }
 
     /// <summary>
-    ///     配置满足条件时直接返回指定的错误消息
+    ///     配置满足条件时直接返回指定的错误信息
     /// </summary>
     /// <remarks>不执行任何验证逻辑，仅用于输出错误提示。</remarks>
     /// <param name="resourceType">错误信息资源类型</param>
