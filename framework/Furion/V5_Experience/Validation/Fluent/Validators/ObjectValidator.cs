@@ -96,10 +96,7 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
         Items = items is not null ? new Dictionary<object, object?>(items) : new Dictionary<object, object?>();
 
         // 初始化 AttributeObjectValidator 实例
-        _attributeValidator = new AttributeObjectValidator(serviceProvider, items)
-        {
-            ValidateAllProperties = Options.ValidateAllProperties
-        };
+        _attributeValidator = new AttributeObjectValidator { ValidateAllProperties = Options.ValidateAllProperties };
 
         Validators = [];
         _ruleSetStack = new Stack<string?>();
@@ -277,9 +274,6 @@ public class ObjectValidator<T> : ValidatorBase<T>, IObjectValidator<T>, IMember
     public virtual void InitializeServiceProvider(Func<Type, object?>? serviceProvider)
     {
         _serviceProvider = serviceProvider;
-
-        // 同步 _attributeValidator 实例 IServiceProvider 委托
-        _attributeValidator.InitializeServiceProvider(serviceProvider);
 
         // 同步 _objectValidator 实例 IServiceProvider 委托
         _objectValidator?.InitializeServiceProvider(serviceProvider);

@@ -33,6 +33,11 @@ namespace Furion.Validation;
 public interface IValidationService
 {
     /// <summary>
+    ///     共享数据
+    /// </summary>
+    IDictionary<object, object?> Items { get; }
+
+    /// <summary>
     ///     检查对象是否合法
     /// </summary>
     /// <param name="instance">对象</param>
