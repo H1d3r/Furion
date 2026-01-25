@@ -120,35 +120,18 @@ public static class HttpContextExtensions
     /// <returns></returns>
     public static string GetRemoteIpAddressToIPv4(this HttpContext context, bool xff = false)
     {
-        string ipv4 = null;
-        var remoteIp = context.Connection.RemoteIpAddress;
-        if (remoteIp != null)
-        {
-            if (remoteIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            {
-                ipv4 = remoteIp.ToString();
-            }
-            else if (remoteIp.IsIPv4MappedToIPv6)
-            {
-                ipv4 = remoteIp.MapToIPv4().ToString();
-            }
-        }
-
-        if (xff)
+        if (xff && !string.IsNullOrWhiteSpace(context.Request.Headers["X-Forwarded-For"]))
         {
             var xForwardedFor = context.Request.Headers["X-Forwarded-For"].ToString();
-            if (!string.IsNullOrWhiteSpace(xForwardedFor))
+            // 获取首个客户端 IP 地址
+            var firstIp = xForwardedFor.Split(',')[0].Trim();
+            if (System.Net.IPAddress.TryParse(firstIp, out var ip) && ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
             {
-                // 获取首个客户端 IP 地址
-                var firstIp = xForwardedFor.Split(',')[0].Trim();
-                if (System.Net.IPAddress.TryParse(firstIp, out var ip) && ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                {
-                    return ip.ToString();
-                }
+                return ip.ToString();
             }
         }
-
-        return ipv4;
+        
+        return context.Connection.RemoteIpAddress.MapToIPv4().ToString();
     }
 
     /// <summary>
