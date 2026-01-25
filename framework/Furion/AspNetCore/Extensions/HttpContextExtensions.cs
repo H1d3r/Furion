@@ -120,18 +120,23 @@ public static class HttpContextExtensions
     /// <returns></returns>
     public static string GetRemoteIpAddressToIPv4(this HttpContext context, bool xff = false)
     {
-        if (xff && !string.IsNullOrWhiteSpace(context.Request.Headers["X-Forwarded-For"]))
+        if (xff)
         {
             var xForwardedFor = context.Request.Headers["X-Forwarded-For"].ToString();
-            // 获取首个客户端 IP 地址
-            var firstIp = xForwardedFor.Split(',')[0].Trim();
-            if (System.Net.IPAddress.TryParse(firstIp, out var ip) && ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+
+            if (!string.IsNullOrWhiteSpace(xForwardedFor))
             {
-                return ip.ToString();
+                // 获取首个客户端 IP 地址
+                var firstIp = xForwardedFor.Split(',')[0].Trim();
+
+                if (System.Net.IPAddress.TryParse(firstIp, out var ip) && ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
             }
         }
-        
-        return context.Connection.RemoteIpAddress.MapToIPv4().ToString();
+
+        return context.Connection.RemoteIpAddress?.MapToIPv4()?.ToString();
     }
 
     /// <summary>
