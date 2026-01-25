@@ -40,7 +40,12 @@ public sealed class ValidationService : IValidationService
     /// <summary>
     ///     <inheritdoc cref="ValidationService" />
     /// </summary>
-    public ValidationService() => _attributeValidator = new AttributeObjectValidator();
+    public ValidationService()
+    {
+        _attributeValidator = new AttributeObjectValidator();
+
+        Items = new Dictionary<object, object?>();
+    }
 
     /// <summary>
     ///     <inheritdoc cref="ValidationService" />
@@ -55,8 +60,15 @@ public sealed class ValidationService : IValidationService
         ArgumentNullException.ThrowIfNull(serviceProvider);
 
         _serviceProvider = serviceProvider;
-        _attributeValidator = new AttributeObjectValidator(serviceProvider, null);
+        _attributeValidator = new AttributeObjectValidator();
+
+        Items = new Dictionary<object, object?>();
     }
+
+    /// <summary>
+    ///     共享数据
+    /// </summary>
+    public IDictionary<object, object?> Items { get; }
 
     /// <inheritdoc />
     public bool IsValid(object? instance, string?[]? ruleSets = null) =>
@@ -114,6 +126,6 @@ public sealed class ValidationService : IValidationService
         // 空检查
         ArgumentNullException.ThrowIfNull(instance);
 
-        return new ValidationContext<object>(instance, _serviceProvider, null) { RuleSets = ruleSets };
+        return new ValidationContext<object>(instance, _serviceProvider, Items) { RuleSets = ruleSets };
     }
 }
