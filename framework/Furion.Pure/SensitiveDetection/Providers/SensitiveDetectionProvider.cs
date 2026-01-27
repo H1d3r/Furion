@@ -95,13 +95,21 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
                 }
 
                 buffer = new byte[readStream.Length];
-                _ = await readStream.ReadAsync(buffer.AsMemory(0, buffer.Length));
+                var position = 0;
+                var remaining = buffer.Length;
+                while (remaining > 0)
+                {
+                    var read = await readStream.ReadAsync(buffer.AsMemory(position, remaining));
+                    if (read == 0) break; // 流结束
+                    position += read;
+                    remaining -= read;
+                }
             }
 
             // 同时兼容 UTF-8 BOM，UTF-8
             using (var stream = new MemoryStream(buffer))
+            using (var streamReader = new StreamReader(stream, new UTF8Encoding(true)))
             {
-                using var streamReader = new StreamReader(stream, new UTF8Encoding(false));
                 wordsOfCached = await streamReader.ReadToEndAsync();
             }
 
@@ -109,9 +117,12 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
             await _distributedCache.SetStringAsync(DISTRIBUTED_KEY, wordsOfCached);
         }
 
-        // 取换行符分割字符串
-        var words = wordsOfCached.Split(new[] { "\r\n", "|" }, StringSplitOptions.RemoveEmptyEntries)
+        // 统一换行符：先将 \r\n 和 \r 标准化为 \n，再按 \n 和 | 分割
+        // 解决跨平台换行符差异导致词汇分割失败的问题
+        var normalizedText = wordsOfCached.Replace("\r\n", "\n").Replace("\r", "\n");
+        var words = normalizedText.Split(new[] { "\n", "|" }, StringSplitOptions.RemoveEmptyEntries)
             .Select(u => u.Trim())
+            .Where(u => !string.IsNullOrEmpty(u))
             .Distinct();
 
         return words;
@@ -122,7 +133,7 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
-    public async Task<bool> VaildedAsync(string text)
+    public async Task<bool> IsValidAsync(string text)
     {
         // 空字符串和空白字符不验证
         if (string.IsNullOrWhiteSpace(text)) return true;
@@ -141,7 +152,7 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
     /// <returns></returns>
     public async Task<string> ReplaceAsync(string text, char transfer = '*')
     {
-        if (string.IsNullOrWhiteSpace(text)) return default;
+        if (string.IsNullOrWhiteSpace(text)) return text;
 
         // 查找脱敏词汇出现次数和位置
         var foundSets = await FoundSensitiveWordsAsync(text);
@@ -151,17 +162,18 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
 
         var stringBuilder = new StringBuilder(text);
 
-        // 循环替换
+        // 从后往前替换，避免前面的替换影响后面敏感词的位置
         foreach (var kv in foundSets)
         {
-            for (var i = 0; i < kv.Value.Count; i++)
-            {
-                for (var j = 0; j < kv.Key.Length; j++)
-                {
-                    var tempIndex = GetSensitiveWordIndex(kv.Value, i, sensitiveWordLength: kv.Key.Length);
+            var sensitiveWord = kv.Key;
+            // 按位置降序排列，确保从后往前替换
+            var positions = kv.Value.OrderByDescending(p => p);
 
-                    // 设置替换的字符
-                    stringBuilder[tempIndex + j] = transfer;
+            foreach (var position in positions)
+            {
+                for (var i = 0; i < sensitiveWord.Length; i++)
+                {
+                    stringBuilder[position + i] = transfer;
                 }
             }
         }
@@ -181,61 +193,34 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
         // 获取脱敏词库
         var sensitiveWords = await GetWordsAsync();
 
-        var stringBuilder = new StringBuilder(realText);
-        var tempStringBuilder = new StringBuilder();
-
         // 记录脱敏词汇出现位置和次数
-        int findIndex;
         var foundSets = new Dictionary<string, List<int>>();
 
         // 遍历所有脱敏词汇并查找字符串是否包含
         foreach (var sensitiveWord in sensitiveWords)
         {
-            // 重新填充目标字符串
-            tempStringBuilder.Clear();
-            tempStringBuilder.Append(stringBuilder);
+            if (string.IsNullOrEmpty(sensitiveWord)) continue;
 
-            // 查询查找至结尾
-            while (tempStringBuilder.ToString().IndexOf(sensitiveWord) > -1)
+            var startIndex = 0;
+            while (true)
             {
-                if (foundSets.ContainsKey(sensitiveWord) == false)
+                // 在原始字符串中直接查找，记录绝对位置
+                var findIndex = realText.IndexOf(sensitiveWord, startIndex, StringComparison.OrdinalIgnoreCase);
+                if (findIndex == -1) break;
+
+                if (!foundSets.TryGetValue(sensitiveWord, out var value))
                 {
-                    foundSets.Add(sensitiveWord, new());
+                    value = [];
+                    foundSets[sensitiveWord] = value;
                 }
 
-                findIndex = tempStringBuilder.ToString().IndexOf(sensitiveWord);
-                foundSets[sensitiveWord].Add(findIndex);
+                value.Add(findIndex);
 
-                // 删除从零开始，长度为 findIndex + sensitiveWord.Length 的字符串
-                tempStringBuilder.Remove(0, findIndex + sensitiveWord.Length);
+                // 从下一个字符开始继续查找，支持重叠匹配
+                startIndex = findIndex + 1;
             }
         }
 
         return foundSets;
-    }
-
-    /// <summary>
-    /// 获取敏感词索引
-    /// </summary>
-    /// <param name="list"></param>
-    /// <param name="count"></param>
-    /// <param name="sensitiveWordLength"></param>
-    /// <returns></returns>
-    private static int GetSensitiveWordIndex(List<int> list, int count, int sensitiveWordLength)
-    {
-        // 用于返回当前敏感词的第 count 个的真实索引
-        var sum = 0;
-        for (var i = 0; i <= count; i++)
-        {
-            if (i == 0)
-            {
-                sum = list[i];
-            }
-            else
-            {
-                sum += list[i] + sensitiveWordLength;
-            }
-        }
-        return sum;
     }
 }
