@@ -646,7 +646,7 @@
             </summary>
             <returns></returns>
         </member>
-        <member name="M:Furion.Application.TestSensitiveDetection.VaildedAsync(System.String)">
+        <member name="M:Furion.Application.TestSensitiveDetection.IsValidAsync(System.String)">
             <summary>
             判断是否是正常的词汇
             </summary>
