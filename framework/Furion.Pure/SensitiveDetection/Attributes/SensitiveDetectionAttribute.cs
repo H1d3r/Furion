@@ -23,8 +23,9 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Localization;
 using Furion.SensitiveDetection;
+using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using System.Reflection;
 
 namespace System.ComponentModel.DataAnnotations;
@@ -57,6 +58,11 @@ public class SensitiveDetectionAttribute : ValidationAttribute
     public char Transfer { get; set; }
 
     /// <summary>
+    /// 是否显示命中的脱敏词汇
+    /// </summary>
+    public bool ShowSensitiveWords { get; set; }
+
+    /// <summary>
     /// 验证逻辑
     /// </summary>
     /// <param name="value"></param>
@@ -65,29 +71,48 @@ public class SensitiveDetectionAttribute : ValidationAttribute
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         // null 、非字符串和空字符串跳过检查
-        if (value == null || value.GetType() != typeof(string) || (value is string s && string.IsNullOrWhiteSpace(s))) return ValidationResult.Success;
+        if (value == null || value.GetType() != typeof(string) || (value is string str && string.IsNullOrWhiteSpace(str)))
+        {
+            return ValidationResult.Success;
+        }
 
         // 获取脱敏提供器（如果未注册，直接跳过，而不是抛异常）
-        if (validationContext.GetService(typeof(ISensitiveDetectionProvider)) is not ISensitiveDetectionProvider sensitiveWordsProvider) return ValidationResult.Success;
+        if (validationContext.GetService<ISensitiveDetectionProvider>() is not { } sensitiveWordsProvider)
+        {
+            return ValidationResult.Success;
+        }
 
-        var strValue = value.ToString()!;
+        var strValue = value.ToString();
 
         // 如果没有传入替换字符，则直接校验
         if (Transfer == default)
         {
-            // 判断符合
-            var isValid = sensitiveWordsProvider.IsValidAsync(strValue).GetAwaiter().GetResult();
-
-            if (!isValid)
+            // 判断是否显示敏感词汇
+            if (!ShowSensitiveWords)
             {
-                // 进行多语言处理
-                var errorMessage = !string.IsNullOrWhiteSpace(ErrorMessage) ? ErrorMessage : "Characters contain sensitive words.";
+                // 判断符合
+                var isValid = sensitiveWordsProvider.IsValid(strValue);
 
-                return new ValidationResult(string.Format(L.Text == null ? errorMessage : L.Text[errorMessage], validationContext.MemberName));
+                if (!isValid)
+                {
+                    return new ValidationResult(FormatErrorMessage(validationContext.DisplayName), validationContext.MemberName is null ? null : [validationContext.MemberName]);
+                }
+
+                // 验证成功
+                return ValidationResult.Success;
             }
+            else
+            {
+                // 获取命中的敏感词汇集合
+                var foundSets = sensitiveWordsProvider.FoundSensitiveWords(strValue);
+                if (foundSets.Count > 0)
+                {
+                    return new ValidationResult(FormatErrorMessage(validationContext.DisplayName, foundSets), validationContext.MemberName is null ? null : [validationContext.MemberName]);
+                }
 
-            // 验证成功
-            return ValidationResult.Success;
+                // 验证成功
+                return ValidationResult.Success;
+            }
         }
         // 替换敏感词汇
         else
@@ -96,18 +121,33 @@ public class SensitiveDetectionAttribute : ValidationAttribute
             if (validationContext.ObjectType == typeof(string)) return ValidationResult.Success;
 
             // 替换字符
-            var newValue = sensitiveWordsProvider.ReplaceAsync(strValue, Transfer).GetAwaiter().GetResult();
+            var newValue = sensitiveWordsProvider.Replace(strValue, Transfer);
 
             // 如果不包含敏感词汇直接返回
             if (newValue == strValue) return ValidationResult.Success;
 
             // 将对象属性值进行替换
-            validationContext.ObjectType
-                                .GetProperty(validationContext.MemberName, BindingFlags.Public | BindingFlags.Instance)
-                                .SetValue(validationContext.ObjectInstance, newValue);
+            validationContext.ObjectType.GetProperty(validationContext.MemberName, BindingFlags.Public | BindingFlags.Instance)
+                .SetValue(validationContext.ObjectInstance, newValue);
 
             // 验证成功
             return ValidationResult.Success;
         }
+    }
+
+    /// <summary>
+    /// 格式化消息
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="foundSets"></param>
+    /// <returns></returns>
+    private string FormatErrorMessage(string name, Dictionary<string, List<int>>? foundSets)
+    {
+        if (foundSets is null || foundSets.Count == 0)
+        {
+            return FormatErrorMessage(name);
+        }
+
+        return string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, string.Join(" ", foundSets.Select(kv => $"[{kv.Key}@{string.Join(",", kv.Value)}]")));
     }
 }

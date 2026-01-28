@@ -37,11 +37,24 @@ public interface ISensitiveDetectionProvider
     Task<IEnumerable<string>> GetWordsAsync();
 
     /// <summary>
+    /// 返回所有脱敏词汇（同步版本）
+    /// </summary>
+    /// <returns></returns>
+    IEnumerable<string> GetWords();
+
+    /// <summary>
     /// 判断脱敏词汇是否有效（支持自定义算法）
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
     Task<bool> IsValidAsync(string text);
+
+    /// <summary>
+    /// 判断脱敏词汇是否有效（支持自定义算法）（同步版本）
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    bool IsValid(string text);
 
     /// <summary>
     /// 替换敏感词汇
@@ -52,9 +65,24 @@ public interface ISensitiveDetectionProvider
     Task<string> ReplaceAsync(string text, char transfer = '*');
 
     /// <summary>
+    /// 替换敏感词汇（同步版本）
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="transfer"></param>
+    /// <returns></returns>
+    string Replace(string text, char transfer = '*');
+
+    /// <summary>
     /// 查找脱敏词汇
     /// </summary>
     /// <param name="text"></param>
     /// <returns></returns>
     Task<Dictionary<string, List<int>>> FoundSensitiveWordsAsync(string text);
+
+    /// <summary>
+    /// 查找脱敏词汇（同步版本）
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    Dictionary<string, List<int>> FoundSensitiveWords(string text);
 }
