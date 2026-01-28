@@ -25,7 +25,6 @@
 
 using Furion.Reflection;
 using Furion.Templates.Extensions;
-using Microsoft.Extensions.Caching.Distributed;
 using System.Text;
 
 namespace Furion.SensitiveDetection;
@@ -33,35 +32,27 @@ namespace Furion.SensitiveDetection;
 /// <summary>
 /// 脱敏词汇（脱敏）提供器（默认实现）
 /// </summary>
+/// <remarks>
+/// 构造函数
+/// </remarks>
+/// <param name="embedFileName">脱敏词汇数据文件名</param>
 [SuppressSniffer]
-public class SensitiveDetectionProvider : ISensitiveDetectionProvider
+public class SensitiveDetectionProvider(string embedFileName) : ISensitiveDetectionProvider
 {
     /// <summary>
-    /// 分布式缓存
+    /// 本地缓存的脱敏词汇集合
     /// </summary>
-    private readonly IDistributedCache _distributedCache;
+    private IEnumerable<string>? _cachedWords;
 
     /// <summary>
-    /// 脱敏词汇数据文件名
+    /// 异步加载锁
     /// </summary>
-    private readonly string _embedFileName;
+    private readonly SemaphoreSlim _asyncCacheLock = new(1, 1);
 
     /// <summary>
-    /// 构造函数
+    /// 同步加载锁
     /// </summary>
-    /// <param name="distributedCache"></param>
-    /// <param name="embedFileName"></param>
-    public SensitiveDetectionProvider(IDistributedCache distributedCache
-        , string embedFileName)
-    {
-        _distributedCache = distributedCache;
-        _embedFileName = embedFileName;
-    }
-
-    /// <summary>
-    /// 分布式缓存键
-    /// </summary>
-    private const string DISTRIBUTED_KEY = "SENSITIVE:WORDS";
+    private readonly object _syncCacheLock = new();
 
     /// <summary>
     /// 返回所有脱敏词汇
@@ -69,63 +60,52 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
     /// <returns></returns>
     public async Task<IEnumerable<string>> GetWordsAsync()
     {
-        // 读取缓存数据
-        var wordsOfCached = await _distributedCache.GetStringAsync(DISTRIBUTED_KEY);
-        if (wordsOfCached == null)
+        // 确保线程安全
+        if (_cachedWords != null) return _cachedWords;
+
+        await _asyncCacheLock.WaitAsync().ConfigureAwait(false);
+
+        try
         {
-            var entryAssembly = Reflect.GetEntryAssembly();
+            // 双重检查
+            if (_cachedWords != null) return _cachedWords;
 
-            /*
-             * 查找脱敏词汇数据的嵌入资源文件。
-             * 由于程序集名称可在 .csproj 文件中通过 <AssemblyName> 自定义，
-             * 故采用模糊匹配方式查找。请确保资源文件名具有唯一性，避免歧义。
-             * 
-             * var embedFileNameOfResource = $"{Reflect.GetAssemblyName(entryAssembly)}.{_embedFileName}";
-             */
-            var embedFileNameOfResource = entryAssembly.GetManifestResourceNames()
-                .FirstOrDefault(n => n.EndsWith(_embedFileName, StringComparison.OrdinalIgnoreCase));
+            // 从嵌入式资源加载脱敏词汇
+            var wordsOfCached = await LoadWordsFromEmbeddedResourceAsync();
 
-            // 解析嵌入式文件流
-            byte[] buffer;
-            using (var readStream = entryAssembly.GetManifestResourceStream(embedFileNameOfResource))
-            {
-                if (readStream == null)
-                {
-                    throw new InvalidOperationException($"The embedded file of path <{embedFileNameOfResource}> is not found.");
-                }
+            // 仅分割一次
+            _cachedWords = NormalizeAndSplitWords(wordsOfCached).ToList();
 
-                buffer = new byte[readStream.Length];
-                var position = 0;
-                var remaining = buffer.Length;
-                while (remaining > 0)
-                {
-                    var read = await readStream.ReadAsync(buffer.AsMemory(position, remaining));
-                    if (read == 0) break; // 流结束
-                    position += read;
-                    remaining -= read;
-                }
-            }
-
-            // 同时兼容 UTF-8 BOM，UTF-8
-            using (var stream = new MemoryStream(buffer))
-            using (var streamReader = new StreamReader(stream, new UTF8Encoding(true)))
-            {
-                wordsOfCached = await streamReader.ReadToEndAsync();
-            }
-
-            // 缓存数据
-            await _distributedCache.SetStringAsync(DISTRIBUTED_KEY, wordsOfCached);
+            return _cachedWords;
         }
+        finally
+        {
+            _asyncCacheLock.Release();
+        }
+    }
 
-        // 统一换行符：先将 \r\n 和 \r 标准化为 \n，再按 \n 和 | 分割
-        // 解决跨平台换行符差异导致词汇分割失败的问题
-        var normalizedText = wordsOfCached.Replace("\r\n", "\n").Replace("\r", "\n");
-        var words = normalizedText.Split(new[] { "\n", "|" }, StringSplitOptions.RemoveEmptyEntries)
-            .Select(u => u.Trim())
-            .Where(u => !string.IsNullOrEmpty(u))
-            .Distinct();
+    /// <summary>
+    /// 返回所有脱敏词汇
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<string> GetWords()
+    {
+        // 确保线程安全
+        if (_cachedWords != null) return _cachedWords;
 
-        return words;
+        lock (_syncCacheLock)
+        {
+            // 双重检查
+            if (_cachedWords != null) return _cachedWords;
+
+            // 从嵌入式资源加载脱敏词汇
+            var wordsOfCached = LoadWordsFromEmbeddedResource();
+
+            // 仅分割一次
+            _cachedWords = NormalizeAndSplitWords(wordsOfCached).ToList();
+
+            return _cachedWords;
+        }
     }
 
     /// <summary>
@@ -145,6 +125,22 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
     }
 
     /// <summary>
+    /// 判断脱敏词汇是否有效（支持自定义算法）（同步版本）
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public bool IsValid(string text)
+    {
+        // 空字符串和空白字符不验证
+        if (string.IsNullOrWhiteSpace(text)) return true;
+
+        // 查找脱敏词汇出现次数和位置
+        var foundSets = FoundSensitiveWords(text);
+
+        return foundSets.Count == 0;
+    }
+
+    /// <summary>
     /// 替换敏感词汇
     /// </summary>
     /// <param name="text"></param>
@@ -157,6 +153,202 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
         // 查找脱敏词汇出现次数和位置
         var foundSets = await FoundSensitiveWordsAsync(text);
 
+        return ReplaceWordsCore(text, foundSets, transfer);
+    }
+
+    /// <summary>
+    /// 替换敏感词汇（同步版本）
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="transfer"></param>
+    /// <returns></returns>
+    public string Replace(string text, char transfer = '*')
+    {
+        if (string.IsNullOrWhiteSpace(text)) return text;
+
+        // 查找脱敏词汇出现次数和位置
+        var foundSets = FoundSensitiveWords(text);
+
+        return ReplaceWordsCore(text, foundSets, transfer);
+    }
+
+    /// <summary>
+    /// 查找脱敏词汇
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public async Task<Dictionary<string, List<int>>> FoundSensitiveWordsAsync(string text)
+    {
+        // 支持读取配置渲染
+        var realText = text.Render();
+
+        // 获取脱敏词库（自动使用缓存，无重复分割开销）
+        var sensitiveWords = await GetWordsAsync();
+
+        // 在文本中定位所有敏感词的位置
+        return FindWordPositions(realText, sensitiveWords);
+    }
+
+    /// <summary>
+    /// 查找脱敏词汇（同步版本）
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public Dictionary<string, List<int>> FoundSensitiveWords(string text)
+    {
+        // 支持读取配置渲染
+        var realText = text.Render();
+
+        // 获取脱敏词库（自动使用缓存，无重复分割开销）
+        var sensitiveWords = GetWords();
+
+        // 在文本中定位所有敏感词的位置
+        return FindWordPositions(realText, sensitiveWords);
+    }
+
+    /// <summary>
+    /// 获取嵌入式资源文件流（支持模糊匹配）
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private Stream GetEmbeddedResourceStream()
+    {
+        var entryAssembly = Reflect.GetEntryAssembly();
+
+        /*
+         * 查找脱敏词汇数据的嵌入资源文件。
+         * 由于程序集名称可在 .csproj 文件中通过 <AssemblyName> 自定义，
+         * 故采用模糊匹配方式查找。请确保资源文件名具有唯一性，避免歧义。
+         * 
+         * var embedFileNameOfResource = $"{Reflect.GetAssemblyName(entryAssembly)}.{embedFileName}";
+         */
+        var embedFileNameOfResource = entryAssembly.GetManifestResourceNames()
+            .FirstOrDefault(n => n.EndsWith(embedFileName, StringComparison.OrdinalIgnoreCase));
+
+        var readStream = entryAssembly.GetManifestResourceStream(embedFileNameOfResource)
+           ?? throw new InvalidOperationException($"The embedded file of path <{embedFileNameOfResource}> is not found.");
+
+        return readStream;
+    }
+
+    /// <summary>
+    /// 从嵌入式资源加载脱敏词汇（异步）
+    /// </summary>
+    /// <returns></returns>
+    private async Task<string> LoadWordsFromEmbeddedResourceAsync()
+    {
+        // 获取嵌入式资源文件流
+        using var readStream = GetEmbeddedResourceStream();
+
+        // 解析嵌入式文件流
+        var buffer = new byte[readStream.Length];
+        var position = 0;
+        var remaining = buffer.Length;
+        while (remaining > 0)
+        {
+            var read = await readStream.ReadAsync(buffer.AsMemory(position, remaining)).ConfigureAwait(false);
+            if (read == 0) break;   // 流结束
+            position += read;
+            remaining -= read;
+        }
+
+        // 同时兼容 UTF-8 BOM，UTF-8
+        using var stream = new MemoryStream(buffer);
+        using var streamReader = new StreamReader(stream, new UTF8Encoding(true));
+        return await streamReader.ReadToEndAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// 从嵌入式资源加载脱敏词汇（同步）
+    /// </summary>
+    /// <returns></returns>
+    private string LoadWordsFromEmbeddedResource()
+    {
+        // 获取嵌入式资源文件流
+        using var readStream = GetEmbeddedResourceStream();
+
+        // 解析嵌入式文件流
+        var buffer = new byte[readStream.Length];
+        var position = 0;
+        var remaining = buffer.Length;
+        while (remaining > 0)
+        {
+            var read = readStream.Read(buffer, position, remaining);
+            if (read == 0) break;   // 流结束
+            position += read;
+            remaining -= read;
+        }
+
+        // 同时兼容 UTF-8 BOM，UTF-8
+        using var stream = new MemoryStream(buffer);
+        using var streamReader = new StreamReader(stream, new UTF8Encoding(true));
+        return streamReader.ReadToEnd();
+    }
+
+    /// <summary>
+    /// 规范化文本并分割为脱敏词汇集合
+    /// </summary>
+    /// <param name="wordsOfCached"></param>
+    /// <returns></returns>
+    private static IEnumerable<string> NormalizeAndSplitWords(string wordsOfCached)
+    {
+        // 统一换行符：先将 \r\n 和 \r 标准化为 \n，再按 \n 和 | 分割
+        // 解决跨平台换行符差异导致词汇分割失败的问题
+        var normalizedText = wordsOfCached.Replace("\r\n", "\n").Replace("\r", "\n");
+        return normalizedText.Split(new[] { "\n", "|" }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(u => u.Trim())
+            .Where(u => !string.IsNullOrEmpty(u))
+            .Distinct();
+    }
+
+    /// <summary>
+    /// 在文本中定位所有敏感词的位置
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="sensitiveWords"></param>
+    /// <returns></returns>
+    private static Dictionary<string, List<int>> FindWordPositions(string text, IEnumerable<string> sensitiveWords)
+    {
+        // 记录脱敏词汇出现位置和次数
+        var foundSets = new Dictionary<string, List<int>>();
+
+        // 遍历所有脱敏词汇并查找字符串是否包含
+        foreach (var sensitiveWord in sensitiveWords)
+        {
+            if (string.IsNullOrEmpty(sensitiveWord)) continue;
+
+            var startIndex = 0;
+            while (true)
+            {
+                // 在原始字符串中直接查找，记录绝对位置
+                var findIndex = text.IndexOf(sensitiveWord, startIndex, StringComparison.OrdinalIgnoreCase);
+                if (findIndex == -1) break;
+
+                if (!foundSets.TryGetValue(sensitiveWord, out var value))
+                {
+                    value = [];
+                    foundSets[sensitiveWord] = value;
+                }
+
+                value.Add(findIndex);
+
+                // 从下一个字符开始继续查找，支持重叠匹配
+                startIndex = findIndex + 1;
+            }
+        }
+
+        return foundSets;
+    }
+
+    /// <summary>
+    /// 根据找到的位置替换敏感词
+    /// </summary>
+    /// <param name="text"></param>
+    /// <param name="foundSets"></param>
+    /// <param name="transfer"></param>
+    /// <returns></returns>
+    private static string ReplaceWordsCore(string text, Dictionary<string, List<int>> foundSets, char transfer)
+    {
         // 如果没有敏感词则返回原字符串
         if (foundSets.Count == 0) return text;
 
@@ -179,48 +371,5 @@ public class SensitiveDetectionProvider : ISensitiveDetectionProvider
         }
 
         return stringBuilder.ToString();
-    }
-
-    /// <summary>
-    /// 查找脱敏词汇
-    /// </summary>
-    /// <param name="text"></param>
-    public async Task<Dictionary<string, List<int>>> FoundSensitiveWordsAsync(string text)
-    {
-        // 支持读取配置渲染
-        var realText = text.Render();
-
-        // 获取脱敏词库
-        var sensitiveWords = await GetWordsAsync();
-
-        // 记录脱敏词汇出现位置和次数
-        var foundSets = new Dictionary<string, List<int>>();
-
-        // 遍历所有脱敏词汇并查找字符串是否包含
-        foreach (var sensitiveWord in sensitiveWords)
-        {
-            if (string.IsNullOrEmpty(sensitiveWord)) continue;
-
-            var startIndex = 0;
-            while (true)
-            {
-                // 在原始字符串中直接查找，记录绝对位置
-                var findIndex = realText.IndexOf(sensitiveWord, startIndex, StringComparison.OrdinalIgnoreCase);
-                if (findIndex == -1) break;
-
-                if (!foundSets.TryGetValue(sensitiveWord, out var value))
-                {
-                    value = [];
-                    foundSets[sensitiveWord] = value;
-                }
-
-                value.Add(findIndex);
-
-                // 从下一个字符开始继续查找，支持重叠匹配
-                startIndex = findIndex + 1;
-            }
-        }
-
-        return foundSets;
     }
 }

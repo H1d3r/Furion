@@ -728,7 +728,7 @@ public class TestModuleServices : IDynamicApiController
     [NonValidation]
     public void 测试手动验证脱敏(SensitiveModel model, [FromServices] IServiceProvider services)
     {
-        var val = model.TryValidate(services);
+        model.Validate(true, services);
     }
 }
 
@@ -840,6 +840,7 @@ public class TestDefaultValue
 
 public class SensitiveModel
 {
-    [SensitiveDetection]
+    [Display(Name = "文本内容")]
+    [SensitiveDetection(ErrorMessage = "{0} 包含敏感词，敏感词为：{1}", ShowSensitiveWords = true)]
     public string Text { get; set; }
 }
