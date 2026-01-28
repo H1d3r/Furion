@@ -93,7 +93,7 @@ public abstract class ValidatorBase<T> : ValidatorBase
     /// <summary>
     ///     执行验证
     /// </summary>
-    /// <remarks>失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
+    /// <remarks>验证失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
     /// <param name="instance">对象</param>
     /// <param name="validationContext">
     ///     <see cref="ValidationContext{T}" />
@@ -108,6 +108,25 @@ public abstract class ValidatorBase<T> : ValidatorBase
                 new ValidationResult(FormatErrorMessage(validationContext.DisplayName), validationContext.MemberNames),
                 null, instance);
         }
+    }
+
+    /// <summary>
+    ///     尝试执行验证
+    /// </summary>
+    /// <param name="instance">对象</param>
+    /// <param name="validationContext">
+    ///     <see cref="ValidationContext{T}" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="ValidatorResult{T}" />
+    /// </returns>
+    public virtual ValidatorResult<T> TryValidate(T? instance, ValidationContext<T> validationContext)
+    {
+        // 获取对象验证结果列表
+        var validationResults = GetValidationResults(instance, validationContext);
+        var isValid = validationResults is null or { Count: 0 };
+
+        return new ValidatorResult<T>(isValid, validationResults, instance);
     }
 
     /// <inheritdoc />
@@ -154,6 +173,21 @@ public abstract class ValidatorBase<T> : ValidatorBase
         }
 
         Validate(instance, CreateValidationContext(instance, validationContext));
+    }
+
+    /// <inheritdoc />
+    public sealed override ValidatorResult TryValidate(object? value, IValidationContext? validationContext)
+    {
+        // 将 value 转换为 T
+        var instance = ConvertValue(value);
+
+        // 检查 validationContext 是否是 ValidationContext<T> 类型
+        if (validationContext is ValidationContext<T> typedValidationContext)
+        {
+            return TryValidate(instance, typedValidationContext);
+        }
+
+        return TryValidate(instance, CreateValidationContext(instance, validationContext));
     }
 
     /// <summary>
@@ -409,7 +443,7 @@ public abstract class ValidatorBase
     /// <summary>
     ///     执行验证
     /// </summary>
-    /// <remarks>失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
+    /// <remarks>验证失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
     /// <param name="value">对象</param>
     /// <param name="name">显示名称</param>
     /// <param name="memberNames">成员名称列表</param>
@@ -420,7 +454,7 @@ public abstract class ValidatorBase
     /// <summary>
     ///     执行验证
     /// </summary>
-    /// <remarks>失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
+    /// <remarks>验证失败时抛出 <see cref="ValidationException" /> 异常。</remarks>
     /// <param name="value">对象</param>
     /// <param name="validationContext">
     ///     <see cref="IValidationContext" />
@@ -435,6 +469,37 @@ public abstract class ValidatorBase
                 new ValidationResult(FormatErrorMessage(validationContext?.DisplayName!),
                     validationContext?.MemberNames), null, value);
         }
+    }
+
+    /// <summary>
+    ///     尝试执行验证
+    /// </summary>
+    /// <param name="value">对象</param>
+    /// <param name="name">显示名称</param>
+    /// <param name="memberNames">成员名称列表</param>
+    /// <returns>
+    ///     <see cref="ValidatorResult" />
+    /// </returns>
+    public virtual ValidatorResult TryValidate(object? value, string name, IEnumerable<string>? memberNames = null) =>
+        TryValidate(value, new LegacyValidationContext(value, name, memberNames));
+
+    /// <summary>
+    ///     尝试执行验证
+    /// </summary>
+    /// <param name="value">对象</param>
+    /// <param name="validationContext">
+    ///     <see cref="IValidationContext" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="ValidatorResult" />
+    /// </returns>
+    public virtual ValidatorResult TryValidate(object? value, IValidationContext? validationContext)
+    {
+        // 获取对象验证结果列表
+        var validationResults = GetValidationResults(value, validationContext);
+        var isValid = validationResults is null or { Count: 0 };
+
+        return new ValidatorResult(isValid, validationResults, value);
     }
 
     /// <summary>

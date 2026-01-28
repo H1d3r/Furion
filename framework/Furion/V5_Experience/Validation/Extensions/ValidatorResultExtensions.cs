@@ -23,10 +23,28 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.ComponentModel.DataAnnotations;
+
 namespace Furion.Validation;
 
 /// <summary>
-///     集合验证器服务
+///     <see cref="ValidatorResult" /> 扩展类
 /// </summary>
-/// <typeparam name="TElement">元素类型</typeparam>
-public interface ICollectionValidator<TElement> : IObjectValidator<IEnumerable<TElement>>, IMemberPathRepairable;
+public static class ValidatorResultExtensions
+{
+    /// <summary>
+    ///     验证验证失败时抛出 <see cref="ValidationException" /> 异常
+    /// </summary>
+    /// <param name="validatorResults"><see cref="ValidatorResult" />列表</param>
+    public static void ThrowIfInvalid(this List<ValidatorResult> validatorResults)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(validatorResults);
+
+        // 遍历所有验证器执行结果列表
+        foreach (var validatorResult in validatorResults)
+        {
+            validatorResult.ThrowIfInvalid();
+        }
+    }
+}

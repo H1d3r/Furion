@@ -83,6 +83,10 @@ public sealed class ValidationService : IValidationService
         _attributeValidator.Validate(instance, CreateValidationContext(instance, ruleSets));
 
     /// <inheritdoc />
+    public ValidatorResult TryValidate(object? instance, string?[]? ruleSets = null) =>
+        _attributeValidator.TryValidate(instance, CreateValidationContext(instance, ruleSets));
+
+    /// <inheritdoc />
     public bool IsValid(IEnumerable<object?> instances, string?[]? ruleSets = null)
     {
         // 空检查
@@ -111,6 +115,15 @@ public sealed class ValidationService : IValidationService
         {
             Validate(instance, ruleSets);
         }
+    }
+
+    /// <inheritdoc />
+    public List<ValidatorResult> TryValidate(IEnumerable<object?> instances, string?[]? ruleSets = null)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(instances);
+
+        return instances.Select(instance => TryValidate(instance, ruleSets)).ToList();
     }
 
     /// <summary>
