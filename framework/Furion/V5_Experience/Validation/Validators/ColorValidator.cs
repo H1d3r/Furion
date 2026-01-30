@@ -29,7 +29,7 @@ using System.Text.RegularExpressions;
 namespace Furion.Validation;
 
 /// <summary>
-///     颜色值验证器
+///     颜色验证器
 /// </summary>
 public partial class ColorValidator : ValidatorBase
 {
@@ -54,7 +54,7 @@ public partial class ColorValidator : ValidatorBase
         };
 
     /// <summary>
-    ///     颜色值正则表达式（完整模式）
+    ///     颜色正则表达式（完整模式）
     /// </summary>
     /// <returns>
     ///     <see cref="System.Text.RegularExpressions.Regex" />
@@ -65,7 +65,7 @@ public partial class ColorValidator : ValidatorBase
     private static partial Regex Regex();
 
     /// <summary>
-    ///     颜色值正则表达式（标准模式）
+    ///     颜色正则表达式（标准模式）
     /// </summary>
     /// <remarks>仅支持：十六进制颜色、RGB 和 RGBA。</remarks>
     /// <returns>
