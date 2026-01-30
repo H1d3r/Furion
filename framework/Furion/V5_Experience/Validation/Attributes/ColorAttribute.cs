@@ -29,7 +29,7 @@ using Furion.Validation.Resources;
 namespace System.ComponentModel.DataAnnotations;
 
 /// <summary>
-///     颜色值验证特性
+///     颜色验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class ColorAttribute : ValidationBaseAttribute
