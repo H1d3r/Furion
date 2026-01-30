@@ -31,13 +31,12 @@ namespace Furion.Validation;
 /// <summary>
 ///     颜色值验证器
 /// </summary>
-public partial class ColorValueValidator : ValidatorBase
+public partial class ColorValidator : ValidatorBase
 {
     /// <summary>
-    ///     <inheritdoc cref="ColorValueValidator" />
+    ///     <inheritdoc cref="ColorValidator" />
     /// </summary>
-    public ColorValueValidator() =>
-        UseResourceKey(() => nameof(ValidationMessages.ColorValueValidator_ValidationError));
+    public ColorValidator() => UseResourceKey(() => nameof(ValidationMessages.ColorValidator_ValidationError));
 
     /// <summary>
     ///     是否启用完整模式
