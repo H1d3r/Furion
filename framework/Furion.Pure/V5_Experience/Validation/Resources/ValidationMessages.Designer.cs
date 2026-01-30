@@ -124,11 +124,11 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
-        ///   查找类似 The field {0} is not a valid color value. 的本地化字符串。
+        ///   查找类似 The field {0} is not a valid color. 的本地化字符串。
         /// </summary>
-        internal static string ColorValueValidator_ValidationError {
+        internal static string ColorValidator_ValidationError {
             get {
-                return ResourceManager.GetString("ColorValueValidator_ValidationError", resourceCulture);
+                return ResourceManager.GetString("ColorValidator_ValidationError", resourceCulture);
             }
         }
         
