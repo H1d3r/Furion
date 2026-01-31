@@ -55,14 +55,12 @@ public sealed class ValidationService : IValidationService
     /// </param>
     [ActivatorUtilitiesConstructor]
     public ValidationService(IServiceProvider serviceProvider)
+        : this()
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(serviceProvider);
 
         _serviceProvider = serviceProvider;
-        _attributeValidator = new AttributeObjectValidator();
-
-        Items = new Dictionary<object, object?>();
     }
 
     /// <summary>

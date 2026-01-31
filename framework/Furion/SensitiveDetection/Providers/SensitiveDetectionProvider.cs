@@ -182,7 +182,7 @@ public class SensitiveDetectionProvider(string embedFileName) : ISensitiveDetect
         // 支持读取配置渲染
         var realText = text.Render();
 
-        // 获取脱敏词库（自动使用缓存，无重复分割开销）
+        // 获取脱敏词库
         var sensitiveWords = await GetWordsAsync();
 
         // 在文本中定位所有敏感词的位置
@@ -199,7 +199,7 @@ public class SensitiveDetectionProvider(string embedFileName) : ISensitiveDetect
         // 支持读取配置渲染
         var realText = text.Render();
 
-        // 获取脱敏词库（自动使用缓存，无重复分割开销）
+        // 获取脱敏词库
         var sensitiveWords = GetWords();
 
         // 在文本中定位所有敏感词的位置
