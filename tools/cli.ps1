@@ -199,7 +199,14 @@ if (-not (Test-Path -Path $TempOutputDir)) {
 # 如果 dotnet ef dbcontext scaffold 命令不存在则提示安装
 
 Write-Output "-----------------------------------------------------------------------------";
-Write-Warning "请确保 dotnet tool install --global dotnet-ef --version 版本号 已经执行安装操作（没有则执行）";
+# 检查 dotnet ef 命令是否可用
+if (Get-Command "dotnet-ef" -ErrorAction SilentlyContinue) {
+    Write-Host "✅ dotnet-ef 已安装" -ForegroundColor Green
+    dotnet ef --version
+} else {
+    Write-Host "❌ dotnet-ef 未安装" -ForegroundColor Red
+    Write-Host "安装命令: dotnet tool install --global dotnet-ef --version 版本号" -ForegroundColor Yellow
+}
 Write-Output "-----------------------------------------------------------------------------";
 
 Write-Warning "$FurTools 请键入操作类型：[G] 界面操作，[任意字符] 命令行操作";
@@ -213,52 +220,63 @@ if($options -eq "G")
     # -----------------------------------------------------------------------------
 
     # 加载数据库表
-    function loadDbTable(){
-        # 获取选中的数据库连接字符串
-        $connStr = $comboBox.SelectedItem;
-        if ($connStr -eq $null -or $connStr -eq ""){
-            [System.Windows.Forms.MessageBox]::Show("请选择数据库连接字符串后再操作");
-            return;
+    function loadDbTable() {
+        $conn = $null
+        $cmd = $null
+        $da = $null
+        $ds = $null
+
+        try {
+            # 获取选中的数据库连接字符串
+            $connStr = $comboBox.SelectedItem
+            if ([string]::IsNullOrWhiteSpace($connStr)) {
+                [System.Windows.Forms.MessageBox]::Show("请选择数据库连接字符串后再操作", "提示", "OK", "Warning")
+                throw "未选择数据库连接字符串"
+            }
+
+            # 创建并打开数据库连接
+            $conn = New-Object System.Data.SqlClient.SqlConnection
+            $conn.ConnectionString = $connStr
+            $conn.Open()
+
+            # 创建命令
+            $cmd = New-Object System.Data.SqlClient.SqlCommand(
+                "SELECT i.name + '.' + h.name AS FullName FROM sys.objects h 
+                 LEFT JOIN sys.schemas i ON h.schema_id = i.schema_id 
+                 WHERE h.type IN ('U','V') 
+                 ORDER BY h.type, i.name, h.name", 
+                $conn
+            )
+
+            # 创建适配器并填充数据集
+            $da = New-Object System.Data.SqlClient.SqlDataAdapter($cmd)
+            $ds = New-Object System.Data.DataSet
+            [void]$da.Fill($ds)
+
+            # 清空列表并填充数据
+            $listBox.Items.Clear()
+            foreach ($row in $ds.Tables[0].Rows) {
+                if ($row -ne $null -and $row[0] -ne $null) {
+                    [void]$listBox.Items.Add($row[0].ToString())
+                }
+            }
+
+            Write-Host "$FurTools 表和视图加载成功！" -ForegroundColor Green
         }
-
-        # 打开数据库读取所有数据库表和视图
-
-        # 创建一个数据库连接对象
-        $conn = New-Object System.Data.SqlClient.SQLConnection;
-
-        # 设置连接字符串
-        $conn.ConnectionString = $connStr;
-
-        # 打开数据库连接
-        $conn.Open();
-
-        # 创建 CMD执行命令
-        $cmd = New-Object System.Data.SqlClient.SqlCommand("SELECT i.name+'.'+h.name FROM sys.objects h left join sys.schemas i on h.schema_id=i.SCHEMA_ID WHERE h.type IN('U','V') ORDER BY h.type,i.name,h.name", $conn);
-
-        # 创建一个dataset
-        $ds = New-Object System.Data.DataSet;
-
-        # 创建一个适配器
-        $da = New-Object System.Data.SqlClient.SqlDataAdapter($cmd);
-
-        # 填充数据
-        [void]$da.fill($ds)
-
-        # 关闭数据库连接
-        $conn.Close();
-
-        # 销毁数据库链接
-        $conn.Dispose();
-
-        $rowCount = $ds.Tables[0].Rows.Count;
-
-        # 填充 Listbox
-        for($i = 0;$i -le $rowCount; $i++)
-        {
-            $rows = $ds.Tables[0].Rows[$i];
-            if($rows -ne $null)
-            {
-                [void] $listBox.Items.Add($rows[0]);
+        catch {
+            $errorMsg = "❌ 连接失败`n`n连接字符串: '$connStr'`n`n错误详情:`n$($_.Exception.Message)`n`n$($_.Exception.StackTrace)"
+            Write-Host "$FurTools 详细错误：`n$errorMsg" -ForegroundColor Red
+            $displayMsg = if ($errorMsg.Length -gt 1000) { $errorMsg.Substring(0, 1000) + "`n...(内容过长已截断)" } else { $errorMsg }
+            [System.Windows.Forms.MessageBox]::Show($displayMsg, "数据库连接错误", "OK", "Error")
+            throw
+        }
+        finally {
+            # 释放资源
+            if ($da -ne $null) { $da.Dispose() }
+            if ($cmd -ne $null) { $cmd.Dispose() }
+            if ($conn -ne $null) {
+                if ($conn.State -eq 'Open') { $conn.Close() }
+                $conn.Dispose()
             }
         }
     }
@@ -584,10 +602,14 @@ try
     }
 
     # 执行命令字符串  
+    Write-Output "$FurTools 执行: $CommandString"
     Invoke-Expression $CommandString;
 
-    Write-Output "$FurTools 编译成功！";
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet ef 命令执行失败（退出码: $LASTEXITCODE）"
+    }
 
+    Write-Output "$FurTools 编译成功！";
     Write-Output "$FurTools 开始生成实体文件......";
 
     # 获取 DbContext 生成的配置内容
@@ -595,8 +617,9 @@ try
 }
 catch
 {
-    Write-Warning "$FurTools 生成失败：$_.Message";
-    return;
+    Write-Error "$FurTools 生成失败：$($_.Exception.Message)"
+    Write-Host "$FurTools 脚本已终止，后续操作已取消" -ForegroundColor Red
+    exit 1  # 确保彻底终止
 }
 
 $entityConfigures = [regex]::Matches($dbContextContent, "modelBuilder.Entity\<(?<table>\w+)\>\(entity\s=\>\n*[\s\S]*?\{(?<content>(?:[^{}]|(?<open>{)|(?<-open>}))+(?(open)(?!)))\}\);");
