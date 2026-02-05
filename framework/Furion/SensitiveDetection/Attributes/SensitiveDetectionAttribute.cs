@@ -40,6 +40,7 @@ public class SensitiveDetectionAttribute : ValidationAttribute
     /// 构造函数
     /// </summary>
     public SensitiveDetectionAttribute()
+        : base("The field {0} contains sensitive words.")
     {
     }
 
@@ -48,6 +49,7 @@ public class SensitiveDetectionAttribute : ValidationAttribute
     /// </summary>
     /// <param name="transfer"></param>
     public SensitiveDetectionAttribute(char transfer)
+        : this()
     {
         Transfer = transfer;
     }
@@ -148,6 +150,7 @@ public class SensitiveDetectionAttribute : ValidationAttribute
             return FormatErrorMessage(name);
         }
 
-        return string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, string.Join(" ", foundSets.Select(kv => $"[{kv.Key}@{string.Join(",", kv.Value)}]")));
+        var sensitiveWords = string.Join(" ", foundSets.Select(kv => $"[{kv.Key}@{string.Join(",", kv.Value)}]"));
+        return string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, sensitiveWords);
     }
 }
