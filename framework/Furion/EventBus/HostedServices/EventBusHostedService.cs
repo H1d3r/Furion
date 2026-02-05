@@ -252,7 +252,7 @@ internal sealed class EventBusHostedService : BackgroundService
         }
 
         // 检查是否配置只消费一次
-        if (eventSource.IsConsumOnce)
+        if (eventSource.ConsumeOnce)
         {
             var randomId = RandomNumberGenerator.GetInt32(0, eventHandlersThatShouldRun.Count);
             eventHandlersThatShouldRun = [eventHandlersThatShouldRun.ElementAt(randomId)];
