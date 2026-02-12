@@ -590,6 +590,12 @@ public class TestModuleServices : IDynamicApiController
         return status;
     }
 
+    [HttpGet]
+    public TestUrlArray 测试URL模型数组参数([FromQuery] TestUrlArray model)
+    {
+        return model;
+    }
+
     public bool 测试PBKDF2加密比较()
     {
         // 测试 PBKDF2 加密，比较
@@ -843,4 +849,13 @@ public class SensitiveModel
     [Display(Name = "文本内容")]
     [SensitiveDetection(ErrorMessage = "{0} 包含敏感词，敏感词为：{1}", ShowSensitiveWords = true)]
     public string Text { get; set; }
+}
+
+
+public class TestUrlArray
+{
+    public int Id { get; set; }
+
+    [FlexibleArray<string>]
+    public string[] Status { get; set; }
 }
