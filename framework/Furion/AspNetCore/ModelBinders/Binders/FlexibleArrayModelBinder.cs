@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Furion.AspNetCore;
@@ -33,6 +34,10 @@ namespace Furion.AspNetCore;
 /// </summary>
 internal class FlexibleArrayModelBinder<T> : IModelBinder
 {
+    // 缓存元素类型信息
+    private static readonly Type _elementType = typeof(T);
+    private static readonly bool _isNullableType = _elementType.IsGenericType && _elementType.GetGenericTypeDefinition() == typeof(Nullable<>);
+
     /// <inheritdoc />
     public Task BindModelAsync(ModelBindingContext bindingContext)
     {
@@ -46,58 +51,124 @@ internal class FlexibleArrayModelBinder<T> : IModelBinder
         // 获取 URL 参数集合
         var queryCollection = bindingContext.HttpContext.Request.Query;
 
-        // 尝试从 status[] 获取值
-        if (queryCollection.ContainsKey(modelName + "[]"))
-        {
-            var values = ConvertValues(queryCollection[modelName + "[]"], modelType);
-            bindingContext.Result = ModelBindingResult.Success(values);
+        // 尝试从查询字符串中获取值
+        var values = TryGetValues(queryCollection, modelName);
 
-            return Task.CompletedTask;
+        if (values != null && values.Any())
+        {
+            var convertedValues = ConvertValues(values, modelType);
+            bindingContext.Result = ModelBindingResult.Success(convertedValues);
         }
-
-        // 尝试从 status 获取逗号分隔的值
-        var commaSeparatedValue = queryCollection[modelName];
-        if (!string.IsNullOrEmpty(commaSeparatedValue))
+        else
         {
-            var values = ConvertValues(commaSeparatedValue.ToString().Split(',').Where(s => !string.IsNullOrWhiteSpace(s)), modelType);
-            bindingContext.Result = ModelBindingResult.Success(values);
-
-            return Task.CompletedTask;
-        }
-
-        // 如果以上两种情况都不满足，尝试将多个 status 参数合并
-        var individualValues = queryCollection[modelName];
-        if (individualValues.Count > 0)
-        {
-            var values = ConvertValues(individualValues, modelType);
-            bindingContext.Result = ModelBindingResult.Success(values);
-
-            return Task.CompletedTask;
+            bindingContext.Result = ModelBindingResult.Success(CreateEmptyCollection(modelType));
         }
 
         return Task.CompletedTask;
     }
 
     /// <summary>
+    /// 尝试从查询字符串中获取值
+    /// </summary>
+    private static IEnumerable<string> TryGetValues(IQueryCollection queryCollection, string modelName)
+    {
+        // status[] 格式
+        if (queryCollection.ContainsKey(modelName + "[]"))
+        {
+            return queryCollection[modelName + "[]"]
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+        }
+
+        // status=value1,value2,value3 格式
+        var commaValue = queryCollection[modelName];
+        if (!string.IsNullOrEmpty(commaValue))
+        {
+            return commaValue.ToString()
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+        }
+
+        // 多个 status=value 格式
+        if (queryCollection.ContainsKey(modelName) && queryCollection[modelName].Count > 0)
+        {
+            return queryCollection[modelName].Where(s => !string.IsNullOrWhiteSpace(s));
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// 转换集合类型值为模型类型值
     /// </summary>
-    /// <param name="values"></param>
-    /// <param name="modelType"></param>
-    /// <returns></returns>
     private static object ConvertValues(IEnumerable<string> values, Type modelType)
+    {
+        var convertedList = values
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(value => value.ChangeType<T>())
+            .Where(v => v != null || _isNullableType)
+            .ToList();
+
+        // 根据目标类型创建相应的集合
+        if (modelType.IsArray)
+        {
+            // 创建数组并填充转换后的值
+            var array = Array.CreateInstance(_elementType, convertedList.Count);
+            for (var i = 0; i < convertedList.Count; i++)
+            {
+                array.SetValue(convertedList[i], i);
+            }
+
+            return array;
+        }
+
+        if (modelType.IsGenericType)
+        {
+            var genericTypeDefinition = modelType.GetGenericTypeDefinition();
+
+            if (genericTypeDefinition == typeof(List<>))
+            {
+                var listType = typeof(List<>).MakeGenericType(_elementType);
+                var list = (IList)Activator.CreateInstance(listType);
+
+                foreach (var item in convertedList)
+                {
+                    list.Add(item);
+                }
+
+                return list;
+            }
+
+            // 支持其他 IEnumerable<T> 衍生类型
+            if (genericTypeDefinition == typeof(IEnumerable<>) ||
+                genericTypeDefinition == typeof(ICollection<>) ||
+                genericTypeDefinition == typeof(IReadOnlyList<>) ||
+                genericTypeDefinition == typeof(IReadOnlyCollection<>))
+            {
+                return convertedList;
+            }
+        }
+
+        return convertedList;
+    }
+
+    /// <summary>
+    /// 创建空集合
+    /// </summary>
+    private static object CreateEmptyCollection(Type modelType)
     {
         // 处理数组类型
         if (modelType.IsArray)
         {
-            return values.Select(u => u.ChangeType<T>()).ToArray();
+            return Array.CreateInstance(_elementType, 0);
         }
         // 处理 List 类型
         if (modelType.IsGenericType && modelType.GetGenericTypeDefinition() == typeof(List<>))
         {
-            return values.Select(u => u.ChangeType<T>()).ToList();
+            var listType = typeof(List<>).MakeGenericType(_elementType);
+            return Activator.CreateInstance(listType);
         }
 
-        // IEnumerable<T> 类型
-        return values.Select(u => u.ChangeType<T>());
+        return Array.Empty<T>();
     }
 }
