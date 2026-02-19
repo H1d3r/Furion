@@ -16,10 +16,10 @@ import {
   Toast,
   Tooltip,
   Typography,
-} from "@douyinfe/semi-ui";
-import { Data } from "@douyinfe/semi-ui/lib/es/descriptions";
-import { ColumnProps } from "@douyinfe/semi-ui/lib/es/table/interface";
-import Paragraph from "@douyinfe/semi-ui/lib/es/typography/paragraph";
+} from "@douyinfe/semi-ui-19";
+import { Data } from "@douyinfe/semi-ui-19/lib/es/descriptions";
+import { ColumnProps } from "@douyinfe/semi-ui-19/lib/es/table/interface";
+import Paragraph from "@douyinfe/semi-ui-19/lib/es/typography/paragraph";
 import useFetch from "use-http";
 import { JobDetail, Trigger } from "../../types";
 import {
@@ -165,9 +165,11 @@ const columns: ColumnProps<JobDetail>[] = [
           )}
           {jobDetail.temporary === true && (
             <Tooltip content="执行完毕后自动删除">
-              <Tag size="small" shape="circle" color="amber">
-                临时
-              </Tag>
+              <span>
+                <Tag size="small" shape="circle" color="amber">
+                  临时
+                </Tag>
+              </span>
             </Tooltip>
           )}
         </>
@@ -211,9 +213,11 @@ const columns: ColumnProps<JobDetail>[] = [
     render: (text, jobDetail, index) => {
       return jobDetail.concurrent === true ? (
         <Tooltip content={"任务会按触发顺序立即执行，不会等待前一个任务完成。"}>
-          <Tag color="red" type="light">
-            并行
-          </Tag>
+          <span>
+            <Tag color="red" type="light">
+              并行
+            </Tag>
+          </span>
         </Tooltip>
       ) : (
         <Tooltip
@@ -221,9 +225,11 @@ const columns: ColumnProps<JobDetail>[] = [
             "若前一个任务尚未完成，则当前任务将进入阻塞状态，并在下一个触发时间点尝试执行。"
           }
         >
-          <Tag color="red" type="solid">
-            串行
-          </Tag>
+          <span>
+            <Tag color="red" type="solid">
+              串行
+            </Tag>
+          </span>
         </Tooltip>
       );
     },
@@ -366,16 +372,14 @@ function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
    */
   const { post, response, loading } = useFetch(
     apiconfig.hostAddress,
-    apiconfig.options
+    apiconfig.options,
   );
 
   /**
    * 操作作业
    */
   const callAction = async (action: string) => {
-    const data = await post(
-      "/operate-job?jobid=" + jobid + "&action=" + action
-    );
+    await post("/operate-job?jobid=" + jobid + "&action=" + action);
     if (response.ok) {
       Toast.success({
         content: "操作成功",

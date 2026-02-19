@@ -5,7 +5,7 @@ import {
   Timeline,
   Tooltip,
   Typography,
-} from "@douyinfe/semi-ui";
+} from "@douyinfe/semi-ui-19";
 import { Trigger, TriggerTimeline } from "../../types";
 import { dayFromNow, dayTime, formatDuration } from "../../utils";
 import StatusText from "./state-text";
@@ -29,7 +29,7 @@ export default function Timelines({
                 <div style={{ display: "inline-block" }}>
                   <Tag color={"light-green"} type={i === 0 ? "solid" : "light"}>
                     {dayTime(timeline.nextRunTime).format(
-                      "YYYY/MM/DD HH:mm:ss"
+                      "YYYY/MM/DD HH:mm:ss",
                     )}
                     ({dayFromNow(timeline.nextRunTime)})
                   </Tag>
@@ -82,9 +82,11 @@ export default function Timelines({
           </Tag>{" "}
           次运行，耗时{" "}
           <Tooltip content={<>{timeline.elapsedTime}ms</>} zIndex={10000000001}>
-            <Tag color="lime" type="light">
-              {formatDuration(timeline.elapsedTime!)}
-            </Tag>
+            <span>
+              <Tag color="lime" type="light">
+                {formatDuration(timeline.elapsedTime!)}
+              </Tag>
+            </span>
           </Tooltip>{" "}
           {timeline.mode === 1 && (
             <Tag color="yellow" type="solid">

@@ -1,6 +1,6 @@
 import { IconCalendarClock } from "@douyinfe/semi-icons";
-import { Button, Modal, Tag, Tooltip, Typography } from "@douyinfe/semi-ui";
-import Paragraph from "@douyinfe/semi-ui/lib/es/typography/paragraph";
+import { Button, Modal, Tag, Tooltip, Typography } from "@douyinfe/semi-ui-19";
+import Paragraph from "@douyinfe/semi-ui-19/lib/es/typography/paragraph";
 import { useEffect, useState } from "react";
 import useFetch from "use-http";
 import { Trigger, TriggerTimeline } from "../../types";
@@ -184,9 +184,11 @@ export default function RenderValue(props: {
     preview = (
       <>
         <Tooltip content={<>{value}ms</>}>
-          <Tag color="lime" type="light">
-            {formatDuration(Number(value))}
-          </Tag>
+          <span>
+            <Tag color="lime" type="light">
+              {formatDuration(Number(value))}
+            </Tag>
+          </span>
         </Tooltip>
       </>
     );
@@ -251,7 +253,7 @@ function LogPanel(props: {
         jobid +
         "&triggerid=" +
         triggerid +
-        "&action=timelines"
+        "&action=timelines",
     );
 
     if (response.ok) setTimelines(data);

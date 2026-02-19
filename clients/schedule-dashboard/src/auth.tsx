@@ -1,4 +1,4 @@
-import React from "react";
+import React, { JSX } from "react";
 import apiconfig from "./apiconfig";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
@@ -38,7 +38,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newUser);
       sessionStorage.setItem(
         apiconfig.loginConfig.sessionKey,
-        JSON.stringify(newUser)
+        JSON.stringify(newUser),
       );
       callback();
     });

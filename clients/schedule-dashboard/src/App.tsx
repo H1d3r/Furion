@@ -7,7 +7,14 @@ import {
   IconMoon,
   IconSun,
 } from "@douyinfe/semi-icons";
-import { BackTop, Button, Layout, Nav, Tag, Tooltip } from "@douyinfe/semi-ui";
+import {
+  BackTop,
+  Button,
+  Layout,
+  Nav,
+  Tag,
+  Tooltip,
+} from "@douyinfe/semi-ui-19";
 import { useState } from "react";
 import Jobs from "./components/jobs";
 import apiconfig from "./apiconfig";
@@ -61,17 +68,19 @@ function App() {
               <Nav.Footer>
                 {apiconfig.useUtcTimestamp === "true" && (
                   <Tooltip content="当前时间标准为 UTC 时间">
-                    <Tag
-                      color="light-blue"
-                      prefixIcon={<IconClock />}
-                      size="large"
-                      shape="circle"
-                      style={{
-                        marginRight: "12px",
-                      }}
-                    >
-                      UTC 时间
-                    </Tag>
+                    <span>
+                      <Tag
+                        color="light-blue"
+                        prefixIcon={<IconClock />}
+                        size="large"
+                        shape="circle"
+                        style={{
+                          marginRight: "12px",
+                        }}
+                      >
+                        UTC 时间
+                      </Tag>
+                    </span>
                   </Tooltip>
                 )}
 
@@ -80,43 +89,49 @@ function App() {
                     mode === "light" ? "切换到暗色模式" : "切换到亮色模式"
                   }
                 >
-                  <Button
-                    theme="borderless"
-                    icon={
-                      mode === "light" ? (
-                        <IconMoon size="large" />
-                      ) : (
-                        <IconSun size="large" />
-                      )
-                    }
-                    style={{
-                      color: "var(--semi-color-text-2)",
-                      marginRight: "12px",
-                    }}
-                    onClick={() => switchMode()}
-                  />
+                  <span>
+                    <Button
+                      theme="borderless"
+                      icon={
+                        mode === "light" ? (
+                          <IconMoon size="large" />
+                        ) : (
+                          <IconSun size="large" />
+                        )
+                      }
+                      style={{
+                        color: "var(--semi-color-text-2)",
+                        marginRight: "12px",
+                      }}
+                      onClick={() => switchMode()}
+                    />
+                  </span>
                 </Tooltip>
                 <Tooltip content={"查看文档"}>
-                  <Button
-                    theme="borderless"
-                    icon={<IconHelpCircle size="large" />}
-                    style={{
-                      color: "var(--semi-color-text-2)",
-                      marginRight: "12px",
-                    }}
-                    onClick={() => window.open("https://furion.net/docs/job")}
-                  />
+                  <span>
+                    <Button
+                      theme="borderless"
+                      icon={<IconHelpCircle size="large" />}
+                      style={{
+                        color: "var(--semi-color-text-2)",
+                        marginRight: "12px",
+                      }}
+                      onClick={() => window.open("https://furion.net/docs/job")}
+                    />
+                  </span>
                 </Tooltip>
                 <Tooltip content={"退出登录"}>
-                  <Button
-                    theme="borderless"
-                    icon={<IconExit size="large" />}
-                    style={{
-                      color: "var(--semi-color-text-2)",
-                      marginRight: "12px",
-                    }}
-                    onClick={() => auth.signout(() => navigate("/"))}
-                  />
+                  <span>
+                    <Button
+                      theme="borderless"
+                      icon={<IconExit size="large" />}
+                      style={{
+                        color: "var(--semi-color-text-2)",
+                        marginRight: "12px",
+                      }}
+                      onClick={() => auth.signout(() => navigate("/"))}
+                    />
+                  </span>
                 </Tooltip>
               </Nav.Footer>
             </Nav>
