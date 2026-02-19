@@ -14,19 +14,18 @@ import {
   Input,
   Popconfirm,
   Popover,
-  Space,
   Table,
   Tag,
   TextArea,
   Toast,
   Tooltip,
   Typography,
-} from "@douyinfe/semi-ui";
-import { Data } from "@douyinfe/semi-ui/lib/es/descriptions";
+} from "@douyinfe/semi-ui-19";
+import { Data } from "@douyinfe/semi-ui-19/lib/es/descriptions";
 import {
   ExpandedRowRender,
   OnRow,
-} from "@douyinfe/semi-ui/lib/es/table/interface";
+} from "@douyinfe/semi-ui-19/lib/es/table/interface";
 import {
   useCallback,
   useDeferredValue,
@@ -83,7 +82,7 @@ export default function Jobs({ mode }: { mode: string }) {
         (u.jobDetail?.assemblyName ?? "").indexOf(trimWords) > -1 ||
         (u.jobDetail?.properties ?? "").indexOf(trimWords) > -1 ||
         (u.jobDetail?.concurrent === true ? "并行" : "串行").indexOf(
-          trimWords
+          trimWords,
         ) > -1 ||
         (u.jobDetail?.temporary === true ? "临时" : "").indexOf(trimWords) >
           -1 ||
@@ -94,8 +93,8 @@ export default function Jobs({ mode }: { mode: string }) {
             (t.description ?? "").indexOf(trimWords) > -1 ||
             (t.triggerType ?? "").indexOf(trimWords) > -1 ||
             (t.assemblyName ?? "").indexOf(trimWords) > -1 ||
-            (t.args ?? "").indexOf(trimWords) > -1
-        ) > -1
+            (t.args ?? "").indexOf(trimWords) > -1,
+        ) > -1,
     );
   }, [jobs, deferredWords]);
 
@@ -126,7 +125,7 @@ export default function Jobs({ mode }: { mode: string }) {
   const callAction = async (
     jobid: string,
     triggerid: string,
-    action: string
+    action: string,
   ) => {
     await post(
       "/operate-trigger?jobid=" +
@@ -134,7 +133,7 @@ export default function Jobs({ mode }: { mode: string }) {
         "&triggerid=" +
         triggerid +
         "&action=" +
-        action
+        action,
     );
 
     if (response.ok) {
@@ -198,7 +197,7 @@ export default function Jobs({ mode }: { mode: string }) {
     (jobDetail, index) => {
       // 查找作业计划
       var scheduler = jobList.find(
-        (u) => u.jobDetail?.jobId === jobDetail?.jobId
+        (u) => u.jobDetail?.jobId === jobDetail?.jobId,
       );
       if (!scheduler) return <></>;
 
@@ -253,7 +252,7 @@ export default function Jobs({ mode }: { mode: string }) {
                         callAction(
                           getOValueByData("JobId", expandData).toString(),
                           getOValueByData("TriggerId", expandData).toString(),
-                          "start"
+                          "start",
                         )
                       }
                     />
@@ -280,7 +279,7 @@ export default function Jobs({ mode }: { mode: string }) {
                           callAction(
                             getOValueByData("JobId", expandData).toString(),
                             getOValueByData("TriggerId", expandData).toString(),
-                            "start"
+                            "start",
                           )
                         }
                       >
@@ -291,7 +290,7 @@ export default function Jobs({ mode }: { mode: string }) {
                           callAction(
                             getOValueByData("JobId", expandData).toString(),
                             getOValueByData("TriggerId", expandData).toString(),
-                            "pause"
+                            "pause",
                           )
                         }
                       >
@@ -304,7 +303,7 @@ export default function Jobs({ mode }: { mode: string }) {
                             "确定要删除当前触发器 [" +
                             getOValueByData(
                               "TriggerId",
-                              expandData
+                              expandData,
                             ).toString() +
                             "]？"
                           }
@@ -313,9 +312,9 @@ export default function Jobs({ mode }: { mode: string }) {
                               getOValueByData("JobId", expandData).toString(),
                               getOValueByData(
                                 "TriggerId",
-                                expandData
+                                expandData,
                               ).toString(),
-                              "remove"
+                              "remove",
                             )
                           }
                         >
@@ -327,7 +326,7 @@ export default function Jobs({ mode }: { mode: string }) {
                           callAction(
                             getOValueByData("JobId", expandData).toString(),
                             getOValueByData("TriggerId", expandData).toString(),
-                            "run"
+                            "run",
                           )
                         }
                       >
@@ -347,7 +346,7 @@ export default function Jobs({ mode }: { mode: string }) {
         </div>
       );
     },
-    [jobList]
+    [jobList],
   );
 
   const handleRow: OnRow<JobDetail> = (jobDetail, index) => {
@@ -364,7 +363,7 @@ export default function Jobs({ mode }: { mode: string }) {
   };
 
   var invalidJobCount = data.filter(
-    (u) => (u.triggers?.length || 0) === 0
+    (u) => (u.triggers?.length || 0) === 0,
   ).length;
 
   return (
@@ -434,7 +433,7 @@ export default function Jobs({ mode }: { mode: string }) {
                 style={{ marginBottom: 8, fontSize: 14 }}
                 className={clsx(
                   styles.timelineItem,
-                  mode === "dark" && styles.dark
+                  mode === "dark" && styles.dark,
                 )}
               >
                 <Tag size="large" color="green" type="light">
@@ -456,9 +455,11 @@ export default function Jobs({ mode }: { mode: string }) {
                   content={<>{timeline.elapsedTime}ms</>}
                   zIndex={10000000001}
                 >
-                  <Tag color="lime" type="light">
-                    {formatDuration(timeline.elapsedTime!)}
-                  </Tag>
+                  <span>
+                    <Tag color="lime" type="light">
+                      {formatDuration(timeline.elapsedTime!)}
+                    </Tag>
+                  </span>
                 </Tooltip>{" "}
                 {timeline.mode === 1 && (
                   <Tag color="yellow" type="solid">
