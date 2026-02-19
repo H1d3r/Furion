@@ -464,107 +464,144 @@ public static class SpecificationDocumentBuilder
     /// <param name="swaggerGenOptions">Swagger 生成器配置</param>
     private static void LoadXmlComments(SwaggerGenOptions swaggerGenOptions)
     {
-        var xmlComments = _specificationDocumentSettings.XmlComments ?? Array.Empty<string>();
-        var members = new Dictionary<string, XElement>();
+        var xmlComments = _specificationDocumentSettings.XmlComments ?? [];
 
-        // 显式继承的注释
-        var regex = new Regex(@"[A-Z]:[a-zA-Z0-9_@\.]+");
-        // 隐式继承的注释
-        var regex2 = new Regex(@"[A-Z]:[a-zA-Z0-9_@\.]+\.");
-
-        // 支持注释完整特性，包括 inheritdoc 注释语法
         foreach (var xmlComment in xmlComments)
         {
-            var assemblyXmlName = xmlComment.EndsWith(".xml") ? xmlComment : $"{xmlComment}.xml";
+            var assemblyXmlName = xmlComment.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ? xmlComment : $"{xmlComment}.xml";
             var assemblyXmlPath = Path.Combine(AppContext.BaseDirectory, assemblyXmlName);
 
-            if (File.Exists(assemblyXmlPath))
+            if (!File.Exists(assemblyXmlPath))
             {
-                var xmlDoc = XDocument.Load(assemblyXmlPath);
-
-                // 查找所有 member[name] 节点，且不包含 <inheritdoc /> 节点的注释
-                var memberNotInheritdocElementList = xmlDoc.XPathSelectElements("/doc/members/member[@name and not(inheritdoc)]");
-
-                foreach (var memberElement in memberNotInheritdocElementList)
-                {
-                    members.TryAdd(memberElement.Attribute("name").Value, memberElement);
-                }
-
-                // 查找所有 member[name] 含有 <inheritdoc /> 节点的注释
-                var memberElementList = xmlDoc.XPathSelectElements("/doc/members/member[inheritdoc]");
-                foreach (var memberElement in memberElementList)
-                {
-                    var inheritdocElement = memberElement.Element("inheritdoc");
-                    var cref = inheritdocElement.Attribute("cref");
-                    var value = cref?.Value;
-
-                    // 处理不带 cref 的 inheritdoc 注释
-                    if (value == null)
-                    {
-                        var memberName = inheritdocElement.Parent.Attribute("name").Value;
-
-                        // 处理隐式实现接口的注释
-                        // 注释格式：M:Furion.Application.TestInheritdoc.Furion#Application#ITestInheritdoc#Abc(System.String)
-                        // 匹配格式：[A-Z]:[a-zA-Z0-9_@\.]+\.
-                        // 处理逻辑：直接替换匹配为空，然后讲 # 替换为 . 查找即可
-                        if (memberName.Contains('#'))
-                        {
-                            value = $"{memberName[..2]}{regex2.Replace(memberName, "").Replace('#', '.')}";
-                        }
-                        // 处理带参数的注释
-                        // 注释格式：M:Furion.Application.TestInheritdoc.WithParams(System.String)
-                        // 匹配格式：[A-Z]:[a-zA-Z0-9_@\.]+
-                        // 处理逻辑：匹配出不带参数的部分，然后获取类型命名空间，最后调用 GenerateInheritdocCref 进行生成
-                        else if (memberName.Contains('('))
-                        {
-                            var noParamsClassName = regex.Match(memberName).Value;
-                            var className = noParamsClassName[noParamsClassName.IndexOf(":")..noParamsClassName.LastIndexOf(".")];
-                            value = GenerateInheritdocCref(xmlDoc, memberName, className);
-                        }
-                        // 处理不带参数的注释
-                        // 注释格式：M:Furion.Application.TestInheritdoc.WithParams
-                        // 匹配格式：无
-                        // 处理逻辑：获取类型命名空间，最后调用 GenerateInheritdocCref 进行生成
-                        else
-                        {
-                            var className = memberName[memberName.IndexOf(":")..memberName.LastIndexOf(".")];
-                            value = GenerateInheritdocCref(xmlDoc, memberName, className);
-                        }
-                    }
-
-                    if (string.IsNullOrWhiteSpace(value)) continue;
-
-                    // 处理带 cref 的 inheritdoc 注释
-                    if (members.TryGetValue(value, out var realDocMember))
-                    {
-                        memberElement.SetAttributeValue("_ref_", value);
-                        inheritdocElement.Parent.ReplaceNodes(realDocMember.Nodes());
-                    }
-                }
-
-                swaggerGenOptions.IncludeXmlComments(() => new XPathDocument(xmlDoc.CreateReader()), true);
+                continue;
             }
+
+            var xmlDoc = XDocument.Load(assemblyXmlPath, LoadOptions.PreserveWhitespace);
+
+            //  构建成员索引字典
+            var memberIndex = xmlDoc.XPathSelectElements("/doc/members/member[@name]")
+                .ToDictionary(m => m.Attribute("name").Value, m => m, StringComparer.Ordinal);
+
+            // 遍历处理所有 member 节点
+            foreach (var memberElement in xmlDoc.XPathSelectElements("/doc/members/member[@name]"))
+            {
+                var nameAttr = memberElement.Attribute("name");
+                if (nameAttr == null) continue;
+
+                var memberName = nameAttr.Value;
+                var inheritdocElement = memberElement.Element("inheritdoc");
+
+                if (inheritdocElement == null)
+                {
+                    // 普通注释：存入索引供 inheritdoc 引用
+                    memberIndex[memberName] = memberElement;
+                }
+                else
+                {
+                    // inheritdoc 注释：解析 cref 并替换内容
+                    ProcessInheritdoc(memberElement, inheritdocElement, memberIndex, memberName);
+                }
+            }
+
+            swaggerGenOptions.IncludeXmlComments(() => new XPathDocument(xmlDoc.CreateReader()), true);
         }
     }
 
     /// <summary>
-    /// 生成 Inheritdoc cref 属性
+    /// 处理 inheritdoc 注释节点
     /// </summary>
-    /// <param name="xmlDoc"></param>
-    /// <param name="memberName"></param>
-    /// <param name="className"></param>
-    /// <returns></returns>
-    private static string GenerateInheritdocCref(XDocument xmlDoc, string memberName, string className)
+    private static void ProcessInheritdoc(XElement memberElement, XElement inheritdocElement, Dictionary<string, XElement> memberIndex, string memberName)
     {
-        var classElement = xmlDoc.XPathSelectElements($"/doc/members/member[@name='{"T" + className}' and @_ref_]").FirstOrDefault();
-        if (classElement == null) return default;
+        var cref = inheritdocElement.Attribute("cref")?.Value;
 
-        var _ref_value = classElement.Attribute("_ref_")?.Value;
-        if (_ref_value == null) return default;
+        if (string.IsNullOrEmpty(cref))
+        {
+            cref = ResolveInheritdocCref(memberName, memberIndex);
+        }
 
-        var classCrefValue = _ref_value[_ref_value.IndexOf(":")..];
-        return memberName.Replace(className, classCrefValue);
+        if (!string.IsNullOrWhiteSpace(cref) &&
+            memberIndex.TryGetValue(cref, out var realDocMember))
+        {
+            memberElement.SetAttributeValue("_ref_", cref);
+            inheritdocElement.Parent?.ReplaceNodes(realDocMember.Nodes());
+        }
     }
+
+    /// <summary>
+    /// 解析 inheritdoc 的 cref 属性（当未显式指定时）
+    /// </summary>
+    private static string ResolveInheritdocCref(string memberName, Dictionary<string, XElement> memberIndex)
+    {
+        if (memberName.Contains('#'))
+        {
+            return ResolveImplicitInterfaceCref(memberName);
+        }
+
+        if (memberName.Contains('('))
+        {
+            var match = s_memberNameRegex.Match(memberName);
+            if (!match.Success) return null;
+
+            var noParams = match.Value;
+            var className = ExtractClassName(noParams);
+            return GenerateInheritdocCref(memberIndex, memberName, className);
+        }
+
+        var className2 = ExtractClassName(memberName);
+        return GenerateInheritdocCref(memberIndex, memberName, className2);
+    }
+
+    /// <summary>
+    /// 解析隐式接口实现的 cref
+    /// </summary>
+    private static string ResolveImplicitInterfaceCref(string memberName)
+    {
+        if (memberName.IndexOf('#') < 0) return memberName;
+
+        var prefixEnd = memberName.IndexOf(':');
+        if (prefixEnd < 0) return memberName;
+
+        var prefix = memberName[..(prefixEnd + 1)];
+        var rest = memberName[(prefixEnd + 1)..];
+        var resolved = rest.Replace('#', '.');
+        return prefix + resolved;
+    }
+
+    /// <summary>
+    /// 从成员名称中提取类名前缀
+    /// </summary>
+    private static string ExtractClassName(string memberName)
+    {
+        var start = memberName.IndexOf(':');
+        var end = memberName.LastIndexOf('.');
+
+        if (start < 0 || end <= start) return string.Empty;
+
+        return memberName[start..end];
+    }
+
+    /// <summary>
+    /// 生成 inheritdoc 的目标 cref 值
+    /// </summary>
+    private static string GenerateInheritdocCref(Dictionary<string, XElement> memberIndex, string memberName, string className)
+    {
+        var classKey = "T" + className;
+        if (!memberIndex.TryGetValue(classKey, out var classElement)) return null;
+
+        var refValue = classElement.Attribute("_ref_")?.Value;
+        if (string.IsNullOrEmpty(refValue)) return null;
+
+        var colonIndex = refValue.IndexOf(':');
+        if (colonIndex < 0) return null;
+
+        var classCrefSuffix = refValue.Substring(colonIndex);
+        return memberName.Replace(className, classCrefSuffix);
+    }
+
+    /// <summary>
+    /// 静态编译的正则表达式
+    /// </summary>
+    private static readonly Regex s_memberNameRegex = new Regex(@"[A-Z]:[a-zA-Z0-9_@.]+", RegexOptions.Compiled);
 
     /// <summary>
     /// 配置授权
