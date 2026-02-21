@@ -30,7 +30,7 @@ using System.Globalization;
 namespace System.ComponentModel.DataAnnotations;
 
 /// <summary>
-///     <see cref="DateTime" /> 验证特性
+///     <see cref="DateTime" /> 时刻验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class DateTimeAttribute : ValidationBaseAttribute
@@ -41,7 +41,7 @@ public class DateTimeAttribute : ValidationBaseAttribute
     /// <summary>
     ///     <inheritdoc cref="DateTimeAttribute" />
     /// </summary>
-    /// <param name="formats">允许的日期格式列表（如 "yyyy-MM-dd HH:mm:ss"）</param>
+    /// <param name="formats">允许的日期时间格式列表（如 "yyyy-MM-dd HH:mm:ss"）</param>
     public DateTimeAttribute(params string[] formats)
     {
         // 空检查
@@ -54,7 +54,7 @@ public class DateTimeAttribute : ValidationBaseAttribute
     }
 
     /// <summary>
-    ///     允许的日期格式列表（如 "yyyy-MM-dd HH:mm:ss"）
+    ///     允许的日期时间格式列表（如 "yyyy-MM-dd HH:mm:ss"）
     /// </summary>
     public string[] Formats { get; }
 
@@ -78,7 +78,7 @@ public class DateTimeAttribute : ValidationBaseAttribute
     public IFormatProvider? Provider => _validator.Provider;
 
     /// <summary>
-    ///     日期解析样式
+    ///     日期时间解析样式
     /// </summary>
     /// <remarks>需与 <see cref="Formats" /> 搭配使用。默认值为：<see cref="DateTimeStyles.None" />。</remarks>
     public DateTimeStyles Style
@@ -92,7 +92,7 @@ public class DateTimeAttribute : ValidationBaseAttribute
     } = DateTimeStyles.None;
 
     /// <summary>
-    ///     格式化后的允许的日期格式列表
+    ///     格式化后的允许的日期时间格式列表
     /// </summary>
     internal string FormatsFormatted => string.Join(", ", Formats.Select(u => $"'{u}'"));
 

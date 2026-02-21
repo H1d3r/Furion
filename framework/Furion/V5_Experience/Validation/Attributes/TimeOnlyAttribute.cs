@@ -41,7 +41,7 @@ public class TimeOnlyAttribute : ValidationBaseAttribute
     /// <summary>
     ///     <inheritdoc cref="TimeOnlyAttribute" />
     /// </summary>
-    /// <param name="formats">允许的时间格式（如 "HH:mm:ss"）</param>
+    /// <param name="formats">允许的时间格式列表（如 "HH:mm:ss"）</param>
     public TimeOnlyAttribute(params string[] formats)
     {
         // 空检查
@@ -54,7 +54,7 @@ public class TimeOnlyAttribute : ValidationBaseAttribute
     }
 
     /// <summary>
-    ///     允许的时间格式（如 "HH:mm:ss"）
+    ///     允许的时间格式列表（如 "HH:mm:ss"）
     /// </summary>
     public string[] Formats { get; }
 
@@ -78,7 +78,7 @@ public class TimeOnlyAttribute : ValidationBaseAttribute
     public IFormatProvider? Provider => _validator.Provider;
 
     /// <summary>
-    ///     日期解析样式
+    ///     时间解析样式
     /// </summary>
     /// <remarks>需与 <see cref="Formats" /> 搭配使用。默认值为：<see cref="DateTimeStyles.None" />。</remarks>
     public DateTimeStyles Style
