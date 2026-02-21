@@ -59,23 +59,28 @@ public class TimeOnlyAttribute : ValidationBaseAttribute
     public string[] Formats { get; }
 
     /// <summary>
-    ///     格式提供器
+    ///     区域性（格式提供器）
     /// </summary>
-    /// <remarks>默认值为：<see cref="CultureInfo.InvariantCulture" /></remarks>
-    public IFormatProvider? Provider
+    public string? Culture
     {
         get;
         set
         {
             field = value;
-            _validator.Provider = value;
+            _validator.Provider = string.IsNullOrEmpty(value) ? null : CultureInfo.GetCultureInfo(value);
         }
-    } = CultureInfo.InvariantCulture;
+    }
+
+    /// <summary>
+    ///     格式提供器
+    /// </summary>
+    /// <remarks>使用 <see cref="Culture" /> 进行指定。</remarks>
+    public IFormatProvider? Provider => _validator.Provider;
 
     /// <summary>
     ///     日期解析样式
     /// </summary>
-    /// <remarks>需与 <see cref="Provider" /> 搭配使用。默认值为：<see cref="DateTimeStyles.None" />。</remarks>
+    /// <remarks>需与 <see cref="Formats" /> 搭配使用。默认值为：<see cref="DateTimeStyles.None" />。</remarks>
     public DateTimeStyles Style
     {
         get;
@@ -86,12 +91,17 @@ public class TimeOnlyAttribute : ValidationBaseAttribute
         }
     } = DateTimeStyles.None;
 
+    /// <summary>
+    ///     格式化后的允许的日期格式列表
+    /// </summary>
+    internal string FormatsFormatted => string.Join(", ", Formats.Select(u => $"'{u}'"));
+
     /// <inheritdoc />
     public override bool IsValid(object? value) => _validator.IsValid(value);
 
     /// <inheritdoc />
-    public override string FormatErrorMessage(string name) => string.Format(CultureInfo.CurrentCulture,
-        ErrorMessageString, name, string.Join(", ", Formats.Select(u => $"'{u}'")));
+    public override string FormatErrorMessage(string name) =>
+        string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, FormatsFormatted);
 
     /// <summary>
     ///     获取错误信息对应的资源键
