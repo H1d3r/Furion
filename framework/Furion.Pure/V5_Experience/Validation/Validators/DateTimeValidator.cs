@@ -36,7 +36,7 @@ public class DateTimeValidator : ValidatorBase
     /// <summary>
     ///     <inheritdoc cref="DateTimeValidator" />
     /// </summary>
-    /// <param name="formats">允许的日期格式（如 "yyyy-MM-dd HH:mm:ss"）</param>
+    /// <param name="formats">允许的日期格式列表（如 "yyyy-MM-dd HH:mm:ss"）</param>
     public DateTimeValidator(params string[] formats)
     {
         // 空检查
@@ -48,7 +48,7 @@ public class DateTimeValidator : ValidatorBase
     }
 
     /// <summary>
-    ///     允许的日期格式（如 "yyyy-MM-dd HH:mm:ss"）
+    ///     允许的日期格式列表（如 "yyyy-MM-dd HH:mm:ss"）
     /// </summary>
     public string[] Formats { get; }
 
@@ -61,8 +61,13 @@ public class DateTimeValidator : ValidatorBase
     /// <summary>
     ///     日期解析样式
     /// </summary>
-    /// <remarks>需与 <see cref="Provider" /> 搭配使用。默认值为：<see cref="DateTimeStyles.None" />。</remarks>
+    /// <remarks>需与 <see cref="Formats" /> 搭配使用。默认值为：<see cref="DateTimeStyles.None" />。</remarks>
     public DateTimeStyles Style { get; set; } = DateTimeStyles.None;
+
+    /// <summary>
+    ///     格式化后的允许的日期格式列表
+    /// </summary>
+    internal string FormatsFormatted => string.Join(", ", Formats.Select(u => $"'{u}'"));
 
     /// <inheritdoc />
     public override bool IsValid(object? value, IValidationContext? validationContext) =>
@@ -75,8 +80,8 @@ public class DateTimeValidator : ValidatorBase
         };
 
     /// <inheritdoc />
-    public override string FormatErrorMessage(string name) => string.Format(CultureInfo.CurrentCulture,
-        ErrorMessageString, name, string.Join(", ", Formats.Select(u => $"'{u}'")));
+    public override string FormatErrorMessage(string name) =>
+        string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, FormatsFormatted);
 
     /// <summary>
     ///     验证日期时间有效性
