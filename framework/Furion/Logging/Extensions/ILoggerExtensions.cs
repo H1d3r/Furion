@@ -34,6 +34,16 @@ namespace Microsoft.Extensions.Logging;
 public static class ILoggerExtensions
 {
     /// <summary>
+    /// 创建日志范围实例
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <returns></returns>
+    public static LoggerScope CreateScope(this ILogger logger)
+    {
+        return new LoggerScope(logger);
+    }
+
+    /// <summary>
     /// 设置日志上下文
     /// </summary>
     /// <param name="logger"></param>

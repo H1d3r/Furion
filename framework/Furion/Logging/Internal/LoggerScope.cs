@@ -23,65 +23,99 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Logging;
+using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
-namespace Microsoft.Extensions.Logging;
+namespace Furion.Logging;
 
 /// <summary>
-/// <see cref="ILogger"/> 扩展
+/// 日志范围
 /// </summary>
+/// <remarks>用于提供日志上下文编写</remarks>
 [SuppressSniffer]
-public static class ILoggerExtensions
+public sealed class LoggerScope : IDisposable
 {
     /// <summary>
-    /// 创建日志范围实例
+    /// 待释放的日志范围集合
     /// </summary>
-    /// <param name="logger"></param>
-    /// <returns></returns>
-    public static LoggerScope CreateScope(this ILogger logger)
+    private readonly ConcurrentBag<IDisposable> _disposables;
+
+    /// <summary>
+    /// <see cref="ILogger"/>
+    /// </summary>
+    private readonly ILogger _logger;
+
+    /// <summary>
+    /// 释放标识
+    /// </summary>
+    private bool disposedValue;
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    internal LoggerScope(ILogger logger)
     {
-        return new LoggerScope(logger);
+        _disposables = [];
+        _logger = logger;
     }
 
     /// <summary>
     /// 设置日志上下文
     /// </summary>
-    /// <param name="logger"></param>
     /// <param name="properties">建议使用 ConcurrentDictionary 类型</param>
-    /// <returns></returns>
-    public static IDisposable ScopeContext(this ILogger logger, IDictionary<object, object> properties)
+    public void WithContext(IDictionary<object, object> properties)
     {
-        if (logger == null) throw new ArgumentNullException(nameof(logger));
-
-        return logger.BeginScope(new LogContext { Properties = properties });
+        _disposables.Add(_logger.BeginScope(new LogContext { Properties = properties }));
     }
 
     /// <summary>
     /// 设置日志上下文
     /// </summary>
-    /// <param name="logger"></param>
     /// <param name="configure"></param>
-    /// <returns></returns>
-    public static IDisposable ScopeContext(this ILogger logger, Action<LogContext> configure)
+    public void WithContext(Action<LogContext> configure)
     {
-        if (logger == null) throw new ArgumentNullException(nameof(logger));
-
         var logContext = new LogContext();
         configure?.Invoke(logContext);
 
-        return logger.BeginScope(logContext);
+        _disposables.Add(_logger.BeginScope(logContext));
     }
 
     /// <summary>
     /// 设置日志上下文
     /// </summary>
-    /// <param name="logger"></param>
     /// <param name="context"></param>
-    /// <returns></returns>
-    public static IDisposable ScopeContext(this ILogger logger, LogContext context)
+    public void WithContext(LogContext context)
     {
-        if (logger == null) throw new ArgumentNullException(nameof(logger));
+        _disposables.Add(_logger.BeginScope(context));
+    }
 
-        return logger.BeginScope(context);
+    /// <summary>
+    /// 释放托管资源
+    /// </summary>
+    /// <param name="disposing"></param>
+    private void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                foreach (var disposable in _disposables)
+                {
+                    disposable.Dispose();
+                }
+
+                _disposables.Clear();
+            }
+
+            disposedValue = true;
+        }
+    }
+
+    /// <inheritdoc/>
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
