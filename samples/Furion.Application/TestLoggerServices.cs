@@ -143,7 +143,7 @@ public class TestLoggerServices : IDynamicApiController
         "This is log".LogInformation<TestLoggerServices>();
     }
 
-    public void 测试作用域()
+    public void 测试日志上下文()
     {
         using var scope = _logger.ScopeContext(new Dictionary<object, object>
         {
@@ -153,7 +153,19 @@ public class TestLoggerServices : IDynamicApiController
         _logger.LogInformation("测试啊");
     }
 
-    public void 测试日志上下文()
+    public void 测试日志上下文2()
+    {
+        using var scope = _logger.CreateScope();
+
+        scope.WithContext(new Dictionary<object, object>
+        {
+           {"name","Furion" }
+        });
+
+        _logger.LogInformation("测试啊");
+    }
+
+    public void 测试日志上下文3()
     {
         "设置日志上下文".ScopeContext(ctx => ctx.Set("name", "Furion")).LogWarning();
         var (logger, scoped) = Log.ScopeContext(ctx => ctx.Set("name", "Furion"));
