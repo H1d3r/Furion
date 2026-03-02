@@ -122,26 +122,63 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
     /// <returns></returns>
     protected async Task AuthorizeHandleAsync(AuthorizationHandlerContext context)
     {
-        // 获取所有未成功验证的需求
-        var pendingRequirements = context.PendingRequirements;
-
         // 获取 HttpContext 上下文
         var httpContext = context.GetCurrentHttpContext();
 
+        // 判断是否成功刷新 Token
+        var isRefreshSuccessful = httpContext.Response.Headers.ContainsKey("x-access-token") && httpContext.Response.Headers.ContainsKey("access-token");
+
+        // 刷新成功则创建新 Context
+        var effectiveContext = isRefreshSuccessful
+            ? new AuthorizationHandlerContext(context.Requirements, httpContext.User, context.Resource)
+            : context;
+
         // 调用子类管道
-        var pipeline = await PipelineAsync(context, httpContext);
+        var pipeline = await PipelineAsync(effectiveContext, httpContext);
         if (pipeline)
         {
+            // 获取所有未成功验证的需求
+            var pendingRequirements = effectiveContext.PendingRequirements;
+
             // 通过授权验证
             foreach (var requirement in pendingRequirements)
             {
                 // 验证策略管道
-                var policyPipeline = await PolicyPipelineAsync(context, httpContext, requirement);
-                if (policyPipeline) context.Succeed(requirement);
-                else context.Fail();
+                var policyPipeline = await PolicyPipelineAsync(effectiveContext, httpContext, requirement);
+                if (policyPipeline) effectiveContext.Succeed(requirement);
+                else
+                {
+                    effectiveContext.Fail();
+                    break;
+                }
             }
         }
-        else context.Fail();
+        else effectiveContext.Fail();
+
+        // 刷新成功时，同步结果回原 context
+        if (isRefreshSuccessful)
+        {
+            SyncAuthorizationResult(effectiveContext, context);
+        }
+    }
+
+    /// <summary>
+    /// 将授权结果从源 Context 同步到目标 Context
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="target"></param>
+    private static void SyncAuthorizationResult(AuthorizationHandlerContext source, AuthorizationHandlerContext target)
+    {
+        // 找出 source 中已被 Succeed 的需求（在 Requirements 但不在 PendingRequirements 中）
+        var succeededRequirements = source.Requirements.Except(source.PendingRequirements);
+
+        foreach (var requirement in succeededRequirements)
+        {
+            target.Succeed(requirement);
+        }
+
+        // 同步整体失败状态
+        if (source.HasFailed) target.Fail();
     }
 
     /// <summary>
