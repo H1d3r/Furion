@@ -189,6 +189,10 @@ public class JWTEncryption
 
         // 获取过期 Token 的存储信息
         var jwtSecurityToken = SecurityReadJwtToken(expiredToken);
+        if (jwtSecurityToken is null)
+        {
+            return default;
+        }
         var payload = jwtSecurityToken.Payload;
 
         // 移除 Iat，Nbf，Exp
@@ -288,6 +292,11 @@ public class JWTEncryption
     /// <returns></returns>
     public static (bool IsValid, JsonWebToken Token, TokenValidationResult validationResult) Validate(string accessToken)
     {
+        if (string.IsNullOrWhiteSpace(accessToken) || !accessToken.Contains('.'))
+        {
+            return default;
+        }
+
         var jwtSettings = GetJWTSettings();
         if (jwtSettings == null) return (false, default, default);
 
@@ -301,6 +310,11 @@ public class JWTEncryption
 
         // 验证 Token
         var tokenHandler = new JsonWebTokenHandler();
+        if (!tokenHandler.CanReadToken(accessToken))
+        {
+            return (false, default, default);
+        }
+
         try
         {
             var tokenValidationResult = tokenHandler.ValidateToken(accessToken, tokenValidationParameters);
@@ -347,13 +361,18 @@ public class JWTEncryption
     /// <returns></returns>
     public static JsonWebToken ReadJwtToken(string accessToken)
     {
-        var tokenHandler = new JsonWebTokenHandler();
-        if (tokenHandler.CanReadToken(accessToken))
+        if (string.IsNullOrWhiteSpace(accessToken) || !accessToken.Contains('.'))
         {
-            return tokenHandler.ReadJsonWebToken(accessToken);
+            return default;
         }
 
-        return default;
+        var tokenHandler = new JsonWebTokenHandler();
+        if (!tokenHandler.CanReadToken(accessToken))
+        {
+            return default;
+        }
+
+        return tokenHandler.ReadJsonWebToken(accessToken);
     }
 
     /// <summary>
@@ -363,9 +382,18 @@ public class JWTEncryption
     /// <returns></returns>
     public static JwtSecurityToken SecurityReadJwtToken(string accessToken)
     {
+        if (string.IsNullOrWhiteSpace(accessToken) || !accessToken.Contains('.'))
+        {
+            return default;
+        }
+
         var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-        var jwtSecurityToken = jwtSecurityTokenHandler.ReadJwtToken(accessToken);
-        return jwtSecurityToken;
+        if (!jwtSecurityTokenHandler.CanReadToken(accessToken))
+        {
+            return default;
+        }
+
+        return jwtSecurityTokenHandler.ReadJwtToken(accessToken);
     }
 
     /// <summary>
