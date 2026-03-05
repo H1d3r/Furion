@@ -14,7 +14,7 @@ import {
   Nav,
   Tag,
   Tooltip,
-} from "@douyinfe/semi-ui-19";
+} from "@douyinfe/semi-ui";
 import { useState } from "react";
 import Jobs from "./components/jobs";
 import apiconfig from "./apiconfig";

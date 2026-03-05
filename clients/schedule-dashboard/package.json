@@ -4,8 +4,8 @@
   "homepage": "__schedule__",
   "private": true,
   "dependencies": {
-    "@douyinfe/semi-icons": "^2.91.0",
-    "@douyinfe/semi-ui-19": "^2.91.0",
+    "@douyinfe/semi-icons": "^2.92.2",
+    "@douyinfe/semi-ui": "^2.92.2",
     "@leenguyen/react-flip-clock-countdown": "^1.7.2",
     "@types/node": "^25.3.0",
     "@types/react": "^19.2.14",

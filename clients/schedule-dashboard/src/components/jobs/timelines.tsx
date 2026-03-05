@@ -5,7 +5,7 @@ import {
   Timeline,
   Tooltip,
   Typography,
-} from "@douyinfe/semi-ui-19";
+} from "@douyinfe/semi-ui";
 import { Trigger, TriggerTimeline } from "../../types";
 import { dayFromNow, dayTime, formatDuration } from "../../utils";
 import StatusText from "./state-text";

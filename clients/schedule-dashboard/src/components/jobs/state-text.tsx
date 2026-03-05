@@ -1,5 +1,5 @@
 import { IconUploadError } from "@douyinfe/semi-icons";
-import { Popover, Space, Tag, Tooltip } from "@douyinfe/semi-ui-19";
+import { Popover, Space, Tag, Tooltip } from "@douyinfe/semi-ui";
 import { ReactNode } from "react";
 
 export const status = {

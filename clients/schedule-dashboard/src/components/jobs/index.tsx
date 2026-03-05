@@ -20,12 +20,12 @@ import {
   Toast,
   Tooltip,
   Typography,
-} from "@douyinfe/semi-ui-19";
-import { Data } from "@douyinfe/semi-ui-19/lib/es/descriptions";
+} from "@douyinfe/semi-ui";
+import { Data } from "@douyinfe/semi-ui/lib/es/descriptions";
 import {
   ExpandedRowRender,
   OnRow,
-} from "@douyinfe/semi-ui-19/lib/es/table/interface";
+} from "@douyinfe/semi-ui/lib/es/table/interface";
 import {
   useCallback,
   useDeferredValue,
