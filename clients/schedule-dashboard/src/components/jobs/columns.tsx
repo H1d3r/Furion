@@ -16,10 +16,10 @@ import {
   Toast,
   Tooltip,
   Typography,
-} from "@douyinfe/semi-ui-19";
-import { Data } from "@douyinfe/semi-ui-19/lib/es/descriptions";
-import { ColumnProps } from "@douyinfe/semi-ui-19/lib/es/table/interface";
-import Paragraph from "@douyinfe/semi-ui-19/lib/es/typography/paragraph";
+} from "@douyinfe/semi-ui";
+import { Data } from "@douyinfe/semi-ui/lib/es/descriptions";
+import { ColumnProps } from "@douyinfe/semi-ui/lib/es/table/interface";
+import Paragraph from "@douyinfe/semi-ui/lib/es/typography/paragraph";
 import useFetch from "use-http";
 import { JobDetail, Trigger } from "../../types";
 import {
