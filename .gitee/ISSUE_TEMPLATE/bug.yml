@@ -48,6 +48,7 @@ body:
         - .NET8
         - .NET9
         - .NET10
+        - .NET11
         - 其他
     validations:
       required: true
@@ -67,6 +68,7 @@ body:
         - WinForm
         - WPF
         - Console
+        - 辅助角色服务（Worker Service）
         - MAUI
         - 其他
     validations:
