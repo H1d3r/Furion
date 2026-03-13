@@ -881,7 +881,16 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
 
         // 获取真实类型
         var returnType = action.ActionMethod.GetRealReturnType();
-        if (returnType == typeof(void)) return;
+
+        if (returnType == typeof(void))
+        {
+            // 修复 void 类型无法规范化问题：https://gitee.com/dotnetchina/Furion/issues/IFXVQZ
+            if (action.ActionMethod.GetFoundAttribute<ForceUnifyAttribute>(true) is not null)
+            {
+                returnType = typeof(object);
+            }
+            else return;
+        }
 
         // 添加规范化结果特性
         action.Filters.Add(new UnifyResultAttribute(returnType, StatusCodes.Status200OK, action.ActionMethod));
