@@ -32,6 +32,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
@@ -108,7 +109,7 @@ public class JWTEncryption
 
         if (!string.IsNullOrWhiteSpace(issuerSigningKey))
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey));
+            var securityKey = CreateSecurityKey(algorithm, issuerSigningKey);
             credentials = new SigningCredentials(securityKey, algorithm);
         }
 
@@ -300,13 +301,16 @@ public class JWTEncryption
         var jwtSettings = GetJWTSettings();
         if (jwtSettings == null) return (false, default, default);
 
-        // 加密Key
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.IssuerSigningKey));
-        var creds = new SigningCredentials(key, jwtSettings.Algorithm);
-
         // 创建Token验证参数
         var tokenValidationParameters = CreateTokenValidationParameters(jwtSettings);
-        tokenValidationParameters.IssuerSigningKey ??= creds.Key;
+        if (tokenValidationParameters.IssuerSigningKey is null)
+        {
+            // 加密Key
+            var key = CreateSecurityKey(jwtSettings.Algorithm, jwtSettings.IssuerSigningKey);
+            //var creds = new SigningCredentials(key, jwtSettings.Algorithm);
+
+            tokenValidationParameters.IssuerSigningKey = key;
+        }
 
         // 验证 Token
         var tokenHandler = new JsonWebTokenHandler();
@@ -447,7 +451,7 @@ public class JWTEncryption
             // 验证签发方密钥
             ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey.Value,
             // 签发方密钥
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.IssuerSigningKey)),
+            IssuerSigningKey = CreateSecurityKey(jwtSettings.Algorithm, jwtSettings.IssuerSigningKey),
             // 验证签发方
             ValidateIssuer = jwtSettings.ValidateIssuer.Value,
             // 设置签发方
@@ -463,6 +467,47 @@ public class JWTEncryption
             // 验证过期时间，设置 false 永不过期
             RequireExpirationTime = jwtSettings.RequireExpirationTime
         };
+    }
+
+    private static readonly ConcurrentDictionary<string, SecurityKey> _keyCache = new();
+
+    /// <summary>
+    /// 创建安全密钥
+    /// </summary>
+    /// <param name="algorithm"></param>
+    /// <param name="issuerSigningKey"></param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException"></exception>
+
+    private static SecurityKey CreateSecurityKey(string algorithm, string issuerSigningKey)
+    {
+        var cacheKey = $"{algorithm.ToUpperInvariant()}:{issuerSigningKey?.GetHashCode()}";
+
+        return _keyCache.GetOrAdd(cacheKey, _ =>
+        {
+            var algorithmUpper = algorithm.ToUpperInvariant();
+
+            if (algorithmUpper.StartsWith("HS"))
+            {
+                return new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey));
+            }
+            else if (algorithmUpper.StartsWith("RS") || algorithmUpper.StartsWith("PS"))
+            {
+                var rsa = RSA.Create();
+                rsa.ImportFromPem(issuerSigningKey);
+                return new RsaSecurityKey(rsa);
+            }
+            else if (algorithmUpper.StartsWith("ES"))
+            {
+                var ecdsa = ECDsa.Create();
+                ecdsa.ImportFromPem(issuerSigningKey);
+                return new ECDsaSecurityKey(ecdsa);
+            }
+            else
+            {
+                throw new NotSupportedException($"The algorithm '{algorithm}' is not supported.");
+            }
+        });
     }
 
     /// <summary>
