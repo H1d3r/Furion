@@ -2930,7 +2930,11 @@
           },
           "IssuerSigningKey": {
             "type": "string",
-            "description": "签发方密钥"
+            "description": "签发方密钥（公钥）"
+          },
+          "IssuerSigningPrivateKey": {
+            "type": "string",
+            "description": "签发方密钥（私钥），RS*/PS*/ES* 加密算法使用"
           },
           "ValidateIssuer": {
             "type": "boolean",
@@ -3056,3 +3060,4 @@
       }
     }
   }
+}
