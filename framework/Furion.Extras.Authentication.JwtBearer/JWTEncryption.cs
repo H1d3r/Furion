@@ -42,6 +42,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 
 namespace Furion.DataEncryption;
@@ -65,17 +66,17 @@ public class JWTEncryption
     public static string Encrypt(IDictionary<string, object> payload, long? expiredTime = null)
     {
         var (Payload, JWTSettings) = CombinePayload(payload, expiredTime);
-        return Encrypt(JWTSettings.IssuerSigningKey, Payload, JWTSettings.Algorithm);
+        return Encrypt(JWTSettings.IssuerSigningPrivateKey ?? JWTSettings.IssuerSigningKey, Payload, JWTSettings.Algorithm);
     }
 
     /// <summary>
     /// 生成 Token
     /// </summary>
-    /// <param name="issuerSigningKey"></param>
+    /// <param name="issuerSigningPrivateKey">私钥</param>
     /// <param name="payload"></param>
-    /// <param name="algorithm"></param>
+    /// <param name="algorithm">可使用静态类：<c>SecurityAlgorithms.HmacSha256</c></param>
     /// <returns></returns>
-    public static string Encrypt(string issuerSigningKey, IDictionary<string, object> payload, string algorithm = SecurityAlgorithms.HmacSha256)
+    public static string Encrypt(string issuerSigningPrivateKey, IDictionary<string, object> payload, string algorithm)
     {
         string stringPayload;
 
@@ -93,23 +94,23 @@ public class JWTEncryption
             });
         }
 
-        return Encrypt(issuerSigningKey, stringPayload, algorithm);
+        return Encrypt(issuerSigningPrivateKey, stringPayload, algorithm);
     }
 
     /// <summary>
     /// 生成 Token
     /// </summary>
-    /// <param name="issuerSigningKey"></param>
+    /// <param name="issuerSigningPrivateKey">私钥</param>
     /// <param name="payload"></param>
-    /// <param name="algorithm"></param>
+    /// <param name="algorithm">可使用静态类：<c>SecurityAlgorithms.HmacSha256</c></param>
     /// <returns></returns>
-    public static string Encrypt(string issuerSigningKey, string payload, string algorithm = SecurityAlgorithms.HmacSha256)
+    public static string Encrypt(string issuerSigningPrivateKey, string payload, string algorithm)
     {
         SigningCredentials credentials = null;
 
-        if (!string.IsNullOrWhiteSpace(issuerSigningKey))
+        if (!string.IsNullOrWhiteSpace(issuerSigningPrivateKey))
         {
-            var securityKey = CreateSecurityKey(algorithm, issuerSigningKey);
+            var securityKey = CreateSecurityKey(algorithm, issuerSigningPrivateKey);
             credentials = new SigningCredentials(securityKey, algorithm);
         }
 
@@ -305,11 +306,8 @@ public class JWTEncryption
         var tokenValidationParameters = CreateTokenValidationParameters(jwtSettings);
         if (tokenValidationParameters.IssuerSigningKey is null)
         {
-            // 加密Key
-            var key = CreateSecurityKey(jwtSettings.Algorithm, jwtSettings.IssuerSigningKey);
-            //var creds = new SigningCredentials(key, jwtSettings.Algorithm);
-
-            tokenValidationParameters.IssuerSigningKey = key;
+            // 使用公钥
+            tokenValidationParameters.IssuerSigningKey = CreateSecurityKey(jwtSettings.Algorithm, jwtSettings.IssuerSigningKey);
         }
 
         // 验证 Token
@@ -451,7 +449,7 @@ public class JWTEncryption
             // 验证签发方密钥
             ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey.Value,
             // 签发方密钥
-            IssuerSigningKey = CreateSecurityKey(jwtSettings.Algorithm, jwtSettings.IssuerSigningKey),
+            IssuerSigningKey = CreateSecurityKey(jwtSettings.Algorithm, jwtSettings.IssuerSigningKey),  // 使用公钥
             // 验证签发方
             ValidateIssuer = jwtSettings.ValidateIssuer.Value,
             // 设置签发方
@@ -474,6 +472,7 @@ public class JWTEncryption
     /// <summary>
     /// 创建安全密钥
     /// </summary>
+    /// <remarks>生成 RSA 密钥网站：https://www.ufreetools.com/zh/tool/rsa-key-pair-generator</remarks>
     /// <param name="algorithm"></param>
     /// <param name="issuerSigningKey"></param>
     /// <returns></returns>
@@ -481,26 +480,63 @@ public class JWTEncryption
 
     private static SecurityKey CreateSecurityKey(string algorithm, string issuerSigningKey)
     {
-        var cacheKey = $"{algorithm.ToUpperInvariant()}:{issuerSigningKey?.GetHashCode()}";
+        var cacheKey = $"{algorithm.ToUpperInvariant().Trim()}:{issuerSigningKey?.GetHashCode()}";
 
         return _keyCache.GetOrAdd(cacheKey, _ =>
         {
             var algorithmUpper = algorithm.ToUpperInvariant();
+            var keyContent = issuerSigningKey.Trim();
 
+            // HS* 对称加密
             if (algorithmUpper.StartsWith("HS"))
             {
-                return new SymmetricSecurityKey(Encoding.UTF8.GetBytes(issuerSigningKey));
+                return new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyContent));
             }
+            // RS*/PS* RSA 非对称加密
             else if (algorithmUpper.StartsWith("RS") || algorithmUpper.StartsWith("PS"))
             {
+                // 提取纯 Base64 内容
+                static string ExtractBase64(string pem) => Regex.Replace(pem, @"-----BEGIN.*?-----|-----END.*?-----|\s", "");
+
                 var rsa = RSA.Create();
-                rsa.ImportFromPem(issuerSigningKey);
-                return new RsaSecurityKey(rsa);
+
+                try
+                {
+                    // 标准 PKCS#8 格式
+                    if (keyContent.Contains("BEGIN PRIVATE KEY") || keyContent.Contains("BEGIN PUBLIC KEY"))
+                    {
+                        rsa.ImportFromPem(keyContent);
+                    }
+                    // PKCS#1 RSA 私钥格式
+                    else if (keyContent.Contains("BEGIN RSA PRIVATE KEY"))
+                    {
+                        var base64 = ExtractBase64(keyContent);
+                        rsa.ImportRSAPrivateKey(Convert.FromBase64String(base64), out var _);
+                    }
+                    // PKCS#1 RSA 公钥格式
+                    else if (keyContent.Contains("BEGIN RSA PUBLIC KEY"))
+                    {
+                        var base64 = ExtractBase64(keyContent);
+                        rsa.ImportRSAPublicKey(Convert.FromBase64String(base64), out var _);
+                    }
+                    else
+                    {
+                        throw new CryptographicException("Unrecognized PEM format. Supported: PKCS#8, PKCS#1 RSA.");
+                    }
+
+                    return new RsaSecurityKey(rsa);
+                }
+                catch (Exception)
+                {
+                    rsa.Dispose();
+                    throw;
+                }
             }
+            // ES* ECDSA 非对称加密
             else if (algorithmUpper.StartsWith("ES"))
             {
                 var ecdsa = ECDsa.Create();
-                ecdsa.ImportFromPem(issuerSigningKey);
+                ecdsa.ImportFromPem(keyContent);
                 return new ECDsaSecurityKey(ecdsa);
             }
             else

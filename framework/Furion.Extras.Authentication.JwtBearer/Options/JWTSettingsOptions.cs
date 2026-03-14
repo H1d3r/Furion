@@ -36,9 +36,15 @@ public sealed class JWTSettingsOptions
     public bool? ValidateIssuerSigningKey { get; set; }
 
     /// <summary>
-    /// 签发方密钥
+    /// 签发方密钥（公钥）
     /// </summary>
     public string IssuerSigningKey { get; set; }
+
+    /// <summary>
+    /// 签发方密钥（私钥）
+    /// </summary>
+    /// <remarks>RS*/PS*/ES* 加密算法使用</remarks>
+    public string IssuerSigningPrivateKey { get; set; }
 
     /// <summary>
     /// 验证签发方
