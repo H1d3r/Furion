@@ -201,6 +201,8 @@ public sealed class Startup : AppStartup
         app.UseAuthentication();
         app.UseAuthorization();
 
+        app.EnableBuffering();
+
         app.UseInject();
 
         app.UseEndpoints(endpoints =>

@@ -502,8 +502,9 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
     /// <param name="writer"></param>
     /// <param name="exception"></param>
     /// <param name="isValidationException">是否是验证异常</param>
+    /// <param name="httpContext"></param>
     /// <returns></returns>
-    private List<string> GenerateExcetpionInfomationTemplate(Utf8JsonWriter writer, Exception exception, bool isValidationException)
+    private async Task<List<string>> GenerateExcetpionInfomationTemplate(Utf8JsonWriter writer, Exception exception, bool isValidationException, HttpContext httpContext)
     {
         var templates = new List<string>();
 
@@ -559,6 +560,23 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
                 , $"##业务消息## {friendlyException?.ErrorMessage}"
             });
 
+            // 检查是否可以读取原始数据，请确保启用 Body 重复读功能：app.EnableBuffering(); 
+            var canSeek = httpContext.Request.Body.CanSeek;
+            string rawBody = null;
+            if (httpContext.Request.Body.CanSeek)
+            {
+                httpContext.Request.Body.Position = 0;
+
+                // 读取原始内容
+                using var reader = new StreamReader(httpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
+                rawBody = await reader.ReadToEndAsync();
+
+                templates.Add($"##原始数据## {rawBody}");
+
+                // 重置位置
+                httpContext.Request.Body.Position = 0;
+            }
+
             writer.WritePropertyName("exception");
             writer.WriteNullValue();
 
@@ -568,6 +586,10 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
             writer.WriteString("originErrorCode", friendlyException?.OriginErrorCode?.ToString());
             writer.WriteString("message", friendlyException?.Message);
             writer.WriteString("statusCode", friendlyException?.StatusCode.ToString());
+            if (canSeek)
+            {
+                writer.WriteString("rawBody", rawBody);
+            }
             writer.WriteEndObject();
         }
 
@@ -1123,7 +1145,7 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
         monitorItems.AddRange(GenerateExtraTemplate(writer, resultHttpContext) ?? Enumerable.Empty<string>());
 
         // 添加异常信息日志模板
-        monitorItems.AddRange(GenerateExcetpionInfomationTemplate(writer, exception, isValidationException));
+        monitorItems.AddRange(await GenerateExcetpionInfomationTemplate(writer, exception, isValidationException, context.HttpContext));
 
         // 生成最终模板
         var monitorMessage = TP.Wrapper(Title, displayName, monitorItems.ToArray(), LoggingMonitorSettings.InternalItemFilter);
