@@ -73,6 +73,12 @@ public class TestModuleServices : IDynamicApiController
         return "Furion";
     }
 
+    [LoggingMonitor]
+    public TestLoggingMonitor 测试监听日志原始数据(TestLoggingMonitor model)
+    {
+        return model;
+    }
+
     public ServiceLifetime? 测试服务生命周期()
     {
         var d = App.GetServiceLifetime(typeof(IConfiguration));
@@ -858,4 +864,9 @@ public class TestUrlArray
 
     [FlexibleArray<string>]
     public string[] Status { get; set; }
+}
+
+public class TestLoggingMonitor
+{
+    public Guid Id { get; set; }
 }
