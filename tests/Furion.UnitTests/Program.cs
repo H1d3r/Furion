@@ -8,8 +8,8 @@ using Xunit.Sdk;
 using Xunit.v3;
 
 [assembly: TestPipelineStartup(typeof(TestPipelineStartup))]
-[assembly: CaptureConsole]
-[assembly: CaptureTrace]
+[assembly: CaptureConsole]  // 支持使用 Console 静态类打印
+[assembly: CaptureTrace]    // 支持使用 Debug/Trace 静态类打印
 
 /// <summary>
 ///     测试管道启动类
@@ -21,11 +21,13 @@ public sealed class TestPipelineStartup : ITestPipelineStartup
     /// <inheritdoc />
     public async ValueTask StartAsync(IMessageSink diagnosticMessageSink)
     {
+        // 初始化 Furion
         _host = await Serve.RunNativeAsync(services =>
         {
             services.AddHttpRemote();
-        });
+        }, urls: Serve.IdleHost.Urls);
 
+        // 配置单元测试类型依赖注入激活器
         TypeActivator.Current = new DependencyInjectionTypeActivator(_host.Services);
     }
 
