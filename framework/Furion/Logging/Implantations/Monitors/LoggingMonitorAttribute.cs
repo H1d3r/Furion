@@ -563,7 +563,7 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
             // 检查是否可以读取原始数据，请确保启用 Body 重复读功能：app.EnableBuffering(); 
             var canSeek = httpContext.Request.Body.CanSeek;
             string rawBody = null;
-            if (httpContext.Request.Body.CanSeek)
+            if (canSeek)
             {
                 httpContext.Request.Body.Position = 0;
 
@@ -586,10 +586,12 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
             writer.WriteString("originErrorCode", friendlyException?.OriginErrorCode?.ToString());
             writer.WriteString("message", friendlyException?.Message);
             writer.WriteString("statusCode", friendlyException?.StatusCode.ToString());
+
             if (canSeek)
             {
                 writer.WriteString("rawBody", rawBody);
             }
+
             writer.WriteEndObject();
         }
 
