@@ -1,11 +1,12 @@
 using Furion.HttpRemote;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Furion.UnitTests;
 
-public class SampleTests
+public class SampleTests : IDisposable
 {
     /// <summary>
     /// 输出日志
@@ -53,6 +54,7 @@ public class SampleTests
     public void Test_Dependency_Injection()
     {
         Assert.Equal("Furion", _sysService.GetName());
+        Console.WriteLine("测试 Console 打印");
     }
 
     private static bool IsOdd(int value)
@@ -65,5 +67,10 @@ public class SampleTests
     {
         var res = await _httpRemoteService.GetAsync("https://www.baidu.com");
         Assert.True(res.IsSuccessStatusCode);
+    }
+
+    public void Dispose()
+    {
+        Console.WriteLine("测试自动释放");
     }
 }
