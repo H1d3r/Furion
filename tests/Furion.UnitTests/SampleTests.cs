@@ -2,7 +2,6 @@ using Furion.HttpRemote;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Furion.UnitTests;
 
