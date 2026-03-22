@@ -31,7 +31,7 @@ namespace Furion.DistributedIDGenerator;
 /// 连续 GUID ID 生成器
 /// <para>代码参考自：https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql/blob/ebe011a6f1b2a2a9709fe558cfc7ed3215b55c37/src/EFCore.MySql/ValueGeneration/Internal/MySqlSequentialGuidValueGenerator.cs </para>
 /// </summary>
-public class SequentialGuidIDGenerator : IDistributedIDGenerator, ISingleton
+public class SequentialGuidIDGenerator : IDistributedIDGenerator
 {
     /// <summary>
     /// 随机数生成器

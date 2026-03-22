@@ -227,6 +227,18 @@ public static class ObsoleteObjectExtensions
     }
 
     /// <summary>
+    /// 检查类型是否是 internal 类型
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    internal static bool IsInternal(this Type type)
+    {
+        return type.IsNested
+            ? type.IsNestedAssembly || type.IsNestedFamANDAssem
+            : !type.IsPublic;
+    }
+
+    /// <summary>
     /// 判断是否是富基元类型
     /// </summary>
     /// <param name="type">类型</param>
