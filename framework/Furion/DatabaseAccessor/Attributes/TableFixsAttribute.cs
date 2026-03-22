@@ -28,7 +28,7 @@ namespace System.ComponentModel.DataAnnotations.Schema;
 /// <summary>
 /// 配置表名称前后缀
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public class TableFixsAttribute : Attribute
 {
     /// <summary>

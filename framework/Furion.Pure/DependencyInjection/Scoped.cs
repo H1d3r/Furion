@@ -30,7 +30,6 @@ namespace Furion.DependencyInjection;
 /// <summary>
 /// 创建作用域静态类
 /// </summary>
-[SuppressSniffer]
 public static partial class Scoped
 {
     /// <summary>

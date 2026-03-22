@@ -29,7 +29,7 @@ namespace Microsoft.AspNetCore.Mvc;
 /// 自定义参数绑定转换特性
 /// </summary>
 /// <remarks>供模型绑定使用</remarks>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
 public sealed class FromConvertAttribute : Attribute
 {
     /// <summary>

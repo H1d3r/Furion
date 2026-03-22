@@ -31,7 +31,6 @@ namespace Furion.DataEncryption;
 /// <summary>
 /// RSA 加密
 /// </summary>
-[SuppressSniffer]
 public static class RSAEncryption
 {
     /// <summary>

@@ -31,7 +31,6 @@ namespace Furion.ViewEngine;
 /// <summary>
 /// 视图引擎模板（编译后）
 /// </summary>
-[SuppressSniffer]
 public class ViewEngineTemplate : IViewEngineTemplate
 {
     /// <summary>
@@ -198,7 +197,6 @@ public class ViewEngineTemplate : IViewEngineTemplate
 /// 视图引擎模板（编译后）
 /// </summary>
 /// <typeparam name="T"></typeparam>
-[SuppressSniffer]
 public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     where T : IViewEngineModel
 {

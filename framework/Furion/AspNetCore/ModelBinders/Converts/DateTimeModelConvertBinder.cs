@@ -31,7 +31,6 @@ namespace Furion.AspNetCore;
 /// <summary>
 /// <see cref="DateTime"/> 类型模型转换绑定器
 /// </summary>
-[SuppressSniffer]
 public sealed class DateTimeModelConvertBinder : IModelConvertBinder
 {
     /// <summary>

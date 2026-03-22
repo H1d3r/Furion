@@ -28,7 +28,7 @@ namespace Furion.DependencyInjection;
 /// <summary>
 /// 设置依赖注入方式
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class)]
 public class InjectionAttribute : Attribute
 {
     /// <summary>

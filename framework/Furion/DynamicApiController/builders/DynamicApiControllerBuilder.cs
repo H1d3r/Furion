@@ -30,7 +30,6 @@ namespace Furion.DynamicApiController;
 /// <summary>
 /// 动态 WebAPI 构建器
 /// </summary>
-[SuppressSniffer]
 public sealed class DynamicApiControllerBuilder
 {
     /// <summary>

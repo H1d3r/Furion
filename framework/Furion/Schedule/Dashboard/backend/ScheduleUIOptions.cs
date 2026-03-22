@@ -30,7 +30,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// Schedule UI 配置选项
 /// </summary>
-[SuppressSniffer]
 public sealed class ScheduleUIOptions
 {
     /// <summary>

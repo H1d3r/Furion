@@ -28,7 +28,7 @@ namespace Furion.InstantMessaging;
 /// <summary>
 /// 即时通信集线器配置特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class)]
 public sealed class MapHubAttribute : Attribute
 {
     /// <summary>

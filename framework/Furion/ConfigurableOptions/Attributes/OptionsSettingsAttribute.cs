@@ -28,7 +28,7 @@ namespace Furion.ConfigurableOptions;
 /// <summary>
 /// 选项配置特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class)]
 public sealed class OptionsSettingsAttribute : Attribute
 {
     /// <summary>

@@ -28,7 +28,7 @@ namespace Furion.Schedule;
 /// <summary>
 /// 每年特定月1号（午夜）开始作业触发器特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public sealed class YearlyAtAttribute : CronAttribute
 {
     /// <summary>

@@ -28,7 +28,6 @@ namespace Furion.SensitiveDetection;
 /// <summary>
 /// 脱敏词汇构建器
 /// </summary>
-[SuppressSniffer]
 public sealed class SensitiveDetectionBuilder
 {
     /// <summary>

@@ -39,7 +39,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 非泛型EF Core仓储实现
 /// </summary>
-[SuppressSniffer]
 public partial class EFCoreRepository : IRepository
 {
     /// <summary>
@@ -163,7 +162,6 @@ public partial class EFCoreRepository : IRepository
 /// EF Core仓储实现
 /// </summary>
 /// <typeparam name="TEntity">实体类型</typeparam>
-[SuppressSniffer]
 public partial class EFCoreRepository<TEntity> : EFCoreRepository<TEntity, MasterDbContextLocator>
     , IRepository<TEntity>
     where TEntity : class, IPrivateEntity, new()
@@ -180,7 +178,6 @@ public partial class EFCoreRepository<TEntity> : EFCoreRepository<TEntity, Maste
 /// <summary>
 /// 多数据库上下文仓储
 /// </summary>
-[SuppressSniffer]
 public partial class EFCoreRepository<TEntity, TDbContextLocator> : PrivateRepository<TEntity>
     , IRepository<TEntity, TDbContextLocator>
     where TEntity : class, IPrivateEntity, new()

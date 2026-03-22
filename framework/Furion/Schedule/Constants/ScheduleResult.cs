@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业调度器操作结果
 /// </summary>
-[SuppressSniffer]
 public enum ScheduleResult
 {
     /// <summary>

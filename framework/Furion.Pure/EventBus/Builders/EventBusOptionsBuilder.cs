@@ -32,7 +32,6 @@ namespace Furion.EventBus;
 /// <summary>
 /// 事件总线配置选项构建器
 /// </summary>
-[SuppressSniffer]
 public sealed class EventBusOptionsBuilder
 {
     /// <summary>

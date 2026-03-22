@@ -32,7 +32,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 对象映射扩展类
 /// </summary>
-[SuppressSniffer]
 public static class ObjectMapperServiceCollectionExtensions
 {
     /// <summary>

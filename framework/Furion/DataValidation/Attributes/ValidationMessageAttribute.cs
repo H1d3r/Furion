@@ -28,7 +28,7 @@ namespace Furion.DataValidation;
 /// <summary>
 /// 验证消息特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Field)]
+[AttributeUsage(AttributeTargets.Field)]
 public sealed class ValidationMessageAttribute : Attribute
 {
     /// <summary>

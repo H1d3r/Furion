@@ -32,7 +32,7 @@ namespace Furion.Logging;
 /// 文件日志记录器提供程序
 /// </summary>
 /// <remarks>https://docs.microsoft.com/zh-cn/dotnet/core/extensions/custom-logging-provider</remarks>
-[SuppressSniffer, ProviderAlias("File")]
+[ProviderAlias("File")]
 public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
 {
     /// <summary>

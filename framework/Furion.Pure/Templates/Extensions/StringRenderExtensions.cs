@@ -31,7 +31,6 @@ namespace Furion.Templates.Extensions;
 /// <summary>
 /// 字符串渲染模板扩展类
 /// </summary>
-[SuppressSniffer]
 public static class StringRenderExtensions
 {
     /// <summary>

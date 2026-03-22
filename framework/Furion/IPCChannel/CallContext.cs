@@ -38,7 +38,6 @@ namespace Furion.IPCChannel;
 ///   在设置新的值之前完成复制操作
 /// 获取当前线程 Id：Thread.CurrentThread.ManagedThreadId
 /// </remarks>
-[SuppressSniffer]
 public static class CallContext<T>
 {
     /// <summary>
@@ -83,7 +82,6 @@ public static class CallContext<T>
 ///   在设置新的值之前完成复制操作
 /// 获取当前线程 Id：Thread.CurrentThread.ManagedThreadId
 /// </remarks>
-[SuppressSniffer]
 public static class CallContext
 {
     /// <summary>

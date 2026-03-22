@@ -32,7 +32,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// ADONET 扩展类
 /// </summary>
-[SuppressSniffer]
 public static class SqlAdoNetExtensions
 {
     /// <summary>

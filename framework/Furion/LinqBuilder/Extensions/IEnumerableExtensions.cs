@@ -31,7 +31,6 @@ namespace System.Linq;
 /// <summary>
 /// IEnumerable 扩展
 /// </summary>
-[SuppressSniffer]
 public static class IEnumerableExtensions
 {
     /// <summary>

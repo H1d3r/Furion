@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业集群服务上下文
 /// </summary>
-[SuppressSniffer]
 public sealed class JobClusterContext
 {
     /// <summary>

@@ -36,7 +36,7 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 工作单元配置特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncPageFilter, IOrderedFilter
 {
     /// <summary>

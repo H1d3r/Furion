@@ -30,7 +30,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业计划构建器
 /// </summary>
-[SuppressSniffer]
 public sealed class SchedulerBuilder
 {
     /// <summary>

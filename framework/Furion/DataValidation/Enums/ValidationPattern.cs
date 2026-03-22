@@ -28,7 +28,6 @@ namespace System.ComponentModel.DataAnnotations;
 /// <summary>
 /// 验证逻辑
 /// </summary>
-[SuppressSniffer]
 public enum ValidationPattern
 {
     /// <summary>

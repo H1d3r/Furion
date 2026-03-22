@@ -30,7 +30,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 分页扩展类
 /// </summary>
-[SuppressSniffer]
 public static class PagedQueryableExtensions
 {
     /// <summary>

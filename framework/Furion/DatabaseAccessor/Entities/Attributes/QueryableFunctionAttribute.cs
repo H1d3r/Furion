@@ -30,7 +30,7 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 实体函数配置特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Method)]
 public class QueryableFunctionAttribute : DbFunctionAttribute
 {
     /// <summary>

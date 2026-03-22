@@ -30,7 +30,6 @@ namespace Furion.DataValidation;
 /// <summary>
 /// 数据验证结果
 /// </summary>
-[SuppressSniffer]
 public sealed class DataValidationResult
 {
     /// <summary>

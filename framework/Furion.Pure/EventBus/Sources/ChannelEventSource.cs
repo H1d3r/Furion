@@ -30,7 +30,6 @@ namespace Furion.EventBus;
 /// <summary>
 /// 内存通道事件源（事件承载对象）
 /// </summary>
-[SuppressSniffer]
 public sealed class ChannelEventSource : IEventSource
 {
     /// <summary>

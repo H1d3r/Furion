@@ -30,7 +30,6 @@ namespace Furion.SpecificationDocument;
 /// <summary>
 /// 规范化文档开放接口信息
 /// </summary>
-[SuppressSniffer]
 public sealed class SpecificationOpenApiInfo : OpenApiInfo
 {
     /// <summary>

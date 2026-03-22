@@ -28,7 +28,7 @@ namespace Furion.FriendlyException;
 /// <summary>
 /// 异常元数据特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Field)]
+[AttributeUsage(AttributeTargets.Field)]
 public sealed class ErrorCodeItemMetadataAttribute : Attribute
 {
     /// <summary>

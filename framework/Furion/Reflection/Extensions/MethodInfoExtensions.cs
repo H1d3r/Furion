@@ -30,7 +30,6 @@ namespace Furion.Reflection.Extensions;
 /// <summary>
 /// Method Info 扩展
 /// </summary>
-[SuppressSniffer]
 public static class MethodInfoExtensions
 {
     /// <summary>

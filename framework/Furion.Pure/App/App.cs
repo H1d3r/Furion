@@ -48,7 +48,6 @@ namespace Furion;
 /// <summary>
 /// 全局应用类
 /// </summary>
-[SuppressSniffer]
 public static class App
 {
     /// <summary>

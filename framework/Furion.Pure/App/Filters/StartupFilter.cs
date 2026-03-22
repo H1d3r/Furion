@@ -36,7 +36,6 @@ namespace Furion;
 /// </summary>
 /// <remarks>
 /// </remarks>
-[SuppressSniffer]
 public class StartupFilter : IStartupFilter
 {
     /// <summary>

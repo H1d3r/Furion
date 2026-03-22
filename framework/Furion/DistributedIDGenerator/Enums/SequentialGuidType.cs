@@ -30,7 +30,6 @@ namespace Furion.DistributedIDGenerator;
 /// <summary>
 /// 连续 GUID 类型选项
 /// </summary>
-[SuppressSniffer]
 public enum SequentialGuidType
 {
     /// <summary>

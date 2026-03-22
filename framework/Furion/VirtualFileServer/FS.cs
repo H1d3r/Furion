@@ -32,7 +32,6 @@ namespace Furion.VirtualFileServer;
 /// <summary>
 /// 虚拟文件服务静态类
 /// </summary>
-[SuppressSniffer]
 public static class FS
 {
     /// <summary>

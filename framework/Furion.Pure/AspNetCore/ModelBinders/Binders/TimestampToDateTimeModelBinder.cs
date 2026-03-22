@@ -31,7 +31,6 @@ namespace Furion.AspNetCore;
 /// <summary>
 /// 时间戳转 DateTime 类型模型绑定
 /// </summary>
-[SuppressSniffer]
 public sealed class TimestampToDateTimeModelBinder : IModelBinder
 {
     /// <summary>

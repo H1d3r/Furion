@@ -31,7 +31,6 @@ namespace Furion.DynamicApiController;
 /// <summary>
 /// 动态接口控制器特性提供器
 /// </summary>
-[SuppressSniffer]
 public sealed class DynamicApiControllerFeatureProvider : ControllerFeatureProvider
 {
     /// <summary>

@@ -28,7 +28,7 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// Sql 执行特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Method)]
 public class SqlExecuteAttribute : SqlSentenceProxyAttribute
 {
     /// <summary>

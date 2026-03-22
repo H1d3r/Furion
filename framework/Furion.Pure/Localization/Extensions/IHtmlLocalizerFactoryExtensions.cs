@@ -31,7 +31,6 @@ namespace Microsoft.AspNetCore.Mvc.Localization;
 /// <summary>
 /// IHtmlLocalizerFactory 扩展类
 /// </summary>
-[SuppressSniffer]
 public static class IHtmlLocalizerFactoryExtensions
 {
     /// <summary>

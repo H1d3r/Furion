@@ -31,7 +31,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// TaskQueue 模块服务扩展
 /// </summary>
-[SuppressSniffer]
 public static class TaskQueueServiceCollectionExtensions
 {
     /// <summary>

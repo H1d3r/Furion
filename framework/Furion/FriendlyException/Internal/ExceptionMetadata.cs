@@ -28,7 +28,6 @@ namespace Furion.FriendlyException;
 /// <summary>
 /// 异常元数据
 /// </summary>
-[SuppressSniffer]
 public sealed class ExceptionMetadata
 {
     /// <summary>

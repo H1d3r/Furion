@@ -33,7 +33,6 @@ namespace Furion.UnifyResult;
 /// <summary>
 /// 状态码中间件
 /// </summary>
-[SuppressSniffer]
 public class UnifyResultStatusCodesMiddleware
 {
     /// <summary>

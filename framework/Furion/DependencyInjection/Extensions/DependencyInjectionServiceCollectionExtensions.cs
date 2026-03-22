@@ -35,7 +35,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 依赖注入扩展类
 /// </summary>
-[SuppressSniffer]
 public static class DependencyInjectionServiceCollectionExtensions
 {
     /// <summary>

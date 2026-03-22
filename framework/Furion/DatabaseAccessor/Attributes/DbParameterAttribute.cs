@@ -30,7 +30,7 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// DbParameter 配置特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Property)]
 public sealed class DbParameterAttribute : Attribute
 {
     /// <summary>

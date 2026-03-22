@@ -30,7 +30,7 @@ namespace Furion.AspNetCore;
 /// <summary>
 /// 数组 URL 地址参数模型绑定特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property)]
 public class FlexibleArrayAttribute<T> : ModelBinderAttribute
 {
     /// <summary>

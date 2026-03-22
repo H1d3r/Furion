@@ -31,7 +31,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业调度器配置选项构建器
 /// </summary>
-[SuppressSniffer]
 public sealed class ScheduleOptionsBuilder
 {
     /// <summary>

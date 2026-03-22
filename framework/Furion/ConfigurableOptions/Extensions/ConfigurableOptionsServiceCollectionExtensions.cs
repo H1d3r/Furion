@@ -37,7 +37,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 可变选项服务扩展类
 /// </summary>
-[SuppressSniffer]
 public static class ConfigurableOptionsServiceCollectionExtensions
 {
     /// <summary>

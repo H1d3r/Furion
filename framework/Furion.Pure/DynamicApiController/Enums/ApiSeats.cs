@@ -30,7 +30,6 @@ namespace Microsoft.AspNetCore.Mvc;
 /// <summary>
 /// 接口参数位置
 /// </summary>
-[SuppressSniffer]
 public enum ApiSeats
 {
     /// <summary>

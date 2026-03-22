@@ -28,7 +28,6 @@ namespace Furion.Logging;
 /// <summary>
 /// 日志上下文
 /// </summary>
-[SuppressSniffer]
 public sealed class LogContext : IDisposable
 {
     /// <summary>

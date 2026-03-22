@@ -28,7 +28,6 @@ namespace Furion.TaskQueue;
 /// <summary>
 /// 任务队列配置选项构建器
 /// </summary>
-[SuppressSniffer]
 public sealed class TaskQueueOptionsBuilder
 {
     /// <summary>

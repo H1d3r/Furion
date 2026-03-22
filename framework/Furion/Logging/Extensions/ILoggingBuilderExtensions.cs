@@ -33,7 +33,6 @@ namespace Microsoft.Extensions.Logging;
 /// <summary>
 /// 日志构建器扩展类
 /// </summary>
-[SuppressSniffer]
 public static class ILoggingBuilderExtensions
 {
     /// <summary>

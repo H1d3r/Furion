@@ -33,7 +33,6 @@ namespace System;
 /// <summary>
 /// 用于原生应用（WinForm/WPF）创建窗口
 /// </summary>
-[SuppressSniffer]
 public static class Native
 {
     /// <summary>

@@ -34,7 +34,6 @@ namespace Furion.ViewEngine;
 /// <summary>
 /// 视图引擎编译选项
 /// </summary>
-[SuppressSniffer]
 public class ViewEngineOptions
 {
     /// <summary>

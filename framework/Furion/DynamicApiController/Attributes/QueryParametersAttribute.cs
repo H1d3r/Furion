@@ -28,7 +28,7 @@ namespace Furion.DynamicApiController;
 /// <summary>
 /// 将 Action 所有参数 [FromQuery] 化
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Method)]
 public sealed class QueryParametersAttribute : Attribute
 {
     /// <summary>

@@ -28,7 +28,6 @@ namespace Furion.DistributedIDGenerator;
 /// <summary>
 /// ID 生成器
 /// </summary>
-[SuppressSniffer]
 public static class IDGen
 {
     /// <summary>

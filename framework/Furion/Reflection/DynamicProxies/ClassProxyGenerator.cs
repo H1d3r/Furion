@@ -36,7 +36,6 @@ namespace Furion.Reflection;
 /// Class 代理类生成器
 /// </summary>
 /// <typeparam name="TClass">代理类型</typeparam>
-[SuppressSniffer]
 public class ClassProxyGenerator<TClass>
     where TClass : class
 {

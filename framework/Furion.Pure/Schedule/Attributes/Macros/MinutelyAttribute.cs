@@ -28,7 +28,7 @@ namespace Furion.Schedule;
 /// <summary>
 /// 每分钟开始作业触发器特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public sealed class MinutelyAttribute : CronAttribute
 {
     /// <summary>

@@ -30,7 +30,6 @@ namespace Furion.LinqBuilder;
 /// <summary>
 /// EF Core Linq 扩展
 /// </summary>
-[SuppressSniffer]
 public static class LinqExpression
 {
     /// <summary>

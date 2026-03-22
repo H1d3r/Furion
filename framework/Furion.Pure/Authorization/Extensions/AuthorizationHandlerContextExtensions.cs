@@ -31,7 +31,6 @@ namespace Microsoft.AspNetCore.Authorization;
 /// <summary>
 /// 授权处理上下文扩展类
 /// </summary>
-[SuppressSniffer]
 public static class AuthorizationHandlerContextExtensions
 {
     internal const string FAIL_STATUSCODE_KEY = $"{nameof(AuthorizationHandlerContext)}_FAIL_STATUSCODE";

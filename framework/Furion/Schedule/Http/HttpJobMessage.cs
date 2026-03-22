@@ -30,7 +30,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// HTTP 作业消息
 /// </summary>
-[SuppressSniffer]
 public sealed class HttpJobMessage
 {
     /// <summary>

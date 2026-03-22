@@ -31,7 +31,6 @@ namespace Furion.DataEncryption;
 /// <summary>
 /// SHA1 加密
 /// </summary>
-[SuppressSniffer]
 public class SHA1Encryption
 {
     /// <summary>

@@ -40,7 +40,6 @@ namespace Microsoft.AspNetCore.Mvc.Filters;
 /// <summary>
 /// 友好异常拦截器
 /// </summary>
-[SuppressSniffer]
 public sealed class FriendlyExceptionFilter : IAsyncExceptionFilter
 {
     /// <summary>

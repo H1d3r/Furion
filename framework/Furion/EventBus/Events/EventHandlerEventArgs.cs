@@ -28,7 +28,6 @@ namespace Furion.EventBus;
 /// <summary>
 /// 事件处理程序事件参数
 /// </summary>
-[SuppressSniffer]
 public sealed class EventHandlerEventArgs : EventArgs
 {
     /// <summary>

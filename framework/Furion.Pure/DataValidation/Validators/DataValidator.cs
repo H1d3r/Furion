@@ -36,7 +36,6 @@ namespace Furion.DataValidation;
 /// <summary>
 /// 数据验证器
 /// </summary>
-[SuppressSniffer]
 public static class DataValidator
 {
     /// <summary>

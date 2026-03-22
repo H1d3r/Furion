@@ -28,7 +28,7 @@ namespace Microsoft.AspNetCore.Mvc;
 /// <summary>
 /// 规范化序列化配置
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
 public sealed class UnifySerializerSettingAttribute : Attribute
 {
     /// <summary>

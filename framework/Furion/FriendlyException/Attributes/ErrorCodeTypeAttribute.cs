@@ -28,7 +28,7 @@ namespace Furion.FriendlyException;
 /// <summary>
 /// 错误代码类型特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Enum | AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Enum | AttributeTargets.Class)]
 public sealed class ErrorCodeTypeAttribute : Attribute
 {
     /// <summary>

@@ -32,7 +32,6 @@ namespace Furion;
 /// <summary>
 /// 配置程序启动时自动注入
 /// </summary>
-[SuppressSniffer]
 public sealed class HostingStartup : IHostingStartup
 {
     /// <summary>

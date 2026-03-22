@@ -37,7 +37,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Sqlite 数据库服务扩展
 /// </summary>
-[SuppressSniffer]
 public static class DatabaseProviderServiceCollectionExtensions
 {
     /// <summary>

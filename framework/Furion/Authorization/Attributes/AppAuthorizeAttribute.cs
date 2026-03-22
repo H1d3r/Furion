@@ -30,7 +30,7 @@ namespace Microsoft.AspNetCore.Authorization;
 /// <summary>
 /// 策略授权特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class AppAuthorizeAttribute : AuthorizeAttribute
 {
     /// <summary>

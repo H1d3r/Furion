@@ -35,7 +35,6 @@ namespace Furion.AspNetCore;
 /// <summary>
 /// [FromConvert] 模型绑定器
 /// </summary>
-[SuppressSniffer]
 public class FromConvertBinder : IModelBinder
 {
     /// <summary>

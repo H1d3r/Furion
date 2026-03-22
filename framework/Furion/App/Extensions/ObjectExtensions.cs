@@ -36,7 +36,6 @@ namespace Furion.Extensions;
 /// <summary>
 /// 对象扩展类
 /// </summary>
-[SuppressSniffer]
 public static class ObsoleteObjectExtensions
 {
     /// <summary>

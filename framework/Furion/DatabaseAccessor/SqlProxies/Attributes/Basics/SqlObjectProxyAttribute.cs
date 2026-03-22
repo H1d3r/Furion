@@ -28,7 +28,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// Sql 对象类型执行代理
 /// </summary>
-[SuppressSniffer]
 public class SqlObjectProxyAttribute : SqlProxyAttribute
 {
     /// <summary>

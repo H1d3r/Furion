@@ -38,7 +38,6 @@ namespace Furion.UnifyResult;
 /// <summary>
 /// 规范化结构（请求成功）过滤器
 /// </summary>
-[SuppressSniffer]
 public class SucceededUnifyResultFilter : IAsyncActionFilter, IOrderedFilter
 {
     /// <summary>

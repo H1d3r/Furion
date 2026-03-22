@@ -29,7 +29,7 @@ namespace Furion.DatabaseAccessor;
 /// Sql 代理拦截器
 /// </summary>
 /// <remarks>如果贴在静态方法中且 InterceptorId/MethodName 为空，则为全局拦截</remarks>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Method)]
 public class SqlInterceptorAttribute : Attribute
 {
     /// <summary>

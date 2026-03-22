@@ -31,7 +31,6 @@ namespace Furion.Logging;
 /// 文件日志记录器
 /// </summary>
 /// <remarks>https://docs.microsoft.com/zh-cn/dotnet/core/extensions/custom-logging-provider</remarks>
-[SuppressSniffer]
 public sealed class FileLogger : ILogger
 {
     /// <summary>

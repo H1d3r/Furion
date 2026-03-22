@@ -30,7 +30,6 @@ namespace Microsoft.Extensions.Logging;
 /// <summary>
 /// <see cref="ILogger"/> 扩展
 /// </summary>
-[SuppressSniffer]
 public static class ILoggerExtensions
 {
     /// <summary>

@@ -34,7 +34,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库数据转换扩展
 /// </summary>
-[SuppressSniffer]
 public static class DbDataConvertExtensions
 {
     /// <summary>

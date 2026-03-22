@@ -32,7 +32,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// 解决 Clay 问题
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftJsonClayJsonConverter : JsonConverter<Clay>
 {
     /// <summary>

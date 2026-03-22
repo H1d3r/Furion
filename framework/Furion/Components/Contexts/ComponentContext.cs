@@ -30,7 +30,6 @@ namespace System;
 /// <summary>
 /// 组件上下文
 /// </summary>
-[SuppressSniffer]
 public sealed class ComponentContext
 {
     /// <summary>

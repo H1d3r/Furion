@@ -30,7 +30,6 @@ namespace Furion.ViewEngine;
 /// <summary>
 /// 视图引擎模板模型实现类
 /// </summary>
-[SuppressSniffer]
 public abstract class ViewEngineModel : IViewEngineModel
 {
     /// <summary>
@@ -211,7 +210,6 @@ public abstract class ViewEngineModel : IViewEngineModel
 /// 视图引擎模板模型实现类
 /// </summary>
 /// <typeparam name="T"></typeparam>
-[SuppressSniffer]
 public abstract class ViewEngineModel<T> : ViewEngineModel
 {
     /// <summary>

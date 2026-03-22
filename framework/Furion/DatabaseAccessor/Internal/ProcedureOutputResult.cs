@@ -30,7 +30,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 存储过程输出返回值
 /// </summary>
-[SuppressSniffer]
 public sealed class ProcedureOutputResult : ProcedureOutputResult<DataSet>
 {
     /// <summary>
@@ -45,7 +44,6 @@ public sealed class ProcedureOutputResult : ProcedureOutputResult<DataSet>
 /// 存储过程输出返回值
 /// </summary>
 /// <typeparam name="TResult">泛型版本</typeparam>
-[SuppressSniffer]
 public class ProcedureOutputResult<TResult>
 {
     /// <summary>

@@ -31,7 +31,6 @@ namespace Furion.DataEncryption;
 /// <summary>
 /// AES 加解密
 /// </summary>
-[SuppressSniffer]
 public class AESEncryption
 {
     /// <summary>

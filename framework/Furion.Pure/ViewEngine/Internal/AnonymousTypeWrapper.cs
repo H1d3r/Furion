@@ -31,7 +31,6 @@ namespace Furion.ViewEngine;
 /// <summary>
 /// 匿名类型包装器
 /// </summary>
-[SuppressSniffer]
 public class AnonymousTypeWrapper : DynamicObject
 {
     /// <summary>

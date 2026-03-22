@@ -29,7 +29,7 @@ namespace Furion.DatabaseAccessor;
 /// 手动配置实体特性
 /// </summary>
 /// <remarks>支持类和方法</remarks>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class ManualAttribute : Attribute
 {
 }

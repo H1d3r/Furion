@@ -33,7 +33,7 @@ namespace System.ComponentModel.DataAnnotations;
 /// <summary>
 /// 脱敏词汇检查（脱敏处理）
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
 public class SensitiveDetectionAttribute : ValidationAttribute
 {
     /// <summary>

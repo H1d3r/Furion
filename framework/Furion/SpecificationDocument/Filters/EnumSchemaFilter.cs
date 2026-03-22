@@ -38,7 +38,6 @@ namespace Furion.SpecificationDocument;
 /// <summary>
 /// 修正 规范化文档 Enum 提示
 /// </summary>
-[SuppressSniffer]
 public class EnumSchemaFilter : ISchemaFilter
 {
     /// <summary>

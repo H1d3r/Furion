@@ -28,7 +28,6 @@ namespace Furion.DistributedIDGenerator;
 /// <summary>
 /// 短 ID 生成配置选项
 /// </summary>
-[SuppressSniffer]
 public class GenerationOptions
 {
     /// <summary>

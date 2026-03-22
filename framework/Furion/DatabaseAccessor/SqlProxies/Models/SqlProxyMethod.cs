@@ -32,7 +32,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// Sql 代理方法元数据
 /// </summary>
-[SuppressSniffer]
 public sealed class SqlProxyMethod
 {
     /// <summary>

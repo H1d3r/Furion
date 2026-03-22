@@ -31,7 +31,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// DateOnly 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class SystemTextJsonDateOnlyJsonConverter : JsonConverter<DateOnly>
 {
     /// <summary>
@@ -83,7 +82,6 @@ public class SystemTextJsonDateOnlyJsonConverter : JsonConverter<DateOnly>
 /// <summary>
 /// DateOnly? 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class SystemTextJsonNullableDateOnlyJsonConverter : JsonConverter<DateOnly?>
 {
     /// <summary>

@@ -30,7 +30,6 @@ namespace Furion.DependencyInjection;
 /// <summary>
 /// 注册类型
 /// </summary>
-[SuppressSniffer]
 public enum RegisterType
 {
     /// <summary>

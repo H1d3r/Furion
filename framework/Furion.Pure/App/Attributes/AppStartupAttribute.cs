@@ -28,7 +28,7 @@ namespace Furion;
 /// <summary>
 /// 注册服务启动配置
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class)]
 public class AppStartupAttribute : Attribute
 {
     /// <summary>

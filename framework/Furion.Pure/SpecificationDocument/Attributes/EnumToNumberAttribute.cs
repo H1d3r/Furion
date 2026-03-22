@@ -28,7 +28,7 @@ namespace Furion.SpecificationDocument;
 /// <summary>
 /// 用于控制 Swager 生成 Enum 类型
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Enum, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Enum, AllowMultiple = false)]
 public sealed class EnumToNumberAttribute : Attribute
 {
     /// <summary>

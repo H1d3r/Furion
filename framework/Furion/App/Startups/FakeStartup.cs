@@ -31,7 +31,6 @@ namespace Furion;
 /// <summary>
 /// 模拟 Startup，解决 .NET5 下不设置 UseStartup 时出现异常问题
 /// </summary>
-[SuppressSniffer]
 public sealed class FakeStartup
 {
     /// <summary>

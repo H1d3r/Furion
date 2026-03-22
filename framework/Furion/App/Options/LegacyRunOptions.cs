@@ -33,7 +33,6 @@ namespace System;
 /// <summary>
 /// Web 泛型主机方式配置选项
 /// </summary>
-[SuppressSniffer]
 public sealed class LegacyRunOptions : GenericRunOptions
 {
     /// <summary>

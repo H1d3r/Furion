@@ -46,7 +46,6 @@ namespace Furion.UnifyResult;
 /// <summary>
 /// 规范化结果上下文
 /// </summary>
-[SuppressSniffer]
 public static class UnifyContext
 {
     /// <summary>

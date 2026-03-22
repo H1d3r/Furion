@@ -38,7 +38,6 @@ namespace Furion.Localization;
 /// <summary>
 /// 全局多语言静态类
 /// </summary>
-[SuppressSniffer]
 public static class L
 {
     /// <summary>

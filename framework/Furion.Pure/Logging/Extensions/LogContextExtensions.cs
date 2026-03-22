@@ -30,7 +30,6 @@ namespace Furion.Logging;
 /// <summary>
 /// LogContext 扩展
 /// </summary>
-[SuppressSniffer]
 public static class LogContextExtensions
 {
     /// <summary>

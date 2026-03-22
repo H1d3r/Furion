@@ -30,7 +30,6 @@ namespace Furion.ViewEngine;
 /// <summary>
 /// 视图引擎模板编译异常类
 /// </summary>
-[SuppressSniffer]
 public class ViewEngineTemplateException : ViewEngineException
 {
     /// <summary>

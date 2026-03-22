@@ -28,7 +28,6 @@ namespace Furion.ViewEngine.Extensions;
 /// <summary>
 /// 字符串视图引擎扩展
 /// </summary>
-[SuppressSniffer]
 public static class ViewEngineStringExtensions
 {
     /// <summary>

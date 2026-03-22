@@ -30,7 +30,6 @@ namespace Microsoft.EntityFrameworkCore;
 /// <summary>
 /// EntityFramework Core 扩展
 /// </summary>
-[SuppressSniffer]
 public static class EFCoreExtensions
 {
     /// <summary>

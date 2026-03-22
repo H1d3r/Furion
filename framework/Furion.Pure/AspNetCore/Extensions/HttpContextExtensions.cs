@@ -32,7 +32,6 @@ namespace Microsoft.AspNetCore.Http;
 /// <summary>
 /// Http 扩展类
 /// </summary>
-[SuppressSniffer]
 public static class HttpContextExtensions
 {
     /// <summary>

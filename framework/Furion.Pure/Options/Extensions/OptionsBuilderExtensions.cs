@@ -36,7 +36,6 @@ namespace Microsoft.Extensions.Options;
 /// <summary>
 /// OptionsBuilder 扩展类
 /// </summary>
-[SuppressSniffer]
 public static class OptionsBuilderExtensions
 {
     /// <summary>

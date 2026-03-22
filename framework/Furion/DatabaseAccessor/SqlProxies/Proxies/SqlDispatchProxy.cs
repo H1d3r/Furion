@@ -36,7 +36,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// Sql 执行代理类
 /// </summary>
-[SuppressSniffer]
 public class SqlDispatchProxy : AspectDispatchProxy, IDispatchProxy
 {
     /// <summary>

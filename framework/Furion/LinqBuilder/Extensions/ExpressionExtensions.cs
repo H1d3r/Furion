@@ -31,7 +31,6 @@ namespace Furion.LinqBuilder;
 /// <summary>
 /// 表达式扩展类
 /// </summary>
-[SuppressSniffer]
 public static class ExpressionExtensions
 {
     /// <summary>

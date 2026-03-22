@@ -30,7 +30,6 @@ namespace Furion.DependencyInjection;
 /// <summary>
 /// 服务注册方式
 /// </summary>
-[SuppressSniffer]
 public enum InjectionActions
 {
     /// <summary>

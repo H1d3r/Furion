@@ -34,7 +34,6 @@ namespace Furion.SensitiveDetection;
 /// <summary>
 /// [FromConvert] 模型绑定提供器
 /// </summary>
-[SuppressSniffer]
 public class FromConvertBinderProvider : IModelBinderProvider
 {
     /// <summary>

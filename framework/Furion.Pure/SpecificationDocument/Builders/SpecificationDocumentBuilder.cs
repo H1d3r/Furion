@@ -50,7 +50,6 @@ namespace Furion.SpecificationDocument;
 /// <summary>
 /// 规范化文档构建器
 /// </summary>
-[SuppressSniffer]
 public static class SpecificationDocumentBuilder
 {
     /// <summary>

@@ -30,7 +30,6 @@ namespace Furion.FriendlyException;
 /// <summary>
 /// 自定义友好异常类
 /// </summary>
-[SuppressSniffer]
 public class AppFriendlyException : Exception
 {
     /// <summary>

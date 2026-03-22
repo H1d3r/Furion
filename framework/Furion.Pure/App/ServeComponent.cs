@@ -34,7 +34,6 @@ namespace Furion.Components;
 /// <summary>
 /// Serve 组件应用服务组件
 /// </summary>
-[SuppressSniffer]
 public sealed class ServeServiceComponent : IServiceComponent
 {
     /// <summary>
@@ -64,7 +63,6 @@ public sealed class ServeServiceComponent : IServiceComponent
 /// <summary>
 /// Serve 组件应用中间件组件
 /// </summary>
-[SuppressSniffer]
 public sealed class ServeApplicationComponent : IApplicationComponent
 {
     /// <summary>

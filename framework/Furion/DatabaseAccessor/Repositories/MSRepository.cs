@@ -30,7 +30,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 默认主库主从仓储
 /// </summary>
-[SuppressSniffer]
 public partial class MSRepository : MSRepository<MasterDbContextLocator>, IMSRepository
 {
     /// <summary>
@@ -48,7 +47,6 @@ public partial class MSRepository : MSRepository<MasterDbContextLocator>, IMSRep
 /// 主从库仓储
 /// </summary>
 /// <typeparam name="TMasterDbContextLocator">主库</typeparam>
-[SuppressSniffer]
 public partial class MSRepository<TMasterDbContextLocator> : IMSRepository<TMasterDbContextLocator>
     where TMasterDbContextLocator : class, IDbContextLocator
 {
@@ -145,7 +143,6 @@ public partial class MSRepository<TMasterDbContextLocator> : IMSRepository<TMast
 /// </summary>
 /// <typeparam name="TMasterDbContextLocator">主库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator1">从库</typeparam>
-[SuppressSniffer]
 public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1> : IMSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1>
     where TMasterDbContextLocator : class, IDbContextLocator
     where TSlaveDbContextLocator1 : class, IDbContextLocator
@@ -193,7 +190,6 @@ public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocato
 /// <typeparam name="TMasterDbContextLocator">主库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator1">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator2">从库</typeparam>
-[SuppressSniffer]
 public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2>
     : MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1>
     , IMSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2>
@@ -234,7 +230,6 @@ public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocato
 /// <typeparam name="TSlaveDbContextLocator1">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator2">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator3">从库</typeparam>
-[SuppressSniffer]
 public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3>
     : MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2>
     , IMSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3>
@@ -277,7 +272,6 @@ public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocato
 /// <typeparam name="TSlaveDbContextLocator2">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator3">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator4">从库</typeparam>
-[SuppressSniffer]
 public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4>
     : MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3>
     , IMSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4>
@@ -322,7 +316,6 @@ public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocato
 /// <typeparam name="TSlaveDbContextLocator3">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator4">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator5">从库</typeparam>
-[SuppressSniffer]
 public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4, TSlaveDbContextLocator5>
     : MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4>
     , IMSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4, TSlaveDbContextLocator5>
@@ -369,7 +362,6 @@ public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocato
 /// <typeparam name="TSlaveDbContextLocator4">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator5">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator6">从库</typeparam>
-[SuppressSniffer]
 public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4, TSlaveDbContextLocator5, TSlaveDbContextLocator6>
     : MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4, TSlaveDbContextLocator5>
     , IMSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4, TSlaveDbContextLocator5, TSlaveDbContextLocator6>
@@ -418,7 +410,6 @@ public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocato
 /// <typeparam name="TSlaveDbContextLocator5">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator6">从库</typeparam>
 /// <typeparam name="TSlaveDbContextLocator7">从库</typeparam>
-[SuppressSniffer]
 public partial class MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4, TSlaveDbContextLocator5, TSlaveDbContextLocator6, TSlaveDbContextLocator7>
     : MSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4, TSlaveDbContextLocator5, TSlaveDbContextLocator6>
     , IMSRepository<TMasterDbContextLocator, TSlaveDbContextLocator1, TSlaveDbContextLocator2, TSlaveDbContextLocator3, TSlaveDbContextLocator4, TSlaveDbContextLocator5, TSlaveDbContextLocator6, TSlaveDbContextLocator7>

@@ -32,7 +32,6 @@ namespace Furion.DatabaseAccessor.Extensions;
 /// <summary>
 /// 多租户数据库上下文扩展
 /// </summary>
-[SuppressSniffer]
 public static class MultiTenantDbContextExtensions
 {
     /// <summary>

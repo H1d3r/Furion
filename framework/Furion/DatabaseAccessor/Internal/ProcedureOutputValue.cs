@@ -28,7 +28,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 存储过程输出值模型
 /// </summary>
-[SuppressSniffer]
 public sealed class ProcedureOutputValue
 {
     /// <summary>

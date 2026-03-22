@@ -30,7 +30,6 @@ namespace Furion.Logging;
 /// <summary>
 /// LoggingMonitor JSON 输出行为
 /// </summary>
-[SuppressSniffer]
 public enum JsonBehavior
 {
     /// <summary>

@@ -29,7 +29,7 @@ namespace Furion.DatabaseAccessor;
 /// 手动提交标识
 /// <para>默认情况下，框架会自动在方法结束之时调用 SaveChanges 方法，贴此特性可以忽略该行为</para>
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Method)]
 public sealed class ManualCommitAttribute : Attribute
 {
 }

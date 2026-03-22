@@ -32,7 +32,6 @@ namespace System.Text.Json;
 /// <summary>
 /// System.Text.Json 扩展
 /// </summary>
-[SuppressSniffer]
 public static class SystemTextJsonExtensions
 {
     /// <summary>

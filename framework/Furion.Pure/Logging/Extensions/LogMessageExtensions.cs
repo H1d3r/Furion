@@ -32,7 +32,6 @@ namespace Furion.Logging;
 /// <summary>
 /// <see cref="LogMessage"/> 扩展
 /// </summary>
-[SuppressSniffer]
 public static class LogMessageExtensions
 {
     /// <summary>

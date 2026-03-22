@@ -29,7 +29,6 @@ namespace Furion.DatabaseAccessor;
 /// 实体执行部件
 /// </summary>
 /// <typeparam name="TEntity"></typeparam>
-[SuppressSniffer]
 public sealed partial class EntityExecutePart<TEntity>
     where TEntity : class, IPrivateEntity, new()
 {

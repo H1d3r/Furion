@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 动态作业处理程序
 /// </summary>
-[SuppressSniffer]
 public sealed class DynamicJob : IJob
 {
     /// <summary>

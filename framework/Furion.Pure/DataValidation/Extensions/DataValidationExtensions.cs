@@ -33,7 +33,6 @@ namespace Furion.DataValidation;
 /// <summary>
 /// 数据验证扩展类
 /// </summary>
-[SuppressSniffer]
 public static class DataValidationExtensions
 {
     /// <summary>

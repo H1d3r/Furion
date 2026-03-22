@@ -29,5 +29,5 @@ namespace Microsoft.AspNetCore.Mvc;
 /// 强制进行规范化处理，即使无返回值（204 NoContent）
 /// </summary>
 /// <remarks>https://gitee.com/dotnetchina/Furion/issues/IFXVQZ</remarks>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public class ForceUnifyAttribute : Attribute;

@@ -37,7 +37,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库上下文池
 /// </summary>
-[SuppressSniffer]
 public class DbContextPool : IDbContextPool, IDisposable
 {
     /// <summary>

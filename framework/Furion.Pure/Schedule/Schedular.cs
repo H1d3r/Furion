@@ -32,7 +32,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 调度作业服务静态类
 /// </summary>
-[SuppressSniffer]
 public static class ScheduleServe
 {
     /// <summary>
@@ -82,7 +81,6 @@ public static class ScheduleServe
 /// <summary>
 /// 作业调度器静态类
 /// </summary>
-[SuppressSniffer]
 public static class Schedular
 {
     /// <summary>

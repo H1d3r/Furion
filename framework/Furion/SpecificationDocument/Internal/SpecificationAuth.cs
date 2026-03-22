@@ -28,7 +28,6 @@ namespace Furion.SpecificationDocument;
 /// <summary>
 /// 规范化文档授权参数类型
 /// </summary>
-[SuppressSniffer]
 public sealed class SpecificationAuth
 {
     /// <summary>
