@@ -37,7 +37,6 @@ namespace System;
 /// <summary>
 /// 主机静态类
 /// </summary>
-[SuppressSniffer]
 public static class Serve
 {
     /// <summary>

@@ -35,7 +35,6 @@ namespace System;
 /// <summary>
 /// <see cref="WebApplication"/> 方式配置选项
 /// </summary>
-[SuppressSniffer]
 public sealed class RunOptions : IRunOptions
 {
     /// <summary>

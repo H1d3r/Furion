@@ -30,7 +30,6 @@ namespace Furion.EventBus;
 /// <summary>
 /// 事件处理程序执行后上下文
 /// </summary>
-[SuppressSniffer]
 public sealed class EventHandlerExecutedContext : EventHandlerContext
 {
     /// <summary>

@@ -28,7 +28,6 @@ namespace Furion.TaskQueue;
 /// <summary>
 /// 任务处理委托事件参数
 /// </summary>
-[SuppressSniffer]
 public sealed class TaskHandlerEventArgs : EventArgs
 {
     /// <summary>

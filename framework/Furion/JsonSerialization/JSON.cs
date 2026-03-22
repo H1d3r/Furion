@@ -30,7 +30,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// JSON 静态帮助类
 /// </summary>
-[SuppressSniffer]
 public static class JSON
 {
     /// <summary>

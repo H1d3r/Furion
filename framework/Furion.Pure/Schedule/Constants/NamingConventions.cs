@@ -29,7 +29,6 @@ namespace Furion.Schedule;
 /// 命名转换器
 /// </summary>
 /// <remarks>用于生成持久化 SQL 语句</remarks>
-[SuppressSniffer]
 public enum NamingConventions
 {
     /// <summary>

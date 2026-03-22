@@ -30,7 +30,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// DateTime 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftJsonDateTimeJsonConverter : JsonConverter<DateTime>
 {
     /// <summary>
@@ -104,7 +103,6 @@ public class NewtonsoftJsonDateTimeJsonConverter : JsonConverter<DateTime>
 /// <summary>
 /// DateTime 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftNullableJsonDateTimeJsonConverter : JsonConverter<DateTime?>
 {
     /// <summary>

@@ -29,7 +29,6 @@ namespace Furion.Schedule;
 /// SQL 类型
 /// </summary>
 /// <remarks>用于控制生成 SQL 格式</remarks>
-[SuppressSniffer]
 public enum SqlTypes
 {
     /// <summary>

@@ -28,7 +28,6 @@ namespace Furion.SpecificationDocument;
 /// <summary>
 /// 分组附加信息
 /// </summary>
-[SuppressSniffer]
 public sealed class GroupExtraInfo
 {
     /// <summary>

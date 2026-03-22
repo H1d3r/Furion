@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业集群状态
 /// </summary>
-[SuppressSniffer]
 public enum ClusterStatus : uint
 {
     /// <summary>

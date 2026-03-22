@@ -30,7 +30,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业触发器静态类
 /// </summary>
-[SuppressSniffer]
 public static class Triggers
 {
     /// <summary>

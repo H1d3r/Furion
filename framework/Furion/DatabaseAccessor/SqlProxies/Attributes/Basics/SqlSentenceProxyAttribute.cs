@@ -30,7 +30,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// Sql 语句执行代理
 /// </summary>
-[SuppressSniffer]
 public class SqlSentenceProxyAttribute : SqlProxyAttribute
 {
     /// <summary>

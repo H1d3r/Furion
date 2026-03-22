@@ -31,7 +31,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// <see cref="System.Text.Json.Nodes.JsonObject"/> 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftJsonJsonObjectJsonConverter : JsonConverter<System.Text.Json.Nodes.JsonObject>
 {
     /// <summary>
@@ -63,7 +62,6 @@ public class NewtonsoftJsonJsonObjectJsonConverter : JsonConverter<System.Text.J
 /// <summary>
 /// <see cref="System.Text.Json.Nodes.JsonArray"/> 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftJsonJsonArrayJsonConverter : JsonConverter<System.Text.Json.Nodes.JsonArray>
 {
     /// <summary>

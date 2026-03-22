@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业触发器配置选项
 /// </summary>
-[SuppressSniffer]
 public sealed class TriggerOptions
 {
     /// <summary>

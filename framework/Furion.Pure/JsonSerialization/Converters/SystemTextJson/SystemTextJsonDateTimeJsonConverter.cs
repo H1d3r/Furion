@@ -31,7 +31,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// DateTime 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class SystemTextJsonDateTimeJsonConverter : JsonConverter<DateTime>
 {
     /// <summary>
@@ -101,7 +100,6 @@ public class SystemTextJsonDateTimeJsonConverter : JsonConverter<DateTime>
 /// <summary>
 /// DateTime? 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class SystemTextJsonNullableDateTimeJsonConverter : JsonConverter<DateTime?>
 {
     /// <summary>

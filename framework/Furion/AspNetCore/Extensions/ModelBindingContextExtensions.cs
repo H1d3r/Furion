@@ -31,7 +31,6 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding;
 /// <summary>
 /// <see cref="ModelBindingContext"/> 扩展
 /// </summary>
-[SuppressSniffer]
 public static class ModelBindingContextExtensions
 {
     /// <summary>

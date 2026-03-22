@@ -31,7 +31,6 @@ namespace System.ComponentModel.DataAnnotations;
 /// <summary>
 /// 数据类型验证特性
 /// </summary>
-[SuppressSniffer]
 public class DataValidationAttribute : ValidationAttribute
 {
     /// <summary>

@@ -36,7 +36,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库提供器选项
 /// </summary>
-[SuppressSniffer]
 public static class DbProvider
 {
     /// <summary>

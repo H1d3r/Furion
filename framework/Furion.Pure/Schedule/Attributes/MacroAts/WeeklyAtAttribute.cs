@@ -28,7 +28,7 @@ namespace Furion.Schedule;
 /// <summary>
 /// 每周特定星期几（午夜）开始作业触发器特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public sealed class WeeklyAtAttribute : CronAttribute
 {
     /// <summary>

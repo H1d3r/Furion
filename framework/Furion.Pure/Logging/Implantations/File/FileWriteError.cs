@@ -28,7 +28,6 @@ namespace Furion.Logging;
 /// <summary>
 /// 文件写入错误信息上下文
 /// </summary>
-[SuppressSniffer]
 public sealed class FileWriteError
 {
     /// <summary>

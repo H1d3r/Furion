@@ -30,7 +30,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// EFCore 工作单元实现
 /// </summary>
-[SuppressSniffer]
 public sealed class EFCoreUnitOfWork : IUnitOfWork
 {
     /// <summary>

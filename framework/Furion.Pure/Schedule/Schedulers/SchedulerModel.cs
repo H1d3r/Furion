@@ -31,7 +31,6 @@ namespace Furion.Schedule;
 /// 作业计划模型
 /// </summary>
 /// <remarks>常用于接口返回或序列化操作</remarks>
-[SuppressSniffer]
 public sealed class SchedulerModel
 {
     /// <summary>

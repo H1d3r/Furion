@@ -30,7 +30,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库上下文提交拦截器
 /// </summary>
-[SuppressSniffer]
 public class DbContextSaveChangesInterceptor : SaveChangesInterceptor
 {
     /// <summary>

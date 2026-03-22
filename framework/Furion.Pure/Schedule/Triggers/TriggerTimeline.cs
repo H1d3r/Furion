@@ -30,7 +30,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业触发器运行记录
 /// </summary>
-[SuppressSniffer]
 public sealed class TriggerTimeline : IDisposable
 {
     /// <summary>

@@ -32,7 +32,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库实体依赖基类
 /// </summary>
-[SuppressSniffer]
 public abstract class EntityBase : EntityBase<int, MasterDbContextLocator>
 {
 }
@@ -41,7 +40,6 @@ public abstract class EntityBase : EntityBase<int, MasterDbContextLocator>
 /// 数据库实体依赖基类
 /// </summary>
 /// <typeparam name="TKey">主键类型</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey> : EntityBase<TKey, MasterDbContextLocator>
 {
 }
@@ -51,7 +49,6 @@ public abstract class EntityBase<TKey> : EntityBase<TKey, MasterDbContextLocator
 /// </summary>
 /// <typeparam name="TKey">主键类型</typeparam>
 /// <typeparam name="TDbContextLocator1">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey, TDbContextLocator1> : PrivateEntityBase<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
 {
@@ -63,7 +60,6 @@ public abstract class EntityBase<TKey, TDbContextLocator1> : PrivateEntityBase<T
 /// <typeparam name="TKey">主键类型</typeparam>
 /// <typeparam name="TDbContextLocator1">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator2">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2> : PrivateEntityBase<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -77,7 +73,6 @@ public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2> :
 /// <typeparam name="TDbContextLocator1">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator2">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator3">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3> : PrivateEntityBase<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -93,7 +88,6 @@ public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, T
 /// <typeparam name="TDbContextLocator2">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator3">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator4">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4> : PrivateEntityBase<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -111,7 +105,6 @@ public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, T
 /// <typeparam name="TDbContextLocator3">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator4">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator5">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5> : PrivateEntityBase<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -131,7 +124,6 @@ public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, T
 /// <typeparam name="TDbContextLocator4">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator5">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator6">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6> : PrivateEntityBase<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -153,7 +145,6 @@ public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, T
 /// <typeparam name="TDbContextLocator5">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator6">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator7">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6, TDbContextLocator7> : PrivateEntityBase<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -177,7 +168,6 @@ public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, T
 /// <typeparam name="TDbContextLocator6">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator7">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator8">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6, TDbContextLocator7, TDbContextLocator8> : PrivateEntityBase<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -194,7 +184,6 @@ public abstract class EntityBase<TKey, TDbContextLocator1, TDbContextLocator2, T
 /// 数据库实体依赖基类（禁止外部继承）
 /// </summary>
 /// <typeparam name="TKey">主键类型</typeparam>
-[SuppressSniffer]
 public abstract class PrivateEntityBase<TKey> : IPrivateEntity
 {
     /// <summary>

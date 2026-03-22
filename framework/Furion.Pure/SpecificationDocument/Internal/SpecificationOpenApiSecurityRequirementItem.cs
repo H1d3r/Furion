@@ -30,7 +30,6 @@ namespace Furion.SpecificationDocument;
 /// <summary>
 /// 安全定义需求子项
 /// </summary>
-[SuppressSniffer]
 public sealed class SpecificationOpenApiSecurityRequirementItem
 {
     /// <summary>

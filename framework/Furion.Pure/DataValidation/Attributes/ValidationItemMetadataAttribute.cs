@@ -30,7 +30,7 @@ namespace Furion.DataValidation;
 /// <summary>
 /// 验证项元数据
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Field)]
+[AttributeUsage(AttributeTargets.Field)]
 public class ValidationItemMetadataAttribute : Attribute
 {
     /// <summary>

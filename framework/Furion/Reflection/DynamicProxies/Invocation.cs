@@ -31,7 +31,6 @@ namespace Furion.Reflection;
 /// 方法调用器
 /// </summary>
 /// <remarks>负责动态调用方法</remarks>
-[SuppressSniffer]
 public sealed class Invocation
 {
     /// <summary>

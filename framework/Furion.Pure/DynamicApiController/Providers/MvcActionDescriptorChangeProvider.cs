@@ -31,7 +31,6 @@ namespace Furion.DynamicApiController;
 /// <summary>
 /// MVC 控制器感知提供器
 /// </summary>
-[SuppressSniffer]
 public class MvcActionDescriptorChangeProvider : IActionDescriptorChangeProvider
 {
     private CancellationTokenSource _cancellationTokenSource;

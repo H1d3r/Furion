@@ -30,7 +30,6 @@ namespace Furion.Authorization;
 /// <summary>
 /// 策略对应的需求
 /// </summary>
-[SuppressSniffer]
 public sealed class AppAuthorizeRequirement : IAuthorizationRequirement
 {
     /// <summary>

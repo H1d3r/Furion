@@ -32,7 +32,6 @@ namespace Microsoft.AspNetCore.Builder;
 /// <summary>
 /// 多语言中间件扩展
 /// </summary>
-[SuppressSniffer]
 public static class LocalizationApplicationBuilderExtensions
 {
     /// <summary>

@@ -32,7 +32,6 @@ namespace Furion.SpecificationDocument;
 /// <summary>
 /// 标签文档排序/注释拦截器
 /// </summary>
-[SuppressSniffer]
 public class TagsOrderDocumentFilter : IDocumentFilter
 {
     /// <summary>

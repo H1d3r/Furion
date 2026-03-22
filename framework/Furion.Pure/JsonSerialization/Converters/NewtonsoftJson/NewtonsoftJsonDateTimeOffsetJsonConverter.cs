@@ -30,7 +30,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// DateTimeOffset 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftJsonDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset>
 {
     /// <summary>
@@ -104,7 +103,6 @@ public class NewtonsoftJsonDateTimeOffsetJsonConverter : JsonConverter<DateTimeO
 /// <summary>
 /// DateTimeOffset 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftJsonNullableDateTimeOffsetJsonConverter : JsonConverter<DateTimeOffset?>
 {
     /// <summary>

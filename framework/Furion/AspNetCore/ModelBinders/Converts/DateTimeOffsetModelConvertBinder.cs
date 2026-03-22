@@ -32,7 +32,6 @@ namespace Furion.AspNetCore;
 /// <summary>
 /// <see cref="DateTimeOffset"/> 类型模型转换绑定器
 /// </summary>
-[SuppressSniffer]
 public sealed class DateTimeOffsetModelConvertBinder : IModelConvertBinder
 {
     /// <summary>

@@ -32,7 +32,7 @@ namespace Furion.Logging;
 /// 空日志记录器提供程序
 /// </summary>
 /// <remarks>https://docs.microsoft.com/zh-cn/dotnet/core/extensions/custom-logging-provider</remarks>
-[SuppressSniffer, ProviderAlias("Empty")]
+[ProviderAlias("Empty")]
 public sealed class EmptyLoggerProvider : ILoggerProvider
 {
     /// <summary>

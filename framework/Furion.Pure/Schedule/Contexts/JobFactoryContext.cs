@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业处理程序工厂上下文
 /// </summary>
-[SuppressSniffer]
 public sealed class JobFactoryContext
 {
     /// <summary>

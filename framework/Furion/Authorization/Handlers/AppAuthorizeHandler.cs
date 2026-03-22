@@ -34,7 +34,6 @@ namespace Furion.Authorization;
 /// <summary>
 /// 授权策略执行程序
 /// </summary>
-[SuppressSniffer]
 public abstract class AppAuthorizeHandler : IAuthorizationHandler
 {
     /// <summary>

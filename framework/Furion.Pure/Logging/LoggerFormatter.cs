@@ -31,7 +31,6 @@ namespace System;
 /// <summary>
 /// 日志格式化静态类
 /// </summary>
-[SuppressSniffer]
 public static class LoggerFormatter
 {
     /// <summary>

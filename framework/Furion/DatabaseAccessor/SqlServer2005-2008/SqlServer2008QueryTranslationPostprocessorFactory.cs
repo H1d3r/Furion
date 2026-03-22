@@ -28,7 +28,6 @@ namespace Microsoft.EntityFrameworkCore.Query;
 /// <summary>
 /// SqlServer 查询转换工厂（处理 SqlServer 2008 分页问题）
 /// </summary>
-[SuppressSniffer]
 public class SqlServer2008QueryTranslationPostprocessorFactory : IQueryTranslationPostprocessorFactory
 {
     /// <summary>

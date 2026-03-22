@@ -32,7 +32,6 @@ namespace Furion.DatabaseAccessor;
 /// 动态模型缓存工厂
 /// </summary>
 /// <remarks>主要用来实现数据库分表分库</remarks>
-[SuppressSniffer]
 public class DynamicModelCacheKeyFactory : IModelCacheKeyFactory
 {
     /// <summary>

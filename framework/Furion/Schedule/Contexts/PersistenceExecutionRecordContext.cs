@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业执行记录持久上下文
 /// </summary>
-[SuppressSniffer]
 public sealed class PersistenceExecutionRecordContext
 {
     /// <summary>

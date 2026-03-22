@@ -34,7 +34,6 @@ namespace Furion.DataValidation;
 /// <summary>
 /// 数据验证拦截器（Razor Pages）
 /// </summary>
-[SuppressSniffer]
 public sealed class DataValidationPageFilter : IAsyncPageFilter, IOrderedFilter
 {
     /// <summary>

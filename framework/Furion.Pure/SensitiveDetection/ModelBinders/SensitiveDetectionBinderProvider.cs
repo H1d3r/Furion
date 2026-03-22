@@ -34,7 +34,6 @@ namespace Furion.SensitiveDetection;
 /// 脱敏词汇（脱敏）提供器模型绑定
 /// </summary>
 /// <remarks>用于替换脱敏词汇</remarks>
-[SuppressSniffer]
 public class SensitiveDetectionBinderProvider : IModelBinderProvider
 {
     /// <summary>

@@ -32,7 +32,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 脱敏词汇处理服务
 /// </summary>
-[SuppressSniffer]
 public static class SensitiveDetectionServiceCollectionExtensions
 {
     /// <summary>

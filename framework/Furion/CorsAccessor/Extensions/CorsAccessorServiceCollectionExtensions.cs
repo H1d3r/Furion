@@ -33,7 +33,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 跨域访问服务扩展类
 /// </summary>
-[SuppressSniffer]
 public static class CorsAccessorServiceCollectionExtensions
 {
     /// <summary>

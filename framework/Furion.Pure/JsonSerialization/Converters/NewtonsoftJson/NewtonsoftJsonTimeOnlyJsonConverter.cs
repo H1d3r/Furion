@@ -31,7 +31,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// TimeOnly 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftJsonTimeOnlyJsonConverter : JsonConverter<TimeOnly>
 {
     /// <summary>
@@ -86,7 +85,6 @@ public class NewtonsoftJsonTimeOnlyJsonConverter : JsonConverter<TimeOnly>
 /// <summary>
 /// TimeOnly? 类型序列化
 /// </summary>
-[SuppressSniffer]
 public class NewtonsoftJsonNullableTimeOnlyJsonConverter : JsonConverter<TimeOnly?>
 {
     /// <summary>

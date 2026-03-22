@@ -29,7 +29,6 @@ namespace Furion.UnifyResult;
 /// RESTful 风格结果集
 /// </summary>
 /// <typeparam name="T"></typeparam>
-[SuppressSniffer]
 public class RESTfulResult<T>
 {
     /// <summary>

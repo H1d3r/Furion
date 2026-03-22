@@ -32,7 +32,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库实体依赖基类（不带租户）
 /// </summary>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant : EntityBaseNotTenant<int, MasterDbContextLocator>
 {
 }
@@ -41,7 +40,6 @@ public abstract class EntityBaseNotTenant : EntityBaseNotTenant<int, MasterDbCon
 /// 数据库实体依赖基类（不带租户）
 /// </summary>
 /// <typeparam name="TKey">主键类型</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey> : EntityBaseNotTenant<TKey, MasterDbContextLocator>
 {
 }
@@ -51,7 +49,6 @@ public abstract class EntityBaseNotTenant<TKey> : EntityBaseNotTenant<TKey, Mast
 /// </summary>
 /// <typeparam name="TKey">主键类型</typeparam>
 /// <typeparam name="TDbContextLocator1">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1> : PrivateEntityBaseNotTenant<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
 {
@@ -63,7 +60,6 @@ public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1> : PrivateEnt
 /// <typeparam name="TKey">主键类型</typeparam>
 /// <typeparam name="TDbContextLocator1">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator2">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLocator2> : PrivateEntityBaseNotTenant<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -77,7 +73,6 @@ public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLo
 /// <typeparam name="TDbContextLocator1">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator2">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator3">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3> : PrivateEntityBaseNotTenant<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -93,7 +88,6 @@ public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLo
 /// <typeparam name="TDbContextLocator2">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator3">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator4">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4> : PrivateEntityBaseNotTenant<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -111,7 +105,6 @@ public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLo
 /// <typeparam name="TDbContextLocator3">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator4">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator5">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5> : PrivateEntityBaseNotTenant<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -131,7 +124,6 @@ public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLo
 /// <typeparam name="TDbContextLocator4">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator5">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator6">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6> : PrivateEntityBaseNotTenant<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -153,7 +145,6 @@ public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLo
 /// <typeparam name="TDbContextLocator5">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator6">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator7">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6, TDbContextLocator7> : PrivateEntityBaseNotTenant<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -177,7 +168,6 @@ public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLo
 /// <typeparam name="TDbContextLocator6">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator7">数据库上下文定位器</typeparam>
 /// <typeparam name="TDbContextLocator8">数据库上下文定位器</typeparam>
-[SuppressSniffer]
 public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLocator2, TDbContextLocator3, TDbContextLocator4, TDbContextLocator5, TDbContextLocator6, TDbContextLocator7, TDbContextLocator8> : PrivateEntityBaseNotTenant<TKey>
     where TDbContextLocator1 : class, IDbContextLocator
     where TDbContextLocator2 : class, IDbContextLocator
@@ -194,7 +184,6 @@ public abstract class EntityBaseNotTenant<TKey, TDbContextLocator1, TDbContextLo
 /// 数据库实体依赖基类（不带租户）（禁止外部继承）
 /// </summary>
 /// <typeparam name="TKey">主键类型</typeparam>
-[SuppressSniffer]
 public abstract class PrivateEntityBaseNotTenant<TKey> : IPrivateEntity
 {
     /// <summary>

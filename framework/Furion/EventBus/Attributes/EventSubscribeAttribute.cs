@@ -34,7 +34,7 @@ namespace Furion.EventBus;
 /// <para>作用于 <see cref="IEventSubscriber"/> 实现类实例方法</para>
 /// <para>支持多个事件 Id 触发同一个事件处理程序</para>
 /// </remarks>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
 public sealed class EventSubscribeAttribute : Attribute
 {
     /// <summary>

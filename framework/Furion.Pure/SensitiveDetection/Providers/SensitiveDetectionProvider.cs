@@ -36,7 +36,6 @@ namespace Furion.SensitiveDetection;
 /// 构造函数
 /// </remarks>
 /// <param name="embedFileName">脱敏词汇数据文件名</param>
-[SuppressSniffer]
 public class SensitiveDetectionProvider(string embedFileName) : ISensitiveDetectionProvider
 {
     /// <summary>

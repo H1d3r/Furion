@@ -33,7 +33,6 @@ namespace Furion.SensitiveDetection;
 /// <summary>
 /// 脱敏词汇（脱敏）模型绑定器
 /// </summary>
-[SuppressSniffer]
 public class SensitiveDetectionBinder : IModelBinder
 {
     /// <summary>

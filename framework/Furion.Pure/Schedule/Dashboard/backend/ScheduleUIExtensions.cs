@@ -34,7 +34,6 @@ namespace Microsoft.AspNetCore.Builder;
 /// <summary>
 /// Schedule 模块 UI 中间件扩展
 /// </summary>
-[SuppressSniffer]
 public static class ScheduleUIExtensions
 {
     /// <summary>

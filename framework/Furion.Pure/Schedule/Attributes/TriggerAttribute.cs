@@ -28,7 +28,7 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业触发器特性基类
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public abstract class TriggerAttribute : Attribute
 {
     /// <summary>

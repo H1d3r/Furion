@@ -30,7 +30,6 @@ namespace Furion.TaskQueue;
 /// <summary>
 /// 任务包装器
 /// </summary>
-[SuppressSniffer]
 public sealed class TaskWrapper
 {
     /// <summary>

@@ -28,7 +28,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 构建 Sql 字符串执行部件
 /// </summary>
-[SuppressSniffer]
 public sealed partial class SqlExecutePart
 {
     /// <summary>

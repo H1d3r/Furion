@@ -33,7 +33,6 @@ namespace Microsoft.Extensions.Hosting;
 /// <summary>
 /// 主机构建器扩展类
 /// </summary>
-[SuppressSniffer]
 public static class HostBuilderExtensions
 {
     /// <summary>

@@ -30,7 +30,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// Cron 表达式作业触发器
 /// </summary>
-[SuppressSniffer]
 public class CronTrigger : Trigger
 {
     /// <summary>

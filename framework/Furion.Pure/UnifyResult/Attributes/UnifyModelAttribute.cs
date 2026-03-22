@@ -28,7 +28,7 @@ namespace Furion.UnifyResult;
 /// <summary>
 /// 规范化模型特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class)]
 public class UnifyModelAttribute : Attribute
 {
     /// <summary>

@@ -28,7 +28,7 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 禁止实体监听
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class)]
 public sealed class SuppressChangedListenerAttribute : Attribute
 {
 }

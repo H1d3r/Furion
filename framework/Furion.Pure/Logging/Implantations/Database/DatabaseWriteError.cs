@@ -28,7 +28,6 @@ namespace Furion.Logging;
 /// <summary>
 /// 数据库写入错误信息上下文
 /// </summary>
-[SuppressSniffer]
 public sealed class DatabaseWriteError
 {
     /// <summary>

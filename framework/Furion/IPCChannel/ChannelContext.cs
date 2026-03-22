@@ -34,7 +34,6 @@ namespace Furion.IPCChannel;
 /// <typeparam name="TMessage"></typeparam>
 /// <typeparam name="THandler"></typeparam>
 /// <remarks>后续将通过 MemoryMapperFile 共享内存实现 IPC 通信：https://docs.microsoft.com/zh-cn/dotnet/api/system.io.memorymappedfiles.memorymappedfile?view=net-5.0 </remarks>
-[SuppressSniffer]
 public sealed class ChannelContext<TMessage, THandler>
     where THandler : ChannelHandler<TMessage>
 {

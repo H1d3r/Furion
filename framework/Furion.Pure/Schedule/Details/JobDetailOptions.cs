@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业信息配置选项
 /// </summary>
-[SuppressSniffer]
 public sealed class JobDetailOptions
 {
     /// <summary>

@@ -28,7 +28,6 @@ namespace Furion.ViewEngine;
 /// <summary>
 /// 字符串模板执行部件
 /// </summary>
-[SuppressSniffer]
 public sealed partial class ViewEnginePart
 {
     /// <summary>

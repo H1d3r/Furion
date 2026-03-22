@@ -35,7 +35,6 @@ namespace Microsoft.Extensions.Configuration;
 /// <summary>
 /// IConfigurationBuilder 接口扩展
 /// </summary>
-[SuppressSniffer]
 public static class IConfigurationBuilderExtensions
 {
     /// <summary>

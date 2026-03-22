@@ -31,7 +31,6 @@ namespace Furion.DatabaseAccessor.Extensions;
 /// <summary>
 /// Sql 字符串执行扩展类
 /// </summary>
-[SuppressSniffer]
 public static class SqlStringExecuteExtensions
 {
     /// <summary>

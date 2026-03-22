@@ -28,7 +28,7 @@ namespace Furion.Options;
 /// <summary>
 /// 选项构建器特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class OptionsBuilderAttribute : Attribute
 {
     /// <summary>

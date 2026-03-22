@@ -32,7 +32,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 虚拟文件服务服务扩展
 /// </summary>
-[SuppressSniffer]
 public static class VirtualFileServerServiceCollectionExtensions
 {
     /// <summary>

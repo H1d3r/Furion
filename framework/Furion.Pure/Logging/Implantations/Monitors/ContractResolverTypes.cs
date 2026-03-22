@@ -28,7 +28,6 @@ namespace Furion.Logging;
 /// <summary>
 /// LoggingMonitor 序列化属性命名规则选项
 /// </summary>
-[SuppressSniffer]
 public enum ContractResolverTypes
 {
     /// <summary>

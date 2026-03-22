@@ -28,7 +28,7 @@ namespace Furion.Schedule;
 /// <summary>
 /// 指定具体时间触发的一次性作业触发器特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class AtAttribute : TriggerAttribute
 {
     /// <summary>

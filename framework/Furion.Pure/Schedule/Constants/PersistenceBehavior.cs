@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业持久化行为
 /// </summary>
-[SuppressSniffer]
 public enum PersistenceBehavior : uint
 {
     /// <summary>

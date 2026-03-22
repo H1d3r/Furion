@@ -31,7 +31,6 @@ namespace Furion.DistributedIDGenerator;
 /// 短 ID 生成核心代码
 /// <para>代码参考自：https://github.com/bolorundurowb/shortid </para>
 /// </summary>
-[SuppressSniffer]
 public static class ShortIDGen
 {
     /// <summary>

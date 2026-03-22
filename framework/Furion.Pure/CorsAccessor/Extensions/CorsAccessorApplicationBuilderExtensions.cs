@@ -33,7 +33,6 @@ namespace Microsoft.AspNetCore.Builder;
 /// <summary>
 /// 跨域中间件扩展
 /// </summary>
-[SuppressSniffer]
 public static class CorsAccessorApplicationBuilderExtensions
 {
     /// <summary>

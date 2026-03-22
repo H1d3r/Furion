@@ -30,7 +30,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// EventBus 模块服务扩展
 /// </summary>
-[SuppressSniffer]
 public static class EventBusServiceCollectionExtensions
 {
     /// <summary>

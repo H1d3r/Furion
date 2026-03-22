@@ -30,7 +30,6 @@ namespace Furion.Logging;
 /// <summary>
 /// LoggingMonitor 上下文
 /// </summary>
-[SuppressSniffer]
 public static class LoggingMonitorContext
 {
     internal const string KEY = nameof(LoggingMonitorContext);

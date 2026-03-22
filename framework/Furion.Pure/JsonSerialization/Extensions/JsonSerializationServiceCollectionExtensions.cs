@@ -31,7 +31,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Json 序列化服务扩展类
 /// </summary>
-[SuppressSniffer]
 public static class JsonSerializationServiceCollectionExtensions
 {
     /// <summary>

@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业触发器状态
 /// </summary>
-[SuppressSniffer]
 public enum TriggerStatus : uint
 {
     /// <summary>

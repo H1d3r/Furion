@@ -33,7 +33,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 友好异常服务扩展类
 /// </summary>
-[SuppressSniffer]
 public static class DataValidationServiceCollectionExtensions
 {
     /// <summary>

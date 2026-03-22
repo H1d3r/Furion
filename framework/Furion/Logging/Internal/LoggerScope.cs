@@ -32,7 +32,6 @@ namespace Furion.Logging;
 /// 日志范围
 /// </summary>
 /// <remarks>用于提供日志上下文编写</remarks>
-[SuppressSniffer]
 public sealed class LoggerScope : IDisposable
 {
     /// <summary>

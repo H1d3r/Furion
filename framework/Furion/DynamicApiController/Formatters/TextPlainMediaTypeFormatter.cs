@@ -31,7 +31,6 @@ namespace Microsoft.AspNetCore.Mvc.Formatters;
 /// <summary>
 /// text/plain 请求 Body 参数支持
 /// </summary>
-[SuppressSniffer]
 public sealed class TextPlainMediaTypeFormatter : TextInputFormatter
 {
     /// <summary>

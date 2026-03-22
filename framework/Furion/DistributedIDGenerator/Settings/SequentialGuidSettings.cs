@@ -28,7 +28,6 @@ namespace Furion.DistributedIDGenerator;
 /// <summary>
 /// 连续 GUID 配置
 /// </summary>
-[SuppressSniffer]
 public sealed class SequentialGuidSettings
 {
     /// <summary>

@@ -31,7 +31,6 @@ namespace Furion.Logging;
 /// <summary>
 /// 日志结构化消息
 /// </summary>
-[SuppressSniffer]
 public struct LogMessage
 {
     /// <summary>

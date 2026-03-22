@@ -31,7 +31,6 @@ namespace Microsoft.Extensions.Localization;
 /// <summary>
 /// <see cref="IStringLocalizer"/> 和 <see cref="IHtmlLocalizer"/> 扩展
 /// </summary>
-[SuppressSniffer]
 public static class ILocalizerExtensions
 {
     /// <summary>

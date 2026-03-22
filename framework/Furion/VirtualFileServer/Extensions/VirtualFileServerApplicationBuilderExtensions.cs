@@ -28,7 +28,6 @@ namespace Microsoft.AspNetCore.Builder;
 /// <summary>
 /// 虚拟文件服务中间件
 /// </summary>
-[SuppressSniffer]
 public static class VirtualFileServerApplicationBuilderExtensions
 {
     /// <summary>

@@ -34,7 +34,7 @@ namespace Furion.UnifyResult;
 /// <summary>
 /// RESTful 风格返回值
 /// </summary>
-[SuppressSniffer, UnifyModel(typeof(RESTfulResult<>))]
+[UnifyModel(typeof(RESTfulResult<>))]
 public class RESTfulResultProvider : IUnifyResultProvider
 {
     /// <summary>

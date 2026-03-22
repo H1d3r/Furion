@@ -31,7 +31,6 @@ namespace Furion.DataEncryption;
 /// <summary>
 /// GZip 压缩解压
 /// </summary>
-[SuppressSniffer]
 public static class GzipEncryption
 {
     /// <summary>

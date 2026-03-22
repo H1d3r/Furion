@@ -29,7 +29,6 @@ namespace System.Collections.Generic;
 /// 分页泛型集合
 /// </summary>
 /// <typeparam name="TEntity"></typeparam>
-[SuppressSniffer]
 public class PagedList<TEntity>
 {
     /// <summary>
@@ -71,7 +70,6 @@ public class PagedList<TEntity>
 /// <summary>
 /// 分页集合
 /// </summary>
-[SuppressSniffer]
 public class PagedList : PagedList<object>
 {
 }

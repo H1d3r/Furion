@@ -31,7 +31,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// HTTP 请求作业处理程序
 /// </summary>
-[SuppressSniffer]
 public class HttpJob : IJob
 {
     /// <summary>

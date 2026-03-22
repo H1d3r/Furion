@@ -30,7 +30,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库公开类
 /// </summary>
-[SuppressSniffer]
 public static class Db
 {
     /// <summary>

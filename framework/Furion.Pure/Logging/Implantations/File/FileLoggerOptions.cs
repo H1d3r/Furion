@@ -31,7 +31,6 @@ namespace Furion.Logging;
 /// <summary>
 /// 文件日志记录器配置选项
 /// </summary>
-[SuppressSniffer]
 public sealed class FileLoggerOptions
 {
     /// <summary>

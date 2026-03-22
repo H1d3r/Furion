@@ -33,7 +33,7 @@ namespace Microsoft.AspNetCore.Mvc;
 /// <summary>
 /// 规范化结果配置
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
 public class UnifyResultAttribute : ProducesResponseTypeAttribute
 {
     /// <summary>

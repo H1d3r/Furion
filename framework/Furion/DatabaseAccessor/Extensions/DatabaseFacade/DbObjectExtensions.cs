@@ -37,7 +37,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// DatabaseFacade 扩展类
 /// </summary>
-[SuppressSniffer]
 public static class DbObjectExtensions
 {
     /// <summary>

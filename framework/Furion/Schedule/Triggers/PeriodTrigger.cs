@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 毫秒周期（间隔）作业触发器
 /// </summary>
-[SuppressSniffer]
 public class PeriodTrigger : Trigger
 {
     /// <summary>

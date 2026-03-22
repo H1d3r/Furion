@@ -33,7 +33,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// Schedule 模块扩展类
 /// </summary>
-[SuppressSniffer]
 public static class ScheduleExtensions
 {
     /// <summary>

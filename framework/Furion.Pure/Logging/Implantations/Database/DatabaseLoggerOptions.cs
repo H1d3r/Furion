@@ -31,7 +31,6 @@ namespace Furion.Logging;
 /// <summary>
 /// 数据库记录器配置选项
 /// </summary>
-[SuppressSniffer]
 public sealed class DatabaseLoggerOptions
 {
     /// <summary>

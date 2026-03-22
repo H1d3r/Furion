@@ -36,7 +36,6 @@ namespace Microsoft.AspNetCore.Builder;
 /// <summary>
 /// 终点路由构建器扩展
 /// </summary>
-[SuppressSniffer]
 public static class IEndpointRouteBuilderExtensions
 {
     /// <summary>

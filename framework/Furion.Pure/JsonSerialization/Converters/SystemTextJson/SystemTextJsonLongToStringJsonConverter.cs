@@ -31,7 +31,6 @@ namespace Furion.JsonSerialization;
 /// <summary>
 /// 解决 long 精度问题
 /// </summary>
-[SuppressSniffer]
 public class SystemTextJsonLongToStringJsonConverter : JsonConverter<long>
 {
     /// <summary>
@@ -89,7 +88,6 @@ public class SystemTextJsonLongToStringJsonConverter : JsonConverter<long>
 /// <summary>
 /// 解决 long? 精度问题
 /// </summary>
-[SuppressSniffer]
 public class SystemTextJsonNullableLongToStringJsonConverter : JsonConverter<long?>
 {
     /// <summary>

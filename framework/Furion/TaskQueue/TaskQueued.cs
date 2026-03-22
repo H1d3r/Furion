@@ -28,7 +28,6 @@ namespace Furion.TaskQueue;
 /// <summary>
 /// 任务队列静态类
 /// </summary>
-[SuppressSniffer]
 public static class TaskQueued
 {
     /// <summary>

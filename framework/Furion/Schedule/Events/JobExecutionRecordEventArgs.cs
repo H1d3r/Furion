@@ -28,7 +28,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业执行记录事件参数
 /// </summary>
-[SuppressSniffer]
 public sealed class JobExecutionRecordEventArgs : EventArgs
 {
     /// <summary>

@@ -33,7 +33,7 @@ namespace Furion.Logging;
 /// 数据库日志记录器提供程序
 /// </summary>
 /// <remarks>https://docs.microsoft.com/zh-cn/dotnet/core/extensions/custom-logging-provider</remarks>
-[SuppressSniffer, ProviderAlias("Database")]
+[ProviderAlias("Database")]
 public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalScope
 {
     /// <summary>

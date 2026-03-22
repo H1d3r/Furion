@@ -30,7 +30,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业信息
 /// </summary>
-[SuppressSniffer]
 public partial class JobDetail
 {
     /// <summary>

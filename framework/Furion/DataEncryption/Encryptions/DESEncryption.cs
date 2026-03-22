@@ -31,7 +31,6 @@ namespace Furion.DataEncryption;
 /// <summary>
 /// DES 加解密
 /// </summary>
-[SuppressSniffer]
 public class DESEncryption
 {
     /// <summary>

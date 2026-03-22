@@ -33,7 +33,6 @@ namespace Furion.Logging;
 /// <summary>
 /// 解决 JsonElement 问题
 /// </summary>
-[SuppressSniffer]
 public class JsonElementConverter : JsonConverter<System.Text.Json.JsonElement>
 {
     /// <summary>

@@ -32,7 +32,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// Sql 操作仓储实现
 /// </summary>
-[SuppressSniffer]
 public partial class SqlRepository : SqlRepository<MasterDbContextLocator>, ISqlRepository
 {
     /// <summary>
@@ -47,7 +46,6 @@ public partial class SqlRepository : SqlRepository<MasterDbContextLocator>, ISql
 /// <summary>
 /// Sql 操作仓储实现
 /// </summary>
-[SuppressSniffer]
 public partial class SqlRepository<TDbContextLocator> : PrivateSqlRepository, ISqlRepository<TDbContextLocator>
     where TDbContextLocator : class, IDbContextLocator
 {

@@ -30,7 +30,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// 作业触发器构建器
 /// </summary>
-[SuppressSniffer]
 public sealed partial class TriggerBuilder : Trigger
 {
     /// <summary>

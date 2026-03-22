@@ -28,7 +28,6 @@ namespace Furion.DependencyInjection;
 /// <summary>
 /// 外部注册类型模型
 /// </summary>
-[SuppressSniffer]
 public sealed class ExternalService
 {
     /// <summary>

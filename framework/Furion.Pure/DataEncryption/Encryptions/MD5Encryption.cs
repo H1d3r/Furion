@@ -31,7 +31,6 @@ namespace Furion.DataEncryption;
 /// <summary>
 /// MD5 加密
 /// </summary>
-[SuppressSniffer]
 public static unsafe class MD5Encryption
 {
     /// <summary>

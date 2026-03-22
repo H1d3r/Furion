@@ -31,7 +31,6 @@ namespace Microsoft.Extensions.Localization;
 /// <summary>
 /// IStringLocalizerFactory 扩展类
 /// </summary>
-[SuppressSniffer]
 public static class IStringLocalizerFactoryExtensions
 {
     /// <summary>

@@ -35,7 +35,6 @@ namespace Furion.Schedule;
 /// <summary>
 /// Schedule 模块 UI 中间件
 /// </summary>
-[SuppressSniffer]
 public sealed class ScheduleUIMiddleware
 {
     private const string STATIC_FILES_PATH = "/__schedule__";

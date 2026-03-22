@@ -32,7 +32,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 日志服务扩展类
 /// </summary>
-[SuppressSniffer]
 public static class LoggingServiceCollectionExtensions
 {
     /// <summary>

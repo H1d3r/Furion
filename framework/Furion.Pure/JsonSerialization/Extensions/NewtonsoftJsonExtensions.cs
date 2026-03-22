@@ -30,7 +30,6 @@ namespace Newtonsoft.Json;
 /// <summary>
 /// Newtonsoft.Json 扩展
 /// </summary>
-[SuppressSniffer]
 public static class NewtonsoftJsonExtensions
 {
     /// <summary>

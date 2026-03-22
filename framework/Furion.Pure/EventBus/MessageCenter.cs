@@ -30,7 +30,6 @@ namespace Furion.EventBus;
 /// <summary>
 /// 全局事件总线静态类
 /// </summary>
-[SuppressSniffer]
 public static class MessageCenter
 {
     /// <summary>

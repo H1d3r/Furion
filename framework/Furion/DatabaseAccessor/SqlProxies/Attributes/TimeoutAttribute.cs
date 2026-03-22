@@ -28,7 +28,7 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 配置 ADO.NET 超时时间
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Interface | AttributeTargets.Method)]
+[AttributeUsage(AttributeTargets.Interface | AttributeTargets.Method)]
 public class TimeoutAttribute : Attribute
 {
     /// <summary>

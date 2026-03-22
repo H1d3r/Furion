@@ -33,7 +33,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// 规范化接口服务扩展类
 /// </summary>
-[SuppressSniffer]
 public static class SpecificationDocumentServiceCollectionExtensions
 {
     /// <summary>

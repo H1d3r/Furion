@@ -30,7 +30,6 @@ namespace Furion.Extensitions.EventBus;
 /// <summary>
 /// 事件总线扩展类
 /// </summary>
-[SuppressSniffer]
 public static class EventBusExtensitions
 {
     /// <summary>

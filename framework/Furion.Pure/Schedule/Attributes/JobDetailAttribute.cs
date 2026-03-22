@@ -31,7 +31,7 @@ namespace Furion.Schedule;
 /// 配置作业信息特性
 /// </summary>
 /// <remarks>仅限 <see cref="IJob"/> 实现类使用</remarks>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class JobDetailAttribute : Attribute
 {
     /// <summary>

@@ -35,7 +35,6 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// ASP.NET Core 服务扩展类
 /// </summary>
-[SuppressSniffer]
 public static class AspNetCoreBuilderServiceCollectionExtensions
 {
     /// <summary>

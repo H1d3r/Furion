@@ -30,7 +30,6 @@ namespace Furion.DataEncryption.Extensions;
 /// <summary>
 /// DataEncryption 字符串加密扩展
 /// </summary>
-[SuppressSniffer]
 public static class StringEncryptionExtensions
 {
     /// <summary>

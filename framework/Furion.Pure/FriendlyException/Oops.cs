@@ -39,7 +39,6 @@ namespace Furion.FriendlyException;
 /// <summary>
 /// 抛异常静态类
 /// </summary>
-[SuppressSniffer]
 public static class Oops
 {
     /// <summary>

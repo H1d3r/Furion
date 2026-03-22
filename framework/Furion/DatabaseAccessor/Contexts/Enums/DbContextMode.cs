@@ -30,7 +30,6 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库上下文模式
 /// </summary>
-[SuppressSniffer]
 public enum DbContextMode
 {
     /// <summary>

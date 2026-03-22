@@ -28,7 +28,6 @@ namespace Furion.Logging;
 /// <summary>
 /// LoggingMonitor 方法配置
 /// </summary>
-[SuppressSniffer]
 public sealed class LoggingMonitorMethod
 {
     /// <summary>

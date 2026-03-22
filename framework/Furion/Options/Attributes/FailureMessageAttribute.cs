@@ -28,7 +28,7 @@ namespace Furion.Options;
 /// <summary>
 /// 选项校验失败消息特性
 /// </summary>
-[SuppressSniffer, AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 public sealed class FailureMessageAttribute : Attribute
 {
     /// <summary>
