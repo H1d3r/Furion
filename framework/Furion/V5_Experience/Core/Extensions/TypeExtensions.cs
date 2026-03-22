@@ -136,6 +136,18 @@ internal static class TypeExtensions
     internal static bool IsStatic(this Type type) => type is { IsSealed: true, IsAbstract: true };
 
     /// <summary>
+    ///     检查类型是否具有 internal 可见性
+    /// </summary>
+    /// <param name="type">
+    ///     <see cref="Type" />
+    /// </param>
+    /// <returns>
+    ///     <see cref="bool" />
+    /// </returns>
+    internal static bool IsInternal(this Type type) =>
+        type.IsNested ? type.IsNestedAssembly || type.IsNestedFamORAssem /* protected internal */ : !type.IsPublic;
+
+    /// <summary>
     ///     检查类型是否是匿名类型
     /// </summary>
     /// <param name="type">

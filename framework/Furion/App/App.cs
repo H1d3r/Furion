@@ -725,7 +725,7 @@ public static class App
         return types.Where(u =>
         {
             return !u.Assembly.IsDefined(typeof(FurionAttribute), false)
-                   && (u.IsPublic || u.IsInternal())    // 支持 public 和 internal 声明类型
+                   && (u.IsPublic || ObsoleteObjectExtensions.IsInternal(u))    // 支持 public 和 internal 声明类型
                    && !u.IsDefined(typeof(SuppressSnifferAttribute), false);
         });
     }
