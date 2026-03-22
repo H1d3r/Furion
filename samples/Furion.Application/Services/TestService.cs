@@ -1,6 +1,6 @@
 ﻿namespace Furion.Application.Services;
 
-public class TestService : ITestService, ITransient
+internal class TestService : ITestService, ITransient
 {
     public string GetName()
     {

@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.ConfigurableOptions;
+using Furion.Extensions;
 using Furion.Reflection;
 using Furion.Templates;
 using Microsoft.AspNetCore.Hosting;
@@ -722,7 +723,12 @@ public static class App
             Console.WriteLine($"Error load `{ass.FullName}` assembly.");
         }
 
-        return types.Where(u => u.IsPublic && !u.IsDefined(typeof(SuppressSnifferAttribute), false));
+        return types.Where(u =>
+        {
+            return !u.Assembly.IsDefined(typeof(FurionAttribute), false)
+                   && (u.IsPublic || u.IsInternal())    // 支持 public 和 internal 声明类型
+                   && !u.IsDefined(typeof(SuppressSnifferAttribute), false);
+        });
     }
 
     /// <summary>

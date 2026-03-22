@@ -1,4 +1,6 @@
-﻿namespace Furion.Application;
+﻿using Furion.JsonSerialization;
+
+namespace Furion.Application;
 
 public class TestNotFound : IDynamicApiController
 {
