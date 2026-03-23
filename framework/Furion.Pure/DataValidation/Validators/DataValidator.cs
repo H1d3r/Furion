@@ -41,12 +41,12 @@ public static class DataValidator
     /// <summary>
     /// 所有验证类型
     /// </summary>
-    private static readonly IEnumerable<Type> ValidationTypes;
+    private static readonly List<Type> ValidationTypes;
 
     /// <summary>
     /// 所有验证类型
     /// </summary>
-    private static readonly IEnumerable<Type> ValidationMessageTypes;
+    private static readonly List<Type> ValidationMessageTypes;
 
     /// <summary>
     /// 验证类型正则表达式
@@ -277,18 +277,17 @@ public static class DataValidator
     /// 获取所有验证类型
     /// </summary>
     /// <returns></returns>
-    private static IEnumerable<Type> GetValidationTypes()
+    private static List<Type> GetValidationTypes()
     {
         // 扫描所有公开的枚举且贴有 [ValidationType] 特性
-        var validationTypes = App.EffectiveTypes.Where(u => u.IsDefined(typeof(ValidationTypeAttribute), true) && u.IsEnum);
-        return validationTypes;
+        return [.. App.EffectiveTypes.Concat([typeof(ValidationTypes)]).Where(u => u.IsDefined(typeof(ValidationTypeAttribute), true) && u.IsEnum)];
     }
 
     /// <summary>
     /// 获取所有验证消息类型
     /// </summary>
     /// <returns></returns>
-    private static IEnumerable<Type> GetValidationMessageTypes()
+    private static List<Type> GetValidationMessageTypes()
     {
         // 扫描所有公开的的枚举且贴有 [ValidationMessageType] 特性
         var validationMessageTypes = App.EffectiveTypes
@@ -298,7 +297,7 @@ public static class DataValidator
         var validationMessageTypeProvider = App.GetService<IValidationMessageTypeProvider>(App.RootServices);
         if (validationMessageTypeProvider is { Definitions: not null }) validationMessageTypes = validationMessageTypes.Concat(validationMessageTypeProvider.Definitions);
 
-        return validationMessageTypes.Distinct();
+        return [.. validationMessageTypes.Distinct()];
     }
 
     /// <summary>
@@ -345,9 +344,9 @@ public static class DataValidator
     private static ValidationItemMetadataAttribute ReplaceValidateErrorMessage(string name, FieldInfo field, Dictionary<string, string> customErrorMessages)
     {
         var validationValidationItemMetadata = field.GetCustomAttribute<ValidationItemMetadataAttribute>();
-        if (customErrorMessages.ContainsKey(name))
+        if (customErrorMessages.TryGetValue(name, out var value))
         {
-            validationValidationItemMetadata.DefaultErrorMessage = customErrorMessages[name];
+            validationValidationItemMetadata.DefaultErrorMessage = value;
         }
 
         return validationValidationItemMetadata;
