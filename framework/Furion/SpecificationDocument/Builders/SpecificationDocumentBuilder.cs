@@ -2,12 +2,12 @@
 // 版权信息
 // 版权归百小僧及百签科技（广东）有限公司所有。
 // 所有权利保留。
-// 官方网站：https://baiqian.com
+// 官方网站：https://baiqian.com  
 //
 // 许可证信息
 // Furion 项目主要遵循 MIT 许可证和 Apache 许可证（版本 2.0）进行分发和使用。
 // 许可证的完整文本可以在源代码树根目录中的 LICENSE-APACHE 和 LICENSE-MIT 文件中找到。
-// 官方网站：https://furion.net
+// 官方网站：https://furion.net  
 //
 // 使用条款
 // 使用本代码应遵守相关法律法规和许可证的要求。
@@ -92,12 +92,12 @@ public static class SpecificationDocumentBuilder
         _appSettings = App.Settings;
 
         // 初始化常量
-        _groupOrderRegex = new Regex(@"@(?<order>[0-9]+$)");
+        _groupOrderRegex = new Regex(@"@(?<order>[0-9]+$)", RegexOptions.Compiled);
         GetActionGroupsCached = new ConcurrentDictionary<MethodInfo, IEnumerable<GroupExtraInfo>>();
         GetControllerGroupsCached = new ConcurrentDictionary<Type, IEnumerable<GroupExtraInfo>>();
         GetGroupOpenApiInfoCached = new ConcurrentDictionary<string, SpecificationOpenApiInfo>();
-        GetControllerTagCached = new ConcurrentDictionary<ControllerActionDescriptor, string>();
-        GetActionTagCached = new ConcurrentDictionary<ApiDescription, string>();
+        GetControllerTagCached = new ConcurrentDictionary<string, string>();
+        GetActionTagCached = new ConcurrentDictionary<string, string>();
 
         // 默认分组，支持多个逗号分割
         DocumentGroupExtras = new List<GroupExtraInfo> { ResolveGroupExtraInfo(_specificationDocumentSettings.DefaultGroupName) };
@@ -411,10 +411,7 @@ public static class SpecificationDocumentBuilder
                 return method.GetCustomAttribute<OperationIdAttribute>(false).OperationId;
             }
 
-            var operationId = apiDescription.RelativePath.Replace("/", "-")
-                                       .Replace("{", "-")
-                                       .Replace("}", "-") + "-" + apiDescription.HttpMethod.ToLower().ToUpperCamelCase();
-
+            var operationId = Regex.Replace(apiDescription.RelativePath, @"[/{]}", "-") + "-" + apiDescription.HttpMethod.ToLower().ToUpperCamelCase();
             return operationId.Replace("--", "-");
         });
     }
@@ -730,7 +727,7 @@ public static class SpecificationDocumentBuilder
     private static IEnumerable<string> ReadGroups()
     {
         // 获取所有的控制器和动作方法
-        var controllers = App.EffectiveTypes.Where(u => Penetrates.IsApiController(u));
+        var controllers = App.EffectiveTypes.Where(u => Penetrates.IsApiController(u)).ToArray();
         if (!controllers.Any())
         {
             var defaultGroups = new List<string>
@@ -851,9 +848,9 @@ public static class SpecificationDocumentBuilder
     }
 
     /// <summary>
-    /// <see cref="GetActionTag(ApiDescription)"/> 缓存集合
+    /// <see cref="GetControllerTag(ControllerActionDescriptor)"/> 缓存集合
     /// </summary>
-    private static readonly ConcurrentDictionary<ControllerActionDescriptor, string> GetControllerTagCached;
+    private static readonly ConcurrentDictionary<string, string> GetControllerTagCached;
 
     /// <summary>
     /// 获取控制器标签
@@ -862,10 +859,9 @@ public static class SpecificationDocumentBuilder
     /// <returns></returns>
     public static string GetControllerTag(ControllerActionDescriptor controllerActionDescriptor)
     {
-        return GetControllerTagCached.GetOrAdd(controllerActionDescriptor, Function);
+        var cacheKey = $"{controllerActionDescriptor.ControllerTypeInfo.FullName}::{controllerActionDescriptor.ControllerName}";
 
-        // 本地函数
-        static string Function(ControllerActionDescriptor controllerActionDescriptor)
+        return GetControllerTagCached.GetOrAdd(cacheKey, _ =>
         {
             var type = controllerActionDescriptor.ControllerTypeInfo;
             // 如果动作方法没有定义 [ApiDescriptionSettings] 特性，则返回所在控制器名
@@ -874,13 +870,13 @@ public static class SpecificationDocumentBuilder
             // 读取标签
             var apiDescriptionSettings = type.GetCustomAttribute<ApiDescriptionSettingsAttribute>(true);
             return string.IsNullOrWhiteSpace(apiDescriptionSettings.Tag) ? controllerActionDescriptor.ControllerName : apiDescriptionSettings.Tag;
-        }
+        });
     }
 
     /// <summary>
     /// <see cref="GetActionTag(ApiDescription)"/> 缓存集合
     /// </summary>
-    private static readonly ConcurrentDictionary<ApiDescription, string> GetActionTagCached;
+    private static readonly ConcurrentDictionary<string, string> GetActionTagCached;
 
     /// <summary>
     /// 获取动作方法标签
@@ -889,10 +885,11 @@ public static class SpecificationDocumentBuilder
     /// <returns></returns>
     public static string GetActionTag(ApiDescription apiDescription)
     {
-        return GetActionTagCached.GetOrAdd(apiDescription, Function);
+        var cacheKey = apiDescription.TryGetMethodInfo(out var method) && apiDescription.ActionDescriptor is ControllerActionDescriptor descriptor
+            ? $"{descriptor.ControllerTypeInfo.FullName}::{descriptor.ActionName}::{apiDescription.HttpMethod}"
+            : Assembly.GetEntryAssembly().GetName().Name;
 
-        // 本地函数
-        static string Function(ApiDescription apiDescription)
+        return GetActionTagCached.GetOrAdd(cacheKey, _ =>
         {
             if (!apiDescription.TryGetMethodInfo(out var method)
                 || apiDescription.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor) return Assembly.GetEntryAssembly().GetName().Name;
@@ -903,7 +900,7 @@ public static class SpecificationDocumentBuilder
             // 读取标签
             var apiDescriptionSettings = method.GetCustomAttribute<ApiDescriptionSettingsAttribute>(true);
             return string.IsNullOrWhiteSpace(apiDescriptionSettings.Tag) ? GetControllerTag(controllerActionDescriptor) : apiDescriptionSettings.Tag;
-        }
+        });
     }
 
     /// <summary>
