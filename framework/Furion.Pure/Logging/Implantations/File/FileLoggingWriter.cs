@@ -23,6 +23,9 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Diagnostics;
+using System.Text;
+
 namespace Furion.Logging;
 
 /// <summary>
@@ -66,6 +69,12 @@ internal class FileLoggingWriter
     private readonly bool _isEnabledRollingFiles;
 
     /// <summary>
+    /// 是否启用兼容模式
+    /// </summary>
+    /// <remarks>调试状态下自动启用，解决 VS 双击打开文件被占用的问题</remarks>
+    private readonly bool _isCompatibleMode;
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="fileLoggerProvider">文件日志记录器提供程序</param>
@@ -74,6 +83,10 @@ internal class FileLoggingWriter
         _fileLoggerProvider = fileLoggerProvider;
         _options = fileLoggerProvider.LoggerOptions;
         _isEnabledRollingFiles = _options.MaxRollingFiles > 0 && _options.FileSizeLimitBytes > 0;
+
+        // 根据调试状态自动判断是否启用兼容模式
+        // 注意：兼容模式下性能较差但避免文件占用问题，适合调试环境使用！！！
+        _isCompatibleMode = Debugger.IsAttached;
 
         // 解析当前写入日志的文件名
         GetCurrentFileName();
@@ -84,8 +97,12 @@ internal class FileLoggingWriter
             RebuildRollingFileNames();
         }
 
-        // 打开文件并持续写入，调用 .Wait() 确保文件流创建完毕
-        Task.Run(async () => await OpenFileAsync(_options.Append)).Wait();
+        // 兼容模式下不需要预打开长连接文件流
+        if (!_isCompatibleMode)
+        {
+            // 打开文件并持续写入，调用 .Wait() 确保文件流创建完毕
+            Task.Run(async () => await OpenFileAsync(_options.Append)).Wait();
+        }
     }
 
     /// <summary>
@@ -216,7 +233,7 @@ internal class FileLoggingWriter
     }
 
     /// <summary>
-    /// 打开文件
+    /// 打开文件（仅长连接模式使用）
     /// </summary>
     /// <param name="append"></param>
     /// <returns><see cref="Task"/></returns>
@@ -250,7 +267,7 @@ internal class FileLoggingWriter
         }
 
         // 初始化文本写入器
-        _textWriter = new StreamWriter(_fileStream);
+        _textWriter = new StreamWriter(_fileStream, Encoding.UTF8, 4096, leaveOpen: true) { AutoFlush = true };
 
         // 创建文件流
         void CreateFileStream()
@@ -261,25 +278,65 @@ internal class FileLoggingWriter
             fileInfo.Directory.Create();
 
             // 创建文件流，采用共享锁方式
-            _fileStream = new FileStream(_fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite, 4096, FileOptions.WriteThrough);
+            _fileStream = new FileStream(_fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
 
             // 删除超出滚动日志限制的文件
             DropFilesIfOverLimit(fileInfo);
 
             // 判断是否追加还是覆盖
-            if (append) _fileStream.Seek(0, SeekOrigin.End);
-            else _fileStream.SetLength(0);
+            if (append)
+            {
+                if (_fileStream.Length > 0) _fileStream.Seek(0, SeekOrigin.End);
+            }
+            else
+            {
+                _fileStream.SetLength(0);
+            }
         }
 
         return Task.CompletedTask;
     }
 
     /// <summary>
-    /// 判断是否需要创建新文件写入
+    /// 兼容模式下的短连接写入方法（每次写入独立打开/关闭文件）
+    /// </summary>
+    private async Task WriteWithCompatibleModeAsync(string message)
+    {
+        var directory = Path.GetDirectoryName(_fileName);
+
+        // 空检查
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        // 处理文件滚动逻辑
+        if (_isEnabledRollingFiles)
+        {
+            var fileInfo = new FileInfo(_fileName);
+            if (fileInfo.Exists && fileInfo.Length >= _options.FileSizeLimitBytes)
+            {
+                // 滚动到新文件
+                _fileName = GetNextFileName();
+
+                // 清理超出数量的旧文件
+                DropFilesIfOverLimit(fileInfo);
+            }
+        }
+
+        // 使用 AppendAllTextAsync，每次写入独立打开/关闭文件，避免文件占用问题
+        await File.AppendAllTextAsync(_fileName, message + Environment.NewLine, Encoding.UTF8);
+    }
+
+    /// <summary>
+    /// 判断是否需要创建新文件写入（仅长连接模式使用）
     /// </summary>
     /// <returns><see cref="Task"/></returns>
     private async Task CheckForNewLogFileAsync()
     {
+        // 兼容模式下跳过此方法
+        if (_isCompatibleMode) return;
+
         var openNewFile = false;
         if (isMaxFileSizeThresholdReached() || isBaseFileNameChanged())
             openNewFile = true;
@@ -298,7 +355,7 @@ internal class FileLoggingWriter
 
         // 是否超出限制的最大大小
         bool isMaxFileSizeThresholdReached() => _options.FileSizeLimitBytes > 0
-            && _fileStream.Length > _options.FileSizeLimitBytes;
+            && _fileStream?.Length > _options.FileSizeLimitBytes;
 
         // 是否重新自定义了文件名
         bool isBaseFileNameChanged()
@@ -372,26 +429,56 @@ internal class FileLoggingWriter
     /// <returns><see cref="Task"/></returns>
     internal async Task WriteAsync(LogMessage logMsg, bool flush)
     {
+        // 检查是否是兼容模式
+        if (_isCompatibleMode)
+        {
+            try
+            {
+                await WriteWithCompatibleModeAsync(logMsg.Message);
+            }
+            // 处理文件写入错误
+            catch (Exception ex) when (_options.HandleWriteError != null)
+            {
+                var fileWriteError = new FileWriteError(_fileName, ex);
+                _options.HandleWriteError(fileWriteError);
+            }
+            finally
+            {
+                logMsg.Context?.Dispose();
+            }
+            return;
+        }
+
+        // 长连接模式
         if (_textWriter == null) return;
 
         try
         {
             await CheckForNewLogFileAsync();
-            await _textWriter.WriteLineAsync(logMsg.Message);
 
-            if (flush)
+            var retry = 0;
+            const int maxRetries = 3;
+
+            while (retry < maxRetries)
             {
-                await _textWriter.FlushAsync();
+                try
+                {
+                    await _textWriter.WriteLineAsync(logMsg.Message);
+                    if (flush) await _textWriter.FlushAsync();
+                    break;
+                }
+                catch (IOException) when (retry < maxRetries - 1)
+                {
+                    retry++;
+                    await Task.Delay(100 * retry);
+                }
             }
         }
-        catch (Exception ex)
+        // 处理文件写入错误
+        catch (Exception ex) when (_options.HandleWriteError != null)
         {
-            // 处理文件写入错误
-            if (_options.HandleWriteError != null)
-            {
-                var fileWriteError = new FileWriteError(_fileName, ex);
-                _options.HandleWriteError(fileWriteError);
-            }
+            var fileWriteError = new FileWriteError(_fileName, ex);
+            _options.HandleWriteError(fileWriteError);
         }
         finally
         {
@@ -400,19 +487,30 @@ internal class FileLoggingWriter
     }
 
     /// <summary>
-    /// 关闭文本写入器并释放
+    /// 关闭文本写入器并释放（仅长连接模式使用）
     /// </summary>
     /// <returns><see cref="Task"/></returns>
     internal async Task CloseAsync()
     {
+        // 兼容模式下无需关闭长连接资源
+        if (_isCompatibleMode) return;
         if (_textWriter == null) return;
 
-        var textloWriter = _textWriter;
-        _textWriter = null;
+        try
+        {
+            await _textWriter.FlushAsync();
+        }
+        finally
+        {
+            await _textWriter.DisposeAsync();
 
-        await textloWriter.DisposeAsync();
-        await _fileStream.DisposeAsync();
+            if (_fileStream != null)
+            {
+                await _fileStream.DisposeAsync();
+                _fileStream = null;
+            }
 
-        _fileStream = null;
+            _textWriter = null;
+        }
     }
 }
