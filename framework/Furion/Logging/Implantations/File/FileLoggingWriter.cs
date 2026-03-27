@@ -75,6 +75,11 @@ internal class FileLoggingWriter
     private readonly bool _isCompatibleMode;
 
     /// <summary>
+    /// UTF-8 编码
+    /// </summary>
+    private static readonly UTF8Encoding _utf8Encoding = new(encoderShouldEmitUTF8Identifier: false);
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="fileLoggerProvider">文件日志记录器提供程序</param>
@@ -267,7 +272,11 @@ internal class FileLoggingWriter
         }
 
         // 初始化文本写入器
-        _textWriter = new StreamWriter(_fileStream, Encoding.UTF8, 4096, leaveOpen: true) { AutoFlush = true };
+        _textWriter = new StreamWriter(_fileStream, _utf8Encoding, 4096, leaveOpen: true)
+        {
+            AutoFlush = true,
+            NewLine = Environment.NewLine
+        };
 
         // 创建文件流
         void CreateFileStream()
@@ -278,7 +287,7 @@ internal class FileLoggingWriter
             fileInfo.Directory.Create();
 
             // 创建文件流，采用共享锁方式
-            _fileStream = new FileStream(_fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            _fileStream = new FileStream(_fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
 
             // 删除超出滚动日志限制的文件
             DropFilesIfOverLimit(fileInfo);
@@ -325,7 +334,7 @@ internal class FileLoggingWriter
         }
 
         // 使用 AppendAllTextAsync，每次写入独立打开/关闭文件，避免文件占用问题
-        await File.AppendAllTextAsync(_fileName, message + Environment.NewLine, Encoding.UTF8);
+        await File.AppendAllTextAsync(_fileName, message + Environment.NewLine, _utf8Encoding);
     }
 
     /// <summary>
@@ -415,10 +424,25 @@ internal class FileLoggingWriter
                 // 执行删除
                 Task.Run(() =>
                 {
-                    if (File.Exists(rollingFile.Key)) File.Delete(rollingFile.Key);
+                    try
+                    {
+                        if (File.Exists(rollingFile.Key)) File.Delete(rollingFile.Key);
+                    }
+                    catch { }
                 });
             }
         }
+    }
+
+    /// <summary>
+    /// 处理当文件被外部删除时重新建立连接
+    /// </summary>
+    private async Task ReconnectFileAsync()
+    {
+        await CloseAsync();
+        GetCurrentFileName();
+        RebuildRollingFileNames();
+        await OpenFileAsync(_options.Append);
     }
 
     /// <summary>
@@ -463,6 +487,12 @@ internal class FileLoggingWriter
             {
                 try
                 {
+                    // 写入前检查文件是否存在，处理用户外部删除
+                    if (!File.Exists(_fileName))
+                    {
+                        await ReconnectFileAsync();
+                    }
+
                     await _textWriter.WriteLineAsync(logMsg.Message);
                     if (flush) await _textWriter.FlushAsync();
                     break;
@@ -471,6 +501,17 @@ internal class FileLoggingWriter
                 {
                     retry++;
                     await Task.Delay(100 * retry);
+                }
+                catch (IOException ex) when (retry < maxRetries - 1)
+                {
+                    var errorCode = ex.HResult & 0xFFFF;
+                    if (errorCode == 2 || errorCode == 3)
+                    {
+                        await ReconnectFileAsync();
+                        retry++;
+                        continue;
+                    }
+                    throw;
                 }
             }
         }
