@@ -558,7 +558,7 @@ internal class FileLoggingWriter
                     // 智能检查：显式flush时 或 每100次写入 检查文件是否存在
                     if (flush || Interlocked.Increment(ref _writeCount) >= PeriodicCheckInterval)
                     {
-                        // 重置计数器（允许轻微竞态，不影响正确性）
+                        // 重置计数器
                         _writeCount = 0;
 
                         // 如果文件不存在，说明被外部删除，需要重连
