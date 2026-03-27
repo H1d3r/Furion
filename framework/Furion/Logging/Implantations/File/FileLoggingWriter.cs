@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Furion.Logging;
@@ -77,7 +78,23 @@ internal class FileLoggingWriter
     /// <summary>
     /// UTF-8 编码
     /// </summary>
+    /// <remarks>不带 BOM，避免外部编辑乱码</remarks>
     private static readonly UTF8Encoding _utf8Encoding = new(encoderShouldEmitUTF8Identifier: false);
+
+    /// <summary>
+    /// 写入计数器，用于周期性检查文件存在性
+    /// </summary>
+    private int _writeCount = 0;
+
+    /// <summary>
+    /// 周期性检查文件的间隔（写入次数），默认 100 次
+    /// </summary>
+    private const int PeriodicCheckInterval = 100;
+
+    /// <summary>
+    /// 重连锁，避免多线程同时重连
+    /// </summary>
+    private int _reconnecting = 0;
 
     /// <summary>
     /// 构造函数
@@ -286,8 +303,13 @@ internal class FileLoggingWriter
             // 判断文件目录是否存在，不存在则自动创建
             fileInfo.Directory.Create();
 
-            // 创建文件流，采用共享锁方式
-            _fileStream = new FileStream(_fileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            _fileStream = new FileStream(
+                _fileName,
+                FileMode.OpenOrCreate,
+                FileAccess.Write,
+                FileShare.ReadWrite | FileShare.Delete,
+                4096,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
 
             // 删除超出滚动日志限制的文件
             DropFilesIfOverLimit(fileInfo);
@@ -439,11 +461,53 @@ internal class FileLoggingWriter
     /// </summary>
     private async Task ReconnectFileAsync()
     {
-        await CloseAsync();
-        GetCurrentFileName();
-        RebuildRollingFileNames();
-        await OpenFileAsync(_options.Append);
+        // 轻量锁：避免多线程同时重连
+        if (Interlocked.Exchange(ref _reconnecting, 1) == 1)
+            return; // 已有线程在重连，直接返回
+
+        try
+        {
+            await CloseAsync();
+            GetCurrentFileName();
+            RebuildRollingFileNames();
+            await OpenFileAsync(_options.Append);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _reconnecting, 0);
+        }
     }
+
+    /// <summary>
+    /// 判断异常是否表示文件不存在/句柄无效
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsFileMissingException(Exception ex)
+    {
+        // 常见异常类型直接判断
+        if (ex is FileNotFoundException or DirectoryNotFoundException or ObjectDisposedException)
+            return true;
+
+        // IOException：检查 HResult（低16位为 Win32 错误码）
+        if (ex is IOException ioEx)
+        {
+            var code = ioEx.HResult & 0xFFFF;
+            // 2=FILE_NOT_FOUND, 3=PATH_NOT_FOUND, 6=INVALID_HANDLE, 32=SHARING_VIOLATION
+            return code is 2 or 3 or 6 or 32;
+        }
+
+        // UnauthorizedAccessException：文件被删除后权限检查可能报此错
+        if (ex is UnauthorizedAccessException)
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// 检查文件是否仍存在于文件系统中
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsFileStillExists() => File.Exists(_fileName);
 
     /// <summary>
     /// 写入文件
@@ -460,7 +524,6 @@ internal class FileLoggingWriter
             {
                 await WriteWithCompatibleModeAsync(logMsg.Message);
             }
-            // 处理文件写入错误
             catch (Exception ex) when (_options.HandleWriteError != null)
             {
                 var fileWriteError = new FileWriteError(_fileName, ex);
@@ -482,36 +545,41 @@ internal class FileLoggingWriter
 
             var retry = 0;
             const int maxRetries = 3;
+            const int baseDelayMs = 100;
 
             while (retry < maxRetries)
             {
                 try
                 {
-                    // 写入前检查文件是否存在，处理用户外部删除
-                    if (!File.Exists(_fileName))
-                    {
-                        await ReconnectFileAsync();
-                    }
-
+                    // 直接写入
                     await _textWriter.WriteLineAsync(logMsg.Message);
                     if (flush) await _textWriter.FlushAsync();
+
+                    // 智能检查：显式flush时 或 每100次写入 检查文件是否存在
+                    if (flush || Interlocked.Increment(ref _writeCount) >= PeriodicCheckInterval)
+                    {
+                        // 重置计数器（允许轻微竞态，不影响正确性）
+                        _writeCount = 0;
+
+                        // 如果文件不存在，说明被外部删除，需要重连
+                        if (!IsFileStillExists())
+                        {
+                            await ReconnectFileAsync();
+                        }
+                    }
                     break;
                 }
+                // 处理临时性 IO 错误（如文件被短暂锁定）
                 catch (IOException) when (retry < maxRetries - 1)
                 {
                     retry++;
-                    await Task.Delay(100 * retry);
+                    await Task.Delay(baseDelayMs * retry);
                 }
-                catch (IOException ex) when (retry < maxRetries - 1)
+                // 捕获文件不存在/句柄无效等异常，自动重连
+                catch (Exception ex) when (IsFileMissingException(ex) && retry < maxRetries - 1)
                 {
-                    var errorCode = ex.HResult & 0xFFFF;
-                    if (errorCode == 2 || errorCode == 3)
-                    {
-                        await ReconnectFileAsync();
-                        retry++;
-                        continue;
-                    }
-                    throw;
+                    await ReconnectFileAsync();
+                    retry++;
                 }
             }
         }
