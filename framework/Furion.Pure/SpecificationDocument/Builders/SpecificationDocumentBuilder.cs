@@ -411,7 +411,10 @@ public static class SpecificationDocumentBuilder
                 return method.GetCustomAttribute<OperationIdAttribute>(false).OperationId;
             }
 
-            var operationId = Regex.Replace(apiDescription.RelativePath, @"[/{]}", "-") + "-" + apiDescription.HttpMethod.ToLower().ToUpperCamelCase();
+            var operationId = apiDescription.RelativePath.Replace("/", "-")
+                                       .Replace("{", "-")
+                                       .Replace("}", "-") + "-" + apiDescription.HttpMethod.ToLower().ToUpperCamelCase();
+
             return operationId.Replace("--", "-");
         });
     }
