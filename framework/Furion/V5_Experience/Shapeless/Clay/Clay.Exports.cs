@@ -701,24 +701,11 @@ public partial class Clay
     /// <returns>
     ///     <see cref="object" />
     /// </returns>
-    public object? PathValue(string path, Type resultType, JsonSerializerOptions? jsonSerializerOptions = null)
-    {
+    public object? PathValue(string path, Type resultType, JsonSerializerOptions? jsonSerializerOptions = null) =>
         // 根据路径查找 JsonNode 节点
-        if (!FindNodeByPath(path, out var jsonNode, out _))
-        {
-            return null;
-        }
-
-        // 处理 object 类型生成 JsonElement 问题
-        if (resultType == typeof(object))
-        {
-            return DeserializeNode(jsonNode, Options);
-        }
-
-        return IsClay(resultType)
-            ? new Clay(jsonNode, Options)
-            : jsonNode.As(resultType, jsonSerializerOptions ?? Options.JsonSerializerOptions);
-    }
+        !FindNodeByPath(path, out _, out var parentClay, out var pathSegments)
+            ? null
+            : parentClay.Get(pathSegments[^1], resultType, jsonSerializerOptions);
 
     /// <summary>
     ///     根据路径获取值
@@ -799,7 +786,8 @@ public partial class Clay
     ///     <see cref="JsonNode" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public JsonNode? FindNodeByPath(string path) => !FindNodeByPath(path, out var jsonNode, out _) ? null : jsonNode;
+    public JsonNode? FindNodeByPath(string path) =>
+        !FindNodeByPath(path, out var jsonNode, out _, out _) ? null : jsonNode;
 
     /// <summary>
     ///     根据路径查找 <see cref="JsonNode" /> 节点
@@ -809,12 +797,13 @@ public partial class Clay
     /// <param name="jsonNode">
     ///     <see cref="JsonNode" />
     /// </param>
+    /// <param name="parentClay">上级 <see cref="Clay" /></param>
     /// <param name="pathSegments">根据路径分隔符进行分割后的数组</param>
     /// <returns>
     ///     <see cref="bool" />
     /// </returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public bool FindNodeByPath(string path, [NotNullWhen(true)] out JsonNode? jsonNode, out string[] pathSegments)
+    public bool FindNodeByPath(string path, out JsonNode? jsonNode, out Clay parentClay, out string[] pathSegments)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(path);
@@ -832,6 +821,7 @@ public partial class Clay
         if (pathSegments is { Length: 0 })
         {
             jsonNode = null;
+            parentClay = this;
             return false;
         }
 
@@ -839,9 +829,13 @@ public partial class Clay
         var currentNode = FindNode(pathSegments[0]);
         if (currentNode is null)
         {
-            jsonNode = null;
-            return false;
+            jsonNode = currentNode;
+            parentClay = this;
+            return Contains(pathSegments[0]);
         }
+
+        // 记录最后成功访问的流变对象
+        Clay? lastClay = null;
 
         // 遍历剩余的标识符
         for (var i = 1; i < pathSegments.Length; i++)
@@ -857,7 +851,9 @@ public partial class Clay
             }
 
             // 进行下一级查找
-            currentNode = ((Clay)currentValue).FindNode(pathSegments[i]);
+            var currentClay = (Clay)currentValue;
+            lastClay = currentClay;
+            currentNode = currentClay.FindNode(pathSegments[i]);
 
             // 空检查
             if (currentNode is not null)
@@ -865,11 +861,13 @@ public partial class Clay
                 continue;
             }
 
-            jsonNode = null;
-            return false;
+            jsonNode = currentNode;
+            parentClay = currentClay;
+            return currentClay.Contains(pathSegments[i]);
         }
 
         jsonNode = currentNode;
+        parentClay = lastClay ?? this;
         return true;
     }
 
@@ -1221,9 +1219,9 @@ public partial class Clay
     ///     <see cref="bool" />
     /// </returns>
     public bool RemovePathValue(string path) =>
-        FindNodeByPath(path, out var jsonNode, out var pathSegments) &&
+        FindNodeByPath(path, out _, out var parentClay, out var pathSegments) &&
         // 从父节点删除
-        ((Clay)DeserializeNode(jsonNode.Parent, Options)!).Remove(pathSegments[^1]);
+        parentClay.Remove(pathSegments[^1]);
 
     /// <summary>
     ///     根据标识符删除数据
@@ -1279,10 +1277,10 @@ public partial class Clay
     public void SetPathValue(string path, object? value)
     {
         // 根据路径查找 JsonNode 节点
-        if (FindNodeByPath(path, out var jsonNode, out var pathSegments))
+        if (FindNodeByPath(path, out _, out var parentClay, out var pathSegments))
         {
             // 从父节点更新值
-            ((Clay)DeserializeNode(jsonNode.Parent, Options)!).Set(pathSegments[^1], value);
+            parentClay.Set(pathSegments[^1], value);
         }
     }
 
