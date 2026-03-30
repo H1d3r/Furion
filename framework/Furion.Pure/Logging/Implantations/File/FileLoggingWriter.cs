@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -108,7 +109,7 @@ internal class FileLoggingWriter
 
         // 根据调试状态自动判断是否启用兼容模式
         // 注意：兼容模式下性能较差但避免文件占用问题，适合调试环境使用！！！
-        _isCompatibleMode = Debugger.IsAttached;
+        _isCompatibleMode = EnvironmentUtility.IsDevelopment;
 
         // 解析当前写入日志的文件名
         GetCurrentFileName();
