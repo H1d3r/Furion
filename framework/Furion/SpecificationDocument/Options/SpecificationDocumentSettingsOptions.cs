@@ -143,6 +143,11 @@ public sealed class SpecificationDocumentSettingsOptions : IConfigurableOptions<
     public bool? EnumToNumber { get; set; }
 
     /// <summary>
+    /// 是否默认深色模式
+    /// </summary>
+    public bool? DarkMode { get; set; }
+
+    /// <summary>
     /// 后期配置
     /// </summary>
     /// <param name="options"></param>

@@ -710,6 +710,9 @@ public static class SpecificationDocumentBuilder
                 [nameof(SpecificationLoginInfo.DefaultPassword)] = additionals.DefaultPassword
             });
         }
+
+        // 添加深色主题
+        swaggerUIOptions.ConfigObject.AdditionalItems.Add(nameof(_specificationDocumentSettings.DarkMode), _specificationDocumentSettings.DarkMode == true);
     }
 
     /// <summary>

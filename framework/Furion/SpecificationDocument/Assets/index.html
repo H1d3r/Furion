@@ -110,6 +110,24 @@
             color: red;
             margin-top: 8px;
         }
+
+        html.dark-mode #login-form {
+            border: 1px solid #545d61;
+        }
+
+            html.dark-mode #login-form .login-area {
+                background: #1c2022;
+            }
+
+            html.dark-mode #login-form .form-row input {
+                background: #1c2022;
+                border-color: #b7bcbf;
+                color: #f0f1f1;
+            }
+
+            html.dark-mode #login-form .form-row label {
+                color: #e4e6e6;
+            }
     </style>
     %(HeadContent)
 </head>
@@ -381,6 +399,10 @@
         window.onload = function () {
             var configObject = JSON.parse('%(ConfigObject)');
             var oauthConfigObject = JSON.parse('%(OAuthConfigObject)');
+
+            if (configObject.DarkMode === true) {
+                document.documentElement.classList.add("dark-mode");
+            }
 
             var loginObject = configObject.LoginInfo;
             if (loginObject && loginObject.Enabled === true) {

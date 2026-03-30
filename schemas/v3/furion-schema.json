@@ -2673,6 +2673,11 @@
             "type": "boolean",
             "description": "是否自动加载 Xml 注释文件",
             "default": true
+          },
+          "DarkMode ": {
+            "type": "boolean",
+            "description": "是否默认深色模式",
+            "default": false
           }
         }
       },
