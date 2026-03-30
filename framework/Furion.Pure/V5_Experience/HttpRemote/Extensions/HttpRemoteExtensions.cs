@@ -28,7 +28,6 @@ using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Net.Http.Headers;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http.Headers;
@@ -45,16 +44,6 @@ namespace Furion.HttpRemote.Extensions;
 /// </summary>
 public static partial class HttpRemoteExtensions
 {
-    /// <summary>
-    ///     判断是否是开发环境
-    /// </summary>
-    internal static readonly bool IsDevelopment =
-        string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Development",
-            StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development",
-            StringComparison.OrdinalIgnoreCase) ||
-        Debugger.IsAttached;
-
     /// <summary>
     ///     添加 HTTP 远程请求分析工具处理委托
     /// </summary>
@@ -97,7 +86,7 @@ public static partial class HttpRemoteExtensions
         builder.AddProfilerDelegatingHandler(() =>
             disableInProduction &&
             (string.Equals(GetHostEnvironmentName(builder.Services), "Production",
-                StringComparison.OrdinalIgnoreCase) || !IsDevelopment));
+                StringComparison.OrdinalIgnoreCase) || !EnvironmentUtility.IsDevelopment));
 
     /// <summary>
     ///     配置 <see cref="HttpClient" /> 额外选项
