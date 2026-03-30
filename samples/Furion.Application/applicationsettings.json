@@ -40,7 +40,8 @@
       "Password": "admin",
       "DefaultUsername": "admin",
       "DefaultPassword": "admin"
-    }
+    },
+    "DarkMode": false
   },
   "LocalizationSettings": {
     "SupportedCultures": [
