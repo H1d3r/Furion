@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Microsoft.CodeAnalysis;
+using System.Text;
 
 namespace Furion.ViewEngine;
 
@@ -42,10 +43,7 @@ public class ViewEngineTemplateException : ViewEngineException
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="innerException"></param>
-    public ViewEngineTemplateException(Exception innerException) : base(null, innerException)
-    {
-    }
+    public ViewEngineTemplateException(Exception innerException) : base(null, innerException) { }
 
     /// <summary>
     /// 错误信息
@@ -58,7 +56,50 @@ public class ViewEngineTemplateException : ViewEngineException
     public string GeneratedCode { get; set; }
 
     /// <summary>
+    /// 缓存的消息
+    /// </summary>
+    private string _cachedMessage;
+
+    /// <summary>
     /// 重写异常消息
     /// </summary>
-    public override string Message => $"Unable to compile template: {string.Join("\n", Errors.Where(w => w.IsWarningAsError || w.Severity == DiagnosticSeverity.Error))}";
+    public override string Message
+    {
+        get
+        {
+            if (_cachedMessage != null) return _cachedMessage;
+
+            var sb = new StringBuilder("Unable to compile template:");
+
+            foreach (var error in Errors?.Where(e => e.Severity == DiagnosticSeverity.Error || e.IsWarningAsError) ?? [])
+            {
+                var loc = error.Location.GetLineSpan();
+                var line = loc.StartLinePosition.Line + 1;
+                var col = loc.StartLinePosition.Character + 1;
+
+                sb.AppendLine().AppendFormat("  [{0}] ({1},{2}): {3}", error.Id, line, col, error.GetMessage());
+
+                // 显示错误行上下文（上下各 3 行）
+                if (!string.IsNullOrEmpty(GeneratedCode))
+                {
+                    var lines = GeneratedCode.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
+                    var start = Math.Max(0, line - 4);
+                    var end = Math.Min(lines.Length - 1, line + 2);
+                    var pad = end.ToString().Length;
+
+                    sb.AppendLine().AppendLine("  Code Context:");
+                    for (var i = start; i <= end; i++)
+                    {
+                        var ln = i + 1;
+                        var marker = ln == line ? ">>> " : "    ";
+                        var code = lines[i];
+                        if (code.Length > 120) code = code[..120] + "...";
+                        sb.AppendFormat("{0}{1} | {2}{3}", marker, ln.ToString().PadLeft(pad), code, Environment.NewLine);
+                    }
+                }
+            }
+
+            return _cachedMessage = sb.ToString();
+        }
+    }
 }
