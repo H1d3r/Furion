@@ -64,7 +64,10 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     /// <param name="assembly"></param>
     public void AddAssemblyReference(Assembly assembly)
     {
-        Options.ReferencedAssemblies.Add(assembly);
+        if (assembly != null && !Options.ReferencedAssemblies.Contains(assembly))
+        {
+            Options.ReferencedAssemblies.Add(assembly);
+        }
     }
 
     /// <summary>
@@ -73,6 +76,8 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     /// <param name="type"></param>
     public void AddAssemblyReference(Type type)
     {
+        if (type == null) return;
+
         AddAssemblyReference(type.Assembly);
 
         foreach (var argumentType in type.GenericTypeArguments)
@@ -87,7 +92,10 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     /// <param name="reference"></param>
     public void AddMetadataReference(MetadataReference reference)
     {
-        Options.MetadataReferences.Add(reference);
+        if (reference != null)
+        {
+            Options.MetadataReferences.Add(reference);
+        }
     }
 
     /// <summary>
@@ -96,7 +104,10 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     /// <param name="namespaceName"></param>
     public void AddUsing(string namespaceName)
     {
-        Options.DefaultUsings.Add(namespaceName);
+        if (!string.IsNullOrWhiteSpace(namespaceName))
+        {
+            Options.DefaultUsings.Add(namespaceName);
+        }
     }
 
     /// <summary>
@@ -105,6 +116,8 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     /// <param name="type"></param>
     public void Inherits(Type type)
     {
+        if (type == null) return;
+
         Options.Inherits = RenderTypeName(type);
         AddAssemblyReference(type);
     }
@@ -116,6 +129,8 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     /// <returns></returns>
     private string RenderTypeName(Type type)
     {
+        if (type == null) return string.Empty;
+
         IList<string> elements = new List<string>()
         {
             type.Namespace,
@@ -135,7 +150,7 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
             return result;
         }
 
-        return result + "<" + string.Join(",", type.GenericTypeArguments.Select(RenderTypeName)) + ">";
+        return result + "<" + string.Join(", ", type.GenericTypeArguments.Select(RenderTypeName)) + ">";
     }
 
     private string RenderDeclaringType(Type type)
