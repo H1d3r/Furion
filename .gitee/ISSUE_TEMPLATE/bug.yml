@@ -13,7 +13,8 @@ body:
       label: 版本号
       description: 请选择项目使用的 Furion 版本？
       options:
-        - 4.9.8.31 (最新)
+        - 4.9.8.32 (最新)
+        - 4.9.8.31
         - 4.9.8.30
         - 其他版本（请升级）
     validations:
