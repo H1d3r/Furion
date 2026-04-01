@@ -44,6 +44,11 @@ public class ViewEngineTemplate : IViewEngineTemplate
     private readonly Type templateType;
 
     /// <summary>
+    /// 是否已释放
+    /// </summary>
+    private bool _disposed;
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="assemblyByteCode"></param>
@@ -67,9 +72,12 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// </summary>
     /// <param name="stream"></param>
     /// <returns></returns>
-    public Task SaveToStreamAsync(Stream stream)
+    public async Task SaveToStreamAsync(Stream stream)
     {
-        return assemblyByteCode.CopyToAsync(stream);
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
+
+        assemblyByteCode.Position = 0;
+        await assemblyByteCode.CopyToAsync(stream);
     }
 
     /// <summary>
@@ -88,15 +96,21 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public async Task SaveToFileAsync(string fileName)
     {
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
+
+        var filePath = Penetrates.GetTemplateFileName(fileName);
+
         using var fileStream = new FileStream(
-            path: Penetrates.GetTemplateFileName(fileName),
-            mode: FileMode.OpenOrCreate,
+            path: filePath,
+            mode: FileMode.Create,
             access: FileAccess.Write,
-            share: FileShare.None,
+            share: FileShare.Read,
             bufferSize: 8192,
             useAsync: true);
 
+        assemblyByteCode.Position = 0;
         await assemblyByteCode.CopyToAsync(fileStream);
+        await fileStream.FlushAsync();
     }
 
     /// <summary>
@@ -116,6 +130,8 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public async Task<string> RunAsync(object model = null)
     {
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
+
         if (model != null && model.IsAnonymous())
         {
             model = new AnonymousTypeWrapper(model);
@@ -148,17 +164,20 @@ public class ViewEngineTemplate : IViewEngineTemplate
     {
         using var memoryStream = new MemoryStream();
 
+        var filePath = Penetrates.GetTemplateFileName(fileName);
+
         using (var fileStream = new FileStream(
-            path: Penetrates.GetTemplateFileName(fileName),
+            path: filePath,
             mode: FileMode.Open,
             access: FileAccess.Read,
-            share: FileShare.None,
+            share: FileShare.Read,
             bufferSize: 8192,
             useAsync: true))
         {
             await fileStream.CopyToAsync(memoryStream);
         }
 
+        memoryStream.Position = 0;
         return new ViewEngineTemplate(memoryStream);
     }
 
@@ -189,7 +208,11 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <inheritdoc/>
     public void Dispose()
     {
-        assemblyByteCode?.Dispose();
+        if (!_disposed)
+        {
+            assemblyByteCode?.Dispose();
+            _disposed = true;
+        }
     }
 }
 
@@ -206,9 +229,14 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     private readonly MemoryStream assemblyByteCode;
 
     /// <summary>
-    /// 内存流
+    /// 模板类型
     /// </summary>
     private readonly Type templateType;
+
+    /// <summary>
+    /// 是否已释放
+    /// </summary>
+    private bool _disposed;
 
     /// <summary>
     /// 构造函数
@@ -234,9 +262,12 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// </summary>
     /// <param name="stream"></param>
     /// <returns></returns>
-    public Task SaveToStreamAsync(Stream stream)
+    public async Task SaveToStreamAsync(Stream stream)
     {
-        return assemblyByteCode.CopyToAsync(stream);
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
+
+        assemblyByteCode.Position = 0;
+        await assemblyByteCode.CopyToAsync(stream);
     }
 
     /// <summary>
@@ -255,15 +286,21 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public async Task SaveToFileAsync(string fileName)
     {
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
+
+        var filePath = Penetrates.GetTemplateFileName(fileName);
+
         using var fileStream = new FileStream(
-            path: Penetrates.GetTemplateFileName(fileName),
-            mode: FileMode.OpenOrCreate,
+            path: filePath,
+            mode: FileMode.Create,
             access: FileAccess.Write,
-            share: FileShare.None,
+            share: FileShare.Read,
             bufferSize: 8192,
             useAsync: true);
 
+        assemblyByteCode.Position = 0;
         await assemblyByteCode.CopyToAsync(fileStream);
+        await fileStream.FlushAsync();
     }
 
     /// <summary>
@@ -283,6 +320,8 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public async Task<string> RunAsync(Action<T> initializer)
     {
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
+
         var instance = (T)Activator.CreateInstance(templateType);
         initializer(instance);
 
@@ -310,8 +349,10 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         using var memoryStream = new MemoryStream();
 
+        var filePath = Penetrates.GetTemplateFileName(fileName);
+
         using (var fileStream = new FileStream(
-            path: Penetrates.GetTemplateFileName(fileName),
+            path: filePath,
             mode: FileMode.Open,
             access: FileAccess.Read,
             share: FileShare.Read,
@@ -321,6 +362,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
             await fileStream.CopyToAsync(memoryStream);
         }
 
+        memoryStream.Position = 0;
         return new ViewEngineTemplate<T>(memoryStream);
     }
 
@@ -348,9 +390,13 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
         return new ViewEngineTemplate<T>(memoryStream);
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public void Dispose()
     {
-        assemblyByteCode.Dispose();
+        if (!_disposed)
+        {
+            assemblyByteCode?.Dispose();
+            _disposed = true;
+        }
     }
 }

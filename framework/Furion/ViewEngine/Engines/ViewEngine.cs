@@ -27,7 +27,7 @@ using Furion.DataEncryption;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Reflection.Metadata;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace Furion.ViewEngine;
@@ -37,6 +37,21 @@ namespace Furion.ViewEngine;
 /// </summary>
 public class ViewEngine : IViewEngine
 {
+    /// <summary>
+    /// Razor 引擎缓存
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, RazorProjectEngine> _razorEngineCache = new();
+
+    /// <summary>
+    /// 编译结果缓存
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, byte[]> _compilationCache = new();
+
+    /// <summary>
+    /// 缓存是否启用
+    /// </summary>
+    private static readonly bool _enableCache = Environment.GetEnvironmentVariable("FURION_VIEWENGINE_CACHE") != "false";
+
     /// <summary>
     /// 编译并运行
     /// </summary>
@@ -130,10 +145,6 @@ public class ViewEngine : IViewEngine
             var result = template.Run(model);
             return result;
         }
-        catch (Exception)
-        {
-            throw;
-        }
         finally
         {
             template?.Dispose();
@@ -166,10 +177,6 @@ public class ViewEngine : IViewEngine
 
             var result = await template.RunAsync(model);
             return result;
-        }
-        catch (Exception)
-        {
-            throw;
         }
         finally
         {
@@ -209,10 +216,6 @@ public class ViewEngine : IViewEngine
             });
             return result;
         }
-        catch (Exception)
-        {
-            throw;
-        }
         finally
         {
             template?.Dispose();
@@ -222,6 +225,7 @@ public class ViewEngine : IViewEngine
     /// <summary>
     /// 通过缓存解析模板
     /// </summary>
+    /// <typeparam name="T"></typeparam>
     /// <param name="content"></param>
     /// <param name="model"></param>
     /// <param name="cacheFileName"></param>
@@ -250,10 +254,6 @@ public class ViewEngine : IViewEngine
             });
             return result;
         }
-        catch (Exception)
-        {
-            throw;
-        }
         finally
         {
             template?.Dispose();
@@ -273,7 +273,24 @@ public class ViewEngine : IViewEngine
 
         builderAction?.Invoke(compilationOptionsBuilder);
 
-        var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+        // 尝试从缓存获取编译结果
+        var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
+
+        MemoryStream memoryStream;
+        if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out var cachedBytes))
+        {
+            memoryStream = new MemoryStream(cachedBytes);
+        }
+        else
+        {
+            memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+
+            // 缓存编译结果
+            if (_enableCache && !string.IsNullOrEmpty(cacheKey))
+            {
+                _compilationCache[cacheKey] = memoryStream.ToArray();
+            }
+        }
 
         return new ViewEngineTemplate(memoryStream);
     }
@@ -284,9 +301,9 @@ public class ViewEngine : IViewEngine
     /// <param name="content"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public Task<IViewEngineTemplate> CompileAsync(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public async Task<IViewEngineTemplate> CompileAsync(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
     {
-        return Task.Factory.StartNew(() => Compile(content: content, builderAction: builderAction));
+        return await Task.Run(() => Compile(content: content, builderAction: builderAction));
     }
 
     /// <summary>
@@ -306,7 +323,24 @@ public class ViewEngine : IViewEngine
 
         builderAction?.Invoke(compilationOptionsBuilder);
 
-        var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+        // 尝试从缓存获取编译结果
+        var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
+
+        MemoryStream memoryStream;
+        if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out var cachedBytes))
+        {
+            memoryStream = new MemoryStream(cachedBytes);
+        }
+        else
+        {
+            memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+
+            // 缓存编译结果
+            if (_enableCache && !string.IsNullOrEmpty(cacheKey))
+            {
+                _compilationCache[cacheKey] = memoryStream.ToArray();
+            }
+        }
 
         return new ViewEngineTemplate<T>(memoryStream);
     }
@@ -318,10 +352,22 @@ public class ViewEngine : IViewEngine
     /// <param name="content"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public Task<IViewEngineTemplate<T>> CompileAsync<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public async Task<IViewEngineTemplate<T>> CompileAsync<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
         where T : IViewEngineModel
     {
-        return Task.Factory.StartNew(() => Compile<T>(content: content, builderAction: builderAction));
+        return await Task.Run(() => Compile<T>(content: content, builderAction: builderAction));
+    }
+
+    /// <summary>
+    /// 生成缓存键
+    /// </summary>
+    private static string GenerateCacheKey(string content, ViewEngineOptions options)
+    {
+        var hashContent = MD5Encryption.Encrypt(content);
+        var hashOptions = MD5Encryption.Encrypt(string.Join("|",
+            options.ReferencedAssemblies.Select(a => a.FullName),
+            options.DefaultUsings.OrderBy(u => u)));
+        return $"{hashContent}:{hashOptions}";
     }
 
     /// <summary>
@@ -334,13 +380,15 @@ public class ViewEngine : IViewEngine
     {
         templateSource = WriteDirectives(templateSource, options);
 
-        var engine = RazorProjectEngine.Create(
+        // 缓存 Razor 引擎，避免重复创建
+        var engineKey = options.TemplateNamespace;
+        var engine = _razorEngineCache.GetOrAdd(engineKey, _ => RazorProjectEngine.Create(
             RazorConfiguration.Default,
             RazorProjectFileSystem.Create(@"."),
             (builder) =>
             {
                 builder.SetNamespace(options.TemplateNamespace);
-            });
+            }));
 
         var fileName = Path.GetRandomFileName();
 
@@ -354,39 +402,43 @@ public class ViewEngine : IViewEngine
 
         var razorCSharpDocument = codeDocument.GetCSharpDocument();
 
-        var syntaxTree = CSharpSyntaxTree.ParseText(razorCSharpDocument.GeneratedCode); // 第二个参数可以指定 C# 版本
+        var syntaxTree = CSharpSyntaxTree.ParseText(razorCSharpDocument.GeneratedCode,
+            new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.None));
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var metadataReferences = new List<MetadataReference>();
+
+        foreach (var assembly in options.ReferencedAssemblies)
+        {
+            if (assembly == null || assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location))
+                continue;
+
+            if (!File.Exists(assembly.Location))
+                continue;
+
+            if (seen.Add(assembly.FullName ?? assembly.GetName().Name))
+            {
+                // ✅ 修正：使用标准方式，移除 unsafe 代码
+                metadataReferences.Add(MetadataReference.CreateFromFile(assembly.Location));
+            }
+        }
+
+        // 添加自定义元数据引用
+        metadataReferences.AddRange(options.MetadataReferences);
 
         var compilation = CSharpCompilation.Create(
             fileName,
-            new[]
-            {
-                    syntaxTree
-            },
-            options.ReferencedAssemblies.Where(ass =>
-            {
-                unsafe
-                {
-                    return ass.TryGetRawMetadata(out var blob, out var length);
-                }
-            })
-            .Select(ass =>
-            {
-                // MetadataReference.CreateFromFile(ass.Location)
-
-                unsafe
-                {
-                    ass.TryGetRawMetadata(out var blob, out var length);
-                    var moduleMetadata = ModuleMetadata.CreateFromMetadata((IntPtr)blob, length);
-                    var assemblyMetadata = AssemblyMetadata.Create(moduleMetadata);
-                    var metadataReference = assemblyMetadata.GetReference();
-                    return metadataReference;
-                }
-            })
-            .Concat(options.MetadataReferences)
-            .ToList(),
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                    .WithOptimizationLevel(OptimizationLevel.Release)
-                    .WithOverflowChecks(true));
+            new[] { syntaxTree },
+            metadataReferences,
+            new CSharpCompilationOptions(
+                OutputKind.DynamicallyLinkedLibrary,
+                optimizationLevel: OptimizationLevel.Release,
+                nullableContextOptions: NullableContextOptions.Disable,
+                warningLevel: 4,
+                allowUnsafe: false,
+                checkOverflow: false,
+                deterministic: true
+            ));
 
         var memoryStream = new MemoryStream();
 
@@ -394,6 +446,11 @@ public class ViewEngine : IViewEngine
 
         if (!emitResult.Success)
         {
+            var errors = emitResult.Diagnostics
+                .Where(d => d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
+                .Select(d => d.ToString())
+                .ToArray();
+
             var exception = new ViewEngineTemplateException()
             {
                 Errors = emitResult.Diagnostics.ToList(),
@@ -409,7 +466,7 @@ public class ViewEngine : IViewEngine
     }
 
     /// <summary>
-    /// 写入Razor 命令
+    /// 写入 Razor 命令
     /// </summary>
     /// <param name="content"></param>
     /// <param name="options"></param>
