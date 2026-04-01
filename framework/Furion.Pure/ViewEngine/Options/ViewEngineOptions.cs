@@ -41,7 +41,7 @@ public class ViewEngineOptions
     /// </summary>
     public ViewEngineOptions()
     {
-        ReferencedAssemblies = new HashSet<Assembly>()
+        ReferencedAssemblies = new HashSet<Assembly>(new AssemblyEqualityComparer())
         {
             typeof(object).Assembly,
             typeof(ViewEngineModel).Assembly,
@@ -83,14 +83,31 @@ public class ViewEngineOptions
     /// </summary>
     public HashSet<string> DefaultUsings { get; set; } = new HashSet<string>()
     {
-        "System",
-        "System.Linq",
-        "System.Text",
-        "System.IO",
-        "System.Collections",
-        "System.Collections.Generic",
-        "System.Threading",
-        "System.Threading.Tasks",
-        "System.Dynamic"
+         "System",
+         "System.Linq",
+         "System.Text",
+         "System.IO",
+         "System.Collections",
+         "System.Collections.Generic",
+         "System.Threading",
+         "System.Threading.Tasks",
+         "System.Dynamic"
     };
+}
+
+/// <summary>
+/// 程序集相等比较器
+/// </summary>
+internal class AssemblyEqualityComparer : IEqualityComparer<Assembly>
+{
+    public bool Equals(Assembly x, Assembly y)
+    {
+        if (x == null || y == null) return x == y;
+        return x.FullName == y.FullName;
+    }
+
+    public int GetHashCode(Assembly obj)
+    {
+        return obj?.FullName?.GetHashCode() ?? 0;
+    }
 }

@@ -168,19 +168,34 @@ public class TestModuleServices : IDynamicApiController
 
     public async Task<string> 测试模板引擎模式匹配([FromServices] IViewEngine viewEngine)
     {
+        //var template = """
+        //     @{
+        //         var ss = new { QueryType = "like"};
+        //         string result = "";
+        //         switch (ss)
+        //         {
+        //             case {QueryType: "like"}:
+        //                 result = "显示此处内容";
+        //                 break;
+        //         }
+        //         @:@result
+        //     }
+        //     """;
+
         var template = """
-             @{
-                 var ss = new { QueryType = "like"};
-                 string result = "";
-                 switch (ss)
-                 {
-                     case {QueryType: "like"}:
-                         result = "显示此处内容";
-                         break;
-                 }
-                 @:@result
-             }
-             """;
+     @functions {
+         public string GetResult()
+         {
+             var ss = new { QueryType = "like"};
+             return ss switch
+             {
+                 {QueryType: "like"} => "显示此处内容",
+                 _ => "其他内容"
+             };
+         }
+     }
+     @GetResult()
+     """;
 
         var str = await viewEngine.RunCompileAsync(template);
 

@@ -40,7 +40,6 @@ using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
-using System.Reflection.Metadata;
 using System.Security.Claims;
 
 namespace Furion;
@@ -440,24 +439,30 @@ public static class App
     /// <returns><see cref="Assembly"/></returns>
     public static Assembly CompileCSharpClassCodeToDllFile(string csharpCode, string assemblyName = default, params Assembly[] additionalAssemblies)
     {
-        var assName = string.IsNullOrWhiteSpace(assemblyName) ? Path.GetRandomFileName() : assemblyName.Trim();
+        var assName = string.IsNullOrWhiteSpace(assemblyName)
+            ? Path.GetFileNameWithoutExtension(Path.GetRandomFileName())
+            : Path.GetFileName(assemblyName.Trim());
+
+        var dllPath = Path.Combine(AppContext.BaseDirectory, $"{assName}.dll");
 
         // 编译代码
         using var memoryStream = CompileCSharpClassCodeToStream(csharpCode, assName, additionalAssemblies);
 
         // 保存到 dll 文件
-        using var fileStream = new FileStream(
-            path: Path.Combine(AppContext.BaseDirectory, $"{assName}.dll"),
-            mode: FileMode.OpenOrCreate,
+        using (var fileStream = new FileStream(
+            path: dllPath,
+            mode: FileMode.Create,
             access: FileAccess.Write,
-            share: FileShare.None,
+            share: FileShare.Read,
             bufferSize: 8192,
-            useAsync: true);
-
-        memoryStream.CopyTo(fileStream);
+            useAsync: false))
+        {
+            memoryStream.CopyTo(fileStream);
+            fileStream.Flush();
+        }
 
         // 返回编译程序集
-        return Assembly.Load(memoryStream.ToArray());
+        return Assembly.LoadFrom(dllPath);
     }
 
     /// <summary>
@@ -470,51 +475,69 @@ public static class App
     public static MemoryStream CompileCSharpClassCodeToStream(string csharpCode, string assemblyName = default, params Assembly[] additionalAssemblies)
     {
         // 空检查
-        if (csharpCode == null) throw new ArgumentNullException(nameof(csharpCode));
+        if (string.IsNullOrWhiteSpace(csharpCode)) throw new ArgumentNullException(nameof(csharpCode));
 
-        // 合并程序集
-        var domainAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-        var references = assemblyName != null && additionalAssemblies.Length > 0
-            ? domainAssemblies.Concat(additionalAssemblies)
-            : domainAssemblies;
+        additionalAssemblies ??= [];
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var metadataReferences = new List<MetadataReference>();
+
+        foreach (var assembly in additionalAssemblies)
+        {
+            if (assembly != null &&
+                !string.IsNullOrEmpty(assembly.Location) &&
+                File.Exists(assembly.Location) &&
+                seen.Add(assembly.FullName ?? assembly.GetName().Name))
+            {
+                metadataReferences.Add(MetadataReference.CreateFromFile(assembly.Location));
+            }
+        }
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location))
+                continue;
+
+            if (seen.Add(assembly.FullName ?? assembly.GetName().Name))
+            {
+                metadataReferences.Add(MetadataReference.CreateFromFile(assembly.Location));
+            }
+        }
 
         // 生成语法树
-        var syntaxTree = CSharpSyntaxTree.ParseText(csharpCode);
+        var syntaxTree = CSharpSyntaxTree.ParseText(
+            csharpCode,
+            new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.None));
 
-        // 创建 C# 编译器
+        // 创建编译单元
         var compilation = CSharpCompilation.Create(
-          string.IsNullOrWhiteSpace(assemblyName) ? Path.GetRandomFileName() : assemblyName.Trim(),
-          new[]
-          {
-                    syntaxTree
-          },
-          references.Where(ass =>
-          {
-              unsafe
-              {
-                  return ass.TryGetRawMetadata(out var blob, out var length);
-              }
-          }).Select(ass =>
-          {
-              unsafe
-              {
-                  ass.TryGetRawMetadata(out var blob, out var length);
-                  var moduleMetadata = ModuleMetadata.CreateFromMetadata((IntPtr)blob, length);
-                  var assemblyMetadata = AssemblyMetadata.Create(moduleMetadata);
-                  var metadataReference = assemblyMetadata.GetReference();
-                  return metadataReference;
-              }
-          }),
-          new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            assemblyName: string.IsNullOrWhiteSpace(assemblyName) ? Path.GetRandomFileName() : assemblyName.Trim(),
+            syntaxTrees: [syntaxTree],
+            references: metadataReferences,
+            options: new CSharpCompilationOptions(
+                OutputKind.DynamicallyLinkedLibrary,
+                optimizationLevel: OptimizationLevel.Release,
+                nullableContextOptions: NullableContextOptions.Disable,
+                warningLevel: 4,
+                allowUnsafe: false,
+                checkOverflow: false,
+                deterministic: true
+            ));
 
         // 编译代码
-        var memoryStream = new MemoryStream();
+        using var memoryStream = new MemoryStream();
         var emitResult = compilation.Emit(memoryStream);
 
         // 编译失败抛出异常
         if (!emitResult.Success)
         {
-            throw new InvalidOperationException($"Unable to compile class code: {string.Join("\n", emitResult.Diagnostics.ToList().Where(w => w.IsWarningAsError || w.Severity == DiagnosticSeverity.Error))}");
+            var errors = emitResult.Diagnostics
+                .Where(d => d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
+                .Select(d => d.ToString())
+                .ToArray();
+
+            throw new InvalidOperationException(
+                $"Unable to compile class code:{Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
         }
 
         memoryStream.Position = 0;

@@ -418,7 +418,6 @@ public class ViewEngine : IViewEngine
 
             if (seen.Add(assembly.FullName ?? assembly.GetName().Name))
             {
-                // ✅ 修正：使用标准方式，移除 unsafe 代码
                 metadataReferences.Add(MetadataReference.CreateFromFile(assembly.Location));
             }
         }
