@@ -43,7 +43,10 @@ public class ViewEngineTemplateException : ViewEngineException
     /// <summary>
     /// 构造函数
     /// </summary>
-    public ViewEngineTemplateException(Exception innerException) : base(null, innerException) { }
+    public ViewEngineTemplateException(Exception innerException)
+        : base(null, innerException)
+    {
+    }
 
     /// <summary>
     /// 错误信息

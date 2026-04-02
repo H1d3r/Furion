@@ -445,10 +445,10 @@ public class ViewEngine : IViewEngine
 
         if (!emitResult.Success)
         {
-            var errors = emitResult.Diagnostics
-                .Where(d => d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
-                .Select(d => d.ToString())
-                .ToArray();
+            //var errors = emitResult.Diagnostics
+            //    .Where(d => d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
+            //    .Select(d => d.ToString())
+            //    .ToArray();
 
             var exception = new ViewEngineTemplateException()
             {
