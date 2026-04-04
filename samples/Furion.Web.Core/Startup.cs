@@ -181,6 +181,15 @@ public sealed class Startup : AppStartup
             ContentTypeProvider = FS.GetFileExtensionContentTypeProvider()
         });
 
+        app.UseRouting();
+
+        app.UseCorsAccessor();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.EnableBuffering();
+
         app.UseScheduleUI(options =>
         {
             options.Title = "定时任务看板";
@@ -193,15 +202,6 @@ public sealed class Startup : AppStartup
                 return await Task.FromResult(username == "furion" && string.IsNullOrWhiteSpace(password));
             };
         });
-
-        app.UseRouting();
-
-        app.UseCorsAccessor();
-
-        app.UseAuthentication();
-        app.UseAuthorization();
-
-        app.EnableBuffering();
 
         app.UseInject();
 

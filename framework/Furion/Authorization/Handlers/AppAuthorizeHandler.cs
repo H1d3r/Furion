@@ -194,9 +194,10 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
         // 处理规范化结果
         if (!UnifyContext.CheckExceptionHttpContextNonUnify(httpContext, out var unifyRes))
         {
+            var statusCode = friendlyException?.StatusCode ?? (exception is UnauthorizedAccessException ? StatusCodes.Status401Unauthorized : StatusCodes.Status500InternalServerError);
             _ = UnifyContext.CheckVaildResult(unifyRes.OnAuthorizeException(httpContext, new ExceptionMetadata
             {
-                StatusCode = friendlyException?.StatusCode ?? StatusCodes.Status500InternalServerError,
+                StatusCode = statusCode,
                 Errors = friendlyException?.ErrorMessage ?? exception.Message,
                 Data = friendlyException?.Data,
                 ErrorCode = friendlyException?.ErrorCode,
@@ -205,7 +206,7 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
             }), out var data);
 
             // 设置响应状态码
-            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            httpContext.Response.StatusCode = statusCode;
 
             await httpContext.Response.WriteAsJsonAsync(data, App.GetOptions<JsonOptions>()?.JsonSerializerOptions);
         }
