@@ -30,7 +30,7 @@ using System.Globalization;
 namespace System.ComponentModel.DataAnnotations;
 
 /// <summary>
-///     验证数值是否为有效的 <see cref="decimal" /> 类型验证特性
+///     验证值是否为有效的 <see cref="decimal" /> 类型验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
 public class DecimalAttribute : ValidationBaseAttribute
