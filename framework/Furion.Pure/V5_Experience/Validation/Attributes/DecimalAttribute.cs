@@ -30,30 +30,51 @@ using System.Globalization;
 namespace System.ComponentModel.DataAnnotations;
 
 /// <summary>
-///     验证数值的小数位数验证特性
+///     验证数值是否为有效的 <see cref="decimal" /> 类型验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class DecimalPlacesAttribute : ValidationBaseAttribute
+public class DecimalAttribute : ValidationBaseAttribute
 {
-    /// <inheritdoc cref="DecimalPlacesValidator" />
-    internal readonly DecimalPlacesValidator _validator;
+    /// <inheritdoc cref="DecimalValidator" />
+    internal readonly DecimalValidator _validator;
 
     /// <summary>
-    ///     <inheritdoc cref="DecimalPlacesAttribute" />
+    ///     <inheritdoc cref="DecimalAttribute" />
     /// </summary>
-    /// <param name="maxDecimalPlaces">允许的最大有效小数位数</param>
-    public DecimalPlacesAttribute(int maxDecimalPlaces)
+    /// <param name="precision">总位数（精度），默认值为：<c>18</c></param>
+    /// <param name="scale">小数位数（标度），默认值为：<c>2</c></param>
+    public DecimalAttribute(int precision = 18, int scale = 2)
     {
-        MaxDecimalPlaces = maxDecimalPlaces;
-        _validator = new DecimalPlacesValidator(maxDecimalPlaces);
+        Precision = precision;
+        Scale = scale;
+        _validator = new DecimalValidator(precision, scale);
 
-        UseResourceKey(() => nameof(ValidationMessages.DecimalPlacesValidator_ValidationError));
+        UseResourceKey(GetResourceKey);
     }
 
     /// <summary>
-    ///     允许的最大有效小数位数
+    ///     总位数（精度）
     /// </summary>
-    public int MaxDecimalPlaces { get; }
+    public int Precision { get; }
+
+    /// <summary>
+    ///     小数位数（标度）
+    /// </summary>
+    public int Scale { get; }
+
+    /// <summary>
+    ///     是否允许负数
+    /// </summary>
+    /// <remarks>默认值为：<c>false</c>。</remarks>
+    public bool AllowNegative
+    {
+        get;
+        set
+        {
+            field = value;
+            _validator.AllowNegative = value;
+        }
+    }
 
     /// <summary>
     ///     是否允许字符串数值
@@ -74,5 +95,16 @@ public class DecimalPlacesAttribute : ValidationBaseAttribute
 
     /// <inheritdoc />
     public override string FormatErrorMessage(string name) =>
-        string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, MaxDecimalPlaces);
+        string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, Precision, Scale);
+
+    /// <summary>
+    ///     获取错误信息对应的资源键
+    /// </summary>
+    /// <returns>
+    ///     <see cref="string" />
+    /// </returns>
+    internal string GetResourceKey() =>
+        AllowNegative
+            ? nameof(ValidationMessages.DecimalValidator_ValidationError_AllowNegative)
+            : nameof(ValidationMessages.DecimalValidator_ValidationError);
 }
