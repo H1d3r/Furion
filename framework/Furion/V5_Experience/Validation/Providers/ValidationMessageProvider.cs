@@ -72,7 +72,7 @@ public static class ValidationMessageProvider
     /// </summary>
     public static void UseChineseMessages()
     {
-        // 更多可替换项参考：https://gitee.com/dotnetchina/Cordon/blob/master/src/Cordon/src/Resources/ValidationMessages.resx
+        // 更多可替换项参考：https://gitee.com/dotnetchina/Furion.Validation/blob/master/src/Furion.Validation/src/Resources/ValidationMessages.resx
         var chineseMessages = new Dictionary<string, string>
         {
             { "AgeValidator_ValidationError", "字段 {0} 不是有效的年龄。" },
