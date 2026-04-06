@@ -30,7 +30,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 ///     数据验证模块 <see cref="IServiceCollection" /> 扩展类
 /// </summary>
-public static class ValidationCoreServiceCollectionExtensions
+public static class CordonServiceCollectionExtensions
 {
     /// <summary>
     ///     添加数据验证服务
@@ -42,7 +42,7 @@ public static class ValidationCoreServiceCollectionExtensions
     /// <returns>
     ///     <see cref="IServiceCollection" />
     /// </returns>
-    public static IServiceCollection AddValidationCore(this IServiceCollection services,
+    public static IServiceCollection AddCordon(this IServiceCollection services,
         Action<ValidationBuilder>? configure = null)
     {
         // 初始化数据验证构建器
@@ -51,7 +51,7 @@ public static class ValidationCoreServiceCollectionExtensions
         // 调用自定义配置委托
         configure?.Invoke(validationBuilder);
 
-        return services.AddValidationCore(validationBuilder);
+        return services.AddCordon(validationBuilder);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public static class ValidationCoreServiceCollectionExtensions
     /// <returns>
     ///     <see cref="IServiceCollection" />
     /// </returns>
-    public static IServiceCollection AddValidationCore(this IServiceCollection services,
+    public static IServiceCollection AddCordon(this IServiceCollection services,
         ValidationBuilder validationBuilder)
     {
         // 空检查
