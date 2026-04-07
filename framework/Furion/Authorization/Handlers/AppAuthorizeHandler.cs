@@ -32,6 +32,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace Furion.Authorization;
 
 /// <summary>
+/// 自定义授权需求
+/// </summary>
+public interface IAppAuthorizationRequirement : IAuthorizationRequirement;
+
+/// <summary>
 /// 授权策略执行程序
 /// </summary>
 public abstract class AppAuthorizeHandler : IAuthorizationHandler
@@ -88,7 +93,11 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
 
             await AuthorizeHandleAsync(context);
         }
-        else context.GetCurrentHttpContext()?.SignoutToSwagger();    // 退出 Swagger 登录
+        else
+        {
+            context.Fail();
+            context.GetCurrentHttpContext()?.SignoutToSwagger();    // 退出 Swagger 登录
+        }
     }
 
     /// <summary>
@@ -136,21 +145,18 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
         var pipeline = await PipelineAsync(effectiveContext, httpContext);
         if (pipeline)
         {
-            // 获取所有未成功验证的需求
-            var pendingRequirements = effectiveContext.PendingRequirements;
+            // 获取所有未成功自定义验证的需求
+            var customRequirements = effectiveContext.PendingRequirements.Where(u => u is IAppAuthorizationRequirement).ToList();
 
-            // 通过授权验证
-            foreach (var requirement in pendingRequirements)
+            // 验证自定义策略管道
+            foreach (var requirement in customRequirements)
             {
-                // 验证策略管道
                 var policyPipeline = await PolicyPipelineAsync(effectiveContext, httpContext, requirement);
                 if (policyPipeline) effectiveContext.Succeed(requirement);
-                else
-                {
-                    effectiveContext.Fail();
-                    break;
-                }
             }
+
+            // 如果还有自定义的验证的需求未通过（保持 Pending），标记整体失败
+            if (customRequirements.Any(r => effectiveContext.PendingRequirements.Contains(r))) effectiveContext.Fail();
         }
         else effectiveContext.Fail();
 
