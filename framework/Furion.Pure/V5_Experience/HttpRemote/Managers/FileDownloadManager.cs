@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
@@ -50,10 +51,8 @@ internal sealed class FileDownloadManager
     /// </summary>
     internal readonly Channel<FileTransferProgress> _progressChannel;
 
-    /// <summary>
-    ///     上次成功触发进度通知的系统启动毫秒数
-    /// </summary>
-    internal long _lastProgressTick;
+    /// <inheritdoc cref="Throttler" />
+    internal readonly Throttler _throttler;
 
     /// <summary>
     ///     全局已接收字节数
@@ -81,6 +80,9 @@ internal sealed class FileDownloadManager
 
         // 初始化文件传输进度信息的通道
         _progressChannel = Channel.CreateUnbounded<FileTransferProgress>();
+
+        // 初始化节流器实例
+        _throttler = new Throttler(_httpFileDownloadBuilder.ProgressInterval);
 
         // 解析 IHttpFileTransferEventHandler 事件处理程序
         FileTransferEventHandler = (httpFileDownloadBuilder.FileTransferEventHandlerType is not null
@@ -588,12 +590,11 @@ internal sealed class FileDownloadManager
                 fileWriteLock.Release();
             }
 
-            // 更新文件传输进度
-            fileTransferProgress.UpdateProgress(_totalBytesReceived, stopwatch.Elapsed);
-
             // 发送文件传输进度到通道
-            if (TryReportProgress())
+            // ReSharper disable once InvertIf
+            if (_throttler.TryEnter())
             {
+                fileTransferProgress.UpdateProgress(_totalBytesReceived, stopwatch.Elapsed);
                 await _progressChannel.Writer.WriteAsync(fileTransferProgress, cancellationToken);
             }
         }
@@ -668,12 +669,11 @@ internal sealed class FileDownloadManager
                 _totalBytesReceived += numBytesRead;
             }
 
-            // 更新文件传输进度
-            fileTransferProgress.UpdateProgress(_totalBytesReceived, stopwatch.Elapsed);
-
             // 发送文件传输进度到通道
-            if (TryReportProgress())
+            // ReSharper disable once InvertIf
+            if (_throttler.TryEnter())
             {
+                fileTransferProgress.UpdateProgress(_totalBytesReceived, stopwatch.Elapsed);
                 _progressChannel.Writer.TryWrite(fileTransferProgress);
             }
         }
@@ -725,20 +725,21 @@ internal sealed class FileDownloadManager
 
             // 更新文件传输进度
             bytesReceived += numBytesRead;
-            fileTransferProgress.UpdateProgress(bytesReceived, stopwatch.Elapsed);
 
             // 发送文件传输进度到通道
-            if (TryReportProgress())
+            // ReSharper disable once InvertIf
+            if (_throttler.TryEnter())
             {
+                fileTransferProgress.UpdateProgress(bytesReceived, stopwatch.Elapsed);
                 await _progressChannel.Writer.WriteAsync(fileTransferProgress, cancellationToken);
             }
         }
 
         // 更新下载完成时的传输进度
         fileTransferProgress.FileSize = bytesReceived;
-        fileTransferProgress.UpdateProgress(bytesReceived, stopwatch.Elapsed);
 
         // 发送文件传输进度到通道
+        fileTransferProgress.UpdateProgress(bytesReceived, stopwatch.Elapsed);
         await _progressChannel.Writer.WriteAsync(fileTransferProgress, cancellationToken);
 
         return bytesReceived;
@@ -789,20 +790,21 @@ internal sealed class FileDownloadManager
 
             // 更新文件传输进度
             bytesReceived += numBytesRead;
-            fileTransferProgress.UpdateProgress(bytesReceived, stopwatch.Elapsed);
 
             // 发送文件传输进度到通道
-            if (TryReportProgress())
+            // ReSharper disable once InvertIf
+            if (_throttler.TryEnter())
             {
+                fileTransferProgress.UpdateProgress(bytesReceived, stopwatch.Elapsed);
                 _progressChannel.Writer.TryWrite(fileTransferProgress);
             }
         }
 
         // 更新下载完成时的传输进度
         fileTransferProgress.FileSize = bytesReceived;
-        fileTransferProgress.UpdateProgress(bytesReceived, stopwatch.Elapsed);
 
         // 发送文件传输进度到通道
+        fileTransferProgress.UpdateProgress(bytesReceived, stopwatch.Elapsed);
         _progressChannel.Writer.TryWrite(fileTransferProgress);
 
         return bytesReceived;
@@ -1089,35 +1091,5 @@ internal sealed class FileDownloadManager
             "br" => new BrotliStream(rawContentStream, CompressionMode.Decompress, true),
             _ => rawContentStream
         };
-    }
-
-    /// <summary>
-    ///     文件传输进度通知节流控制
-    /// </summary>
-    /// <returns>
-    ///     <see cref="bool" />
-    /// </returns>
-    internal bool TryReportProgress()
-    {
-        var intervalMs = (long)_httpFileDownloadBuilder.ProgressInterval.TotalMilliseconds;
-        if (intervalMs <= 0)
-        {
-            return true;
-        }
-
-        var now = Environment.TickCount64;
-        var last = Volatile.Read(ref _lastProgressTick);
-
-        // 首次调用或间隔已到
-        // ReSharper disable once InvertIf
-        if (last == 0 || now - last >= intervalMs)
-        {
-            if (Interlocked.CompareExchange(ref _lastProgressTick, now, last) == last)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
