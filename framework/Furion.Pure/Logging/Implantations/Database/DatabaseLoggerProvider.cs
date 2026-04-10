@@ -25,6 +25,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Concurrent;
 
 namespace Furion.Logging;
@@ -59,21 +60,60 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
     /// <summary>
     /// 数据库日志写入器
     /// </summary>
-    private IDatabaseLoggingWriter _databaseLoggingWriter;
+    private readonly Lazy<IDatabaseLoggingWriter> _writerLazy;
 
     /// <summary>
     /// 长时间运行的后台任务
     /// </summary>
     /// <remarks>实现不间断写入</remarks>
-    private Task _processQueueTask;
+    private readonly Task _processQueueTask;
+
+    /// <summary>
+    /// 是否正在解析日志写入器
+    /// </summary>
+    /// <remarks>用于防止构造函数循环依赖。</remarks>
+    [ThreadStatic]
+    private static bool _isResolvingWriter;
+
+    /// <summary>
+    /// 用于检测当前正在执行写入的写入器类型
+    /// </summary>
+    /// <remarks>用于精确丢弃该写入器自身发出的日志。</remarks>
+    internal static readonly AsyncLocal<Type> CurrentWritingWriterType = new();
 
     /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="databaseLoggerOptions">数据库日志记录器配置选项</param>
-    public DatabaseLoggerProvider(DatabaseLoggerOptions databaseLoggerOptions)
+    /// <param name="serviceProvider">服务提供器</param>
+    /// <param name="writerType">实现 <see cref="IDatabaseLoggingWriter"/> 的类型</param>
+    public DatabaseLoggerProvider(DatabaseLoggerOptions databaseLoggerOptions, IServiceProvider serviceProvider, Type writerType)
     {
         LoggerOptions = databaseLoggerOptions;
+
+        _writerLazy = new Lazy<IDatabaseLoggingWriter>(() =>
+        {
+            _isResolvingWriter = true;
+            try
+            {
+                // 解析服务作用域工厂服务
+                var scopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
+
+                // 创建服务作用域
+                _serviceScope = scopeFactory.CreateScope();
+
+                // 基于当前作用域创建数据库日志写入器
+                return _serviceScope.ServiceProvider.GetRequiredService(writerType) as IDatabaseLoggingWriter;
+            }
+            finally
+            {
+                _isResolvingWriter = false;
+            }
+        });
+
+        // 创建长时间运行的后台任务，并将日志消息队列中数据写入存储中
+        _processQueueTask = Task.Factory.StartNew(async state => await ((DatabaseLoggerProvider)state).ProcessQueueAsync()
+            , this, TaskCreationOptions.LongRunning);
     }
 
     /// <summary>
@@ -93,6 +133,9 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
     /// <returns><see cref="ILogger"/></returns>
     public ILogger CreateLogger(string categoryName)
     {
+        // 解决日志死循环问题
+        if (_isResolvingWriter) return NullLogger.Instance;
+
         return _databaseLoggers.GetOrAdd(categoryName, name => new DatabaseLogger(name, this));
     }
 
@@ -150,38 +193,23 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
     }
 
     /// <summary>
-    /// 设置服务提供器
-    /// </summary>
-    /// <param name="serviceProvider"></param>
-    /// <param name="databaseLoggingWriterType"></param>
-    internal void SetServiceProvider(IServiceProvider serviceProvider, Type databaseLoggingWriterType)
-    {
-        // 解析服务作用域工厂服务
-        var serviceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
-
-        // 创建服务作用域
-        _serviceScope = serviceScopeFactory.CreateScope();
-
-        // 基于当前作用域创建数据库日志写入器
-        _databaseLoggingWriter = _serviceScope.ServiceProvider.GetRequiredService(databaseLoggingWriterType) as IDatabaseLoggingWriter;
-
-        // 创建长时间运行的后台任务，并将日志消息队列中数据写入存储中
-        _processQueueTask = Task.Factory.StartNew(async state => await ((DatabaseLoggerProvider)state).ProcessQueueAsync()
-            , this, TaskCreationOptions.LongRunning);
-    }
-
-    /// <summary>
     /// 将日志消息写入数据库中
     /// </summary>
     /// <remarks></remarks>
     private async Task ProcessQueueAsync()
     {
+        // 获取数据库日志写入器实例（仅第一次执行时解析）
+        var databaseLoggingWriter = _writerLazy.Value;
+
         foreach (var logMsg in _logMessageQueue.GetConsumingEnumerable())
         {
+            // 记录当前正在执行的写入器类型
+            CurrentWritingWriterType.Value = databaseLoggingWriter?.GetType();
+
             try
             {
                 // 调用数据库写入器写入数据库方法
-                await _databaseLoggingWriter.WriteAsync(logMsg, _logMessageQueue.Count == 0);
+                await databaseLoggingWriter.WriteAsync(logMsg, _logMessageQueue.Count == 0);
             }
             catch (Exception ex)
             {
@@ -196,6 +224,7 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
             }
             finally
             {
+                CurrentWritingWriterType.Value = null;
                 logMsg.Context?.Dispose();
             }
         }

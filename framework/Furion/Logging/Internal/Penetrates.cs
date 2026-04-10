@@ -25,7 +25,6 @@
 
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.Globalization;
 using System.Text;
 
 namespace Furion.Logging;
@@ -80,14 +79,17 @@ internal static class Penetrates
     /// <summary>
     /// 从配置文件中加载配置并创建数据库日志记录器提供程序
     /// </summary>
+    /// <typeparam name="TDatabaseLoggingWriter">实现自 <see cref="IDatabaseLoggingWriter"/></typeparam>
+    /// <param name="serviceProvider">服务提供器</param>
     /// <param name="configuraionKey">获取配置文件对应的 Key</param>
     /// <param name="configure">数据库日志记录器配置选项委托</param>
     /// <returns><see cref="DatabaseLoggerProvider"/></returns>
-    internal static DatabaseLoggerProvider CreateFromConfiguration(Func<string> configuraionKey, Action<DatabaseLoggerOptions> configure = default)
+    internal static DatabaseLoggerProvider CreateFromConfiguration<TDatabaseLoggingWriter>(IServiceProvider serviceProvider, Func<string> configuraionKey, Action<DatabaseLoggerOptions> configure = default)
+        where TDatabaseLoggingWriter : class, IDatabaseLoggingWriter
     {
         // 检查 Key 是否存在
         var key = configuraionKey?.Invoke();
-        if (string.IsNullOrWhiteSpace(key)) return new DatabaseLoggerProvider(new DatabaseLoggerOptions());
+        if (string.IsNullOrWhiteSpace(key)) return new DatabaseLoggerProvider(new DatabaseLoggerOptions(), serviceProvider, typeof(TDatabaseLoggingWriter));
 
         // 加载配置文件中指定节点
         var databaseLoggerSettings = App.GetConfig<DatabaseLoggerSettings>(key)
@@ -109,7 +111,7 @@ internal static class Penetrates
         configure?.Invoke(databaseLoggerOptions);
 
         // 创建数据库日志记录器提供程序
-        return new DatabaseLoggerProvider(databaseLoggerOptions);
+        return new DatabaseLoggerProvider(new DatabaseLoggerOptions(), serviceProvider, typeof(TDatabaseLoggingWriter));
     }
 
     /// <summary>

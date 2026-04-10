@@ -105,13 +105,8 @@ public static class ILoggerFactoryExtensions
         var options = new DatabaseLoggerOptions();
         configure?.Invoke(options);
 
-        var databaseLoggerProvider = new DatabaseLoggerProvider(options);
-
-        // 解决数据库写入器中循环引用数据库仓储问题
-        if (databaseLoggerProvider._serviceScope == null)
-        {
-            databaseLoggerProvider.SetServiceProvider(serviceProvider, typeof(TDatabaseLoggingWriter));
-        }
+        // 创建数据库日志记录器提供程序
+        var databaseLoggerProvider = new DatabaseLoggerProvider(options, serviceProvider, typeof(TDatabaseLoggingWriter));
 
         // 添加数据库日志记录器提供程序
         factory.AddProvider(databaseLoggerProvider);
@@ -146,17 +141,8 @@ public static class ILoggerFactoryExtensions
     public static ILoggerFactory AddDatabase<TDatabaseLoggingWriter>(this ILoggerFactory factory, Func<string> configuraionKey, IServiceProvider serviceProvider, Action<DatabaseLoggerOptions> configure = default)
         where TDatabaseLoggingWriter : class, IDatabaseLoggingWriter
     {
-        // 创建数据库日志记录器提供程序
-        var databaseLoggerProvider = Penetrates.CreateFromConfiguration(configuraionKey, configure);
-
-        // 解决数据库写入器中循环引用数据库仓储问题
-        if (databaseLoggerProvider._serviceScope == null)
-        {
-            databaseLoggerProvider.SetServiceProvider(serviceProvider, typeof(TDatabaseLoggingWriter));
-        }
-
         // 添加数据库日志记录器提供程序
-        factory.AddProvider(databaseLoggerProvider);
+        factory.AddProvider(Penetrates.CreateFromConfiguration<TDatabaseLoggingWriter>(serviceProvider, configuraionKey, configure));
 
         return factory;
     }
