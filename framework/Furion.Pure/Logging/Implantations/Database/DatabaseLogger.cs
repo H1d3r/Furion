@@ -142,9 +142,19 @@ public sealed class DatabaseLogger : ILogger
         // 判断是否忽略循环输出日志，解决数据库日志提供程序中也输出日志导致写入递归问题
         if (_options.IgnoreReferenceLoop)
         {
-            var stackTrace = new StackTrace();
-            if (stackTrace.GetFrames().Any(u => u.HasMethod() && typeof(IDatabaseLoggingWriter).IsAssignableFrom(u.GetMethod().DeclaringType)))
+            // 第一道防线：丢弃当前正在执行的写入器自身发出的日志
+            var currentWriterType = DatabaseLoggerProvider.CurrentWritingWriterType.Value;
+            if (currentWriterType != null && _logName == currentWriterType.FullName)
             {
+                _options.FallbackLogAction?.Invoke(logMsg);
+                logMsg.Context?.Dispose();
+                return;
+            }
+
+            // 第二道防线：调用栈检测（用于处理其他复杂递归场景）
+            if (IsInWriterCallStack())
+            {
+                _options.FallbackLogAction?.Invoke(logMsg);
                 logMsg.Context?.Dispose();
                 return;
             }
@@ -152,5 +162,15 @@ public sealed class DatabaseLogger : ILogger
 
         // 写入日志队列
         _databaseLoggerProvider.WriteToQueue(logMsg);
+    }
+
+    /// <summary>
+    /// 检查当前调用栈中是否包含 IDatabaseLoggingWriter 接口的实现方法
+    /// </summary>
+    /// <returns></returns>
+    private bool IsInWriterCallStack()
+    {
+        var stackTrace = new StackTrace();
+        return stackTrace.GetFrames().Any(u => u.HasMethod() && typeof(IDatabaseLoggingWriter).IsAssignableFrom(u.GetMethod().DeclaringType));
     }
 }

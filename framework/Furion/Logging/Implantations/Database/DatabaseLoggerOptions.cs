@@ -60,6 +60,12 @@ public sealed class DatabaseLoggerOptions
     public Action<DatabaseWriteError> HandleWriteError { get; set; }
 
     /// <summary>
+    /// 当发生递归日志写入时的备用处理动作
+    /// </summary>
+    /// <remarks>例如输出到控制台或独立文件。</remarks>
+    public Action<LogMessage> FallbackLogAction { get; set; }
+
+    /// <summary>
     /// 是否使用 UTC 时间戳，默认 false
     /// </summary>
     public bool UseUtcTimestamp { get; set; }
