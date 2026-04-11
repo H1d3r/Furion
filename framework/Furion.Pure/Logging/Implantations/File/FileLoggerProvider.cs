@@ -150,7 +150,7 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
 
         try
         {
-            // 设置 1.5秒的缓冲时间，避免还有日志消息没有完成写入文件中
+            // 设置 1.5 秒的缓冲时间，避免还有日志消息没有完成写入文件中
             _processQueueTask?.Wait(1500);
         }
         catch (TaskCanceledException) { }
@@ -178,16 +178,9 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
     internal void WriteToQueue(LogMessage logMsg)
     {
         // 只有队列可持续入队才写入
-        if (!_logMessageQueue.IsAddingCompleted)
-        {
-            try
-            {
-                _logMessageQueue.Add(logMsg);
-                return;
-            }
-            catch (InvalidOperationException) { }
-            catch { }
-        }
+        if (_logMessageQueue.IsAddingCompleted) return;
+
+        if (_logMessageQueue.TryAdd(logMsg)) return;
     }
 
     /// <summary>
