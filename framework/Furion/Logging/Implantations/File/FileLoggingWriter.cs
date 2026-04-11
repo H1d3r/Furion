@@ -63,7 +63,22 @@ internal class FileLoggingWriter
     /// <summary>
     /// 缓存上次返回的基本日志文件名，避免重复解析
     /// </summary>
-    private string __LastBaseFileName = null;
+    private string _lastBaseFileName;
+
+    /// <summary>
+    /// 缓存上次扫描的日志文件列表
+    /// </summary>
+    private List<FileInfo> _cachedLogFiles;
+
+    /// <summary>
+    /// 缓存最后扫描时间戳
+    /// </summary>
+    private long _lastScanTimestamp;
+
+    /// <summary>
+    /// 目录扫描缓存有效期（毫秒），默认 5 秒
+    /// </summary>
+    private const long DirectoryScanCacheTtlMs = 5000;
 
     /// <summary>
     /// 判断是否启动滚动日志功能
@@ -150,39 +165,64 @@ internal class FileLoggingWriter
     {
         // 获取日志基础文件名并将其缓存
         var baseFileName = GetBaseFileName();
-        __LastBaseFileName = baseFileName;
+        _lastBaseFileName = baseFileName;
 
         // 是否配置了日志文件最大存储大小
-        if (_options.FileSizeLimitBytes > 0)
+        if (_options.FileSizeLimitBytes <= 0)
         {
-            // 定义文件查找通配符
-            var logFileMask = Path.GetFileNameWithoutExtension(baseFileName) + "*" + Path.GetExtension(baseFileName);
+            _fileName = baseFileName;
+            return;
+        }
 
-            // 获取文件路径
-            var logDirName = Path.GetDirectoryName(baseFileName);
+        // 定义文件查找通配符
+        var logFileMask = Path.GetFileNameWithoutExtension(baseFileName) + "*" + Path.GetExtension(baseFileName);
 
-            // 如果没有配置文件路径则默认放置根目录
-            if (string.IsNullOrEmpty(logDirName)) logDirName = Directory.GetCurrentDirectory();
+        // 获取文件路径
+        var logDirName = Path.GetDirectoryName(baseFileName);
 
-            // 在当前目录下根据文件通配符查找所有匹配的文件
-            var logFiles = Directory.Exists(logDirName)
-                ? Directory.GetFiles(logDirName, logFileMask, SearchOption.TopDirectoryOnly)
-                : Array.Empty<string>();
+        // 如果没有配置文件路径则默认放置根目录
+        if (string.IsNullOrEmpty(logDirName)) logDirName = Directory.GetCurrentDirectory();
 
-            // 处理已有日志文件存在情况
-            if (logFiles.Length > 0)
+        var now = Stopwatch.GetTimestamp();
+        var elapsedMs = (now - _lastScanTimestamp) * 1000L / Stopwatch.Frequency;
+        // 在当前目录下根据文件通配符查找所有匹配的文件
+        if (_cachedLogFiles == null || elapsedMs >= DirectoryScanCacheTtlMs)
+        {
+            _cachedLogFiles = [];
+
+            if (Directory.Exists(logDirName))
             {
-                // 根据最后更新时间获取最近操作的文件
-                var lastFileInfo = logFiles
-                    .Select(fName => new FileInfo(fName))
-                    .OrderByDescending(fInfo => fInfo.LastWriteTime)
-                    .ThenByDescending(fInfo => fInfo.Name)
-                    .First();
+                foreach (var file in Directory.EnumerateFiles(logDirName, logFileMask, SearchOption.TopDirectoryOnly))
+                {
+                    try
+                    {
+                        _cachedLogFiles.Add(new FileInfo(file));
+                    }
+                    catch { }
+                }
+            }
 
-                _fileName = lastFileInfo.FullName;
+            _lastScanTimestamp = now;
+        }
+
+        // 处理已有日志文件存在情况
+        if (_cachedLogFiles.Count > 0)
+        {
+            FileInfo lastFileInfo = null;
+            long maxTicks = -1;
+
+            foreach (var fInfo in _cachedLogFiles)
+            {
+                var ticks = fInfo.LastWriteTimeUtc.Ticks;
+                // 优先按时间，时间相同按文件名降序
+                if (ticks > maxTicks || (ticks == maxTicks && (lastFileInfo == null || string.CompareOrdinal(fInfo.Name, lastFileInfo.Name) > 0)))
+                {
+                    maxTicks = ticks;
+                    lastFileInfo = fInfo;
+                }
             }
             // 没有任何匹配的日志文件直接使用当前基础文件名
-            else _fileName = baseFileName;
+            _fileName = lastFileInfo?.FullName ?? baseFileName;
         }
         else _fileName = baseFileName;
     }
@@ -192,25 +232,27 @@ internal class FileLoggingWriter
     /// </summary>
     private void RebuildRollingFileNames()
     {
-        var baseFileName = __LastBaseFileName;
+        var baseFileName = _lastBaseFileName;
         var logFileMask = Path.GetFileNameWithoutExtension(baseFileName) + "*" + Path.GetExtension(baseFileName);
         var logDirName = Path.GetDirectoryName(baseFileName);
         if (string.IsNullOrEmpty(logDirName)) logDirName = Directory.GetCurrentDirectory();
 
         if (!Directory.Exists(logDirName)) return;
 
-        var logFiles = Directory.GetFiles(logDirName, logFileMask, SearchOption.TopDirectoryOnly);
-
         // 清空当前记录
         _fileLoggerProvider._rollingFileNames.Clear();
 
         // 将所有匹配的文件加入滚动列表
-        foreach (var file in logFiles)
+        foreach (var file in Directory.EnumerateFiles(logDirName, logFileMask, SearchOption.TopDirectoryOnly))
         {
-            var fileInfo = new FileInfo(file);
-            // 处理 Windows 和 Linux 路径分隔符不一致问题
-            var key = fileInfo.FullName.Replace('\\', '/');
-            _fileLoggerProvider._rollingFileNames.TryAdd(key, fileInfo);
+            try
+            {
+                var fileInfo = new FileInfo(file);
+                // 处理 Windows 和 Linux 路径分隔符不一致问题
+                var key = fileInfo.FullName.Replace('\\', '/');
+                _fileLoggerProvider._rollingFileNames.TryAdd(key, fileInfo);
+            }
+            catch { }
         }
     }
 
@@ -302,7 +344,7 @@ internal class FileLoggingWriter
             var fileInfo = new FileInfo(_fileName);
 
             // 判断文件目录是否存在，不存在则自动创建
-            fileInfo.Directory.Create();
+            fileInfo.Directory?.Create();
 
             _fileStream = new FileStream(
                 _fileName,
@@ -396,9 +438,9 @@ internal class FileLoggingWriter
             {
                 var baseFileName = GetBaseFileName();
 
-                if (baseFileName != __LastBaseFileName)
+                if (baseFileName != _lastBaseFileName)
                 {
-                    __LastBaseFileName = baseFileName;
+                    _lastBaseFileName = baseFileName;
 
                     // 滚动日志文件名规则变更后重建列表
                     if (_isEnabledRollingFiles)
@@ -433,25 +475,35 @@ internal class FileLoggingWriter
         // 判断超出限制的文件自动删除
         if (succeed && _fileLoggerProvider._rollingFileNames.Count > _options.MaxRollingFiles)
         {
-            // 根据最后写入时间删除过时日志
-            var dropFiles = _fileLoggerProvider._rollingFileNames
-                .OrderBy(u => u.Value.LastWriteTimeUtc)
-                .Take(_fileLoggerProvider._rollingFileNames.Count - _options.MaxRollingFiles);
+            // 收集需要删除的文件
+            var filesToDelete = new List<string>(_fileLoggerProvider._rollingFileNames.Count - _options.MaxRollingFiles);
 
-            // 遍历所有需要删除的文件
-            foreach (var rollingFile in dropFiles)
+            foreach (var item in _fileLoggerProvider._rollingFileNames.OrderBy(u => u.Value.LastWriteTimeUtc)
+                .Take(_fileLoggerProvider._rollingFileNames.Count - _options.MaxRollingFiles))
             {
-                var removeSucceed = _fileLoggerProvider._rollingFileNames.TryRemove(rollingFile.Key, out _);
-                if (!removeSucceed) continue;
-
-                // 执行删除
-                Task.Run(() =>
+                if (_fileLoggerProvider._rollingFileNames.TryRemove(item.Key, out _))
                 {
-                    try
+                    filesToDelete.Add(item.Key);
+                }
+            }
+
+            // 批量异步删除
+            if (filesToDelete.Count > 0)
+            {
+                Task.Run(async () =>
+                {
+                    foreach (var filePath in filesToDelete)
                     {
-                        if (File.Exists(rollingFile.Key)) File.Delete(rollingFile.Key);
+                        try
+                        {
+                            if (File.Exists(filePath))
+                            {
+                                await Task.Yield();
+                                File.Delete(filePath);
+                            }
+                        }
+                        catch { }
                     }
-                    catch { }
                 });
             }
         }
@@ -489,7 +541,7 @@ internal class FileLoggingWriter
         if (ex is FileNotFoundException or DirectoryNotFoundException or ObjectDisposedException)
             return true;
 
-        // IOException：检查 HResult（低16位为 Win32 错误码）
+        // IOException：检查 HResult（低 16 位为 Win32 错误码）
         if (ex is IOException ioEx)
         {
             var code = ioEx.HResult & 0xFFFF;
@@ -556,7 +608,7 @@ internal class FileLoggingWriter
                     await _textWriter.WriteLineAsync(logMsg.Message);
                     if (flush) await _textWriter.FlushAsync();
 
-                    // 智能检查：显式flush时 或 每100次写入 检查文件是否存在
+                    // 智能检查：显式 flush 时 或 每 100 次写入 检查文件是否存在
                     if (flush || Interlocked.Increment(ref _writeCount) >= PeriodicCheckInterval)
                     {
                         // 重置计数器

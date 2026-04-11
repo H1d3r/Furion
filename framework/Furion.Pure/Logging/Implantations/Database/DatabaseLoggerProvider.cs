@@ -78,7 +78,7 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
     /// <summary>
     /// 用于检测当前正在执行写入的写入器类型
     /// </summary>
-    /// <remarks>用于精确丢弃该写入器自身发出的日志。</remarks>
+    /// <remarks>用于丢弃该写入器自身发出的日志。</remarks>
     internal static readonly AsyncLocal<Type> CurrentWritingWriterType = new();
 
     /// <summary>
@@ -159,7 +159,7 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
 
         try
         {
-            // 设置 1.5秒的缓冲时间，避免还有日志消息没有完成写入数据库中
+            // 设置 1.5 秒的缓冲时间，避免还有日志消息没有完成写入数据库中
             _processQueueTask?.Wait(1500);
         }
         catch (TaskCanceledException) { }
@@ -180,16 +180,9 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
     internal void WriteToQueue(LogMessage logMsg)
     {
         // 只有队列可持续入队才写入
-        if (!_logMessageQueue.IsAddingCompleted)
-        {
-            try
-            {
-                _logMessageQueue.Add(logMsg);
-                return;
-            }
-            catch (InvalidOperationException) { }
-            catch { }
-        }
+        if (_logMessageQueue.IsAddingCompleted) return;
+
+        if (_logMessageQueue.TryAdd(logMsg)) return;
     }
 
     /// <summary>
