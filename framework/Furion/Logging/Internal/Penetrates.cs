@@ -42,13 +42,13 @@ internal static class Penetrates
     /// <summary>
     /// 从配置文件中加载配置并创建文件日志记录器提供程序
     /// </summary>
-    /// <param name="configuraionKey">获取配置文件对应的 Key</param>
+    /// <param name="configurationKey">获取配置文件对应的 Key</param>
     /// <param name="configure">文件日志记录器配置选项委托</param>
     /// <returns><see cref="FileLoggerProvider"/></returns>
-    internal static FileLoggerProvider CreateFromConfiguration(Func<string> configuraionKey, Action<FileLoggerOptions> configure = default)
+    internal static FileLoggerProvider CreateFromConfiguration(Func<string> configurationKey, Action<FileLoggerOptions> configure = default)
     {
         // 检查 Key 是否存在
-        var key = configuraionKey?.Invoke();
+        var key = configurationKey?.Invoke();
         if (string.IsNullOrWhiteSpace(key)) return new FileLoggerProvider("application.log", new FileLoggerOptions());
 
         // 加载配置文件中指定节点
@@ -81,14 +81,14 @@ internal static class Penetrates
     /// </summary>
     /// <typeparam name="TDatabaseLoggingWriter">实现自 <see cref="IDatabaseLoggingWriter"/></typeparam>
     /// <param name="serviceProvider">服务提供器</param>
-    /// <param name="configuraionKey">获取配置文件对应的 Key</param>
+    /// <param name="configurationKey">获取配置文件对应的 Key</param>
     /// <param name="configure">数据库日志记录器配置选项委托</param>
     /// <returns><see cref="DatabaseLoggerProvider"/></returns>
-    internal static DatabaseLoggerProvider CreateFromConfiguration<TDatabaseLoggingWriter>(IServiceProvider serviceProvider, Func<string> configuraionKey, Action<DatabaseLoggerOptions> configure = default)
+    internal static DatabaseLoggerProvider CreateFromConfiguration<TDatabaseLoggingWriter>(IServiceProvider serviceProvider, Func<string> configurationKey, Action<DatabaseLoggerOptions> configure = default)
         where TDatabaseLoggingWriter : class, IDatabaseLoggingWriter
     {
         // 检查 Key 是否存在
-        var key = configuraionKey?.Invoke();
+        var key = configurationKey?.Invoke();
         if (string.IsNullOrWhiteSpace(key)) return new DatabaseLoggerProvider(new DatabaseLoggerOptions(), serviceProvider, typeof(TDatabaseLoggingWriter));
 
         // 加载配置文件中指定节点
@@ -111,7 +111,7 @@ internal static class Penetrates
         configure?.Invoke(databaseLoggerOptions);
 
         // 创建数据库日志记录器提供程序
-        return new DatabaseLoggerProvider(new DatabaseLoggerOptions(), serviceProvider, typeof(TDatabaseLoggingWriter));
+        return new DatabaseLoggerProvider(databaseLoggerOptions, serviceProvider, typeof(TDatabaseLoggingWriter));
     }
 
     /// <summary>
@@ -207,7 +207,7 @@ internal static class Penetrates
     /// <returns></returns>
     private static string PadLeftAlign(string message)
     {
-        var newMessage = string.Join(Environment.NewLine, message.Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.None)
+        var newMessage = string.Join(Environment.NewLine, message.Replace("\r\n", "\n").Split('\n', StringSplitOptions.None)
                     .Select(line => string.Empty.PadLeft(6, ' ') + line));
 
         return newMessage;
@@ -288,8 +288,8 @@ internal static class Penetrates
         formatString.Append(message);
 
         // 输出控制台前景色和背景色
-        if (colors.Background.HasValue) formatString.Append("\u001b[39m\u001b[22m");
-        if (colors.Foreground.HasValue) formatString.Append("\u001b[49m");
+        if (colors.Foreground.HasValue) formatString.Append("\u001b[39m\u001b[22m");
+        if (colors.Background.HasValue) formatString.Append("\u001b[49m");
 
         return formatString;
     }

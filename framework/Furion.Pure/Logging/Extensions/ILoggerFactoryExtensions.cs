@@ -80,13 +80,13 @@ public static class ILoggerFactoryExtensions
     /// 添加文件日志记录器
     /// </summary>
     /// <param name="factory">日志工厂</param>
-    /// <param name="configuraionKey">获取配置文件对应的 Key</param>
+    /// <param name="configurationKey">获取配置文件对应的 Key</param>
     /// <param name="configure">文件日志记录器配置选项委托</param>
     /// <returns><see cref="ILoggerFactory"/></returns>
-    public static ILoggerFactory AddFile(this ILoggerFactory factory, Func<string> configuraionKey, Action<FileLoggerOptions> configure = default)
+    public static ILoggerFactory AddFile(this ILoggerFactory factory, Func<string> configurationKey, Action<FileLoggerOptions> configure = default)
     {
         // 添加文件日志记录器提供程序
-        factory.AddProvider(Penetrates.CreateFromConfiguration(configuraionKey, configure));
+        factory.AddProvider(Penetrates.CreateFromConfiguration(configurationKey, configure));
 
         return factory;
     }
@@ -120,13 +120,13 @@ public static class ILoggerFactoryExtensions
     /// <typeparam name="TDatabaseLoggingWriter">实现自 <see cref="IDatabaseLoggingWriter"/></typeparam>
     /// <param name="factory">日志工厂</param>
     /// <param name="serviceProvider">服务提供器</param>
-    /// <param name="configuraionKey">配置文件对于的 Key</param>
+    /// <param name="configurationKey">配置文件对于的 Key</param>
     /// <param name="configure">数据库日志记录器配置选项委托</param>
     /// <returns><see cref="ILoggerFactory"/></returns>
-    public static ILoggerFactory AddDatabase<TDatabaseLoggingWriter>(this ILoggerFactory factory, IServiceProvider serviceProvider, string configuraionKey = default, Action<DatabaseLoggerOptions> configure = default)
+    public static ILoggerFactory AddDatabase<TDatabaseLoggingWriter>(this ILoggerFactory factory, IServiceProvider serviceProvider, string configurationKey = default, Action<DatabaseLoggerOptions> configure = default)
          where TDatabaseLoggingWriter : class, IDatabaseLoggingWriter
     {
-        return factory.AddDatabase<TDatabaseLoggingWriter>(() => configuraionKey ?? "Logging:Database", serviceProvider, configure);
+        return factory.AddDatabase<TDatabaseLoggingWriter>(() => configurationKey ?? "Logging:Database", serviceProvider, configure);
     }
 
     /// <summary>
@@ -134,15 +134,15 @@ public static class ILoggerFactoryExtensions
     /// </summary>
     /// <typeparam name="TDatabaseLoggingWriter">实现自 <see cref="IDatabaseLoggingWriter"/></typeparam>
     /// <param name="factory">日志工厂</param>
-    /// <param name="configuraionKey">获取配置文件对应的 Key</param>
+    /// <param name="configurationKey">获取配置文件对应的 Key</param>
     /// <param name="serviceProvider">服务提供器</param>
     /// <param name="configure">数据库日志记录器配置选项委托</param>
     /// <returns><see cref="ILoggerFactory"/></returns>
-    public static ILoggerFactory AddDatabase<TDatabaseLoggingWriter>(this ILoggerFactory factory, Func<string> configuraionKey, IServiceProvider serviceProvider, Action<DatabaseLoggerOptions> configure = default)
+    public static ILoggerFactory AddDatabase<TDatabaseLoggingWriter>(this ILoggerFactory factory, Func<string> configurationKey, IServiceProvider serviceProvider, Action<DatabaseLoggerOptions> configure = default)
         where TDatabaseLoggingWriter : class, IDatabaseLoggingWriter
     {
         // 添加数据库日志记录器提供程序
-        factory.AddProvider(Penetrates.CreateFromConfiguration<TDatabaseLoggingWriter>(serviceProvider, configuraionKey, configure));
+        factory.AddProvider(Penetrates.CreateFromConfiguration<TDatabaseLoggingWriter>(serviceProvider, configurationKey, configure));
 
         return factory;
     }
