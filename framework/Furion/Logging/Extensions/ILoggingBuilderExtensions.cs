@@ -26,6 +26,7 @@
 using Furion.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging.Console;
 
 namespace Microsoft.Extensions.Logging;
 
@@ -39,13 +40,17 @@ public static class ILoggingBuilderExtensions
     /// </summary>
     /// <param name="builder"></param>
     /// <param name="configure"></param>
+    /// <param name="loggerConfigure"></param>
     /// <returns></returns>
-    public static ILoggingBuilder AddConsoleFormatter(this ILoggingBuilder builder, Action<ConsoleFormatterExtendOptions> configure = default)
+    public static ILoggingBuilder AddConsoleFormatter(this ILoggingBuilder builder, Action<ConsoleFormatterExtendOptions> configure = default, Action<ConsoleLoggerOptions> loggerConfigure = default)
     {
         configure ??= (options) => { };
 
-        return builder.AddConsole(options => options.FormatterName = "console-format")
-                      .AddConsoleFormatter<ConsoleFormatterExtend, ConsoleFormatterExtendOptions>(configure);
+        return builder.AddConsole(options =>
+        {
+            options.FormatterName = "console-format";
+            loggerConfigure?.Invoke(options);
+        }).AddConsoleFormatter<ConsoleFormatterExtend, ConsoleFormatterExtendOptions>(configure);
     }
 
     /// <summary>
@@ -102,15 +107,15 @@ public static class ILoggingBuilderExtensions
     /// 添加文件日志记录器（从配置文件中）
     /// </summary>
     /// <param name="builder">日志构建器</param>
-    /// <param name="configuraionKey">获取配置文件对应的 Key</param>
+    /// <param name="configurationKey">获取配置文件对应的 Key</param>
     /// <param name="configure">文件日志记录器配置选项委托</param>
     /// <returns><see cref="ILoggingBuilder"/></returns>
-    public static ILoggingBuilder AddFile(this ILoggingBuilder builder, Func<string> configuraionKey, Action<FileLoggerOptions> configure = default)
+    public static ILoggingBuilder AddFile(this ILoggingBuilder builder, Func<string> configurationKey, Action<FileLoggerOptions> configure = default)
     {
         // 注册文件日志记录器提供器
         builder.Services.Add(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>((serviceProvider) =>
         {
-            return Penetrates.CreateFromConfiguration(configuraionKey, configure);
+            return Penetrates.CreateFromConfiguration(configurationKey, configure);
         }));
 
         return builder;
@@ -147,13 +152,13 @@ public static class ILoggingBuilderExtensions
     /// </summary>
     /// <typeparam name="TDatabaseLoggingWriter">实现自 <see cref="IDatabaseLoggingWriter"/></typeparam>
     /// <param name="builder">日志构建器</param>
-    /// <param name="configuraionKey">配置文件对于的 Key</param>
+    /// <param name="configurationKey">配置文件对于的 Key</param>
     /// <param name="configure">数据库日志记录器配置选项委托</param>
     /// <returns><see cref="ILoggingBuilder"/></returns>
-    public static ILoggingBuilder AddDatabase<TDatabaseLoggingWriter>(this ILoggingBuilder builder, string configuraionKey = default, Action<DatabaseLoggerOptions> configure = default)
+    public static ILoggingBuilder AddDatabase<TDatabaseLoggingWriter>(this ILoggingBuilder builder, string configurationKey = default, Action<DatabaseLoggerOptions> configure = default)
         where TDatabaseLoggingWriter : class, IDatabaseLoggingWriter
     {
-        return builder.AddDatabase<TDatabaseLoggingWriter>(() => configuraionKey ?? "Logging:Database", configure);
+        return builder.AddDatabase<TDatabaseLoggingWriter>(() => configurationKey ?? "Logging:Database", configure);
     }
 
     /// <summary>
@@ -161,10 +166,10 @@ public static class ILoggingBuilderExtensions
     /// </summary>
     /// <typeparam name="TDatabaseLoggingWriter">实现自 <see cref="IDatabaseLoggingWriter"/></typeparam>
     /// <param name="builder">日志构建器</param>
-    /// <param name="configuraionKey">获取配置文件对于的 Key</param>
+    /// <param name="configurationKey">获取配置文件对于的 Key</param>
     /// <param name="configure">数据库日志记录器配置选项委托</param>
     /// <returns><see cref="ILoggingBuilder"/></returns>
-    public static ILoggingBuilder AddDatabase<TDatabaseLoggingWriter>(this ILoggingBuilder builder, Func<string> configuraionKey, Action<DatabaseLoggerOptions> configure = default)
+    public static ILoggingBuilder AddDatabase<TDatabaseLoggingWriter>(this ILoggingBuilder builder, Func<string> configurationKey, Action<DatabaseLoggerOptions> configure = default)
         where TDatabaseLoggingWriter : class, IDatabaseLoggingWriter
     {
         // 注册数据库日志写入器
@@ -173,7 +178,7 @@ public static class ILoggingBuilderExtensions
         // 注册数据库日志记录器提供器
         builder.Services.Add(ServiceDescriptor.Singleton<ILoggerProvider>((serviceProvider) =>
         {
-            return Penetrates.CreateFromConfiguration<TDatabaseLoggingWriter>(serviceProvider, configuraionKey, configure);
+            return Penetrates.CreateFromConfiguration<TDatabaseLoggingWriter>(serviceProvider, configurationKey, configure);
         }));
 
         return builder;
