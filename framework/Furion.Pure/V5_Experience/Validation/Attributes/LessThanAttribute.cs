@@ -25,6 +25,7 @@
 
 using Furion.Validation;
 using Furion.Validation.Resources;
+using System.Globalization;
 
 namespace System.ComponentModel.DataAnnotations;
 
@@ -32,7 +33,7 @@ namespace System.ComponentModel.DataAnnotations;
 ///     小于验证特性
 /// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter)]
-public class LessThanAttribute : ComparisonAttribute
+public class LessThanAttribute : ValidationBaseAttribute
 {
     /// <inheritdoc cref="LessThanValidator" />
     internal readonly LessThanValidator _validator;
@@ -60,9 +61,22 @@ public class LessThanAttribute : ComparisonAttribute
     /// </summary>
     /// <param name="compareValue">比较的值</param>
     public LessThanAttribute(IComparable compareValue)
-        : base(compareValue, nameof(ValidationMessages.LessThanValidator_ValidationError)) =>
+    {
+        CompareValue = compareValue;
         _validator = new LessThanValidator(compareValue);
 
+        UseResourceKey(() => nameof(ValidationMessages.LessThanValidator_ValidationError));
+    }
+
+    /// <summary>
+    ///     比较的值
+    /// </summary>
+    public IComparable CompareValue { get; }
+
     /// <inheritdoc />
-    protected override bool IsValid(IComparable value) => _validator.IsValid(value);
+    public override bool IsValid(object? value) => _validator.IsValid(value);
+
+    /// <inheritdoc />
+    public override string FormatErrorMessage(string name) =>
+        string.Format(CultureInfo.CurrentCulture, ErrorMessageString, name, CompareValue);
 }
