@@ -43,5 +43,5 @@ public class GreaterThanValidator : ComparisonValidator
 
     /// <inheritdoc />
     protected override bool IsValid(IComparable value, IValidationContext? validationContext) =>
-        IsTypeMatchedToCompareValue(value) && value.CompareTo(CompareValue) > 0;
+        value.CompareTo(CompareValue) > 0;
 }
