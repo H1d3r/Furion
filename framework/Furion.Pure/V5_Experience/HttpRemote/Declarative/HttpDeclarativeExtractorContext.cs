@@ -32,31 +32,52 @@ namespace Furion.HttpRemote;
 /// <summary>
 ///     HTTP 声明式提取器上下文
 /// </summary>
-public sealed class HttpDeclarativeExtractorContext
+public sealed class HttpDeclarativeExtractorContext : IServiceProvider
 {
     /// <summary>
     ///     冻结参数类型集合
     /// </summary>
     /// <remarks>此类参数类型不应作为外部提取对象。</remarks>
-    internal static readonly Type[] _frozenParameterTypes =
+    internal static readonly HashSet<Type> _frozenParameterTypes =
     [
         typeof(Action<HttpRequestBuilder>), typeof(Action<HttpMultipartFormDataBuilder>), typeof(HttpCompletionOption),
         typeof(CancellationToken)
     ];
 
     /// <summary>
+    ///     <see cref="IServiceProvider" /> 委托
+    /// </summary>
+    internal Func<Type, object?>? _serviceProvider;
+
+    /// <summary>
     ///     <inheritdoc cref="HttpDeclarativeExtractorContext" />
     /// </summary>
     /// <param name="method">被调用方法</param>
     /// <param name="args">被调用方法的参数值数组</param>
-    internal HttpDeclarativeExtractorContext(MethodInfo method, object?[] args)
+    /// <param name="methodMetadata">
+    ///     <see cref="HttpDeclarativeMethodMetadata" />
+    /// </param>
+    /// <param name="serviceProvider">
+    ///     <see cref="IServiceProvider" />
+    /// </param>
+    internal HttpDeclarativeExtractorContext(MethodInfo method, object?[] args,
+        HttpDeclarativeMethodMetadata methodMetadata, IServiceProvider? serviceProvider = null)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(method);
         ArgumentNullException.ThrowIfNull(args);
+        ArgumentNullException.ThrowIfNull(methodMetadata);
+
+        // 空检查
+        if (serviceProvider is not null)
+        {
+            var localServiceProvider = serviceProvider;
+            InitializeServiceProvider(localServiceProvider.GetService);
+        }
 
         Method = method;
         Args = args;
+        MethodMetadata = methodMetadata;
 
         // 初始化被调用方法的参数键值字典
         Parameters = method.GetParameters().Select((p, i) => new { Parameter = p, Value = args[i] })
@@ -77,6 +98,9 @@ public sealed class HttpDeclarativeExtractorContext
     /// </summary>
     public object?[] Args { get; }
 
+    /// <inheritdoc cref="HttpDeclarativeMethodMetadata" />
+    public HttpDeclarativeMethodMetadata MethodMetadata { get; }
+
     /// <summary>
     ///     被调用方法的参数键值字典
     /// </summary>
@@ -86,6 +110,9 @@ public sealed class HttpDeclarativeExtractorContext
     ///     被调用方法的非冻结类型参数键值字典
     /// </summary>
     public IReadOnlyDictionary<ParameterInfo, object?> UnFrozenParameters { get; }
+
+    /// <inheritdoc />
+    public object? GetService(Type serviceType) => _serviceProvider?.Invoke(serviceType);
 
     /// <summary>
     ///     判断参数是否为冻结参数
@@ -111,7 +138,7 @@ public sealed class HttpDeclarativeExtractorContext
     /// <param name="attribute">
     ///     <typeparamref name="TAttribute" />
     /// </param>
-    /// <param name="inherit">是否在基类中搜索</param>
+    /// <param name="inherit">是否在基类或被代理的接口中搜索</param>
     /// <typeparam name="TAttribute">
     ///     <see cref="Attribute" />
     /// </typeparam>
@@ -119,13 +146,29 @@ public sealed class HttpDeclarativeExtractorContext
     ///     <see cref="bool" />
     /// </returns>
     public bool IsMethodDefined<TAttribute>([NotNullWhen(true)] out TAttribute? attribute, bool inherit = false)
-        where TAttribute : Attribute =>
-        Method.IsDefined(out attribute, inherit);
+        where TAttribute : Attribute
+    {
+        // 获取指定特性实例
+        attribute = MethodMetadata.MethodAttributes?.OfType<TAttribute>().FirstOrDefault();
+
+        // 检查是否定义了指定特性
+        var isDefined = attribute is not null;
+        if (isDefined || !inherit)
+        {
+            return isDefined;
+        }
+
+        // 尝试查找所在声明类或被代理的接口是否定义了指定特性
+        attribute = MethodMetadata.InterfaceAttributes?.OfType<TAttribute>().FirstOrDefault();
+        isDefined = attribute is not null;
+
+        return isDefined;
+    }
 
     /// <summary>
     ///     获取被调用方法指定特性的所有实例
     /// </summary>
-    /// <param name="inherit">是否在基类中搜索</param>
+    /// <param name="inherit">是否在基类或被代理的接口中搜索</param>
     /// <param name="methodScanFirst">是否优先查找 <see cref="MethodInfo" /> 的特性。默认值为：<c>true</c>。</param>
     /// <typeparam name="TAttribute">
     ///     <see cref="Attribute" />
@@ -134,6 +177,38 @@ public sealed class HttpDeclarativeExtractorContext
     ///     <typeparamref name="TAttribute" /><c>[]</c>
     /// </returns>
     public TAttribute[]? GetMethodDefinedCustomAttributes<TAttribute>(bool inherit = false, bool methodScanFirst = true)
-        where TAttribute : Attribute =>
-        Method.GetDefinedCustomAttributes<TAttribute>(inherit, methodScanFirst);
+        where TAttribute : Attribute
+    {
+        // 初始化指定特性集合
+        var attributes = new List<TAttribute>();
+
+        // 获取指定特性集合
+        attributes.AddRange(MethodMetadata.MethodAttributes?.OfType<TAttribute>() ?? []);
+
+        // 尝试获取所在声明类上指定特性集合
+        // ReSharper disable once InvertIf
+        if (inherit && MethodMetadata.InterfaceAttributes is not null)
+        {
+            var declaringAttributes = MethodMetadata.InterfaceAttributes.OfType<TAttribute>();
+
+            // 是否优先查找方法特性
+            if (methodScanFirst)
+            {
+                attributes.AddRange(declaringAttributes);
+            }
+            // 否则添加到头部
+            else
+            {
+                attributes.InsertRange(0, declaringAttributes);
+            }
+        }
+
+        return attributes.Count > 0 ? attributes.ToArray() : null;
+    }
+
+    /// <summary>
+    ///     初始化 <see cref="IServiceProvider" />
+    /// </summary>
+    /// <param name="serviceProvider"><see cref="IServiceProvider" /> 委托</param>
+    internal void InitializeServiceProvider(Func<Type, object?> serviceProvider) => _serviceProvider = serviceProvider;
 }
