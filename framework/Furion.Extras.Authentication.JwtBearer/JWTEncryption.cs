@@ -55,7 +55,7 @@ public class JWTEncryption
     /// <summary>
     /// 刷新 Token 身份标识
     /// </summary>
-    private static readonly string[] _refreshTokenClaims = new[] { "f", "e", "s", "l", "k" };
+    private static readonly string[] _refreshTokenClaims = ["f", "e", "s", "l", "k"];
 
     /// <summary>
     /// 生成 Token
@@ -265,7 +265,6 @@ public class JWTEncryption
 
         // 设置 HttpContext.User 并登录
         httpContext.User = claimsPrincipal;
-        httpContext.SignInAsync(claimsPrincipal);
 
         string accessTokenKey = "access-token"
              , xAccessTokenKey = "x-access-token"
@@ -282,7 +281,7 @@ public class JWTEncryption
 
         // 处理 axios 问题
         httpContext.Response.Headers.TryGetValue(accessControlExposeKey, out var acehs);
-        httpContext.Response.Headers[accessControlExposeKey] = string.Join(',', StringValues.Concat(acehs, new StringValues(new[] { accessTokenKey, xAccessTokenKey })).Distinct());
+        httpContext.Response.Headers[accessControlExposeKey] = string.Join(',', StringValues.Concat(acehs, new StringValues([accessTokenKey, xAccessTokenKey])).Distinct());
 
         return true;
     }
@@ -304,11 +303,9 @@ public class JWTEncryption
 
         // 创建Token验证参数
         var tokenValidationParameters = CreateTokenValidationParameters(jwtSettings);
-        if (tokenValidationParameters.IssuerSigningKey is null)
-        {
-            // 使用公钥
-            tokenValidationParameters.IssuerSigningKey = CreateSecurityKey(jwtSettings.Algorithm, jwtSettings.IssuerSigningKey);
-        }
+
+        // 使用公钥
+        tokenValidationParameters.IssuerSigningKey ??= CreateSecurityKey(jwtSettings.Algorithm, jwtSettings.IssuerSigningKey);
 
         // 验证 Token
         var tokenHandler = new JsonWebTokenHandler();
@@ -429,7 +426,7 @@ public class JWTEncryption
             Debug.WriteLine("No register the code `services.AddJwt()` on Startup.cs.");
         }
 
-        var jwtSettingsOptions = FrameworkApp.GetMethod("GetOptions").MakeGenericMethod(typeof(JWTSettingsOptions)).Invoke(null, new object[] { null }) as JWTSettingsOptions;
+        var jwtSettingsOptions = FrameworkApp.GetMethod("GetOptions").MakeGenericMethod(typeof(JWTSettingsOptions)).Invoke(null, [null]) as JWTSettingsOptions;
         if (jwtSettingsOptions.Algorithm == null && jwtSettingsOptions.ExpiredTime == null)
         {
             SetDefaultJwtSettings(jwtSettingsOptions);
@@ -631,7 +628,7 @@ public class JWTEncryption
     /// <summary>
     /// 日期类型的 Claim 类型
     /// </summary>
-    private static readonly string[] DateTypeClaimTypes = new[] { JwtRegisteredClaimNames.Iat, JwtRegisteredClaimNames.Nbf, JwtRegisteredClaimNames.Exp };
+    private static readonly string[] DateTypeClaimTypes = [JwtRegisteredClaimNames.Iat, JwtRegisteredClaimNames.Nbf, JwtRegisteredClaimNames.Exp];
 
     /// <summary>
     /// 框架 App 静态类
