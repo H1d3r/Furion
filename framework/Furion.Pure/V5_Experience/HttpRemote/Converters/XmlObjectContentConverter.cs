@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.Xml.Serialization;
 
 namespace Furion.HttpRemote;
@@ -39,7 +40,7 @@ public class XmlObjectContentConverter : IHttpContentConverter
     public virtual object? Read(Type resultType, HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
         DeserializeXml(resultType,
-            httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult());
+            AsyncUtility.RunSync(() => httpResponseMessage.Content.ReadAsStringAsync(cancellationToken)));
 
     /// <inheritdoc />
     public virtual async Task<object?> ReadAsync(Type resultType, HttpResponseMessage httpResponseMessage,
@@ -75,7 +76,7 @@ public class XmlObjectContentConverter<TResult> : XmlObjectContentConverter, IHt
     public virtual TResult? Read(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
         (TResult?)DeserializeXml(typeof(TResult),
-            httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult());
+            AsyncUtility.RunSync(() => httpResponseMessage.Content.ReadAsStringAsync(cancellationToken)));
 
     /// <inheritdoc />
     public virtual async Task<TResult?> ReadAsync(HttpResponseMessage httpResponseMessage,

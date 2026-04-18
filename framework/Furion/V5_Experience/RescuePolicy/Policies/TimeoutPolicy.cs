@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Furion.RescuePolicy;
@@ -128,9 +129,8 @@ public class TimeoutPolicy<TResult> : PolicyBase<TResult>
         // 空检查
         ArgumentNullException.ThrowIfNull(operation);
 
-        return ExecuteAsync(() => Task.Run(operation, cancellationToken), cancellationToken)
-            .GetAwaiter()
-            .GetResult();
+        return AsyncUtility.RunSync(() =>
+            ExecuteAsync(() => Task.Run(operation, cancellationToken), cancellationToken));
     }
 
     /// <inheritdoc />
@@ -140,9 +140,8 @@ public class TimeoutPolicy<TResult> : PolicyBase<TResult>
         // 空检查
         ArgumentNullException.ThrowIfNull(operation);
 
-        return ExecuteAsync(() => Task.Run(() => operation(cancellationToken), cancellationToken), cancellationToken)
-            .GetAwaiter()
-            .GetResult();
+        return AsyncUtility.RunSync(() =>
+            ExecuteAsync(() => Task.Run(() => operation(cancellationToken), cancellationToken), cancellationToken));
     }
 
     /// <inheritdoc />

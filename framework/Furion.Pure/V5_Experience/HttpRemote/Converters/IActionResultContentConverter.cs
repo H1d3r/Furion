@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
@@ -63,8 +64,8 @@ public class IActionResultContentConverter : HttpContentConverterBase<IActionRes
             case MediaTypeNames.Text.Plain:
             case MediaTypeNames.Application.Soap:
                 // 读取字符串内容
-                var stringContent = httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).GetAwaiter()
-                    .GetResult();
+                var stringContent =
+                    AsyncUtility.RunSync(() => httpResponseMessage.Content.ReadAsStringAsync(cancellationToken));
 
                 return new ContentResult
                 {

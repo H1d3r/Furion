@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
@@ -84,9 +85,7 @@ internal sealed class StressTestHarnessManager
     internal StressTestHarnessResult Start(
         HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
         CancellationToken cancellationToken = default) =>
-        // 使用 Task.Run 在后台线程执行异步操作，避免同步上下文死锁
-        Task.Run(() => StartAsync(completionOption, cancellationToken), cancellationToken).GetAwaiter()
-            .GetResult();
+        AsyncUtility.RunSync(() => StartAsync(completionOption, cancellationToken));
 
     /// <summary>
     ///     开始测试

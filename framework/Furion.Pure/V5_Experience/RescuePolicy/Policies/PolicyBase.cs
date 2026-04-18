@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
+
 namespace Furion.RescuePolicy;
 
 /// <summary>
@@ -101,9 +103,7 @@ public abstract class PolicyBase<TResult> : IExceptionPolicy<TResult>
         // 空检查
         ArgumentNullException.ThrowIfNull(operation);
 
-        return ExecuteAsync(() => Task.FromResult(operation()), cancellationToken)
-            .GetAwaiter()
-            .GetResult();
+        return AsyncUtility.RunSync(() => ExecuteAsync(() => Task.FromResult(operation()), cancellationToken));
     }
 
     /// <inheritdoc />
@@ -113,9 +113,7 @@ public abstract class PolicyBase<TResult> : IExceptionPolicy<TResult>
         // 空检查
         ArgumentNullException.ThrowIfNull(operation);
 
-        return ExecuteAsync(token => Task.FromResult(operation(token)), cancellationToken)
-            .GetAwaiter()
-            .GetResult();
+        return AsyncUtility.RunSync(() => ExecuteAsync(token => Task.FromResult(operation(token)), cancellationToken));
     }
 
     /// <inheritdoc />
