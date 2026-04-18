@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
+
 namespace Furion.FriendlyException;
 
 /// <summary>
@@ -52,7 +54,7 @@ public sealed class Retry
     {
         if (action == null) throw new ArgumentNullException(nameof(action));
 
-        InvokeAsync(async () =>
+        AsyncUtility.RunSync(() => InvokeAsync(async () =>
         {
             action();
             await Task.CompletedTask;
@@ -61,7 +63,7 @@ public sealed class Retry
         {
             fallbackPolicy?.Invoke(ex);
             await Task.CompletedTask;
-        }, retryAction, shouldExit).GetAwaiter().GetResult();
+        }, retryAction, shouldExit));
     }
 
     /// <summary>

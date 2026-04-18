@@ -25,6 +25,7 @@
 
 using Furion.Extensions;
 using Furion.Reflection;
+using Furion.Utilities;
 
 namespace Furion.ViewEngine;
 
@@ -64,7 +65,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <param name="stream"></param>
     public void SaveToStream(Stream stream)
     {
-        SaveToStreamAsync(stream).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => SaveToStreamAsync(stream));
     }
 
     /// <summary>
@@ -86,7 +87,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <param name="fileName"></param>
     public void SaveToFile(string fileName)
     {
-        SaveToFileAsync(fileName).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => SaveToFileAsync(fileName));
     }
 
     /// <summary>
@@ -120,7 +121,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public string Run(object model = null)
     {
-        return RunAsync(model).GetAwaiter().GetResult();
+        return AsyncUtility.RunSync(() => RunAsync(model));
     }
 
     /// <summary>
@@ -152,7 +153,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public static IViewEngineTemplate LoadFromFile(string fileName)
     {
-        return LoadFromFileAsync(fileName: fileName).GetAwaiter().GetResult();
+        return AsyncUtility.RunSync(() => LoadFromFileAsync(fileName: fileName));
     }
 
     /// <summary>
@@ -188,7 +189,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public static IViewEngineTemplate LoadFromStream(Stream stream)
     {
-        return LoadFromStreamAsync(stream).GetAwaiter().GetResult();
+        return AsyncUtility.RunSync(() => LoadFromStreamAsync(stream));
     }
 
     /// <summary>
@@ -254,7 +255,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <param name="stream"></param>
     public void SaveToStream(Stream stream)
     {
-        SaveToStreamAsync(stream).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => SaveToStreamAsync(stream));
     }
 
     /// <summary>
@@ -276,7 +277,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <param name="fileName"></param>
     public void SaveToFile(string fileName)
     {
-        SaveToFileAsync(fileName).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => SaveToFileAsync(fileName));
     }
 
     /// <summary>
@@ -310,7 +311,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public string Run(Action<T> initializer)
     {
-        return RunAsync(initializer).GetAwaiter().GetResult();
+        return AsyncUtility.RunSync(() => RunAsync(initializer));
     }
 
     /// <summary>
@@ -337,7 +338,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public static IViewEngineTemplate<T> LoadFromFile(string fileName)
     {
-        return LoadFromFileAsync(fileName: fileName).GetAwaiter().GetResult();
+        return AsyncUtility.RunSync(() => LoadFromFileAsync(fileName: fileName));
     }
 
     /// <summary>
@@ -373,7 +374,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public static IViewEngineTemplate<T> LoadFromStream(Stream stream)
     {
-        return LoadFromStreamAsync(stream).GetAwaiter().GetResult();
+        return AsyncUtility.RunSync(() => LoadFromStreamAsync(stream));
     }
 
     /// <summary>

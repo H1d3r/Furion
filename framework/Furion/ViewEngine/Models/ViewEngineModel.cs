@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.Text;
 
 namespace Furion.ViewEngine;
@@ -53,7 +54,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// <param name="literal"></param>
     public void WriteLiteral(string literal = null)
     {
-        WriteLiteralAsync(literal).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => WriteLiteralAsync(literal));
     }
 
     /// <summary>
@@ -73,7 +74,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// <param name="obj"></param>
     public void Write(object obj = null)
     {
-        WriteAsync(obj).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => WriteAsync(obj));
     }
 
     /// <summary>
@@ -99,7 +100,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     public void BeginWriteAttribute(string name, string prefix, int prefixOffset, string suffix, int suffixOffset,
         int attributeValuesCount)
     {
-        BeginWriteAttributeAsync(name, prefix, prefixOffset, suffix, suffixOffset, attributeValuesCount).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => BeginWriteAttributeAsync(name, prefix, prefixOffset, suffix, suffixOffset, attributeValuesCount));
     }
 
     /// <summary>
@@ -131,7 +132,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     public void WriteAttributeValue(string prefix, int prefixOffset, object value, int valueOffset, int valueLength,
         bool isLiteral)
     {
-        WriteAttributeValueAsync(prefix, prefixOffset, value, valueOffset, valueLength, isLiteral).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => WriteAttributeValueAsync(prefix, prefixOffset, value, valueOffset, valueLength, isLiteral));
     }
 
     /// <summary>
@@ -156,7 +157,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// </summary>
     public void EndWriteAttribute()
     {
-        EndWriteAttributeAsync().GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => EndWriteAttributeAsync());
     }
 
     /// <summary>
@@ -175,7 +176,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// </summary>
     public void Execute()
     {
-        ExecuteAsync().GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => ExecuteAsync());
     }
 
     /// <summary>
@@ -193,7 +194,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// <returns></returns>
     public virtual string Result()
     {
-        return ResultAsync().GetAwaiter().GetResult();
+        return AsyncUtility.RunSync(() => ResultAsync());
     }
 
     /// <summary>
