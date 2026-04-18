@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.Threading.Channels;
 
 namespace Furion.TaskQueue;
@@ -83,12 +84,12 @@ internal sealed partial class TaskQueue : ITaskQueue
         // 空检查
         ArgumentNullException.ThrowIfNull(taskHandler);
 
-        return EnqueueAsync((serviceProvider, token) =>
+        return AsyncUtility.RunSync(() => EnqueueAsync((serviceProvider, token) =>
         {
             taskHandler(serviceProvider);
             return ValueTask.CompletedTask;
         }, configure)
-        .AsTask().GetAwaiter().GetResult();
+        .AsTask());
     }
 
     /// <inheritdoc />

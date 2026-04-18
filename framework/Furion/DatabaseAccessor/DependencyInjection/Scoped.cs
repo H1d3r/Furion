@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.DatabaseAccessor;
+using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Furion.DependencyInjection;
@@ -41,11 +42,11 @@ public static partial class Scoped
     public static void CreateUow(Action<IServiceScopeFactory, IServiceScope> handler,
         IServiceScopeFactory scopeFactory = default)
     {
-        CreateUowAsync(async (fac, scope) =>
+        AsyncUtility.RunSync(() => CreateUowAsync(async (fac, scope) =>
         {
             handler(fac, scope);
             await Task.CompletedTask;
-        }, scopeFactory).GetAwaiter().GetResult();
+        }, scopeFactory));
     }
 
     /// <summary>

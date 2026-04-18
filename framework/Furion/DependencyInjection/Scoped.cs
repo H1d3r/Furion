@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Furion.DependencyInjection;
@@ -39,11 +40,11 @@ public static partial class Scoped
     /// <param name="scopeFactory"></param>
     public static void Create(Action<IServiceScopeFactory, IServiceScope> handler, IServiceScopeFactory scopeFactory = default)
     {
-        CreateAsync(async (fac, scope) =>
+        AsyncUtility.RunSync(() => CreateAsync(async (fac, scope) =>
         {
             handler(fac, scope);
             await Task.CompletedTask;
-        }, scopeFactory).GetAwaiter().GetResult();
+        }, scopeFactory));
     }
 
     /// <summary>
