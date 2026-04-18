@@ -26,6 +26,7 @@
 		<SignAssembly>True</SignAssembly>
 		<DelaySign>False</DelaySign>
 		<AssemblyOriginatorKeyFile>..\..\snks\Furion.snk</AssemblyOriginatorKeyFile>
+		<NoWarn>8632</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup>
