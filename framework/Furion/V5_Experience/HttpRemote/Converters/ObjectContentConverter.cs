@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.Net.Http.Json;
 
 namespace Furion.HttpRemote;
@@ -45,8 +46,8 @@ public class ObjectContentConverter : IHttpContentConverter
             HttpRemoteUtility.ResolveJsonSerializationContext(resultType, httpResponseMessage, ServiceProvider);
 
         // 获取 JSON 反序列化的值
-        var deserializedValue = httpResponseMessage.Content.ReadFromJsonAsync(jsonSerializationContext.ResultType,
-            jsonSerializationContext.JsonSerializerOptions, cancellationToken).GetAwaiter().GetResult();
+        var deserializedValue = AsyncUtility.RunSync(() => httpResponseMessage.Content.ReadFromJsonAsync(
+            jsonSerializationContext.ResultType, jsonSerializationContext.JsonSerializerOptions, cancellationToken));
 
         // 获取转换的目标类型值
         return jsonSerializationContext.GetResultValue(deserializedValue);

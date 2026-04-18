@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
+
 namespace Furion.HttpRemote;
 
 /// <summary>
@@ -33,7 +35,7 @@ public class StringContentConverter : HttpContentConverterBase<string>
     /// <inheritdoc />
     public override string? Read(HttpResponseMessage httpResponseMessage,
         CancellationToken cancellationToken = default) =>
-        httpResponseMessage.Content.ReadAsStringAsync(cancellationToken).GetAwaiter().GetResult();
+        AsyncUtility.RunSync(() => httpResponseMessage.Content.ReadAsStringAsync(cancellationToken));
 
     /// <inheritdoc />
     public override async Task<string?> ReadAsync(HttpResponseMessage httpResponseMessage,
