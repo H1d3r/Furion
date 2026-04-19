@@ -46,15 +46,15 @@ public interface IViewEngineTemplate : IDisposable
     /// <summary>
     /// 保存到文件
     /// </summary>
-    /// <param name="fileName"></param>
-    void SaveToFile(string fileName);
+    /// <param name="fullName"></param>
+    void SaveToFile(string fullName);
 
     /// <summary>
     /// 保存到文件
     /// </summary>
-    /// <param name="fileName"></param>
+    /// <param name="fullName"></param>
     /// <returns></returns>
-    Task SaveToFileAsync(string fileName);
+    Task SaveToFileAsync(string fullName);
 
     /// <summary>
     /// 执行编译
@@ -94,15 +94,15 @@ public interface IViewEngineTemplate<out T> : IDisposable
     /// <summary>
     /// 保存到文件
     /// </summary>
-    /// <param name="fileName"></param>
-    void SaveToFile(string fileName);
+    /// <param name="fullName"></param>
+    void SaveToFile(string fullName);
 
     /// <summary>
     /// 保存到文件
     /// </summary>
-    /// <param name="fileName"></param>
+    /// <param name="fullName"></param>
     /// <returns></returns>
-    Task SaveToFileAsync(string fileName);
+    Task SaveToFileAsync(string fullName);
 
     /// <summary>
     /// 执行编译

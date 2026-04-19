@@ -197,7 +197,7 @@ public class TestModuleServices : IDynamicApiController
      @GetResult()
      """;
 
-        var str = await viewEngine.RunCompileAsync(template, null, builder =>
+        var str = await viewEngine.RunCompileFromCachedAsync(template, null, null, builder =>
         {
             builder.Options.CodeContextLines = 5;
         });

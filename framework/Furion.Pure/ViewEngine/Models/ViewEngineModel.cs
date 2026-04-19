@@ -157,7 +157,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// </summary>
     public void EndWriteAttribute()
     {
-        AsyncUtility.RunSync(() => EndWriteAttributeAsync());
+        AsyncUtility.RunSync(EndWriteAttributeAsync);
     }
 
     /// <summary>
@@ -176,7 +176,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// </summary>
     public void Execute()
     {
-        AsyncUtility.RunSync(() => ExecuteAsync());
+        AsyncUtility.RunSync(ExecuteAsync);
     }
 
     /// <summary>
@@ -194,7 +194,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// <returns></returns>
     public virtual string Result()
     {
-        return AsyncUtility.RunSync(() => ResultAsync());
+        return AsyncUtility.RunSync(ResultAsync);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public abstract class ViewEngineModel : IViewEngineModel
     /// <returns></returns>
     public virtual Task<string> ResultAsync()
     {
-        return Task.FromResult<string>(stringBuilder.ToString());
+        return Task.FromResult(stringBuilder.ToString());
     }
 }
 

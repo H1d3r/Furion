@@ -133,18 +133,21 @@ public class ViewEngine : IViewEngine
     /// <returns></returns>
     public string RunCompileFromCached(string content, object model = null, string cacheFileName = default, Action<IViewEngineOptionsBuilder> builderAction = null)
     {
-        var fileName = cacheFileName ?? MD5Encryption.Encrypt(content);
+        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction));
+        var templatePath = Penetrates.GetTemplateFileName(fileName);
 
         IViewEngineTemplate template = null;
 
         try
         {
-            if (File.Exists(Penetrates.GetTemplateFileName(fileName)))
-                template = ViewEngineTemplate.LoadFromFile(fileName);
+            if (File.Exists(templatePath))
+            {
+                template = ViewEngineTemplate.LoadFromFile(templatePath);
+            }
             else
             {
                 template = Compile(content, builderAction);
-                template.SaveToFile(fileName);
+                template.SaveToFile(templatePath);
             }
 
             var result = template.Run(model);
@@ -166,18 +169,21 @@ public class ViewEngine : IViewEngine
     /// <returns></returns>
     public async Task<string> RunCompileFromCachedAsync(string content, object model = null, string cacheFileName = default, Action<IViewEngineOptionsBuilder> builderAction = null)
     {
-        var fileName = cacheFileName ?? MD5Encryption.Encrypt(content);
+        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction));
+        var templatePath = Penetrates.GetTemplateFileName(fileName);
 
         IViewEngineTemplate template = null;
 
         try
         {
-            if (File.Exists(Penetrates.GetTemplateFileName(fileName)))
-                template = await ViewEngineTemplate.LoadFromFileAsync(fileName);
+            if (File.Exists(templatePath))
+            {
+                template = await ViewEngineTemplate.LoadFromFileAsync(templatePath);
+            }
             else
             {
                 template = await CompileAsync(content, builderAction);
-                await template.SaveToFileAsync(fileName);
+                await template.SaveToFileAsync(templatePath);
             }
 
             var result = await template.RunAsync(model);
@@ -201,18 +207,21 @@ public class ViewEngine : IViewEngine
     public string RunCompileFromCached<T>(string content, T model, string cacheFileName = default, Action<IViewEngineOptionsBuilder> builderAction = null)
         where T : class, new()
     {
-        var fileName = cacheFileName ?? MD5Encryption.Encrypt(content);
+        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction, typeof(T)));
+        var templatePath = Penetrates.GetTemplateFileName(fileName);
 
         IViewEngineTemplate<ViewEngineModel<T>> template = null;
 
         try
         {
-            if (File.Exists(Penetrates.GetTemplateFileName(fileName)))
-                template = ViewEngineTemplate<ViewEngineModel<T>>.LoadFromFile(fileName);
+            if (File.Exists(templatePath))
+            {
+                template = ViewEngineTemplate<ViewEngineModel<T>>.LoadFromFile(templatePath);
+            }
             else
             {
                 template = Compile<ViewEngineModel<T>>(content, builderAction);
-                template.SaveToFile(fileName);
+                template.SaveToFile(templatePath);
             }
 
             var result = template.Run(u =>
@@ -239,18 +248,21 @@ public class ViewEngine : IViewEngine
     public async Task<string> RunCompileFromCachedAsync<T>(string content, T model, string cacheFileName = default, Action<IViewEngineOptionsBuilder> builderAction = null)
         where T : class, new()
     {
-        var fileName = cacheFileName ?? MD5Encryption.Encrypt(content);
+        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction, typeof(T)));
+        var templatePath = Penetrates.GetTemplateFileName(fileName);
 
         IViewEngineTemplate<ViewEngineModel<T>> template = null;
 
         try
         {
-            if (File.Exists(Penetrates.GetTemplateFileName(fileName)))
-                template = await ViewEngineTemplate<ViewEngineModel<T>>.LoadFromFileAsync(fileName);
+            if (File.Exists(templatePath))
+            {
+                template = await ViewEngineTemplate<ViewEngineModel<T>>.LoadFromFileAsync(templatePath);
+            }
             else
             {
                 template = await CompileAsync<ViewEngineModel<T>>(content, builderAction);
-                await template.SaveToFileAsync(fileName);
+                await template.SaveToFileAsync(templatePath);
             }
 
             var result = await template.RunAsync(u =>
@@ -385,7 +397,29 @@ public class ViewEngine : IViewEngine
         var sortedUsings = options.DefaultUsings.OrderBy(u => u);
 
         var hashOptions = MD5Encryption.Encrypt(string.Join("|", assemblyNames.Concat(sortedUsings)));
-        return $"{hashContent}:{hashOptions}";
+
+        return hashContent + hashOptions;
+    }
+
+    /// <summary>
+    /// 构建用于缓存键生成的选项
+    /// </summary>
+    private static ViewEngineOptions BuildOptionsForCacheKey(Action<IViewEngineOptionsBuilder> builderAction, Type modelType = null)
+    {
+        var builder = new ViewEngineOptionsBuilder();
+
+        if (modelType != null)
+        {
+            builder.AddAssemblyReference(modelType);
+            builder.Inherits(modelType);
+        }
+        else
+        {
+            builder.Inherits(typeof(ViewEngineModel));
+        }
+
+        builderAction?.Invoke(builder);
+        return builder.Options;
     }
 
     /// <summary>

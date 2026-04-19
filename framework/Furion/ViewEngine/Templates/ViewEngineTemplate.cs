@@ -25,7 +25,6 @@
 
 using Furion.Extensions;
 using Furion.Reflection;
-using Furion.Utilities;
 
 namespace Furion.ViewEngine;
 
@@ -65,7 +64,10 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <param name="stream"></param>
     public void SaveToStream(Stream stream)
     {
-        AsyncUtility.RunSync(() => SaveToStreamAsync(stream));
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
+
+        assemblyByteCode.Position = 0;
+        assemblyByteCode.CopyTo(stream);
     }
 
     /// <summary>
@@ -84,25 +86,35 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <summary>
     /// 保存到文件
     /// </summary>
-    /// <param name="fileName"></param>
-    public void SaveToFile(string fileName)
+    /// <param name="fullName"></param>
+    public void SaveToFile(string fullName)
     {
-        AsyncUtility.RunSync(() => SaveToFileAsync(fileName));
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
+
+        using var fileStream = new FileStream(
+            path: fullName,
+            mode: FileMode.Create,
+            access: FileAccess.Write,
+            share: FileShare.Read,
+            bufferSize: 8192,
+            options: FileOptions.None);
+
+        assemblyByteCode.Position = 0;
+        assemblyByteCode.CopyTo(fileStream);
+        fileStream.Flush();
     }
 
     /// <summary>
     /// 保存到文件
     /// </summary>
-    /// <param name="fileName"></param>
+    /// <param name="fullName"></param>
     /// <returns></returns>
-    public async Task SaveToFileAsync(string fileName)
+    public async Task SaveToFileAsync(string fullName)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
 
-        var filePath = Penetrates.GetTemplateFileName(fileName);
-
         using var fileStream = new FileStream(
-            path: filePath,
+            path: fullName,
             mode: FileMode.Create,
             access: FileAccess.Write,
             share: FileShare.Read,
@@ -121,7 +133,18 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public string Run(object model = null)
     {
-        return AsyncUtility.RunSync(() => RunAsync(model));
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
+
+        if (model != null && model.IsAnonymous())
+        {
+            model = new AnonymousTypeWrapper(model);
+        }
+
+        var instance = (IViewEngineModel)Activator.CreateInstance(templateType);
+        instance.Model = model;
+
+        instance.Execute();
+        return instance.Result();
     }
 
     /// <summary>
@@ -142,44 +165,29 @@ public class ViewEngineTemplate : IViewEngineTemplate
         instance.Model = model;
 
         await instance.ExecuteAsync();
-
         return await instance.ResultAsync();
     }
 
     /// <summary>
     /// 从文件中加载模板
     /// </summary>
-    /// <param name="fileName"></param>
+    /// <param name="fullName"></param>
     /// <returns></returns>
-    public static IViewEngineTemplate LoadFromFile(string fileName)
+    public static IViewEngineTemplate LoadFromFile(string fullName)
     {
-        return AsyncUtility.RunSync(() => LoadFromFileAsync(fileName: fileName));
+        var bytes = File.ReadAllBytes(fullName);
+        return new ViewEngineTemplate(new MemoryStream(bytes, writable: false));
     }
 
     /// <summary>
     /// 从文件中加载模板
     /// </summary>
-    /// <param name="fileName"></param>
+    /// <param name="fullName"></param>
     /// <returns></returns>
-    public static async Task<IViewEngineTemplate> LoadFromFileAsync(string fileName)
+    public static async Task<IViewEngineTemplate> LoadFromFileAsync(string fullName)
     {
-        using var memoryStream = new MemoryStream();
-
-        var filePath = Penetrates.GetTemplateFileName(fileName);
-
-        using (var fileStream = new FileStream(
-            path: filePath,
-            mode: FileMode.Open,
-            access: FileAccess.Read,
-            share: FileShare.Read,
-            bufferSize: 8192,
-            useAsync: true))
-        {
-            await fileStream.CopyToAsync(memoryStream);
-        }
-
-        memoryStream.Position = 0;
-        return new ViewEngineTemplate(memoryStream);
+        var bytes = await File.ReadAllBytesAsync(fullName);
+        return new ViewEngineTemplate(new MemoryStream(bytes, writable: false));
     }
 
     /// <summary>
@@ -189,7 +197,11 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public static IViewEngineTemplate LoadFromStream(Stream stream)
     {
-        return AsyncUtility.RunSync(() => LoadFromStreamAsync(stream));
+        var memoryStream = new MemoryStream();
+        stream.CopyTo(memoryStream);
+        memoryStream.Position = 0;
+
+        return new ViewEngineTemplate(memoryStream);
     }
 
     /// <summary>
@@ -255,7 +267,10 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <param name="stream"></param>
     public void SaveToStream(Stream stream)
     {
-        AsyncUtility.RunSync(() => SaveToStreamAsync(stream));
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
+
+        assemblyByteCode.Position = 0;
+        assemblyByteCode.CopyTo(stream);
     }
 
     /// <summary>
@@ -274,25 +289,35 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <summary>
     /// 保存到文件中
     /// </summary>
-    /// <param name="fileName"></param>
-    public void SaveToFile(string fileName)
+    /// <param name="fullName"></param>
+    public void SaveToFile(string fullName)
     {
-        AsyncUtility.RunSync(() => SaveToFileAsync(fileName));
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
+
+        using var fileStream = new FileStream(
+            path: fullName,
+            mode: FileMode.Create,
+            access: FileAccess.Write,
+            share: FileShare.Read,
+            bufferSize: 8192,
+            options: FileOptions.None);
+
+        assemblyByteCode.Position = 0;
+        assemblyByteCode.CopyTo(fileStream);
+        fileStream.Flush();
     }
 
     /// <summary>
     /// 保存到文件中
     /// </summary>
-    /// <param name="fileName"></param>
+    /// <param name="fullName"></param>
     /// <returns></returns>
-    public async Task SaveToFileAsync(string fileName)
+    public async Task SaveToFileAsync(string fullName)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
 
-        var filePath = Penetrates.GetTemplateFileName(fileName);
-
         using var fileStream = new FileStream(
-            path: filePath,
+            path: fullName,
             mode: FileMode.Create,
             access: FileAccess.Write,
             share: FileShare.Read,
@@ -311,7 +336,13 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public string Run(Action<T> initializer)
     {
-        return AsyncUtility.RunSync(() => RunAsync(initializer));
+        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
+
+        var instance = (T)Activator.CreateInstance(templateType);
+        initializer(instance);
+
+        instance.Execute();
+        return instance.Result();
     }
 
     /// <summary>
@@ -327,44 +358,29 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
         initializer(instance);
 
         await instance.ExecuteAsync();
-
         return await instance.ResultAsync();
     }
 
     /// <summary>
     /// 从文件中加载模板
     /// </summary>
-    /// <param name="fileName"></param>
+    /// <param name="fullName"></param>
     /// <returns></returns>
-    public static IViewEngineTemplate<T> LoadFromFile(string fileName)
+    public static IViewEngineTemplate<T> LoadFromFile(string fullName)
     {
-        return AsyncUtility.RunSync(() => LoadFromFileAsync(fileName: fileName));
+        var bytes = File.ReadAllBytes(fullName);
+        return new ViewEngineTemplate<T>(new MemoryStream(bytes, writable: false));
     }
 
     /// <summary>
     /// 从文件中加载模板
     /// </summary>
-    /// <param name="fileName"></param>
+    /// <param name="fullName"></param>
     /// <returns></returns>
-    public static async Task<IViewEngineTemplate<T>> LoadFromFileAsync(string fileName)
+    public static async Task<IViewEngineTemplate<T>> LoadFromFileAsync(string fullName)
     {
-        using var memoryStream = new MemoryStream();
-
-        var filePath = Penetrates.GetTemplateFileName(fileName);
-
-        using (var fileStream = new FileStream(
-            path: filePath,
-            mode: FileMode.Open,
-            access: FileAccess.Read,
-            share: FileShare.Read,
-            bufferSize: 8192,
-            useAsync: true))
-        {
-            await fileStream.CopyToAsync(memoryStream);
-        }
-
-        memoryStream.Position = 0;
-        return new ViewEngineTemplate<T>(memoryStream);
+        var bytes = await File.ReadAllBytesAsync(fullName);
+        return new ViewEngineTemplate<T>(new MemoryStream(bytes, writable: false));
     }
 
     /// <summary>
@@ -374,7 +390,11 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public static IViewEngineTemplate<T> LoadFromStream(Stream stream)
     {
-        return AsyncUtility.RunSync(() => LoadFromStreamAsync(stream));
+        var memoryStream = new MemoryStream();
+        stream.CopyTo(memoryStream);
+        memoryStream.Position = 0;
+
+        return new ViewEngineTemplate<T>(memoryStream);
     }
 
     /// <summary>
