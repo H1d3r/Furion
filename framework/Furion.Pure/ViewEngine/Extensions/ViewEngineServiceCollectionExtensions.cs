@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.ViewEngine;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -39,7 +40,7 @@ public static class ViewEngineServiceCollectionExtensions
     /// <returns></returns>
     public static IServiceCollection AddViewEngine(this IServiceCollection services)
     {
-        services.AddTransient<IViewEngine, ViewEngine>();
+        services.TryAddSingleton<IViewEngine, ViewEngine>();
         return services;
     }
 }
