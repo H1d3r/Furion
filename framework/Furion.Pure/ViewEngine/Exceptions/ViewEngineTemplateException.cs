@@ -49,14 +49,19 @@ public class ViewEngineTemplateException : ViewEngineException
     }
 
     /// <summary>
-    /// 错误信息
+    /// 编译错误诊断列表
     /// </summary>
     public List<Diagnostic> Errors { get; set; }
 
     /// <summary>
-    /// 生成的代码
+    /// 生成的源代码
     /// </summary>
     public string GeneratedCode { get; set; }
+
+    /// <summary>
+    /// 错误行上下文显示配置
+    /// </summary>
+    internal int ContextLines { get; set; } = 3;
 
     /// <summary>
     /// 缓存的消息
@@ -82,12 +87,12 @@ public class ViewEngineTemplateException : ViewEngineException
 
                 sb.AppendLine().AppendFormat("  [{0}] ({1},{2}): {3}", error.Id, line, col, error.GetMessage());
 
-                // 显示错误行上下文（上下各 3 行）
+                // 显示错误行上下文（上下各 ContextLines 行）
                 if (!string.IsNullOrEmpty(GeneratedCode))
                 {
                     var lines = GeneratedCode.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
-                    var start = Math.Max(0, line - 4);
-                    var end = Math.Min(lines.Length - 1, line + 2);
+                    var start = Math.Max(0, line - 1 - ContextLines);
+                    var end = Math.Min(lines.Length - 1, line - 1 + ContextLines);
                     var pad = end.ToString().Length;
 
                     sb.AppendLine().AppendLine("  Code Context:");

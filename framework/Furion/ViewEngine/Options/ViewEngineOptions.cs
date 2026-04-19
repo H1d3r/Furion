@@ -84,16 +84,21 @@ with(new AssemblyEqualityComparer()),
     /// </summary>
     public HashSet<string> DefaultUsings { get; set; } =
     [
-         "System",
-         "System.Linq",
-         "System.Text",
-         "System.IO",
-         "System.Collections",
-         "System.Collections.Generic",
-         "System.Threading",
-         "System.Threading.Tasks",
-         "System.Dynamic"
+        "System",
+        "System.Linq",
+        "System.Text",
+        "System.IO",
+        "System.Collections",
+        "System.Collections.Generic",
+        "System.Threading",
+        "System.Threading.Tasks",
+        "System.Dynamic"
     ];
+
+    /// <summary>
+    /// 编译错误时显示代码上下文的行数
+    /// </summary>
+    public int CodeContextLines { get; set; } = 3;
 }
 
 /// <summary>

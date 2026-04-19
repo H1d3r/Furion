@@ -48,6 +48,11 @@ public class ViewEngine : IViewEngine
     private static readonly ConcurrentDictionary<string, byte[]> _compilationCache = new();
 
     /// <summary>
+    /// 缓存最大条目数
+    /// </summary>
+    private const int MaxCacheSize = 500;
+
+    /// <summary>
     /// 缓存是否启用
     /// </summary>
     private static readonly bool _enableCache = Environment.GetEnvironmentVariable("FURION_VIEWENGINE_CACHE") != "false";
@@ -279,7 +284,7 @@ public class ViewEngine : IViewEngine
         MemoryStream memoryStream;
         if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out var cachedBytes))
         {
-            memoryStream = new MemoryStream(cachedBytes);
+            memoryStream = new MemoryStream(cachedBytes, writable: false);
         }
         else
         {
@@ -288,6 +293,10 @@ public class ViewEngine : IViewEngine
             // 缓存编译结果
             if (_enableCache && !string.IsNullOrEmpty(cacheKey))
             {
+                // 超过阈值清空旧缓存
+                if (_compilationCache.Count >= MaxCacheSize)
+                    _compilationCache.Clear();
+
                 _compilationCache[cacheKey] = memoryStream.ToArray();
             }
         }
@@ -329,7 +338,7 @@ public class ViewEngine : IViewEngine
         MemoryStream memoryStream;
         if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out var cachedBytes))
         {
-            memoryStream = new MemoryStream(cachedBytes);
+            memoryStream = new MemoryStream(cachedBytes, writable: false);
         }
         else
         {
@@ -338,6 +347,10 @@ public class ViewEngine : IViewEngine
             // 缓存编译结果
             if (_enableCache && !string.IsNullOrEmpty(cacheKey))
             {
+                // 超过阈值清空旧缓存
+                if (_compilationCache.Count >= MaxCacheSize)
+                    _compilationCache.Clear();
+
                 _compilationCache[cacheKey] = memoryStream.ToArray();
             }
         }
@@ -364,9 +377,14 @@ public class ViewEngine : IViewEngine
     private static string GenerateCacheKey(string content, ViewEngineOptions options)
     {
         var hashContent = MD5Encryption.Encrypt(content);
-        var hashOptions = MD5Encryption.Encrypt(string.Join("|",
-            options.ReferencedAssemblies.Select(a => a.FullName),
-            options.DefaultUsings.OrderBy(u => u)));
+
+        var assemblyNames = options.ReferencedAssemblies
+            .Where(a => a != null && !string.IsNullOrEmpty(a.FullName))
+            .Select(a => a.FullName)
+            .OrderBy(n => n);
+        var sortedUsings = options.DefaultUsings.OrderBy(u => u);
+
+        var hashOptions = MD5Encryption.Encrypt(string.Join("|", assemblyNames.Concat(sortedUsings)));
         return $"{hashContent}:{hashOptions}";
     }
 
@@ -384,7 +402,7 @@ public class ViewEngine : IViewEngine
         var engineKey = options.TemplateNamespace;
         var engine = _razorEngineCache.GetOrAdd(engineKey, _ => RazorProjectEngine.Create(
             RazorConfiguration.Default,
-            RazorProjectFileSystem.Create(@"."),
+            RazorProjectFileSystem.Create("."),
             (builder) =>
             {
                 builder.SetNamespace(options.TemplateNamespace);
@@ -453,7 +471,8 @@ public class ViewEngine : IViewEngine
             var exception = new ViewEngineTemplateException()
             {
                 Errors = emitResult.Diagnostics.ToList(),
-                GeneratedCode = razorCSharpDocument.GeneratedCode
+                GeneratedCode = razorCSharpDocument.GeneratedCode,
+                ContextLines = options.CodeContextLines
             };
 
             throw exception;
