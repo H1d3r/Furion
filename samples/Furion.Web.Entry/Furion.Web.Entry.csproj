@@ -4,7 +4,6 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<NoWarn>1701;1702;1591</NoWarn>
-		<DocumentationFile></DocumentationFile>
 		<SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
 		<PublishReadyToRunComposite>true</PublishReadyToRunComposite>
 		<DocumentationFile>Furion.Web.Entry.xml</DocumentationFile>

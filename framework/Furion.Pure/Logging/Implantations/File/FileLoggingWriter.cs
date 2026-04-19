@@ -138,8 +138,7 @@ internal class FileLoggingWriter
         // 兼容模式下不需要预打开长连接文件流
         if (!_isCompatibleMode)
         {
-            // 打开文件并持续写入，调用 .Wait() 确保文件流创建完毕
-            Task.Run(async () => await OpenFileAsync(_options.Append)).Wait();
+            AsyncUtility.RunSync(() => OpenFileAsync(_options.Append));
         }
     }
 
