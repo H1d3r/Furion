@@ -167,23 +167,23 @@ public sealed class SpecificationDocumentSettingsOptions : IConfigurableOptions<
         {
             var frameworkPackageName = Reflect.GetAssemblyName(GetType());
             var projectXmlComments = App.Assemblies.Where(u => u.GetName().Name != frameworkPackageName).Select(t => t.GetName().Name);
-            var externalXmlComments = App.ExternalAssemblies.Any() ? App.PathOfExternalAssemblies.Select(u => u.EndsWith(".dll") ? u[0..^4] : u) : Array.Empty<string>();
+            var externalXmlComments = App.ExternalAssemblies.Any() ? App.PathOfExternalAssemblies.Select(u => u.EndsWith(".dll") ? u[0..^4] : u) : [];
             XmlComments ??= projectXmlComments.Concat(externalXmlComments).ToArray();
         }
 
-        GroupOpenApiInfos ??= new SpecificationOpenApiInfo[]
-        {
+        GroupOpenApiInfos ??=
+        [
                 new SpecificationOpenApiInfo()
                 {
                     Group=options.DefaultGroupName
                 }
-        };
+        ];
 
         EnableAuthorized ??= true;
         if (EnableAuthorized == true)
         {
-            SecurityDefinitions ??= new SpecificationOpenApiSecurityScheme[]
-            {
+            SecurityDefinitions ??=
+            [
                     new SpecificationOpenApiSecurityScheme
                     {
                         Id="Bearer",
@@ -207,13 +207,13 @@ public sealed class SpecificationDocumentSettingsOptions : IConfigurableOptions<
                             Accesses=[]
                         }
                     }
-            };
+            ];
         }
 
-        Servers ??= Array.Empty<OpenApiServer>();
+        Servers ??= [];
         HideServers ??= true;
         RouteTemplate ??= "swagger/{documentName}/swagger.json";
-        PackagesGroups ??= Array.Empty<string>();
+        PackagesGroups ??= [];
         EnableEnumSchemaFilter ??= true;
         EnableTagsOrderDocumentFilter ??= true;
         EnableAllGroups ??= false;

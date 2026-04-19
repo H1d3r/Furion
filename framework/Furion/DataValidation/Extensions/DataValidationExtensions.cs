@@ -181,7 +181,7 @@ public static class DataValidationExtensions
             var validationFailMessage =
                   dataValidationResult.ValidationResults
                   .Select(u => new {
-                      MemberNames = u.MemberNames.Any() ? u.MemberNames : new[] { $"{dataValidationResult.MemberOrValue}" },
+                      MemberNames = u.MemberNames.Any() ? u.MemberNames : [$"{dataValidationResult.MemberOrValue}"],
                       u.ErrorMessage
                   })
                   .OrderBy(u => u.MemberNames.First())

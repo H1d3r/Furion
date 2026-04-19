@@ -1230,7 +1230,7 @@ public partial class PrivateSqlRepository
     /// <returns>ProcedureOutput</returns>
     public virtual ProcedureOutputResult SqlProcedureOutput(string procName, DbParameter[] parameters)
     {
-        parameters ??= Array.Empty<DbParameter>();
+        parameters ??= [];
 
         // 执行存储过程
         var dataSet = Database.DataAdapterFill(procName, parameters, CommandType.StoredProcedure);
@@ -1248,7 +1248,7 @@ public partial class PrivateSqlRepository
     /// <returns>ProcedureOutput</returns>
     public virtual async Task<ProcedureOutputResult> SqlProcedureOutputAsync(string procName, DbParameter[] parameters, CancellationToken cancellationToken = default)
     {
-        parameters ??= Array.Empty<DbParameter>();
+        parameters ??= [];
 
         // 执行存储过程
         var dataSet = await Database.DataAdapterFillAsync(procName, parameters, CommandType.StoredProcedure, cancellationToken: cancellationToken);
@@ -1297,7 +1297,7 @@ public partial class PrivateSqlRepository
     /// <returns>ProcedureOutput</returns>
     public virtual ProcedureOutputResult<TResult> SqlProcedureOutput<TResult>(string procName, DbParameter[] parameters)
     {
-        parameters ??= Array.Empty<DbParameter>();
+        parameters ??= [];
 
         // 执行存储过程
         var dataSet = Database.DataAdapterFill(procName, parameters, CommandType.StoredProcedure);
@@ -1316,7 +1316,7 @@ public partial class PrivateSqlRepository
     /// <returns>ProcedureOutput</returns>
     public virtual async Task<ProcedureOutputResult<TResult>> SqlProcedureOutputAsync<TResult>(string procName, DbParameter[] parameters, CancellationToken cancellationToken = default)
     {
-        parameters ??= Array.Empty<DbParameter>();
+        parameters ??= [];
 
         // 执行存储过程
         var dataSet = await Database.DataAdapterFillAsync(procName, parameters, CommandType.StoredProcedure, cancellationToken: cancellationToken);

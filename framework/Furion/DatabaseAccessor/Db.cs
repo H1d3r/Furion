@@ -240,7 +240,7 @@ public static class Db
         contextOptions ??= App.GetService(typeof(DbContextOptions<>).MakeGenericType(dbContextType), serviceProvider) as DbContextOptions;
 
         // 创建新实例
-        var dbContext = (DbContext)Activator.CreateInstance(dbContextType, new object[] { contextOptions });
+        var dbContext = (DbContext)Activator.CreateInstance(dbContextType, [contextOptions]);
 
         // 实现动态数据库上下文功能，刷新 OnModelCreating
         var dbContextAttribute = DbProvider.GetAppDbContextAttribute(dbContextType);

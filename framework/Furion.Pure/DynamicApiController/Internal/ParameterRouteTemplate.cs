@@ -35,10 +35,10 @@ internal class ParameterRouteTemplate
     /// </summary>
     public ParameterRouteTemplate()
     {
-        ControllerStartTemplates = new List<string>();
-        ControllerEndTemplates = new List<string>();
-        ActionStartTemplates = new List<string>();
-        ActionEndTemplates = new List<string>();
+        ControllerStartTemplates = [];
+        ControllerEndTemplates = [];
+        ActionStartTemplates = [];
+        ActionEndTemplates = [];
     }
 
     /// <summary>

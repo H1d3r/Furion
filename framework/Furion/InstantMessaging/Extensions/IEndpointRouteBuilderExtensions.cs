@@ -66,15 +66,15 @@ public static class IEndpointRouteBuilderExtensions
             {
                 // 执行连接分发器选项配置
                 hub.GetMethod("HttpConnectionDispatcherOptionsSettings", BindingFlags.Public | BindingFlags.Static)
-                ?.Invoke(null, new object[] { options });
+                ?.Invoke(null, [options]);
             };
 
             // 注册集线器
-            var hubEndpointConventionBuilder = mapHubMethod.MakeGenericMethod(hub).Invoke(null, new object[] { endpoints, mapHubAttribute.Pattern, configureOptions }) as HubEndpointConventionBuilder;
+            var hubEndpointConventionBuilder = mapHubMethod.MakeGenericMethod(hub).Invoke(null, [endpoints, mapHubAttribute.Pattern, configureOptions]) as HubEndpointConventionBuilder;
 
             // 执行终点转换器配置
             hub.GetMethod("HubEndpointConventionBuilderSettings", BindingFlags.Public | BindingFlags.Static)
-                ?.Invoke(null, new object[] { hubEndpointConventionBuilder });
+                ?.Invoke(null, [hubEndpointConventionBuilder]);
         }
     }
 }

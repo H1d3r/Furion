@@ -194,7 +194,7 @@ public class DbContextPool : IDbContextPool, IDisposable
         if (Transaction.Current != null) return;
 
         // 判断 dbContextPool 中是否包含DbContext，如果是，则使用第一个数据库上下文开启事务，并应用于其他数据库上下文
-        EnsureTransaction: if (_dbContexts.Any())
+        EnsureTransaction: if (!_dbContexts.IsEmpty)
         {
             // 如果共享事务不为空，则直接共享
             if (DbContextTransaction != null) goto ShareTransaction;
@@ -291,7 +291,7 @@ public class DbContextPool : IDbContextPool, IDisposable
     /// </summary>
     public void CloseAll()
     {
-        if (!_dbContexts.Any()) return;
+        if (_dbContexts.IsEmpty) return;
 
         foreach (var item in _dbContexts)
         {

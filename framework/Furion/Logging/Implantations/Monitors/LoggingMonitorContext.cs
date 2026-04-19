@@ -60,10 +60,7 @@ public static class LoggingMonitorContext
     /// <param name="action"></param>
     public static void Append(Action<Dictionary<string, object>, HttpContext> action)
     {
-        if (action == null)
-        {
-            throw new ArgumentNullException(nameof(action));
-        }
+        ArgumentNullException.ThrowIfNull(action);
 
         var httpContext = App.HttpContext;
         if (httpContext == null)

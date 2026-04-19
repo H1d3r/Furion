@@ -68,7 +68,7 @@ public class PBKDF2Encryption
     {
         try
         {
-            var parts = hash.Split(new[] { SaltHashSeparator }, StringSplitOptions.None);
+            var parts = hash.Split([SaltHashSeparator], StringSplitOptions.None);
             if (parts.Length != 2)
                 return false;
 

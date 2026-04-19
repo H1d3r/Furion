@@ -60,10 +60,7 @@ public static class AuthorizationHandlerContextExtensions
     public static void StatusCode(this AuthorizationHandlerContext context, int statusCode)
     {
         var httpContext = context.GetCurrentHttpContext();
-        if (httpContext != null)
-        {
-            httpContext.Items[FAIL_STATUSCODE_KEY] = statusCode;
-        }
+        httpContext?.Items[FAIL_STATUSCODE_KEY] = statusCode;
     }
 
     /// <summary>

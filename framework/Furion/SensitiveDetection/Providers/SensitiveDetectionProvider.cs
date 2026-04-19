@@ -294,7 +294,7 @@ public class SensitiveDetectionProvider(string embedFileName) : ISensitiveDetect
         // 统一换行符：先将 \r\n 和 \r 标准化为 \n，再按 \n 和 | 分割
         // 解决跨平台换行符差异导致词汇分割失败的问题
         var normalizedText = wordsOfCached.Replace("\r\n", "\n").Replace("\r", "\n");
-        return normalizedText.Split(new[] { "\n", "|" }, StringSplitOptions.RemoveEmptyEntries)
+        return normalizedText.Split(["\n", "|"], StringSplitOptions.RemoveEmptyEntries)
             .Select(u => u.Trim())
             .Where(u => !string.IsNullOrEmpty(u))
             .Distinct();

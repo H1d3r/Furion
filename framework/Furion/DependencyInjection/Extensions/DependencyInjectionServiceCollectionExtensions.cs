@@ -310,7 +310,7 @@ public static class DependencyInjectionServiceCollectionExtensions
                 RegisterService(services, dependencyType,
                     Reflect.GetStringType(externalService.Service),
                     injectionAttribute,
-                    new[] { Reflect.GetStringType(externalService.Interface) });
+                    [Reflect.GetStringType(externalService.Interface)]);
             }
         }
     }

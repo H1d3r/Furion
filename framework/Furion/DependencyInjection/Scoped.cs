@@ -55,7 +55,7 @@ public static partial class Scoped
     public static async Task CreateAsync(Func<IServiceScopeFactory, IServiceScope, Task> handler, IServiceScopeFactory scopeFactory = default)
     {
         // 禁止空调用
-        if (handler == null) throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
 
         // 创建作用域
         var (scoped, serviceProvider) = CreateScope(ref scopeFactory);

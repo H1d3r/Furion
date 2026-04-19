@@ -538,10 +538,10 @@ public static class ObsoleteObjectExtensions
     /// <returns></returns>
     internal static string[] SplitCamelCase(this string str)
     {
-        if (str == null) return Array.Empty<string>();
+        if (str == null) return [];
 
-        if (string.IsNullOrWhiteSpace(str)) return new string[] { str };
-        if (str.Length == 1) return new string[] { str };
+        if (string.IsNullOrWhiteSpace(str)) return [str];
+        if (str.Length == 1) return [str];
 
         return Regex.Split(str, @"(?=\p{Lu}\p{Ll})|(?<=\p{Ll})(?=\p{Lu})")
             .Where(u => u.Length > 0)
@@ -686,10 +686,7 @@ public static class ObsoleteObjectExtensions
         where TAttribute : Attribute
     {
         // 空检查
-        if (type == null)
-        {
-            throw new ArgumentNullException(nameof(type));
-        }
+        ArgumentNullException.ThrowIfNull(type);
 
         // 检查特性并获取特性对象
         return type.IsDefined(typeof(TAttribute), inherit)

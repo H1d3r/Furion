@@ -151,7 +151,7 @@ public static class L
     public static Dictionary<string, string> GetCultures()
     {
         var httpContext = App.HttpContext;
-        if (httpContext == null) return new Dictionary<string, string>();
+        if (httpContext == null) return [];
 
         // 获取请求本地特性选项
         var locOptions = httpContext.RequestServices.GetService<IOptions<RequestLocalizationOptions>>().Value;

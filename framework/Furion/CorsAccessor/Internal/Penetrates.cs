@@ -36,12 +36,12 @@ internal static class Penetrates
     /// 默认跨域导出响应头 Key
     /// </summary>
     /// <remarks>解决 ajax，XMLHttpRequest，axios 不能获取请求头问题</remarks>
-    private static readonly string[] _defaultExposedHeaders = new[]
-    {
+    private static readonly string[] _defaultExposedHeaders =
+    [
         "access-token",
         "x-access-token",
         "Content-Disposition"
-    };
+    ];
 
     /// <summary>
     /// 设置跨域策略
@@ -80,7 +80,7 @@ internal static class Penetrates
             // 解决 SignarlR 必须允许 GET POST 问题
             if (isSupportSignarlR)
             {
-                builder.WithMethods(corsAccessorSettings.WithMethods.Concat(new[] { "GET", "POST" }).Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
+                builder.WithMethods(corsAccessorSettings.WithMethods.Concat(["GET", "POST"]).Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
             }
             else builder.WithMethods(corsAccessorSettings.WithMethods);
         }
@@ -91,7 +91,7 @@ internal static class Penetrates
         // 配置响应头，如果前端不能获取自定义的 header 信息，必须配置该项，默认配置了 access-token 和 x-access-token，可取消默认行为
         IEnumerable<string> exposedHeaders = corsAccessorSettings.FixedClientToken == true
             ? _defaultExposedHeaders
-            : Array.Empty<string>();
+            : [];
         if (corsAccessorSettings.WithExposedHeaders != null && corsAccessorSettings.WithExposedHeaders.Length > 0)
         {
             exposedHeaders = exposedHeaders.Concat(corsAccessorSettings.WithExposedHeaders).Distinct(StringComparer.OrdinalIgnoreCase);

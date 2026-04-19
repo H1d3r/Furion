@@ -150,19 +150,19 @@ public sealed class DynamicApiControllerSettingsOptions : IConfigurableOptions<D
         options.ModelToQuery ??= false;
         options.SupportedMvcController ??= false;
         options.ForceWithRoutePrefix ??= false;
-        options.AbandonControllerAffixes ??= new string[]
-        {
+        options.AbandonControllerAffixes ??=
+        [
                 "AppServices",
                 "AppService",
                 "ApiController",
                 "Controller",
                 "Services",
                 "Service"
-        };
-        options.AbandonActionAffixes ??= new string[]
-        {
+        ];
+        options.AbandonActionAffixes ??=
+        [
                 "Async"
-        };
+        ];
         DefaultBindingInfo ??= "route";
     }
 }

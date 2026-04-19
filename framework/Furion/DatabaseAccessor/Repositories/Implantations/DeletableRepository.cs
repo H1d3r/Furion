@@ -405,10 +405,7 @@ public partial class PrivateRepository<TEntity>
         , object[] keys
         , out StringBuilder stringBuilder)
     {
-        if (tableNamesAction == null)
-        {
-            throw new ArgumentNullException(nameof(tableNamesAction));
-        }
+        ArgumentNullException.ThrowIfNull(tableNamesAction);
 
         // 原始表
         var originTableName = GetFullTableName();

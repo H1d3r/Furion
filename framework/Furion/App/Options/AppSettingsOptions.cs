@@ -88,10 +88,10 @@ public sealed class AppSettingsOptions : IConfigurableOptions<AppSettingsOptions
     {
         options.InjectSpecificationDocument ??= true;
         options.EnabledReferenceAssemblyScan ??= false;
-        options.ExternalAssemblies ??= Array.Empty<string>();
-        options.ExcludeAssemblies ??= Array.Empty<string>();
+        options.ExternalAssemblies ??= [];
+        options.ExcludeAssemblies ??= [];
         options.OutputOriginalSqlExecuteLog ??= true;
-        options.SupportPackageNamePrefixs ??= Array.Empty<string>();
+        options.SupportPackageNamePrefixs ??= [];
         options.VirtualPath ??= string.Empty;
         options.DisableAppStartupScan ??= false;
     }

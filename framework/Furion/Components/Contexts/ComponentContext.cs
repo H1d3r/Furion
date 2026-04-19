@@ -60,7 +60,7 @@ public sealed class ComponentContext
     /// <summary>
     /// 上下文数据
     /// </summary>
-    private Dictionary<string, object> Properties { get; set; } = new();
+    private Dictionary<string, object> Properties { get; set; } = [];
 
     /// <summary>
     /// 是否是根组件

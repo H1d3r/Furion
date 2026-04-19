@@ -131,12 +131,12 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     {
         if (type == null) return string.Empty;
 
-        IList<string> elements = new List<string>()
-        {
+        IList<string> elements =
+        [
             type.Namespace,
             RenderDeclaringType(type.DeclaringType),
             type.Name
-        };
+        ];
 
         var result = string.Join(".", elements.Where(e => !string.IsNullOrWhiteSpace(e)));
 

@@ -231,7 +231,7 @@ internal static class DbHelpers
 
         // 获取模型所有公开的属性
         var properities = model == null
-            ? Array.Empty<PropertyInfo>()
+            ? []
             : modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         // 生成数据库表值函数 sql
@@ -331,7 +331,7 @@ internal static class DbHelpers
                 .First(u => u.Name == "WrapperProcedureOutput" && u.IsGenericMethod)
                 .MakeGenericMethod(type);
 
-        return wrapperProcedureOutputMethod.Invoke(null, new object[] { providerName, parameters, dataSet });
+        return wrapperProcedureOutputMethod.Invoke(null, [providerName, parameters, dataSet]);
     }
 
     /// <summary>
@@ -430,7 +430,7 @@ internal static class DbHelpers
         if (dbCommand.CommandType == CommandType.StoredProcedure)
         {
             isMatch = true;
-            paramNames = Array.Empty<string>();
+            paramNames = [];
             return;
         }
 
@@ -438,7 +438,7 @@ internal static class DbHelpers
         var regex = new Regex(ParamRegex, RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace);
         isMatch = regex.IsMatch(dbCommand.CommandText);
         paramNames = !isMatch
-            ? Array.Empty<string>()
+            ? []
             : regex.Matches(dbCommand.CommandText).Select(u => u.Groups["param"].Value).ToArray();
     }
 }

@@ -199,7 +199,7 @@ public static class AppServiceCollectionExtensions
 
         foreach (var type in backgroundServiceTypes)
         {
-            addHostServiceMethod.MakeGenericMethod(type).Invoke(null, new object[] { services });
+            addHostServiceMethod.MakeGenericMethod(type).Invoke(null, [services]);
         }
 
         return services;
@@ -276,7 +276,7 @@ public static class AppServiceCollectionExtensions
             // 自动安装属性调用
             foreach (var method in serviceMethods)
             {
-                method.Invoke(startup, new[] { services });
+                method.Invoke(startup, [services]);
             }
         }
 

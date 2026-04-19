@@ -49,7 +49,7 @@ public class InjectionAttribute : Attribute
     {
         Action = action;
         Pattern = InjectionPatterns.All;
-        ExceptInterfaces = exceptInterfaces ?? Array.Empty<Type>();
+        ExceptInterfaces = exceptInterfaces ?? [];
         Order = 0;
     }
 

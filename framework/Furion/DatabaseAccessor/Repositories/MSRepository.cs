@@ -121,7 +121,7 @@ public partial class MSRepository<TMasterDbContextLocator> : IMSRepository<TMast
     public virtual IPrivateReadableRepository<TEntity> Slave<TEntity>(Func<Type> locatorHandler)
         where TEntity : class, IPrivateEntity, new()
     {
-        if (locatorHandler == null) throw new ArgumentNullException(nameof(locatorHandler));
+        ArgumentNullException.ThrowIfNull(locatorHandler);
 
         // 获取定位器类型
         var dbContextLocatorType = locatorHandler();

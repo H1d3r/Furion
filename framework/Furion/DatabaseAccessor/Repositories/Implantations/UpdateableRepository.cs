@@ -1133,10 +1133,7 @@ public partial class PrivateRepository<TEntity>
         , string[] includePropertyNames = null
         , string[] excludePropertyNames = null)
     {
-        if (tableNamesAction == null)
-        {
-            throw new ArgumentNullException(nameof(tableNamesAction));
-        }
+        ArgumentNullException.ThrowIfNull(tableNamesAction);
 
         // 原始表
         var originTableName = GetFullTableName();
@@ -1167,7 +1164,7 @@ public partial class PrivateRepository<TEntity>
             .ToDictionary(p => p.Key, p => p.Value);
 
         var setColumnStringBuilder = new StringBuilder();
-        parameters = new();
+        parameters = [];
 
         var i = 0;
         var j = 0;

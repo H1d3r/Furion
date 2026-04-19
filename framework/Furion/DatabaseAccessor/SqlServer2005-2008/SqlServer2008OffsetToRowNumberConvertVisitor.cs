@@ -112,7 +112,7 @@ internal class SqlServer2008OffsetToRowNumberConvertVisitor : ExpressionVisitor
         // 在子查询中 OrderBy 必须写 Top 数量
         var newOrderings = oldOrderings.Count > 0 && (oldLimit != null || selectExpression == root)
             ? oldOrderings.ToList()
-            : new List<OrderingExpression>();
+            : [];
 
 #if NET9_0_OR_GREATER
         // 更新表达式
@@ -136,20 +136,20 @@ internal class SqlServer2008OffsetToRowNumberConvertVisitor : ExpressionVisitor
                                                    offset: null);
 #endif
         var rowOrderings = oldOrderings.Count != 0 ? oldOrderings
-            : new[] { new OrderingExpression(new SqlFragmentExpression("(SELECT 1)"), true) };
+            : [new OrderingExpression(new SqlFragmentExpression("(SELECT 1)"), true)];
 
         selectExpression.PushdownIntoSubquery();
 
         var subQuery = (SelectExpression)selectExpression.Tables[0];
-        var projection = new RowNumberExpression(Array.Empty<SqlExpression>(), rowOrderings, oldOffset.TypeMapping);
+        var projection = new RowNumberExpression([], rowOrderings, oldOffset.TypeMapping);
         var left = GenerateOuterColumnAccessor.Invoke(subQuery
-            , new object[]
-            {
-                Activator.CreateInstance(TableReferenceExpressionType, new object[] { subQuery,subQuery.Alias }),
+            ,
+            [
+                Activator.CreateInstance(TableReferenceExpressionType, [subQuery,subQuery.Alias]),
                 projection,
                 "row",
                 true
-            }) as ColumnExpression;
+            ]) as ColumnExpression;
 
         selectExpression.ApplyPredicate(sqlExpressionFactory.GreaterThan(left, oldOffset));
 

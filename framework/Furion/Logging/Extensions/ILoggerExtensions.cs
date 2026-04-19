@@ -50,7 +50,7 @@ public static class ILoggerExtensions
     /// <returns></returns>
     public static IDisposable ScopeContext(this ILogger logger, IDictionary<object, object> properties)
     {
-        if (logger == null) throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
 
         return logger.BeginScope(new LogContext { Properties = properties });
     }
@@ -63,7 +63,7 @@ public static class ILoggerExtensions
     /// <returns></returns>
     public static IDisposable ScopeContext(this ILogger logger, Action<LogContext> configure)
     {
-        if (logger == null) throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
 
         var logContext = new LogContext();
         configure?.Invoke(logContext);
@@ -79,7 +79,7 @@ public static class ILoggerExtensions
     /// <returns></returns>
     public static IDisposable ScopeContext(this ILogger logger, LogContext context)
     {
-        if (logger == null) throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
 
         return logger.BeginScope(context);
     }

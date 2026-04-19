@@ -52,7 +52,7 @@ public sealed class Retry
         , Action<int, int> retryAction = default
         , Func<bool> shouldExit = default)
     {
-        if (action == null) throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         AsyncUtility.RunSync(() => InvokeAsync(async () =>
         {
@@ -87,7 +87,7 @@ public sealed class Retry
         , Action<int, int> retryAction = default
         , Func<bool> shouldExit = default)
     {
-        if (action == null) throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         // 如果重试次数小于或等于 0，则直接调用
         if (numRetries <= 0)

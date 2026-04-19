@@ -1369,11 +1369,8 @@ public sealed partial class HttpRequestBuilder
     public void ReleaseResources()
     {
         // 空检查
-        if (HttpClientPooling is not null)
-        {
-            HttpClientPooling.Release?.Invoke(HttpClientPooling.Instance);
-            HttpClientPooling = null;
-        }
+        HttpClientPooling?.Release?.Invoke(HttpClientPooling.Instance);
+        HttpClientPooling = null;
 
         // 释放可释放的对象集合
         ReleaseDisposables();

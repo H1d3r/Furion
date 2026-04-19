@@ -87,12 +87,12 @@ public sealed partial class ViewEnginePart
                        .MakeGenericMethod(TemplateModel.Type);
 
         return !isCached
-            ? runCompileMethod.Invoke(viewEngine, new object[] {
+            ? runCompileMethod.Invoke(viewEngine, [
                     Template,TemplateModel.Model,TemplateOptionsBuilder
-            })
-            : runCompileMethod.Invoke(viewEngine, new object[] {
+            ])
+            : runCompileMethod.Invoke(viewEngine, [
                     Template,TemplateModel.Model,TemplateCachedFileName, TemplateOptionsBuilder
-            });
+            ]);
     }
 
     /// <summary>

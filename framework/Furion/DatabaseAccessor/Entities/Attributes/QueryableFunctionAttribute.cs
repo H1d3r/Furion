@@ -40,7 +40,7 @@ public class QueryableFunctionAttribute : DbFunctionAttribute
     /// <param name="schema">架构名</param>
     public QueryableFunctionAttribute(string name, string schema = null) : base(name, schema)
     {
-        DbContextLocators = Array.Empty<Type>();
+        DbContextLocators = [];
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public class QueryableFunctionAttribute : DbFunctionAttribute
     /// <param name="dbContextLocators">数据库上下文定位器</param>
     public QueryableFunctionAttribute(string name, string schema = null, params Type[] dbContextLocators) : base(name, schema)
     {
-        DbContextLocators = dbContextLocators ?? Array.Empty<Type>();
+        DbContextLocators = dbContextLocators ?? [];
     }
 
     /// <summary>

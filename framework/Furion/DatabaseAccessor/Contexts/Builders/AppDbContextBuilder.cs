@@ -88,7 +88,7 @@ internal static class AppDbContextBuilder
         var dbContextCorrelationType = GetDbContextCorrelationType(dbContext, dbContextLocator);
 
         // 如果没有数据，则跳过
-        if (!dbContextCorrelationType.EntityTypes.Any()) goto EntityFunctions;
+        if (dbContextCorrelationType.EntityTypes.Count == 0) goto EntityFunctions;
 
         // 获取当前数据库上下文的 [DbContextAttributes] 特性
         var dbContextType = dbContext.GetType();
@@ -237,7 +237,7 @@ internal static class AppDbContextBuilder
         var getTableNameMethod = lastEntityMutableTableType.GetMethod("GetTableName")
             ?? typeof(IPrivateEntityMutableTable<>).MakeGenericType(entityType).GetMethod("GetTableName");
 
-        var tableMeta = (string[])(getTableNameMethod?.Invoke(Activator.CreateInstance(lastEntityMutableTableType), new object[] { dbContext, dbContextLocator }));
+        var tableMeta = (string[])(getTableNameMethod?.Invoke(Activator.CreateInstance(lastEntityMutableTableType), [dbContext, dbContextLocator]));
         if (tableMeta != null)
         {
             // 设置动态表名
@@ -336,7 +336,7 @@ internal static class AppDbContextBuilder
             if (configureMethod == null) continue;
 
             var instance = Activator.CreateInstance(entityTypeBuilderType);
-            configureMethod.Invoke(instance, new object[] { entityBuilder, dbContext, dbContextLocator });
+            configureMethod.Invoke(instance, [entityBuilder, dbContext, dbContextLocator]);
         }
     }
 
@@ -368,7 +368,7 @@ internal static class AppDbContextBuilder
             if (hasDataMethod == null) continue;
 
             var instance = Activator.CreateInstance(entitySeedDataType);
-            var seedData = ((IList)hasDataMethod?.Invoke(instance, new object[] { dbContext, dbContextLocator }))?.Cast<object>();
+            var seedData = ((IList)hasDataMethod?.Invoke(instance, [dbContext, dbContextLocator]))?.Cast<object>();
             if (seedData == null) continue;
 
             data.AddRange(seedData);

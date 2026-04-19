@@ -305,7 +305,7 @@ public static class App
             if (postConfigure != null)
             {
                 options ??= Activator.CreateInstance<TOptions>();
-                postConfigure.Invoke(options, new object[] { options, Configuration });
+                postConfigure.Invoke(options, [options, Configuration]);
             }
         }
 
@@ -392,7 +392,7 @@ public static class App
     public static long GetExecutionTime(Action action)
     {
         // 空检查
-        if (action == null) throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         // 计算接口执行时间
         var timeOperation = Stopwatch.StartNew();
@@ -551,7 +551,7 @@ public static class App
     static App()
     {
         // 未托管的对象
-        UnmanagedObjects = new ConcurrentBag<IDisposable>();
+        UnmanagedObjects = [];
 
         // 加载程序集
         var assObject = GetAssemblies();
@@ -562,7 +562,7 @@ public static class App
         // 获取有效的类型集合
         EffectiveTypes = Assemblies.SelectMany(GetTypes).ToList();
 
-        AppStartups = new ConcurrentBag<AppStartup>();
+        AppStartups = [];
     }
 
     /// <summary>
@@ -592,7 +592,7 @@ public static class App
             };
 
         // 读取应用配置
-        var supportPackageNamePrefixs = Settings.SupportPackageNamePrefixs ?? Array.Empty<string>();
+        var supportPackageNamePrefixs = Settings.SupportPackageNamePrefixs ?? [];
 
         IEnumerable<Assembly> scanAssemblies;
 
@@ -615,7 +615,7 @@ public static class App
         // 独立发布/单文件发布
         else
         {
-            IEnumerable<Assembly> fixedSingleFileAssemblies = new[] { entryAssembly };
+            IEnumerable<Assembly> fixedSingleFileAssemblies = [entryAssembly];
 
             // 扫描实现 ISingleFilePublish 接口的类型
             var singleFilePublishType = entryAssembly.GetTypes()
@@ -637,8 +637,8 @@ public static class App
                 {
                     if (!fixedSingleFileAssemblies.Any(u => u.GetName().Name.Equals(ObjectMapperServiceCollectionExtensions.ASSEMBLY_NAME)))
                     {
-                        fixedSingleFileAssemblies = fixedSingleFileAssemblies.Concat(new[] {
-                            Reflect.GetAssembly(ObjectMapperServiceCollectionExtensions.ASSEMBLY_NAME) });
+                        fixedSingleFileAssemblies = fixedSingleFileAssemblies.Concat([
+                            Reflect.GetAssembly(ObjectMapperServiceCollectionExtensions.ASSEMBLY_NAME) ]);
                     }
                 }
                 catch { }
@@ -666,11 +666,11 @@ public static class App
                                     .Distinct();
         }
 
-        IEnumerable<Assembly> externalAssemblies = Array.Empty<Assembly>();
-        IEnumerable<string> pathOfExternalAssemblies = Array.Empty<string>();
+        IEnumerable<Assembly> externalAssemblies = [];
+        IEnumerable<string> pathOfExternalAssemblies = [];
 
         // 加载 appsettings.json 配置的外部程序集
-        if (Settings.ExternalAssemblies != null && Settings.ExternalAssemblies.Any())
+        if (Settings.ExternalAssemblies != null && Settings.ExternalAssemblies.Length != 0)
         {
             var externalDlls = new List<string>();
             foreach (var item in Settings.ExternalAssemblies)
@@ -714,12 +714,12 @@ public static class App
                 // 合并程序集
                 scanAssemblies = scanAssemblies.Concat(assembly);
                 externalAssemblies = externalAssemblies.Concat(assembly);
-                pathOfExternalAssemblies = pathOfExternalAssemblies.Concat(new[] { assemblyFileFullPath });
+                pathOfExternalAssemblies = pathOfExternalAssemblies.Concat([assemblyFileFullPath]);
             }
         }
 
         // 处理排除的程序集
-        if (Settings.ExcludeAssemblies != null && Settings.ExcludeAssemblies.Any())
+        if (Settings.ExcludeAssemblies != null && Settings.ExcludeAssemblies.Length != 0)
         {
             scanAssemblies = scanAssemblies.Where(ass => !Settings.ExcludeAssemblies.Contains(ass.GetName().Name, StringComparer.OrdinalIgnoreCase));
         }
@@ -778,10 +778,10 @@ public static class App
         }
 
         // 强制手动回收 GC 内存
-        if (UnmanagedObjects.Any())
+        if (!UnmanagedObjects.IsEmpty)
         {
             var nowTime = DateTime.UtcNow;
-            if ((LastGCCollectTime == null || (nowTime - LastGCCollectTime.Value).TotalSeconds > GC_COLLECT_INTERVAL_SECONDS))
+            if (LastGCCollectTime == null || (nowTime - LastGCCollectTime.Value).TotalSeconds > GC_COLLECT_INTERVAL_SECONDS)
             {
                 LastGCCollectTime = nowTime;
                 GC.Collect();

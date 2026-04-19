@@ -43,7 +43,7 @@ internal sealed class ParameterReplaceExpressionVisitor : ExpressionVisitor
     /// <param name="parameterExpressionSetter">参数表达式映射集合</param>
     public ParameterReplaceExpressionVisitor(Dictionary<ParameterExpression, ParameterExpression> parameterExpressionSetter)
     {
-        this.parameterExpressionSetter = parameterExpressionSetter ?? new Dictionary<ParameterExpression, ParameterExpression>();
+        this.parameterExpressionSetter = parameterExpressionSetter ?? [];
     }
 
     /// <summary>

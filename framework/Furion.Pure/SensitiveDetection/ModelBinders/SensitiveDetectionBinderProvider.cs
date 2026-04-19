@@ -44,10 +44,7 @@ public class SensitiveDetectionBinderProvider : IModelBinderProvider
     /// <exception cref="NotImplementedException"></exception>
     public IModelBinder GetBinder(ModelBinderProviderContext context)
     {
-        if (context == null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         // 只处理字符串类型值
         if (context.Metadata.ModelType == typeof(string) && context.Metadata is DefaultModelMetadata actMetadata)

@@ -274,13 +274,13 @@ public static class OptionsBuilderExtensions
 
         // 设置调用方法实际传入参数
         args = arg1Expression == default
-            ? new object[] { arg0 }
-            : new object[] { arg0, arg1! };
+            ? [arg0]
+            : [arg0, arg1!];
 
         // 返回调用方法参数定义表达式
         return arg1Expression == default
-            ? new[] { arg0Expression }
-            : new[] { arg0Expression, arg1Expression };
+            ? [arg0Expression]
+            : [arg0Expression, arg1Expression];
     }
 
     /// <summary>
@@ -308,6 +308,6 @@ public static class OptionsBuilderExtensions
         return !isFuncDelegate
             ? baseDelegateType.Assembly.GetType($"{baseDelegateType.FullName}`{inputTypes!.Length}")!.MakeGenericType(inputTypes)
             : baseDelegateType.Assembly.GetType($"{(baseDelegateType.FullName![0..^2])}`{inputTypes!.Length + 1}")
-                !.MakeGenericType(inputTypes.Concat(new[] { outputType! }).ToArray());
+                !.MakeGenericType(inputTypes.Concat([outputType!]).ToArray());
     }
 }

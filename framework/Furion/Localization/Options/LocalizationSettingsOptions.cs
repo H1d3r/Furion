@@ -73,7 +73,7 @@ public sealed class LocalizationSettingsOptions : IConfigurableOptions<Localizat
     public void PostConfigure(LocalizationSettingsOptions options, IConfiguration configuration)
     {
         ResourcesPath ??= "Resources";
-        SupportedCultures ??= Array.Empty<string>();
+        SupportedCultures ??= [];
         DefaultCulture ??= string.Empty;
         LanguageFilePrefix ??= "Lang";
         AssemblyName ??= Reflect.GetAssemblyName(Reflect.GetEntryAssembly());

@@ -199,7 +199,7 @@ public class ClassProxyGenerator<TClass>
     private static Assembly CompileCSharpClassCode(string csharpCode, string assemblyName = default, IEnumerable<Assembly> additionalAssemblies = default)
     {
         // 空检查
-        if (csharpCode == null) throw new ArgumentNullException(nameof(csharpCode));
+        ArgumentNullException.ThrowIfNull(csharpCode);
 
         // 默认程序集
         var defaultAssemblies = new[] { typeof(object).Assembly };
@@ -211,10 +211,9 @@ public class ClassProxyGenerator<TClass>
         // 创建 C# 编译器
         var compilation = CSharpCompilation.Create(
           string.IsNullOrWhiteSpace(assemblyName) ? Path.GetRandomFileName() : assemblyName.Trim(),
-          new[]
-          {
+          [
                     syntaxTree
-          },
+          ],
           references.Where(ass =>
           {
               unsafe

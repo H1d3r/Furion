@@ -56,7 +56,7 @@ public static class ObjectMapperServiceCollectionExtensions
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .First(u => u.Name == "AddObjectMapper");
 
-            return addObjectMapperMethod.Invoke(null, new object[] { services, App.Assemblies.ToArray() }) as IServiceCollection;
+            return addObjectMapperMethod.Invoke(null, [services, App.Assemblies.ToArray()]) as IServiceCollection;
         }
 
         return services;

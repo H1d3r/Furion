@@ -128,7 +128,7 @@ public static class Oops
     {
         var exceptionMessage = MontageErrorMessage(errorMessage, default, null, args);
         return new AppFriendlyException(exceptionMessage, default,
-            Activator.CreateInstance(exceptionType, new object[] { exceptionMessage }) as Exception);
+            Activator.CreateInstance(exceptionType, [exceptionMessage]) as Exception);
     }
 
     /// <summary>
@@ -175,7 +175,7 @@ public static class Oops
     {
         var (ErrorCode, Message) = GetErrorCodeMessage(errorCode, null, args);
         return new AppFriendlyException(Message, errorCode,
-            Activator.CreateInstance(exceptionType, new object[] { Message }) as Exception)
+            Activator.CreateInstance(exceptionType, [Message]) as Exception)
         { ErrorCode = ErrorCode };
     }
 

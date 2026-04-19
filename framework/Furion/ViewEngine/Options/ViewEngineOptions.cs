@@ -41,8 +41,9 @@ public class ViewEngineOptions
     /// </summary>
     public ViewEngineOptions()
     {
-        ReferencedAssemblies = new HashSet<Assembly>(new AssemblyEqualityComparer())
-        {
+        ReferencedAssemblies =
+        [
+with(new AssemblyEqualityComparer()),
             typeof(object).Assembly,
             typeof(ViewEngineModel).Assembly,
             typeof(System.Collections.IList).Assembly,
@@ -55,7 +56,7 @@ public class ViewEngineOptions
             Reflect.GetAssembly("System.Linq.Expressions"),
             Reflect.GetAssembly("System.Collections"),
             Reflect.GetAssembly("netstandard"),
-        };
+        ];
     }
 
     /// <summary>
@@ -66,7 +67,7 @@ public class ViewEngineOptions
     /// <summary>
     /// 元数据引用
     /// </summary>
-    public HashSet<MetadataReference> MetadataReferences { get; set; } = new HashSet<MetadataReference>();
+    public HashSet<MetadataReference> MetadataReferences { get; set; } = [];
 
     /// <summary>
     /// 模板命名空间
@@ -81,8 +82,8 @@ public class ViewEngineOptions
     /// <summary>
     /// 默认 Using
     /// </summary>
-    public HashSet<string> DefaultUsings { get; set; } = new HashSet<string>()
-    {
+    public HashSet<string> DefaultUsings { get; set; } =
+    [
          "System",
          "System.Linq",
          "System.Text",
@@ -92,7 +93,7 @@ public class ViewEngineOptions
          "System.Threading",
          "System.Threading.Tasks",
          "System.Dynamic"
-    };
+    ];
 }
 
 /// <summary>

@@ -246,7 +246,7 @@ public static class SpecificationDocumentBuilder
             {
                 // 默认 Server
                 var servers = new List<OpenApiServer> {
-                        new OpenApiServer { Url = $"{request.Scheme}://{request.Host.Value}{_appSettings.VirtualPath}",Description="Default" }
+                        new() { Url = $"{request.Scheme}://{request.Host.Value}{_appSettings.VirtualPath}",Description="Default" }
                 };
                 servers.AddRange(_specificationDocumentSettings.Servers);
 
@@ -374,7 +374,7 @@ public static class SpecificationDocumentBuilder
     {
         swaggerGenOptions.TagActionsBy(apiDescription =>
         {
-            return new[] { GetActionTag(apiDescription) };
+            return [GetActionTag(apiDescription)];
         });
     }
 
@@ -600,7 +600,7 @@ public static class SpecificationDocumentBuilder
     /// <summary>
     /// 静态编译的正则表达式
     /// </summary>
-    private static readonly Regex s_memberNameRegex = new Regex(@"[A-Z]:[a-zA-Z0-9_@.]+", RegexOptions.Compiled);
+    private static readonly Regex s_memberNameRegex = new(@"[A-Z]:[a-zA-Z0-9_@.]+", RegexOptions.Compiled);
 
     /// <summary>
     /// 配置授权
@@ -649,7 +649,7 @@ public static class SpecificationDocumentBuilder
     private static void CreateGroupEndpoint(SwaggerUIOptions swaggerUIOptions, string routePrefix = default, bool withProxy = false)
     {
         var routePrefixArrs = (routePrefix ?? swaggerUIOptions.RoutePrefix).Split('/', StringSplitOptions.RemoveEmptyEntries);
-        var routePrefixList = routePrefixArrs.Length == 0 ? routePrefixArrs.Concat(new[] { string.Empty }) : routePrefixArrs;
+        var routePrefixList = routePrefixArrs.Length == 0 ? routePrefixArrs.Concat([string.Empty]) : routePrefixArrs;
 
         foreach (var group in DocumentGroups)
         {
@@ -734,7 +734,7 @@ public static class SpecificationDocumentBuilder
     {
         // 获取所有的控制器和动作方法
         var controllers = App.EffectiveTypes.Where(u => Penetrates.IsApiController(u)).ToArray();
-        if (!controllers.Any())
+        if (controllers.Length == 0)
         {
             var defaultGroups = new List<string>
             {
@@ -777,7 +777,7 @@ public static class SpecificationDocumentBuilder
         // 启用总分组功能
         if (_specificationDocumentSettings.EnableAllGroups == true)
         {
-            groups = groups.Concat(new[] { AllGroupsKey });
+            groups = groups.Concat([AllGroupsKey]);
         }
 
         return groups;

@@ -95,9 +95,9 @@ public class AnonymousTypeWrapper : DynamicObject
             var data = result as IEnumerable;
             foreach (var item in data)
             {
-                addMethod.Invoke(list, new object[] {
+                addMethod.Invoke(list, [
                     item.IsAnonymous() ? new AnonymousTypeWrapper(item) : item
-                });
+                ]);
             }
 
             result = list;
