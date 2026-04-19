@@ -51,7 +51,7 @@ public sealed class InjectOptions
     /// <param name="directories"></param>
     public void ConfigurationScanDirectories(params string[] directories)
     {
-        InternalConfigurationScanDirectories = directories ?? Array.Empty<string>();
+        InternalConfigurationScanDirectories = directories ?? [];
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public sealed class InjectOptions
     /// <param name="files"></param>
     public void IgnoreConfigurationFiles(params string[] files)
     {
-        InternalIgnoreConfigurationFiles = files ?? Array.Empty<string>();
+        InternalIgnoreConfigurationFiles = files ?? [];
     }
 
     /// <summary>
@@ -102,12 +102,12 @@ public sealed class InjectOptions
     /// <summary>
     /// 配置配置文件扫描目录
     /// </summary>
-    internal static IEnumerable<string> InternalConfigurationScanDirectories { get; private set; } = Array.Empty<string>();
+    internal static IEnumerable<string> InternalConfigurationScanDirectories { get; private set; } = [];
 
     /// <summary>
     /// 配置配置文件忽略注册文件
     /// </summary>
-    internal static IEnumerable<string> InternalIgnoreConfigurationFiles { get; private set; } = Array.Empty<string>();
+    internal static IEnumerable<string> InternalIgnoreConfigurationFiles { get; private set; } = [];
 
     /// <summary>
     /// AppConfiguration 配置

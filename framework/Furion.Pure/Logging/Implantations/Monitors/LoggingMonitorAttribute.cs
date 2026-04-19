@@ -210,12 +210,12 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
 
         if (!claimsPrincipal.Claims.Any()) return templates;
 
-        templates.AddRange(new[]
-        {
+        templates.AddRange(
+        [
             $"━━━━━━━━━━━━━━━  授权信息 ━━━━━━━━━━━━━━━"
             , $"##JWT Token## {authorization}"
             , $""
-        });
+        ]);
 
         // 遍历身份信息
         writer.WritePropertyName("authorizationClaims");
@@ -259,11 +259,11 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
 
         if (!headers.Any()) return templates;
 
-        templates.AddRange(new[]
-        {
+        templates.AddRange(
+        [
             $"━━━━━━━━━━━━━━━  请求头信息 ━━━━━━━━━━━━━━━"
             , $""
-        });
+        ]);
 
         // 遍历请求头列表
         writer.WritePropertyName("requestHeaders");
@@ -302,12 +302,12 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
             return templates;
         }
 
-        templates.AddRange(new[]
-        {
+        templates.AddRange(
+        [
             $"━━━━━━━━━━━━━━━  参数列表 ━━━━━━━━━━━━━━━"
             , $"##Content-Type## {contentType}"
             , $""
-        });
+        ]);
 
         var parameters = method.GetParameters();
 
@@ -465,14 +465,14 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
         // 获取请求返回的响应状态码
         var httpStatusCode = (resultContext as FilterContext).HttpContext.Response.StatusCode;
 
-        templates.AddRange(new[]
-        {
+        templates.AddRange(
+        [
             $"━━━━━━━━━━━━━━━  返回信息 ━━━━━━━━━━━━━━━"
             , $"##HTTP响应状态码## {httpStatusCode}"
             , $"##原始类型## {returnTypeName}"
             , $"##最终类型## {finalReturnTypeName}"
             , $"##最终返回值## {displayValue}"
-        });
+        ]);
 
         writer.WritePropertyName("returnInformation");
         writer.WriteStartObject();
@@ -522,13 +522,13 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
         if (!isValidationException)
         {
             var exceptionTypeName = HandleGenericType(exception.GetType());
-            templates.AddRange(new[]
-            {
+            templates.AddRange(
+            [
                 $"━━━━━━━━━━━━━━━  异常信息 ━━━━━━━━━━━━━━━"
                 , $"##类型## {exceptionTypeName}"
                 , $"##消息## {exception.Message}"
                 , $"##错误堆栈## {exception.StackTrace}"
-            });
+            ]);
 
             writer.WritePropertyName("exception");
             writer.WriteStartObject();
@@ -552,13 +552,13 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
         else
         {
             var friendlyException = exception as AppFriendlyException;
-            templates.AddRange(new[]
-            {
+            templates.AddRange(
+            [
                 $"━━━━━━━━━━━━━━━  业务异常 ━━━━━━━━━━━━━━━"
                 , $"##业务码## {friendlyException?.ErrorCode}"
                 , $"##业务码（原）## {friendlyException?.OriginErrorCode}"
                 , $"##业务消息## {friendlyException?.ErrorMessage}"
-            });
+            ]);
 
             // 检查是否可以读取原始数据，请确保启用 Body 重复读功能：app.EnableBuffering(); 
             var canSeek = httpContext.Request.Body.CanSeek;
@@ -618,10 +618,10 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
 
         var templates = new List<string>();
 
-        templates.AddRange(new[]
-        {
+        templates.AddRange(
+        [
             $"━━━━━━━━━━━━━━━  附加信息 ━━━━━━━━━━━━━━━"
-        });
+        ]);
 
         // 遍历附加信息
         writer.WritePropertyName("loggingExtras");
@@ -790,10 +790,10 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
     /// <returns></returns>
     private string[] GetIgnorePropertyNames(LoggingMonitorMethod monitorMethod)
     {
-        IEnumerable<string> ignorePropertyNamesList = IgnorePropertyNames ?? Array.Empty<string>();
+        IEnumerable<string> ignorePropertyNamesList = IgnorePropertyNames ?? [];
 
-        return ignorePropertyNamesList.Concat(monitorMethod?.IgnorePropertyNames ?? Array.Empty<string>())
-                                      .Concat(Settings.IgnorePropertyNames ?? Array.Empty<string>())
+        return ignorePropertyNamesList.Concat(monitorMethod?.IgnorePropertyNames ?? [])
+                                      .Concat(Settings.IgnorePropertyNames ?? [])
                                       .ToArray();
     }
 
@@ -804,10 +804,10 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
     /// <returns></returns>
     private Type[] GetIgnorePropertyTypes(LoggingMonitorMethod monitorMethod)
     {
-        IEnumerable<Type> ignorePropertyTypesList = IgnorePropertyTypes ?? Array.Empty<Type>();
+        IEnumerable<Type> ignorePropertyTypesList = IgnorePropertyTypes ?? [];
 
-        return ignorePropertyTypesList.Concat(monitorMethod?.IgnorePropertyTypes ?? Array.Empty<Type>())
-                                      .Concat(Settings.IgnorePropertyTypes ?? Array.Empty<Type>())
+        return ignorePropertyTypesList.Concat(monitorMethod?.IgnorePropertyTypes ?? [])
+                                      .Concat(Settings.IgnorePropertyTypes ?? [])
                                       .ToArray();
     }
 

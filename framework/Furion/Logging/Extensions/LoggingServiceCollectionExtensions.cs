@@ -59,9 +59,9 @@ public static class LoggingServiceCollectionExtensions
             ?? new LoggingMonitorSettings();
         settings.IsMvcFilterRegister = false;   // 解决过去 Mvc Filter 全局注册的问题
         settings.FromGlobalFilter = true;   // 解决局部和全局触发器同时配置触发两次问题
-        settings.IncludeOfMethods ??= Array.Empty<string>();
-        settings.ExcludeOfMethods ??= Array.Empty<string>();
-        settings.MethodsSettings ??= Array.Empty<LoggingMonitorMethod>();
+        settings.IncludeOfMethods ??= [];
+        settings.ExcludeOfMethods ??= [];
+        settings.MethodsSettings ??= [];
 
         // 添加外部配置
         configure?.Invoke(settings);

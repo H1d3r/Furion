@@ -267,10 +267,10 @@ public sealed class LegacyRunOptions : GenericRunOptions
     /// <summary>
     /// 应用中间件组件
     /// </summary>
-    internal Dictionary<Type, object> ApplicationComponents { get; set; } = new();
+    internal Dictionary<Type, object> ApplicationComponents { get; set; } = [];
 
     /// <summary>
     /// IWebHostBuilder 组件
     /// </summary>
-    internal Dictionary<Type, object> WebComponents { get; set; } = new();
+    internal Dictionary<Type, object> WebComponents { get; set; } = [];
 }

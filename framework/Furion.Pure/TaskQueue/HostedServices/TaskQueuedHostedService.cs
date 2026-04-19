@@ -81,7 +81,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
     /// <summary>
     /// 同步任务队列（线程安全）
     /// </summary>
-    private readonly BlockingCollection<TaskWrapper> _syncTaskWrapperQueue = new(12000);
+    private readonly BlockingCollection<TaskWrapper> _syncTaskWrapperQueue = [with(12000)];
 
     /// <summary>
     /// 构造函数

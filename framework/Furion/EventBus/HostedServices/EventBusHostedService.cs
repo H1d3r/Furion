@@ -244,9 +244,9 @@ internal sealed class EventBusHostedService : BackgroundService
             .ToList();
 
         // 空订阅
-        if (!eventHandlersThatShouldRun.Any())
+        if (eventHandlersThatShouldRun.Count == 0)
         {
-            Log(LogLevel.Warning, "Subscriber with event ID <{EventId}> was not found.", new[] { eventSource.EventId });
+            Log(LogLevel.Warning, "Subscriber with event ID <{EventId}> was not found.", [eventSource.EventId]);
 
             return;
         }
@@ -333,7 +333,7 @@ internal sealed class EventBusHostedService : BackgroundService
                 catch (Exception ex)
                 {
                     // 输出异常日志
-                    Log(LogLevel.Error, "Error occurred executing in {EventId}.", new[] { eventSource.EventId }, ex);
+                    Log(LogLevel.Error, "Error occurred executing in {EventId}.", [eventSource.EventId], ex);
 
                     // 标记异常
                     executionException = new InvalidOperationException(string.Format("Error occurred executing in {0}.", eventSource.EventId), ex);
@@ -413,7 +413,7 @@ internal sealed class EventBusHostedService : BackgroundService
             // 输出日志
             if (succeeded)
             {
-                Log(LogLevel.Information, "Subscriber with event ID <{EventId}> was appended successfully.", new[] { eventId });
+                Log(LogLevel.Information, "Subscriber with event ID <{EventId}> was appended successfully.", [eventId]);
             }
         }
         // 处理动态删除
@@ -428,7 +428,7 @@ internal sealed class EventBusHostedService : BackgroundService
                 if (!succeeded) continue;
 
                 // 输出日志
-                Log(LogLevel.Warning, "Subscriber<{Name}> with event ID <{EventId}> was remove.", new[] { wrapper.HandlerMethod?.Name, eventId });
+                Log(LogLevel.Warning, "Subscriber<{Name}> with event ID <{EventId}> was remove.", [wrapper.HandlerMethod?.Name, eventId]);
             }
         }
     }

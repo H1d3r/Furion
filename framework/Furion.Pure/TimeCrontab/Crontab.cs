@@ -37,7 +37,7 @@ public sealed partial class Crontab
     /// <remarks>禁止外部 new 实例化</remarks>
     private Crontab()
     {
-        Parsers = new Dictionary<CrontabFieldKind, List<ICronParser>>();
+        Parsers = [];
         Format = CronStringFormat.Default;
     }
 

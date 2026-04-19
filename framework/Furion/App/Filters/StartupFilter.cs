@@ -107,7 +107,7 @@ public class StartupFilter : IStartupFilter
 
         // 处理【部署】二级虚拟目录
         var virtualPath = App.Settings.VirtualPath;
-        if (!string.IsNullOrWhiteSpace(virtualPath) && virtualPath.StartsWith("/"))
+        if (!string.IsNullOrWhiteSpace(virtualPath) && virtualPath.StartsWith('/'))
         {
             app.Map(virtualPath, _app => UseStartups(startups, _app));
             return;

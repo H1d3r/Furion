@@ -67,7 +67,7 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
     /// <param name="options"></param>
     public AppDbContext(DbContextOptions<TDbContext> options) : base(options)
     {
-        ChangeTrackerEntities ??= new Dictionary<EntityEntry, PropertyValues>();
+        ChangeTrackerEntities ??= [];
     }
 
     /// <summary>
@@ -215,7 +215,7 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
         var properyName = Expression.Constant(onTableTenantId);
         var propertyValue = Expression.Call(Expression.Constant(dbContext), dbContext.GetType().GetMethod(nameof(IMultiTenantOnTable.GetTenantId)));
 
-        var expressionBody = Expression.Equal(Expression.Call(typeof(EF), nameof(EF.Property), new[] { typeof(object) }, parameter, properyName), propertyValue);
+        var expressionBody = Expression.Equal(Expression.Call(typeof(EF), nameof(EF.Property), [typeof(object)], parameter, properyName), propertyValue);
         var expression = Expression.Lambda(expressionBody, parameter);
         return expression;
     }
@@ -289,7 +289,7 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
     {
         // 获取所有改变的类型
         var entityChangedTypes = AppDbContextBuilder.DbContextLocatorCorrelationTypes[typeof(TDbContextLocator)].EntityChangedTypes;
-        if (!entityChangedTypes.Any()) return;
+        if (entityChangedTypes.Count == 0) return;
 
         // 遍历所有的改变的实体
         foreach (var trackerEntities in changeTrackerEntities)
@@ -332,11 +332,11 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
                     // 获取实体旧值
                     var oldEntity = trackerEntities.Value?.ToObject();
 
-                    OnChangeMethod.Invoke(instance, new object[] { entity, oldEntity, dbContext, typeof(TDbContextLocator), state });
+                    OnChangeMethod.Invoke(instance, [entity, oldEntity, dbContext, typeof(TDbContextLocator), state]);
                 }
                 else
                 {
-                    OnChangeMethod.Invoke(instance, new object[] { entity, dbContext, typeof(TDbContextLocator), state });
+                    OnChangeMethod.Invoke(instance, [entity, dbContext, typeof(TDbContextLocator), state]);
                 }
             }
         }

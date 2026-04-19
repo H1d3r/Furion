@@ -67,7 +67,7 @@ public static class ConfigurableOptionsServiceCollectionExtensions
                 ChangeToken.OnChange(() => configurationRoot.GetReloadToken(), ((Action)(() =>
                 {
                     var options = optionsConfiguration.Get<TOptions>();
-                    if (options != null) onListenerMethod.Invoke(options, new object[] { options, optionsConfiguration });
+                    if (options != null) onListenerMethod.Invoke(options, [options, optionsConfiguration]);
                 })).Debounce());
             }
         }
@@ -115,9 +115,9 @@ public static class ConfigurableOptionsServiceCollectionExtensions
             if (postConfigureMethod != null)
             {
                 if (optionsSettings?.PostConfigureAll != true)
-                    optionsConfigure.PostConfigure(options => postConfigureMethod.Invoke(options, new object[] { options, optionsConfiguration }));
+                    optionsConfigure.PostConfigure(options => postConfigureMethod.Invoke(options, [options, optionsConfiguration]));
                 else
-                    services.PostConfigureAll<TOptions>(options => postConfigureMethod.Invoke(options, new object[] { options, optionsConfiguration }));
+                    services.PostConfigureAll<TOptions>(options => postConfigureMethod.Invoke(options, [options, optionsConfiguration]));
             }
         }
 

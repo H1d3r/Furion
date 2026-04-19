@@ -61,7 +61,7 @@ public abstract class DynamicDispatchProxy : DispatchProxy
         // 代理派生类检查
         if (!typeof(DynamicDispatchProxy).IsAssignableFrom(proxyType)) throw new InvalidOperationException($"Type {proxyType} is not a {nameof(DynamicDispatchProxy)} derived type.");
 
-        return _decorateMethod.MakeGenericMethod(interfaceType, proxyType).Invoke(null, new object[] { target, properties });
+        return _decorateMethod.MakeGenericMethod(interfaceType, proxyType).Invoke(null, [target, properties]);
     }
 
     /// <summary>
@@ -78,7 +78,7 @@ public abstract class DynamicDispatchProxy : DispatchProxy
     {
         var proxy = Create<TService, TProxy>() as DynamicDispatchProxy;
         proxy.Target = target;
-        proxy.Properties = properties ?? new Dictionary<object, object>();
+        proxy.Properties = properties ?? [];
 
         return proxy as TService;
     }
@@ -108,9 +108,9 @@ public abstract class DynamicDispatchProxy : DispatchProxy
     public static dynamic DecorateClass(Type proxyType, object target, Dictionary<object, object> properties = default)
     {
         // 空检查
-        if (target == null) throw new ArgumentNullException(nameof(target));
+        ArgumentNullException.ThrowIfNull(target);
 
-        return _decorateClassMethod.MakeGenericMethod(target.GetType(), proxyType).Invoke(null, new object[] { target, properties });
+        return _decorateClassMethod.MakeGenericMethod(target.GetType(), proxyType).Invoke(null, [target, properties]);
     }
 
     /// <summary>
@@ -157,7 +157,7 @@ public abstract class DynamicDispatchProxy : DispatchProxy
         // 处理返回值 Task<> 方法
         else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
         {
-            return _invokeAsyncOfTMethod.MakeGenericMethod(returnType.GenericTypeArguments).Invoke(this, new[] { invocation });
+            return _invokeAsyncOfTMethod.MakeGenericMethod(returnType.GenericTypeArguments).Invoke(this, [invocation]);
         }
         // 处理同步方法
         else
@@ -179,5 +179,5 @@ public abstract class DynamicDispatchProxy : DispatchProxy
     /// <summary>
     /// <see cref="InvokeAsync{T}(Invocation)"/> 泛型方法
     /// </summary>
-    private static readonly MethodInfo _invokeAsyncOfTMethod = typeof(DynamicDispatchProxy).GetMethod(nameof(InvokeAsync), 1, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly, null, new[] { typeof(Invocation) }, null);
+    private static readonly MethodInfo _invokeAsyncOfTMethod = typeof(DynamicDispatchProxy).GetMethod(nameof(InvokeAsync), 1, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly, null, [typeof(Invocation)], null);
 }

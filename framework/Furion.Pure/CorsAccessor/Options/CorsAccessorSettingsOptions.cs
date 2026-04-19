@@ -88,7 +88,7 @@ public sealed class CorsAccessorSettingsOptions : IConfigurableOptions<CorsAcces
     public void PostConfigure(CorsAccessorSettingsOptions options, IConfiguration configuration)
     {
         PolicyName ??= "App.Cors.Policy";
-        WithOrigins ??= Array.Empty<string>();
+        WithOrigins ??= [];
         AllowCredentials ??= true;
         FixedClientToken ??= true;
         SignalRSupport ??= false;

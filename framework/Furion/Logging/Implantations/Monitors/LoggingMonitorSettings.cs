@@ -46,18 +46,18 @@ public sealed class LoggingMonitorSettings
     /// 配置包含拦截的方法名列表（完全限定名格式：程序集名称.类名.方法名），注意无需添加参数签名
     /// </summary>
     /// <remarks>结合 <seealso cref="GlobalEnabled"/> 使用，当 <see cref="GlobalEnabled"/> 为 false 时有效，</remarks>
-    public string[] IncludeOfMethods { get; set; } = Array.Empty<string>();
+    public string[] IncludeOfMethods { get; set; } = [];
 
     /// <summary>
     /// 配置排除拦截的方法名列表（完全限定名格式：程序集名称.类名.方法名），注意无需添加参数签名
     /// </summary>
     /// <remarks>结合 <seealso cref="GlobalEnabled"/> 使用，当 <see cref="GlobalEnabled"/> 为 true 时有效，</remarks>
-    public string[] ExcludeOfMethods { get; set; } = Array.Empty<string>();
+    public string[] ExcludeOfMethods { get; set; } = [];
 
     /// <summary>
     /// 配置方法更多信息
     /// </summary>
-    public LoggingMonitorMethod[] MethodsSettings { get; set; } = Array.Empty<LoggingMonitorMethod>();
+    public LoggingMonitorMethod[] MethodsSettings { get; set; } = [];
 
     /// <summary>
     /// 业务日志消息级别

@@ -45,6 +45,6 @@ public sealed class DependencyInjectionSettingsOptions : IConfigurableOptions<De
     /// <param name="configuration"></param>
     public void PostConfigure(DependencyInjectionSettingsOptions options, IConfiguration configuration)
     {
-        options.Definitions ??= Array.Empty<ExternalService>();
+        options.Definitions ??= [];
     }
 }

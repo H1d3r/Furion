@@ -94,7 +94,7 @@ internal static class Penetrates
             DependLinkList = dependLinkList;
             ComponentContextLinkList = componentContextLinkList;
             RootContext = rootContext;
-            ProcessedComponents = new HashSet<Type>(dependLinkList);
+            ProcessedComponents = [with(dependLinkList)];
             CurrentPath = new Stack<Type>();
         }
 
@@ -179,10 +179,10 @@ internal static class Penetrates
             var dependsOnAttribute = componentType.GetCustomAttribute<DependsOnAttribute>(true);
 
             // 获取依赖组件列表
-            var dependComponents = dependsOnAttribute?.DependComponents?.Distinct()?.Where(c => c != null)?.ToArray() ?? Array.Empty<Type>();
+            var dependComponents = dependsOnAttribute?.DependComponents?.Distinct()?.Where(c => c != null)?.ToArray() ?? [];
 
             // 获取链接组件列表
-            var linkComponents = dependsOnAttribute?.LinkComponents?.Distinct()?.Where(c => c != null)?.ToArray() ?? Array.Empty<Type>();
+            var linkComponents = dependsOnAttribute?.LinkComponents?.Distinct()?.Where(c => c != null)?.ToArray() ?? [];
 
             // 检查自引用
             if (dependComponents.Contains(componentType) || linkComponents.Contains(componentType))

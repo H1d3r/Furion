@@ -89,7 +89,7 @@ public static class DataValidator
             };
 
         // 存储验证结果
-        ICollection<ValidationResult> results = new List<ValidationResult>();
+        ICollection<ValidationResult> results = [];
         var isValid = Validator.TryValidateObject(obj, new ValidationContext(obj, serviceProvider, null), results, validateAllProperties);
 
         // 返回验证结果
@@ -122,7 +122,7 @@ public static class DataValidator
     public static DataValidationResult TryValidateValue(object value, IServiceProvider serviceProvider, params ValidationAttribute[] validationAttributes)
     {
         // 存储验证结果
-        ICollection<ValidationResult> results = new List<ValidationResult>();
+        ICollection<ValidationResult> results = [];
         var isValid = Validator.TryValidateValue(value, new ValidationContext(value, serviceProvider, null), results, validationAttributes);
 
         // 返回验证结果
@@ -180,7 +180,7 @@ public static class DataValidator
     public static DataValidationResult TryValidateValue(object value, ValidationPattern validationOptionss, params object[] validationTypes)
     {
         // 存储验证结果
-        ICollection<ValidationResult> results = new List<ValidationResult>();
+        ICollection<ValidationResult> results = [];
 
         // 如果值未null，验证失败
         if (value == null)

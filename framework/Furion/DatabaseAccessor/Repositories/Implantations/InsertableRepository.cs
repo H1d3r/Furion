@@ -307,10 +307,7 @@ public partial class PrivateRepository<TEntity>
         , out StringBuilder stringBuilder
         , out List<object> parameters, object keySet = null)
     {
-        if (tableNamesAction == null)
-        {
-            throw new ArgumentNullException(nameof(tableNamesAction));
-        }
+        ArgumentNullException.ThrowIfNull(tableNamesAction);
 
         // 原始表
         var originTableName = GetFullTableName();
@@ -346,7 +343,7 @@ public partial class PrivateRepository<TEntity>
         var parameterValues = string.Join(", ", columnNames.Keys.Select((p, i) => $"{{{i}}}"));
 
         stringBuilder = new StringBuilder();
-        parameters = new();
+        parameters = [];
 
         // 获取每个属性的值
         foreach (var propName in columnNames.Keys)

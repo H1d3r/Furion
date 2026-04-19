@@ -309,17 +309,17 @@ public sealed class RunOptions : IRunOptions
     /// <summary>
     /// 应用服务组件
     /// </summary>
-    internal Dictionary<Type, object> ServiceComponents { get; set; } = new();
+    internal Dictionary<Type, object> ServiceComponents { get; set; } = [];
 
     /// <summary>
     /// WebApplicationBuilder 组件
     /// </summary>
-    internal Dictionary<Type, object> WebComponents { get; set; } = new();
+    internal Dictionary<Type, object> WebComponents { get; set; } = [];
 
     /// <summary>
     /// 应用中间件组件
     /// </summary>
-    internal Dictionary<Type, object> ApplicationComponents { get; set; } = new();
+    internal Dictionary<Type, object> ApplicationComponents { get; set; } = [];
 
     /// <summary>
     /// 静默启动

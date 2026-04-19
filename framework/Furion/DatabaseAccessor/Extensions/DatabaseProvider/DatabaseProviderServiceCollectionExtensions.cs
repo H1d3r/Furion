@@ -239,7 +239,7 @@ public static class DatabaseProviderServiceCollectionExtensions
             if (DbProvider.IsDatabaseFor(providerName, DbProvider.MySql))
             {
                 dbContextOptionsBuilder = UseMethod
-                    .Invoke(null, new object[] { options, connectionMetadata, MySqlVersion, MigrationsAssemblyAction }) as DbContextOptionsBuilder;
+                    .Invoke(null, [options, connectionMetadata, MySqlVersion, MigrationsAssemblyAction]) as DbContextOptionsBuilder;
             }
             // 处理 SqlServer 2005-2008 兼容问题
             else if (DbProvider.IsDatabaseFor(providerName, DbProvider.SqlServer) && (version == "2008" || version == "2005"))
@@ -248,7 +248,7 @@ public static class DatabaseProviderServiceCollectionExtensions
                 dbContextOptionsBuilder.ReplaceService<IQueryTranslationPostprocessorFactory, SqlServer2008QueryTranslationPostprocessorFactory>();
 
                 dbContextOptionsBuilder = UseMethod
-                    .Invoke(null, new object[] { options, connectionMetadata, MigrationsAssemblyAction }) as DbContextOptionsBuilder;
+                    .Invoke(null, [options, connectionMetadata, MigrationsAssemblyAction]) as DbContextOptionsBuilder;
             }
             // 处理 Oracle 11 兼容问题
             else if (DbProvider.IsDatabaseFor(providerName, DbProvider.Oracle) && !string.IsNullOrWhiteSpace(version))
@@ -259,26 +259,26 @@ public static class DatabaseProviderServiceCollectionExtensions
 
                     // 处理版本号
                     optionsType.GetMethod("UseOracleSQLCompatibility")
-                           .Invoke(options, new[] { version });
+                           .Invoke(options, [version]);
 
                     // 处理迁移程序集
                     optionsType.GetMethod("MigrationsAssembly")
-                           .Invoke(options, new[] { Db.MigrationAssemblyName });
+                           .Invoke(options, [Db.MigrationAssemblyName]);
                 };
 
                 dbContextOptionsBuilder = UseMethod
-                    .Invoke(null, new object[] { options, connectionMetadata, oracleOptionsAction }) as DbContextOptionsBuilder;
+                    .Invoke(null, [options, connectionMetadata, oracleOptionsAction]) as DbContextOptionsBuilder;
             }
             // 处理内存数据库
             else if (DbProvider.IsDatabaseFor(providerName, DbProvider.InMemoryDatabase))
             {
                 dbContextOptionsBuilder = UseMethod
-                    .Invoke(null, new object[] { options, connectionMetadata, null }) as DbContextOptionsBuilder;
+                    .Invoke(null, [options, connectionMetadata, null]) as DbContextOptionsBuilder;
             }
             else
             {
                 dbContextOptionsBuilder = UseMethod
-                    .Invoke(null, new object[] { options, connectionMetadata, MigrationsAssemblyAction }) as DbContextOptionsBuilder;
+                    .Invoke(null, [options, connectionMetadata, MigrationsAssemblyAction]) as DbContextOptionsBuilder;
             }
         }
 
@@ -310,7 +310,7 @@ public static class DatabaseProviderServiceCollectionExtensions
             var optionsType = options.GetType();
 
             optionsType.GetMethods(BindingFlags.Instance | BindingFlags.Public).FirstOrDefault(u => u.Name == "MigrationsAssembly" && u.GetParameters().Length == 1 && u.GetParameters().First().ParameterType == typeof(string))
-                   .Invoke(options, new[] { Db.MigrationAssemblyName });
+                   .Invoke(options, [Db.MigrationAssemblyName]);
 
             // 解决 MySQL/SqlServer/PostgreSQL 有时候出现短暂连接失败问题（v4.8.1.7 版本关闭）
             // https://learn.microsoft.com/zh-cn/ef/core/miscellaneous/connection-resiliency
@@ -396,7 +396,7 @@ public static class DatabaseProviderServiceCollectionExtensions
 
                 // 解析mysql版本类型
                 var mysqlVersionType = Reflect.GetType(databaseProviderAssembly, "Microsoft.EntityFrameworkCore.MySqlServerVersion");
-                mySqlVersionInstance = Activator.CreateInstance(mysqlVersionType, new object[] { new Version(version ?? "8.0.22") });
+                mySqlVersionInstance = Activator.CreateInstance(mysqlVersionType, [new Version(version ?? "8.0.22")]);
             }
             else
             {

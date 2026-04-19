@@ -181,7 +181,7 @@ public class GenericRunOptions : IRunOptions
     /// <summary>
     /// 应用服务组件
     /// </summary>
-    internal Dictionary<Type, object> ServiceComponents { get; set; } = new();
+    internal Dictionary<Type, object> ServiceComponents { get; set; } = [];
 
     /// <summary>
     /// 静默启动

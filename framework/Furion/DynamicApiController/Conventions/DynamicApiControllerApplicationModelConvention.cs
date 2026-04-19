@@ -206,7 +206,7 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
     /// 强制处理了 ForceWithDefaultPrefix 的控制器
     /// </summary>
     /// <remarks>避免路由无限追加</remarks>
-    private ConcurrentBag<Type> ForceWithDefaultPrefixRouteControllerTypes { get; } = new ConcurrentBag<Type>();
+    private ConcurrentBag<Type> ForceWithDefaultPrefixRouteControllerTypes { get; } = [];
 
     /// <summary>
     /// 配置控制器路由特性
@@ -340,7 +340,7 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
         var verb = succeed ? verbValue : _dynamicApiControllerSettings.DefaultHttpMethod.ToUpper();
 
         // 添加请求约束
-        selectorModel.ActionConstraints.Add(new HttpMethodActionConstraint(new[] { verb }));
+        selectorModel.ActionConstraints.Add(new HttpMethodActionConstraint([verb]));
 
         // 添加请求谓词特性
         HttpMethodAttribute httpMethodAttribute = verb switch
@@ -394,11 +394,11 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
                 && !parameterModel.Attributes.Any(u => typeof(IBindingSourceMetadata).IsAssignableFrom(u.GetType()))
                 && _services.Any(s => s.ServiceType.Name == parameterType.Name))
             {
-                parameterModel.BindingInfo = BindingInfo.GetBindingInfo(new[] { new FromServicesAttribute() });
+                parameterModel.BindingInfo = BindingInfo.GetBindingInfo([new FromServicesAttribute()]);
                 continue;
             }
 
-            parameterModel.BindingInfo = BindingInfo.GetBindingInfo(new[] { new FromBodyAttribute() });
+            parameterModel.BindingInfo = BindingInfo.GetBindingInfo([new FromBodyAttribute()]);
         }
     }
 
@@ -569,7 +569,7 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
             // 判断方法贴有 [QueryParameters] 特性且当前参数没有任何 [FromXXX] 特性，则添加 [FromQuery] 特性
             if (isQueryParametersAction && !hasFromAttribute)
             {
-                parameterModel.BindingInfo = BindingInfo.GetBindingInfo(new[] { new FromQueryAttribute() });
+                parameterModel.BindingInfo = BindingInfo.GetBindingInfo([new FromQueryAttribute()]);
                 continue;
             }
 
@@ -581,7 +581,7 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
             // 处理基元数组数组类型，还有全局配置参数问题
             if (!hasFromAttribute && (_dynamicApiControllerSettings?.UrlParameterization == true || parameterType.IsArray))
             {
-                parameterModel.BindingInfo = BindingInfo.GetBindingInfo(new[] { new FromQueryAttribute() });
+                parameterModel.BindingInfo = BindingInfo.GetBindingInfo([new FromQueryAttribute()]);
                 continue;
             }
 
@@ -958,8 +958,8 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
                 foreach (var temp in templates)
                 {
                     // 处理带路由约束的路由参数模板 https://gitee.com/zuohuaijun/Admin.NET/issues/I736XJ
-                    var t = !temp.Contains("?", StringComparison.CurrentCulture)
-                        ? (!temp.Contains(":", StringComparison.CurrentCulture)
+                    var t = !temp.Contains('?', StringComparison.CurrentCulture)
+                        ? (!temp.Contains(':', StringComparison.CurrentCulture)
                             ? temp
                             : temp[..temp.IndexOf(":")] + "}")
                         : temp[..temp.IndexOf("?")] + "}";

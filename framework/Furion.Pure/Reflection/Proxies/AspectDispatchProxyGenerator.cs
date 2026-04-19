@@ -37,7 +37,7 @@ internal static class AspectDispatchProxyGenerator
 {
     private const int InvokeActionFieldAndCtorParameterIndex = 0;
 
-    private static readonly Dictionary<Type, Dictionary<Type, Type>> s_baseTypeAndInterfaceToGeneratedProxyType = new();
+    private static readonly Dictionary<Type, Dictionary<Type, Type>> s_baseTypeAndInterfaceToGeneratedProxyType = [];
 
     private static readonly ProxyAssembly s_proxyAssembly = new();
     private static readonly MethodInfo s_dispatchProxyInvokeMethod = typeof(AspectDispatchProxy).GetTypeInfo().GetDeclaredMethod("Invoke");
@@ -60,7 +60,7 @@ internal static class AspectDispatchProxyGenerator
         {
             if (!s_baseTypeAndInterfaceToGeneratedProxyType.TryGetValue(baseType, out var interfaceToProxy))
             {
-                interfaceToProxy = new Dictionary<Type, Type>();
+                interfaceToProxy = [];
                 s_baseTypeAndInterfaceToGeneratedProxyType[baseType] = interfaceToProxy;
             }
 
@@ -151,7 +151,7 @@ internal static class AspectDispatchProxyGenerator
         {
             Debug.Assert(s_dispatchProxyInvokeMethod != null);
             returnValue = s_dispatchProxyInvokeMethod.Invoke(context.Packed.DispatchProxy,
-                                                                   new object[] { context.Method, context.Packed.Args });
+                                                                   [context.Method, context.Packed.Args]);
             context.Packed.ReturnValue = returnValue;
         }
         catch (TargetInvocationException tie)
@@ -173,7 +173,7 @@ internal static class AspectDispatchProxyGenerator
         {
             Debug.Assert(s_dispatchProxyInvokeAsyncMethod != null);
             await (Task)s_dispatchProxyInvokeAsyncMethod.Invoke(context.Packed.DispatchProxy,
-                                                                   new object[] { context.Method, context.Packed.Args });
+                                                                   [context.Method, context.Packed.Args]);
         }
         catch (TargetInvocationException tie)
         {
@@ -194,7 +194,7 @@ internal static class AspectDispatchProxyGenerator
             Debug.Assert(s_dispatchProxyInvokeAsyncTMethod != null);
             var genericmethod = s_dispatchProxyInvokeAsyncTMethod.MakeGenericMethod(typeof(T));
             returnValue = await (Task<T>)genericmethod.Invoke(context.Packed.DispatchProxy,
-                                                                   new object[] { context.Method, context.Packed.Args });
+                                                                   [context.Method, context.Packed.Args]);
             context.Packed.ReturnValue = returnValue;
         }
         catch (TargetInvocationException tie)
@@ -215,7 +215,7 @@ internal static class AspectDispatchProxyGenerator
         internal const int GenericTypesPosition = 4;
         internal const int ReturnValuePosition = 5;
 
-        internal static readonly Type[] PackedTypes = new Type[] { typeof(object), typeof(Type), typeof(int), typeof(object[]), typeof(Type[]), typeof(object) };
+        internal static readonly Type[] PackedTypes = [typeof(object), typeof(Type), typeof(int), typeof(object[]), typeof(Type[]), typeof(object)];
 
         private readonly object[] _args;
 
@@ -246,10 +246,10 @@ internal static class AspectDispatchProxyGenerator
 
         // Maintain a MethodBase-->int, int-->MethodBase mapping to permit generated code
         // to pass methods by token
-        private readonly Dictionary<MethodBase, int> _methodToToken = new();
+        private readonly Dictionary<MethodBase, int> _methodToToken = [];
 
-        private readonly List<MethodBase> _methodsByToken = new();
-        private readonly HashSet<string> _ignoresAccessAssemblyNames = new();
+        private readonly List<MethodBase> _methodsByToken = [];
+        private readonly HashSet<string> _ignoresAccessAssemblyNames = [];
         private ConstructorInfo _ignoresAccessChecksToAttributeConstructor;
 
         public ProxyAssembly()
@@ -303,7 +303,7 @@ internal static class AspectDispatchProxyGenerator
             // public IgnoresAccessChecksToAttribute(string)
             var constructorBuilder = attributeTypeBuilder.DefineConstructor(MethodAttributes.Public,
                                                          CallingConventions.HasThis,
-                                                         new Type[] { assemblyNameField.FieldType });
+                                                         [assemblyNameField.FieldType]);
 
             var il = constructorBuilder.GetILGenerator();
 
@@ -357,9 +357,9 @@ internal static class AspectDispatchProxyGenerator
             // Create a builder to construct the instance via the ctor and property
             CustomAttributeBuilder customAttributeBuilder =
                 new(attributeUsageConstructorInfo,
-                                            new object[] { AttributeTargets.Assembly },
-                                            new PropertyInfo[] { allowMultipleProperty },
-                                            new object[] { true });
+                                            [AttributeTargets.Assembly],
+                                            [allowMultipleProperty],
+                                            [true]);
 
             // Attach this attribute instance to the newly defined attribute type
             attributeTypeBuilder.SetCustomAttribute(customAttributeBuilder);
@@ -377,7 +377,7 @@ internal static class AspectDispatchProxyGenerator
             // [assembly: System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute(assemblyName)]
             var attributeConstructor = IgnoresAccessChecksAttributeConstructor;
             CustomAttributeBuilder customAttributeBuilder =
-                new(attributeConstructor, new object[] { assemblyName });
+                new(attributeConstructor, [assemblyName]);
             _ab.SetCustomAttribute(customAttributeBuilder);
         }
 
@@ -434,10 +434,10 @@ internal static class AspectDispatchProxyGenerator
             _tb = tb;
             _proxyBaseType = proxyBaseType;
 
-            _fields = new List<FieldBuilder>
-                {
+            _fields =
+                [
                     tb.DefineField("_handler", typeof(DispatchProxyHandler), FieldAttributes.Private)
-                };
+                ];
         }
 
         private static bool IsGenericTask(Type type)
@@ -614,7 +614,7 @@ internal static class AspectDispatchProxyGenerator
             packedArr.EndSet(typeof(AspectDispatchProxy));
 
             // packed[PackedArgs.DeclaringTypePosition] = typeof(iface);
-            var Type_GetTypeFromHandle = typeof(Type).GetRuntimeMethod("GetTypeFromHandle", new Type[] { typeof(RuntimeTypeHandle) });
+            var Type_GetTypeFromHandle = typeof(Type).GetRuntimeMethod("GetTypeFromHandle", [typeof(RuntimeTypeHandle)]);
             _assembly.GetTokenForMethod(mi, out var declaringType, out var methodToken);
             packedArr.BeginSet(PackedArgs.DeclaringTypePosition);
             il.Emit(OpCodes.Ldtoken, declaringType);
@@ -760,7 +760,7 @@ internal static class AspectDispatchProxyGenerator
             return 1;   // TypeCode.Object;
         }
 
-        private static readonly OpCode[] s_convOpCodes = new OpCode[] {
+        private static readonly OpCode[] s_convOpCodes = [
                 OpCodes.Nop,//Empty = 0,
                 OpCodes.Nop,//Object = 1,
                 OpCodes.Nop,//DBNull = 2,
@@ -780,9 +780,9 @@ internal static class AspectDispatchProxyGenerator
                 OpCodes.Nop,//DateTime = 16,
                 OpCodes.Nop,//17
                 OpCodes.Nop,//String = 18,
-            };
+            ];
 
-        private static readonly OpCode[] s_ldindOpCodes = new OpCode[] {
+        private static readonly OpCode[] s_ldindOpCodes = [
                 OpCodes.Nop,//Empty = 0,
                 OpCodes.Nop,//Object = 1,
                 OpCodes.Nop,//DBNull = 2,
@@ -802,9 +802,9 @@ internal static class AspectDispatchProxyGenerator
                 OpCodes.Nop,//DateTime = 16,
                 OpCodes.Nop,//17
                 OpCodes.Ldind_Ref,//String = 18,
-            };
+            ];
 
-        private static readonly OpCode[] s_stindOpCodes = new OpCode[] {
+        private static readonly OpCode[] s_stindOpCodes = [
                 OpCodes.Nop,//Empty = 0,
                 OpCodes.Nop,//Object = 1,
                 OpCodes.Nop,//DBNull = 2,
@@ -824,7 +824,7 @@ internal static class AspectDispatchProxyGenerator
                 OpCodes.Nop,//DateTime = 16,
                 OpCodes.Nop,//17
                 OpCodes.Stind_Ref,//String = 18,
-            };
+            ];
 
         private static void Convert(ILGenerator il, Type source, Type target, bool isAddress)
         {

@@ -118,29 +118,29 @@ public static class DbProvider
     /// </summary>
     static DbProvider()
     {
-        NotSupportStoredProcedureDatabases = new[]
-        {
+        NotSupportStoredProcedureDatabases =
+        [
                 Sqlite,
                 InMemoryDatabase
-            };
+            ];
 
-        NotSupportFunctionDatabases = new[]
-        {
+        NotSupportFunctionDatabases =
+        [
                 Sqlite,
                 InMemoryDatabase,
                 Firebird,
                 Dm,
-            };
+            ];
 
-        NotSupportTableFunctionDatabases = new[]
-        {
+        NotSupportTableFunctionDatabases =
+        [
                 Sqlite,
                 InMemoryDatabase,
                 MySql,
                 MySqlOfficial,
                 Firebird,
                 Dm
-            };
+            ];
 
         DbContextAppDbContextAttributes = new ConcurrentDictionary<Type, AppDbContextAttribute>();
     }
@@ -203,7 +203,7 @@ public static class DbProvider
     /// </summary>
     public static List<IInterceptor> GetDefaultInterceptors()
     {
-        return new List<IInterceptor> { new DbContextSaveChangesInterceptor() };
+        return [new DbContextSaveChangesInterceptor()];
     }
 
     /// <summary>

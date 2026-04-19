@@ -47,7 +47,7 @@ public partial class Crontab
         }
 
         // 通过空白符切割 Cron 表达式每个字段域
-        var instructions = expression.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var instructions = expression.Split([' '], StringSplitOptions.RemoveEmptyEntries);
 
         // 验证当前 Cron 格式化类型字段数量和表达式字段数量是否一致
         var expectedCount = Constants.ExpectedFieldCounts[format];
@@ -397,9 +397,9 @@ public partial class Crontab
         var daySingle = GetSpecificParsers(parsers, CrontabFieldKind.Day);
 
         // 如果月份为 2 月单天数出现 30 和 31 天，则是无效数值
-        if (monthSingle.Any() && monthSingle.All(x => x.SpecificValue == 2))
+        if (monthSingle.Count != 0 && monthSingle.All(x => x.SpecificValue == 2))
         {
-            if (daySingle.Any() && daySingle.All(x => (x.SpecificValue == 30) || (x.SpecificValue == 31)))
+            if (daySingle.Count != 0 && daySingle.All(x => (x.SpecificValue == 30) || (x.SpecificValue == 31)))
             {
                 throw new TimeCrontabException("The February 30 and 31 don't exist.");
             }

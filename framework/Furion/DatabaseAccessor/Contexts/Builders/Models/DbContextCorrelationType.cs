@@ -37,15 +37,15 @@ internal sealed class DbContextCorrelationType
     /// </summary>
     internal DbContextCorrelationType()
     {
-        EntityTypes = new List<Type>();
-        EntityNoKeyTypes = new List<Type>();
-        EntityTypeBuilderTypes = new List<Type>();
-        EntitySeedDataTypes = new List<Type>();
-        EntityChangedTypes = new List<Type>();
-        ModelBuilderFilterTypes = new List<Type>();
-        EntityMutableTableTypes = new List<Type>();
-        ModelBuilderFilterInstances = new List<IPrivateModelBuilderFilter>();
-        DbFunctionMethods = new List<MethodInfo>();
+        EntityTypes = [];
+        EntityNoKeyTypes = [];
+        EntityTypeBuilderTypes = [];
+        EntitySeedDataTypes = [];
+        EntityChangedTypes = [];
+        ModelBuilderFilterTypes = [];
+        EntityMutableTableTypes = [];
+        ModelBuilderFilterInstances = [];
+        DbFunctionMethods = [];
     }
 
     /// <summary>

@@ -50,8 +50,8 @@ internal sealed class CamelCasePropertyNamesContractResolverWithIgnoreProperties
     /// <param name="types"></param>
     public CamelCasePropertyNamesContractResolverWithIgnoreProperties(string[] names, Type[] types)
     {
-        _names = names ?? Array.Empty<string>();
-        _type = types ?? Array.Empty<Type>();
+        _names = names ?? [];
+        _type = types ?? [];
     }
 
     /// <summary>
@@ -92,8 +92,8 @@ internal sealed class DefaultContractResolverWithIgnoreProperties : DefaultContr
     /// <param name="types"></param>
     public DefaultContractResolverWithIgnoreProperties(string[] names, Type[] types)
     {
-        _names = names ?? Array.Empty<string>();
-        _type = types ?? Array.Empty<Type>();
+        _names = names ?? [];
+        _type = types ?? [];
     }
 
     /// <summary>

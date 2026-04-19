@@ -61,12 +61,12 @@ public static class Serve
     /// <summary>
     /// 静默启动排除日志分类名
     /// </summary>
-    private static readonly string[] SilenceExcludesOfLogCategoryName = new string[]
-    {
+    private static readonly string[] SilenceExcludesOfLogCategoryName =
+    [
         "Microsoft.Hosting"
         , "Microsoft.AspNetCore"
         , "Microsoft.Extensions.Hosting"
-    };
+    ];
 
     /// <summary>
     /// 启动原生应用（WinForm/WPF）主机
@@ -628,7 +628,7 @@ public static class Serve
             : WebApplication.CreateBuilder(options.Options));
 
         // 注册 WebApplicationBuilder 组件
-        if (options.WebComponents.Any())
+        if (options.WebComponents.Count != 0)
         {
             foreach (var (componentType, opt) in options.WebComponents)
             {
@@ -652,7 +652,7 @@ public static class Serve
         builder.Inject(options.ActionInject);
 
         // 注册服应用务组件
-        if (options.ServiceComponents.Any())
+        if (options.ServiceComponents.Count != 0)
         {
             foreach (var (componentType, opt) in options.ServiceComponents)
             {
@@ -679,7 +679,7 @@ public static class Serve
         app = builder.Build();
 
         // 注册应用中间件组件
-        if (options.ApplicationComponents.Any())
+        if (options.ApplicationComponents.Count != 0)
         {
             foreach (var (componentType, opt) in options.ApplicationComponents)
             {
@@ -722,7 +722,7 @@ public static class Serve
         builder = builder.ConfigureWebHostDefaults(webHostBuilder =>
         {
             // 注册 IWebHostBuilder 组件
-            if (options.WebComponents.Any())
+            if (options.WebComponents.Count != 0)
             {
                 foreach (var (componentType, opt) in options.WebComponents)
                 {
@@ -742,7 +742,7 @@ public static class Serve
             }
 
             // 配置服务
-            if (options.ServiceComponents.Any())
+            if (options.ServiceComponents.Count != 0)
             {
                 webHostBuilder = webHostBuilder.ConfigureServices(services =>
                 {
@@ -755,7 +755,7 @@ public static class Serve
             }
 
             // 配置中间件
-            if (options.ApplicationComponents.Any())
+            if (options.ApplicationComponents.Count != 0)
             {
                 webHostBuilder = webHostBuilder.Configure((context, app) =>
                 {
@@ -818,7 +818,7 @@ public static class Serve
         builder = builder.Inject(options.ActionInject);
 
         // 配置服务
-        if (options.ServiceComponents.Any())
+        if (options.ServiceComponents.Count != 0)
         {
             builder = builder.ConfigureServices(services =>
             {

@@ -41,10 +41,7 @@ public sealed class TimestampToDateTimeModelBinder : IModelBinder
     /// <exception cref="ArgumentNullException"></exception>
     public Task BindModelAsync(ModelBindingContext bindingContext)
     {
-        if (bindingContext == null)
-        {
-            throw new ArgumentNullException(nameof(bindingContext));
-        }
+        ArgumentNullException.ThrowIfNull(bindingContext);
 
         // 获取模型名称（参数/属性/类名）
         var modelName = bindingContext.ModelName;

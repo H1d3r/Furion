@@ -121,7 +121,7 @@ public partial class PrivateRepository<TEntity>
     /// <returns>数据库中的实体</returns>
     public virtual async Task<TEntity> FindOrDefaultAsync(object key, CancellationToken cancellationToken = default)
     {
-        var entity = await Entities.FindAsync(new object[] { key }, cancellationToken);
+        var entity = await Entities.FindAsync([key], cancellationToken);
         return entity;
     }
 

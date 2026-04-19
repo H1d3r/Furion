@@ -58,10 +58,7 @@ public class FromConvertBinderProvider : IModelBinderProvider
     /// <exception cref="NotImplementedException"></exception>
     public IModelBinder GetBinder(ModelBinderProviderContext context)
     {
-        if (context == null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(context);
 
         // 判断是否定义 [FromConvert] 特性
         if (context.Metadata is DefaultModelMetadata actMetadata

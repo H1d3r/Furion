@@ -109,7 +109,7 @@ public static class IEnumerableExtensions
     /// <returns>新的集合对象</returns>
     public static IQueryable<TSource> Where<TSource>(this IQueryable<TSource> sources, params Expression<Func<TSource, bool>>[] expressions)
     {
-        if (expressions == null || !expressions.Any()) return sources;
+        if (expressions == null || expressions.Length == 0) return sources;
         if (expressions.Length == 1) return Queryable.Where(sources, expressions[0]);
 
         var expression = LinqExpression.Or<TSource>();
@@ -129,7 +129,7 @@ public static class IEnumerableExtensions
     /// <returns>新的集合对象</returns>
     public static IQueryable<TSource> Where<TSource>(this IQueryable<TSource> sources, params Expression<Func<TSource, int, bool>>[] expressions)
     {
-        if (expressions == null || !expressions.Any()) return sources;
+        if (expressions == null || expressions.Length == 0) return sources;
         if (expressions.Length == 1) return Queryable.Where(sources, expressions[0]);
 
         var expression = LinqExpression.IndexOr<TSource>();

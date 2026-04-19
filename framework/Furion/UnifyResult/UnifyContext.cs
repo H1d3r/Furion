@@ -114,7 +114,7 @@ public static class UnifyContext
         {
             // 查找所有全局定义异常
             var ifExceptionAttributes = context.ActionDescriptor is not ControllerActionDescriptor actionDescriptor
-                        ? Array.Empty<IfExceptionAttribute>()
+                        ? []
                         : actionDescriptor.MethodInfo
                             .GetCustomAttributes<IfExceptionAttribute>(true)
                             .Where(u => u.ErrorCode == null);
@@ -373,13 +373,13 @@ public static class UnifyContext
     /// <summary>
     /// 跳过规范化处理的 Response Content-Type
     /// </summary>
-    internal static string[] ResponseContentTypesOfNonUnify = new[]
-    {
+    internal static string[] ResponseContentTypesOfNonUnify =
+    [
         "text/event-stream",
         "application/pdf",
         "application/octet-stream",
         "image/"
-    };
+    ];
 
     /// <summary>
     /// 检查 HttpContext 是否进行规范化处理

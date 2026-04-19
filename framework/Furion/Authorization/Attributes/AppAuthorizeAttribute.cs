@@ -49,7 +49,7 @@ public sealed class AppAuthorizeAttribute : AuthorizeAttribute
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(Policy)) return Array.Empty<string>();
+            if (string.IsNullOrWhiteSpace(Policy)) return [];
 
             return Policy[Penetrates.AppAuthorizePrefix.Length..].Split(',', StringSplitOptions.RemoveEmptyEntries);
         }

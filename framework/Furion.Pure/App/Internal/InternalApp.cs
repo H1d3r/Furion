@@ -212,7 +212,7 @@ internal static class InternalApp
         // 获取自定义配置扫描目录
         var configurationScanDirectories = (configuration.GetSection("ConfigurationScanDirectories")
                 .Get<string[]>()
-            ?? Array.Empty<string>()).Select(u => Path.Combine(executeDirectory, u));
+            ?? []).Select(u => Path.Combine(executeDirectory, u));
 
         // 扫描执行目录及自定义配置目录下的 *.json 文件
         var jsonFiles = new[] { executeDirectory }
@@ -234,7 +234,7 @@ internal static class InternalApp
         // 读取忽略的配置文件
         var ignoreConfigurationFiles = (configuration.GetSection("IgnoreConfigurationFiles")
                 .Get<string[]>()
-            ?? Array.Empty<string>()).Concat(InjectOptions.InternalIgnoreConfigurationFiles);
+            ?? []).Concat(InjectOptions.InternalIgnoreConfigurationFiles);
 
         // 处理控制台应用程序
         var _excludeJsonPrefixs = hostEnvironment == default ? excludeJsonPrefixs.Where(u => !u.Equals("appsettings")) : excludeJsonPrefixs;
@@ -264,13 +264,13 @@ internal static class InternalApp
     /// <summary>
     /// 排除的配置文件前缀
     /// </summary>
-    private static readonly string[] excludeJsonPrefixs = new[] { "appsettings", "bundleconfig", "compilerconfig" };
+    private static readonly string[] excludeJsonPrefixs = ["appsettings", "bundleconfig", "compilerconfig"];
 
     /// <summary>
     /// 排除运行时 Json 后缀
     /// </summary>
-    private static readonly string[] runtimeJsonSuffixs = new[]
-    {
+    private static readonly string[] runtimeJsonSuffixs =
+    [
             "deps.json",
             "runtimeconfig.dev.json",
             "runtimeconfig.prod.json",
@@ -279,7 +279,7 @@ internal static class InternalApp
             "nuget.dgspec.json",
             "project.assets.json",
             "MvcTestingAppManifest.json"
-        };
+        ];
 
     /// <summary>
     /// 对配置文件名进行分组

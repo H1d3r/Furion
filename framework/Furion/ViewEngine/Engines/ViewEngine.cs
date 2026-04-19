@@ -427,7 +427,7 @@ public class ViewEngine : IViewEngine
 
         var compilation = CSharpCompilation.Create(
             fileName,
-            new[] { syntaxTree },
+            [syntaxTree],
             metadataReferences,
             new CSharpCompilationOptions(
                 OutputKind.DynamicallyLinkedLibrary,

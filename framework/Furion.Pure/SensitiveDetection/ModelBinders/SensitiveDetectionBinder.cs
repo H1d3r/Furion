@@ -43,10 +43,7 @@ public class SensitiveDetectionBinder : IModelBinder
     /// <exception cref="ArgumentNullException"></exception>
     public async Task BindModelAsync(ModelBindingContext bindingContext)
     {
-        if (bindingContext == null)
-        {
-            throw new ArgumentNullException(nameof(bindingContext));
-        }
+        ArgumentNullException.ThrowIfNull(bindingContext);
 
         // 获取参数名称
         var modelName = bindingContext.ModelName;

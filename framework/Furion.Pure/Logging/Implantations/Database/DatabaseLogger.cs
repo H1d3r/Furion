@@ -102,7 +102,7 @@ public sealed class DatabaseLogger : ILogger
         if (!IsEnabled(logLevel)) return;
 
         // 检查日志格式化器
-        if (formatter == null) throw new ArgumentNullException(nameof(formatter));
+        ArgumentNullException.ThrowIfNull(formatter);
 
         // 获取格式化后的消息
         var message = formatter(state, exception);

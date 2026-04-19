@@ -37,12 +37,12 @@ public sealed class DependsOnAttribute : Attribute
     /// <summary>
     /// 依赖组件列表
     /// </summary>
-    private Type[] _dependComponents = Array.Empty<Type>();
+    private Type[] _dependComponents = [];
 
     /// <summary>
     /// 连接组件列表
     /// </summary>
-    private Type[] _links = Array.Empty<Type>();
+    private Type[] _links = [];
 
     /// <summary>
     /// 构造函数
@@ -90,7 +90,7 @@ public sealed class DependsOnAttribute : Attribute
         get => _dependComponents;
         set
         {
-            var components = value ?? Array.Empty<Type>();
+            var components = value ?? [];
 
             // 检查类型是否实现 IComponent 接口
             foreach (var type in components)
@@ -146,7 +146,7 @@ public sealed class DependsOnAttribute : Attribute
         get => _links;
         set
         {
-            var components = value ?? Array.Empty<Type>();
+            var components = value ?? [];
 
             // 检查类型是否实现 IComponent 接口
             foreach (var type in components)

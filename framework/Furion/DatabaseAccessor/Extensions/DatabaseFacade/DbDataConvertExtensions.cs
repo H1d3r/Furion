@@ -209,8 +209,8 @@ public static class DbDataConvertExtensions
         // 处理 8 个结果集
         if (returnTypes.Length >= 8)
         {
-            return new List<object>
-                {
+            return
+                [
                     dataTables[0].ToList(returnTypes[0]),
                     dataTables[1].ToList(returnTypes[1]),
                     dataTables[2].ToList(returnTypes[2]),
@@ -219,13 +219,13 @@ public static class DbDataConvertExtensions
                     dataTables[5].ToList(returnTypes[5]),
                     dataTables[6].ToList(returnTypes[6]),
                     dataTables[7].ToList(returnTypes[7])
-                };
+                ];
         }
         // 处理 7 个结果集
         else if (returnTypes.Length == 7)
         {
-            return new List<object>
-                {
+            return
+                [
                     dataTables[0].ToList(returnTypes[0]),
                     dataTables[1].ToList(returnTypes[1]),
                     dataTables[2].ToList(returnTypes[2]),
@@ -233,70 +233,70 @@ public static class DbDataConvertExtensions
                     dataTables[4].ToList(returnTypes[4]),
                     dataTables[5].ToList(returnTypes[5]),
                     dataTables[6].ToList(returnTypes[6])
-                };
+                ];
         }
         // 处理 6 个结果集
         else if (returnTypes.Length == 6)
         {
-            return new List<object>
-                {
+            return
+                [
                     dataTables[0].ToList(returnTypes[0]),
                     dataTables[1].ToList(returnTypes[1]),
                     dataTables[2].ToList(returnTypes[2]),
                     dataTables[3].ToList(returnTypes[3]),
                     dataTables[4].ToList(returnTypes[4]),
                     dataTables[5].ToList(returnTypes[5])
-                };
+                ];
         }
         // 处理 5 个结果集
         else if (returnTypes.Length == 5)
         {
-            return new List<object>
-                {
+            return
+                [
                     dataTables[0].ToList(returnTypes[0]),
                     dataTables[1].ToList(returnTypes[1]),
                     dataTables[2].ToList(returnTypes[2]),
                     dataTables[3].ToList(returnTypes[3]),
                     dataTables[4].ToList(returnTypes[4])
-                };
+                ];
         }
         // 处理 4 个结果集
         else if (returnTypes.Length == 4)
         {
-            return new List<object>
-                {
+            return
+                [
                     dataTables[0].ToList(returnTypes[0]),
                     dataTables[1].ToList(returnTypes[1]),
                     dataTables[2].ToList(returnTypes[2]),
                     dataTables[3].ToList(returnTypes[3])
-                };
+                ];
         }
         // 处理 3 个结果集
         else if (returnTypes.Length == 3)
         {
-            return new List<object>
-                {
+            return
+                [
                     dataTables[0].ToList(returnTypes[0]),
                     dataTables[1].ToList(returnTypes[1]),
                     dataTables[2].ToList(returnTypes[2])
-                };
+                ];
         }
         // 处理 2 个结果集
         else if (returnTypes.Length == 2)
         {
-            return new List<object>
-                {
+            return
+                [
                     dataTables[0].ToList(returnTypes[0]),
                     dataTables[1].ToList(returnTypes[1])
-                };
+                ];
         }
         // 处理 1 个结果集
         else
         {
-            return new List<object>
-                {
+            return
+                [
                     dataTables[0].ToList(returnTypes[0])
-                };
+                ];
         }
     }
 
@@ -341,7 +341,7 @@ public static class DbDataConvertExtensions
                 // 转换成目标类型数据
                 var destValue = firstColumnValue?.ChangeType(underlyingType);
                 // 添加到集合中
-                _ = addMethod.Invoke(list, new[] { destValue });
+                _ = addMethod.Invoke(list, [destValue]);
             }
         }
         // 处理Object类型
@@ -358,7 +358,7 @@ public static class DbDataConvertExtensions
                 {
                     dic.Add(column.ColumnName, dataRow[column]);
                 }
-                _ = addMethod.Invoke(list, new[] { dic });
+                _ = addMethod.Invoke(list, [dic]);
             }
         }
         else
@@ -422,13 +422,13 @@ public static class DbDataConvertExtensions
                 {
                     var listType = typeof(List<>).MakeGenericType(actType);
                     var listArray = Activator.CreateInstance(listType);
-                    listType.GetMethod("Add").Invoke(listArray, new[] { model });
+                    listType.GetMethod("Add").Invoke(listArray, [model]);
                     pams = ((dynamic)listArray).ToArray();
                 }
                 else pams = model;
 
                 // 添加到集合中
-                _ = addMethod.Invoke(list, new[] { pams });
+                _ = addMethod.Invoke(list, [pams]);
             }
         }
 
@@ -558,6 +558,6 @@ public static class DbDataConvertExtensions
             .First(u => u.Name == "ToList" && u.IsGenericMethod && u.GetGenericArguments().Length == tupleType.GetGenericArguments().Length)
             .MakeGenericMethod(underlyingTypes.ToArray());
 
-        return toListMethod.Invoke(null, new[] { dataSet });
+        return toListMethod.Invoke(null, [dataSet]);
     }
 }

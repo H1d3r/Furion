@@ -73,10 +73,7 @@ public static class ShortIDGen
     public static string NextID(GenerationOptions options)
     {
         // 配置必填
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options);
 
         // 判断生成的长度是否小于规定的长度，规定为 8
         if (options.Length < Constants.MinimumAutoLength)
