@@ -461,8 +461,42 @@ public static class App
             fileStream.Flush();
         }
 
-        // 返回编译程序集
-        return Assembly.LoadFrom(dllPath);
+        var bytes = File.ReadAllBytes(dllPath);
+        return Assembly.Load(bytes);
+    }
+
+    /// <summary>
+    /// 编译 C# 类定义代码保存为 dll 文件
+    /// </summary>
+    /// <param name="csharpCode">字符串代码</param>
+    /// <param name="assemblyName">自定义程序集名称</param>
+    /// <param name="additionalAssemblies">附加的程序集</param>
+    /// <returns><see cref="Assembly"/></returns>
+    public static async Task<Assembly> CompileCSharpClassCodeToDllFileAsync(string csharpCode, string assemblyName = default, params Assembly[] additionalAssemblies)
+    {
+        var assName = string.IsNullOrWhiteSpace(assemblyName)
+            ? Path.GetFileNameWithoutExtension(Path.GetRandomFileName())
+            : Path.GetFileName(assemblyName.Trim());
+
+        var dllPath = Path.Combine(AppContext.BaseDirectory, $"{assName}.dll");
+
+        // 编译代码
+        using var memoryStream = CompileCSharpClassCodeToStream(csharpCode, assName, additionalAssemblies);
+
+        // 保存到 dll 文件
+        await using var fileStream = new FileStream(
+              path: dllPath,
+              mode: FileMode.Create,
+              access: FileAccess.Write,
+              share: FileShare.Read,
+              bufferSize: 8192,
+              useAsync: true);
+
+        await memoryStream.CopyToAsync(fileStream);
+        await fileStream.FlushAsync();
+
+        var bytes = await File.ReadAllBytesAsync(dllPath);
+        return Assembly.Load(bytes);
     }
 
     /// <summary>
