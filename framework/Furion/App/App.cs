@@ -555,7 +555,8 @@ public static class App
                 warningLevel: 4,
                 allowUnsafe: false,
                 checkOverflow: false,
-                deterministic: true
+                deterministic: true,
+                concurrentBuild: true
             ));
 
         // 编译代码
