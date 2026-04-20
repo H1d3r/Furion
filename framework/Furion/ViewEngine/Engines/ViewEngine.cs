@@ -488,7 +488,8 @@ public class ViewEngine : IViewEngine
                 warningLevel: 4,
                 allowUnsafe: false,
                 checkOverflow: false,
-                deterministic: true
+                deterministic: true,
+                concurrentBuild: true
             ));
 
         var memoryStream = new MemoryStream();
