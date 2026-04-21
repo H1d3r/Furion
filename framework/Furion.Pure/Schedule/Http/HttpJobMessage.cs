@@ -45,7 +45,7 @@ public sealed class HttpJobMessage
     /// <summary>
     /// 请求头
     /// </summary>
-    public Dictionary<string, string> Headers { get; set; } = [with(StringComparer.OrdinalIgnoreCase)];
+    public Dictionary<string, string> Headers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// 请求报文体

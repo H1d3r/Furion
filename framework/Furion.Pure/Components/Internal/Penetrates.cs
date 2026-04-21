@@ -94,7 +94,7 @@ internal static class Penetrates
             DependLinkList = dependLinkList;
             ComponentContextLinkList = componentContextLinkList;
             RootContext = rootContext;
-            ProcessedComponents = [with(dependLinkList)];
+            ProcessedComponents = new(dependLinkList);
             CurrentPath = new Stack<Type>();
         }
 
