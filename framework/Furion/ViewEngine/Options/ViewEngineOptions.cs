@@ -41,9 +41,8 @@ public class ViewEngineOptions
     /// </summary>
     public ViewEngineOptions()
     {
-        ReferencedAssemblies =
-        [
-with(new AssemblyEqualityComparer()),
+        ReferencedAssemblies = new(new AssemblyEqualityComparer())
+        {
             typeof(object).Assembly,
             typeof(ViewEngineModel).Assembly,
             typeof(System.Collections.IList).Assembly,
@@ -56,7 +55,7 @@ with(new AssemblyEqualityComparer()),
             Reflect.GetAssembly("System.Linq.Expressions"),
             Reflect.GetAssembly("System.Collections"),
             Reflect.GetAssembly("netstandard"),
-        ];
+        };
     }
 
     /// <summary>
