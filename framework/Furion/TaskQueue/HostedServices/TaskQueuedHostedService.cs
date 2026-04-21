@@ -183,7 +183,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
             {
                 try
                 {
-                    _syncTaskWrapperQueue.Add(taskWrapper, stoppingToken);
+                    _syncTaskWrapperQueue.TryAdd(taskWrapper, 0, stoppingToken);
                 }
                 catch (InvalidOperationException) { }
                 catch { }
