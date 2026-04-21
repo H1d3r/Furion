@@ -404,7 +404,7 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
                         Mode = trigger.Mode
                     };
 
-                _persistenceMessageQueue.Add(context);
+                _persistenceMessageQueue.TryAdd(context);
                 return;
             }
             catch (Exception ex)

@@ -318,7 +318,7 @@ public sealed class ScheduleUIMiddleware
                     {
                         if (!queue.IsAddingCompleted)
                         {
-                            queue.Add(args.JobDetail);
+                            queue.TryAdd(args.JobDetail);
                         }
                     }
                     _schedulerFactory.OnChanged += Subscribe;
