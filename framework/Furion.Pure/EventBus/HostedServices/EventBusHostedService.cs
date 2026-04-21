@@ -280,7 +280,7 @@ internal sealed class EventBusHostedService : BackgroundService
     }
 
     /// <summary>
-    /// 执行单个事件处理程序逻辑（从原内联 Lambda 提取，修复异步反模式）
+    /// 执行单个事件处理程序逻辑
     /// </summary>
     private async Task ExecuteEventHandlerAsync(IEventSource eventSource, EventHandlerWrapper eventHandlerThatShouldRun, Dictionary<object, object> properties, CancellationToken stoppingToken)
     {
