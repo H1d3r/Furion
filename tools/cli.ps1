@@ -487,7 +487,7 @@ if($options -eq "G")
         $OutputDir = $selectFolder.Self.Path;
         $ConnectionName = $connDic[$connKey];
 
-        if($OutputDir -eq $null -and $OutputDir -eq "")
+        if ([string]::IsNullOrWhiteSpace($OutputDir))
         {
             Write-Warning "$FurTools 用户取消操作，程序终止！";
             return;
@@ -552,7 +552,7 @@ end tell
         $OutputDir = $selectFolder.Self.Path;
     }
 
-    if($OutputDir -eq $null -and $OutputDir -eq "")
+    if ([string]::IsNullOrWhiteSpace($OutputDir))
     {
         Write-Warning "$FurTools 用户取消操作，程序终止！";
         return;
