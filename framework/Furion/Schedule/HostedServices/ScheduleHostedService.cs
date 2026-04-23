@@ -144,13 +144,7 @@ internal sealed class ScheduleHostedService : BackgroundService
         _logger.LogInformation("Schedule hosted service is running.");
 
         // 注册后台主机服务停止监听
-        stoppingToken.Register(() =>
-        {
-            _logger.LogDebug($"Schedule hosted service is stopping.");
-
-            // 释放作业计划工厂
-            _schedulerFactory.Dispose();
-        });
+        stoppingToken.Register(() => _logger.LogDebug($"Schedule hosted service is stopping."));
 
         // 等待作业集群指示
         await WaitingClusterAsync();
@@ -474,6 +468,9 @@ internal sealed class ScheduleHostedService : BackgroundService
     {
         // 作业集群宕机通知
         ClusterServer?.Crash(new(ClusterId));
+
+        // 释放作业计划工厂
+        _schedulerFactory.Dispose();
 
         base.Dispose();
     }

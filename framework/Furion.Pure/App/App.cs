@@ -791,7 +791,7 @@ public static class App
     /// <summary>
     /// GC 回收默认间隔
     /// </summary>
-    private const int GC_COLLECT_INTERVAL_SECONDS = 5;
+    private const int GC_COLLECT_INTERVAL_SECONDS = 10;
 
     /// <summary>
     /// 记录最近 GC 回收时间
