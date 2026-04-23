@@ -43,7 +43,7 @@ internal sealed class EventBusHostedService : BackgroundService
     /// <summary>
     /// GC 回收默认间隔
     /// </summary>
-    private const int GC_COLLECT_INTERVAL_SECONDS = 3;
+    private const int GC_COLLECT_INTERVAL_SECONDS = 10;
 
     /// <summary>
     /// 避免由 CLR 的终结器捕获该异常从而终止应用程序，让所有未觉察异常被觉察
@@ -198,8 +198,7 @@ internal sealed class EventBusHostedService : BackgroundService
         Log(LogLevel.Information, "EventBus hosted service is running.");
 
         // 注册后台主机服务停止监听
-        stoppingToken.Register(() =>
-           Log(LogLevel.Debug, $"EventBus hosted service is stopping."));
+        stoppingToken.Register(() => Log(LogLevel.Debug, $"EventBus hosted service is stopping."));
 
         // 监听服务是否取消
         while (!stoppingToken.IsCancellationRequested)
