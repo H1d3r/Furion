@@ -330,7 +330,7 @@ internal sealed class EventBusHostedService : BackgroundService
                 , retryAction: (total, times) =>
                 {
                     // 输出重试日志
-                    _logger.LogWarning("Retrying {times}/{total} times for {EventId}", times, total, eventSource.EventId);
+                    Log(LogLevel.Warning, "Retrying {times}/{total} times for {EventId}", [times, total, eventSource.EventId]);
                 });
             }
             else

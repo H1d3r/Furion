@@ -73,10 +73,9 @@ internal sealed class TaskQueueHostedService : BackgroundService
     private readonly int _retryTimeout;
 
     /// <summary>
-    /// 长时间运行的后台任务
+    /// 追踪当前正在运行的任务
     /// </summary>
-    /// <remarks>解决局部设置执行策略问题</remarks>
-    private Task _processQueueTask;
+    private readonly ConcurrentBag<Task> _runningTasks = [];
 
     /// <summary>
     /// 同步任务队列（线程安全）
@@ -107,15 +106,6 @@ internal sealed class TaskQueueHostedService : BackgroundService
         _retryTimeout = retryTimeout;
     }
 
-    public override Task StartAsync(CancellationToken cancellationToken)
-    {
-        // 创建长时间运行的后台任务，并将同步任务队列中任务进行遍历消费
-        _processQueueTask = Task.Factory.StartNew(async state => await ((TaskQueueHostedService)state).ProcessQueueAsync(cancellationToken)
-            , this, TaskCreationOptions.LongRunning);
-
-        return base.StartAsync(cancellationToken);
-    }
-
     /// <summary>
     /// 执行后台任务
     /// </summary>
@@ -126,14 +116,31 @@ internal sealed class TaskQueueHostedService : BackgroundService
         _logger.LogInformation("TaskQueue hosted service is running.");
 
         // 注册后台主机服务停止监听
-        stoppingToken.Register(() =>
-            _logger.LogDebug($"TaskQueue hosted service is stopping."));
+        stoppingToken.Register(() => _logger.LogDebug($"TaskQueue hosted service is stopping."));
 
-        // 监听服务是否取消
-        while (!stoppingToken.IsCancellationRequested)
+        // 启动一个独立的任务来处理同步队列中的任务
+        var serialQueueTask = Task.Run(async () => await ProcessQueueAsync(stoppingToken), stoppingToken);
+
+        try
         {
-            // 执行具体任务
-            await BackgroundProcessing(stoppingToken);
+            // 监听服务是否取消
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                // 执行具体任务
+                await BackgroundProcessing(stoppingToken);
+            }
+        }
+        finally
+        {
+            // 确保串行队列任务被取消
+            _syncTaskWrapperQueue.CompleteAdding();
+
+            // 等待串行队列任务完成（最多 5 秒）
+            try
+            {
+                await Task.WhenAny(serialQueueTask, Task.Delay(TimeSpan.FromSeconds(5), stoppingToken));
+            }
+            catch { }
         }
 
         _logger.LogCritical($"TaskQueue hosted service is stopped.");
@@ -163,19 +170,11 @@ internal sealed class TaskQueueHostedService : BackgroundService
         // 并行执行
         if (concurrent)
         {
-            // 创建一个任务工厂并保证执行任务都使用当前的计划程序
-            var taskFactory = new TaskFactory(TaskScheduler.Current);
-
-            Parallel.For(0, 1, _ =>
-            {
-                // 创建新的线程执行
-                taskFactory.StartNew(async () =>
-                {
-                    await DequeueHandleAsync(taskWrapper, stoppingToken);
-                }, stoppingToken);
-            });
+            // 添加待执行的任务程序
+            var task = DequeueHandleAsync(taskWrapper, stoppingToken);
+            _runningTasks.Add(task);
+            _ = task;
         }
-        // 依次出队执行：https://gitee.com/dotnetchina/Furion/issues/I8VXFV
         else
         {
             // 只有队列可持续入队才写入
@@ -189,6 +188,10 @@ internal sealed class TaskQueueHostedService : BackgroundService
                 catch { }
             }
         }
+
+        // 清理已完成的任务引用
+        CleanCompletedTasks();
+
     }
 
     /// <summary>
@@ -266,6 +269,29 @@ internal sealed class TaskQueueHostedService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// 监听任务队列服务服务停止
+    /// </summary>
+    /// <param name="cancellationToken">后台主机服务停止时取消任务 Token</param>
+    /// <returns><see cref="Task"/></returns>
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        // 等待正在运行的任务完成
+        if (!_runningTasks.IsEmpty)
+        {
+            _logger.LogInformation("Waiting for {Count} running tasks to complete before shutdown...", _runningTasks.Count);
+
+            // 最多等待 30 秒
+            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromSeconds(30), cancellationToken));
+            if (completedTask != Task.WhenAll(_runningTasks))
+            {
+                _logger.LogWarning("Shutdown timeout reached. Some tasks may be terminated abruptly.");
+            }
+        }
+
+        await base.StopAsync(cancellationToken);
+    }
+
     /// <inheritdoc/>
     public override void Dispose()
     {
@@ -273,14 +299,18 @@ internal sealed class TaskQueueHostedService : BackgroundService
 
         // 标记同步任务队列停止写入
         _syncTaskWrapperQueue.CompleteAdding();
+    }
 
-        try
+    /// <summary>
+    /// 清理已完成的任务引用
+    /// </summary>
+    private void CleanCompletedTasks()
+    {
+        var running = new List<Task>();
+        while (_runningTasks.TryTake(out var task))
         {
-            // 设置 1.5秒的缓冲时间，避免还有同步任务队列没有完成消费
-            _processQueueTask?.Wait(1500);
+            if (!task.IsCompleted) running.Add(task);
         }
-        catch (TaskCanceledException) { }
-        catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
-        catch { }
+        foreach (var t in running) _runningTasks.Add(t);
     }
 }
