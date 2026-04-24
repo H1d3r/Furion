@@ -178,16 +178,6 @@ internal sealed class ScheduleHostedService : BackgroundService
         // 输出作业调度器检查信息
         _logger.LogDebug("Schedule hosted service is checking on <{startAt}> and finds <{Count}> schedulers that should be run.", startAt, currentRunJobs.Count);
 
-        // 线程池健康度检查，预防因同步阻塞
-        ThreadPool.GetAvailableThreads(out var worker, out var completion);
-        ThreadPool.GetMaxThreads(out var maxWorker, out _);
-
-        // 剩余不足 20% 时告警
-        if (worker < maxWorker * 0.2)
-        {
-            _logger.LogWarning("ThreadPool is starving! Available: {Worker}/{MaxWorker}. Check for Thread.Sleep or sync-over-async in IJob.", worker, maxWorker);
-        }
-
         // 遍历所有符合触发的作业调度器
         foreach (var scheduler in currentRunJobs)
         {
@@ -421,7 +411,9 @@ internal sealed class ScheduleHostedService : BackgroundService
             trigger.Mode = 0;
 
             // 清空存储作业执行过程中传递的数据
+            trigger.Result = null;
             jobExecutingContext.Items?.Clear();
+            jobExecutingContext = null;
 
             // 释放服务作用域与作业处理程序
             await ReleaseJobHandlerAsync(jobHandler);
