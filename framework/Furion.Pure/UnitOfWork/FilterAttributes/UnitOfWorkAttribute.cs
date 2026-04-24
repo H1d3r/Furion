@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Extensions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
@@ -112,12 +113,17 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
         var actionDescriptor = context.ActionDescriptor as ControllerActionDescriptor;
         var method = actionDescriptor.MethodInfo;
 
+        // 初始化方法信息友好字符串
+        var declaringTypeFriendlyString = method.DeclaringType?.ToFriendlyString();
+        var methodFriendlyString = method.ToFriendlyString();
+        var location = $"{declaringTypeFriendlyString} | {methodFriendlyString}";
+
         // 创建分布式环境事务
         (var transactionScope, var logger) = CreateTransactionScope(context);
 
         try
         {
-            logger.LogWarning("[Database Transaction] Starting a new transaction.");
+            logger.LogInformation("Database transaction started. Location: {Location}", location);
 
             // 开始事务
             BeginTransaction(context, method, out var _unitOfWork, out var unitOfWorkAttribute);
@@ -133,16 +139,16 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
             {
                 transactionScope?.Complete();
 
-                logger.LogWarning("[Database Transaction] Transaction committed successfully.");
+                logger.LogInformation("Database transaction committed. Location: {Location}", location);
             }
             else
             {
-                logger.LogError(resultContext.Exception, "[Database Transaction] Transaction rolled back due to an error.");
+                logger.LogError(resultContext.Exception, "Database transaction rolled back. Location: {Location}, Reason: {Reason}", location, resultContext.Exception.Message);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[Database Transaction] Transaction rolled back due to an error.");
+            logger.LogError(ex, "Database transaction rolled back. Location: {Location}, Reason: {Reason}", location, ex.Message);
             throw;
         }
         finally
@@ -178,12 +184,17 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
             return;
         }
 
+        // 初始化方法信息友好字符串
+        var declaringTypeFriendlyString = method.DeclaringType?.ToFriendlyString();
+        var methodFriendlyString = method.ToFriendlyString();
+        var location = $"{declaringTypeFriendlyString} | {methodFriendlyString}";
+
         // 创建分布式环境事务
         (var transactionScope, var logger) = CreateTransactionScope(context);
 
         try
         {
-            logger.LogWarning("[Database Transaction] Starting a new transaction.");
+            logger.LogInformation("Database transaction started. Location: {Location}", location);
 
             // 开始事务
             BeginTransaction(context, method, out var _unitOfWork, out var unitOfWorkAttribute);
@@ -199,16 +210,16 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
             {
                 transactionScope?.Complete();
 
-                logger.LogWarning("[Database Transaction] Transaction committed successfully.");
+                logger.LogInformation("Database transaction committed. Location: {Location}", location);
             }
             else
             {
-                logger.LogError(resultContext.Exception, "[Database Transaction] Transaction rolled back due to an error.");
+                logger.LogError(resultContext.Exception, "Database transaction rolled back. Location: {Location}, Reason: {Reason}", location, resultContext.Exception.Message);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[Database Transaction] Transaction rolled back due to an error.");
+            logger.LogError(ex, "Database transaction rolled back. Location: {Location}, Reason: {Reason}", location, ex.Message);
             throw;
         }
         finally
