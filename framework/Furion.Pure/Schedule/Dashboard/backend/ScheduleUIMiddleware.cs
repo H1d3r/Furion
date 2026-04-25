@@ -27,6 +27,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Concurrent;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -59,6 +60,10 @@ public sealed class ScheduleUIMiddleware
     /// </summary>
     private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
     {
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        AllowTrailingCommas = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         WriteIndented = false
@@ -426,6 +431,12 @@ public sealed class ScheduleUIMiddleware
     /// <returns><see cref="string"/></returns>
     private static string SerializeToJson(object obj)
     {
+        // 处理时间类型
+        if (!ScheduleOptionsBuilder.UseUtcTimestampProperty && !_jsonSerializerOptions.Converters.OfType<DateTimeJsonConverter>().Any())
+        {
+            _jsonSerializerOptions.Converters.Add(new DateTimeJsonConverter());
+        }
+
         return JsonSerializer.Serialize(obj, _jsonSerializerOptions);
     }
 }
