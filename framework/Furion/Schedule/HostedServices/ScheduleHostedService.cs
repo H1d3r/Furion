@@ -159,7 +159,7 @@ internal sealed class ScheduleHostedService : BackgroundService
             await BackgroundProcessing(stoppingToken);
         }
 
-        _logger.LogCritical($"Schedule hosted service is stopped.");
+        _logger.LogWarning($"Schedule hosted service is stopped.");
     }
 
     /// <summary>
@@ -442,8 +442,8 @@ internal sealed class ScheduleHostedService : BackgroundService
         {
             _logger.LogInformation("Waiting for {Count} running jobs to complete before shutdown...", _runningTasks.Count);
 
-            // 最多等待 30 秒
-            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromSeconds(30), cancellationToken));
+            // 最多等待 0.5 秒
+            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken));
             if (completedTask != Task.WhenAll(_runningTasks))
             {
                 _logger.LogWarning("Shutdown timeout reached. Some jobs may be terminated abruptly.");

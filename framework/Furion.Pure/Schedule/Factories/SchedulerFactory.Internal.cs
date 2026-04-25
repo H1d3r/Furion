@@ -226,7 +226,7 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
             }
             else
             {
-                _logger.LogWarning("Schedule hosted service preload completed, and a total of <{Count}> schedulers are appended.", _schedulers.Count);
+                _logger.LogInformation("Schedule hosted service preload completed, and a total of <{Count}> schedulers are appended.", _schedulers.Count);
             }
         }
     }

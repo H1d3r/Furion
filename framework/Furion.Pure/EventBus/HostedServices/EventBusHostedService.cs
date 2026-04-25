@@ -207,7 +207,7 @@ internal sealed class EventBusHostedService : BackgroundService
             await BackgroundProcessing(stoppingToken);
         }
 
-        Log(LogLevel.Critical, $"EventBus hosted service is stopped.");
+        Log(LogLevel.Warning, $"EventBus hosted service is stopped.");
     }
 
     /// <summary>
@@ -503,8 +503,8 @@ internal sealed class EventBusHostedService : BackgroundService
         {
             Log(LogLevel.Information, "Waiting for {Count} running event handlers to complete before shutdown...", [_runningTasks.Count]);
 
-            // 最多等待 30 秒
-            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromSeconds(30), cancellationToken));
+            // 最多等待 0.5 秒
+            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken));
             if (completedTask != Task.WhenAll(_runningTasks))
             {
                 Log(LogLevel.Warning, "Shutdown timeout reached. Some event handlers may be terminated abruptly.");
