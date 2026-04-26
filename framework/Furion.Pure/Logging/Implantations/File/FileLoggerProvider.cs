@@ -150,8 +150,8 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
 
         try
         {
-            // 设置 0.5 秒的缓冲时间，避免还有日志消息没有完成写入文件中
-            _processQueueTask?.Wait(500);
+            // 设置 1.5 秒的缓冲时间，避免还有日志消息没有完成写入文件中
+            _processQueueTask?.Wait(1500);
         }
         catch (TaskCanceledException) { }
         catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
