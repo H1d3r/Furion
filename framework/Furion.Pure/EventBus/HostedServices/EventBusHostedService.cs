@@ -503,8 +503,8 @@ internal sealed class EventBusHostedService : BackgroundService
         {
             Log(LogLevel.Information, "Waiting for {Count} running event handlers to complete before shutdown...", [_runningTasks.Count]);
 
-            // 最多等待 0.5 秒
-            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken));
+            // 最多等待 1.5 秒
+            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken));
             if (completedTask != Task.WhenAll(_runningTasks))
             {
                 Log(LogLevel.Warning, "Shutdown timeout reached. Some event handlers may be terminated abruptly.");

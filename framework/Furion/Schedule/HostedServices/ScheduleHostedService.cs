@@ -218,7 +218,7 @@ internal sealed class ScheduleHostedService : BackgroundService
         CleanCompletedTasks();
 
         // 作业调度器进入休眠状态
-        await _schedulerFactory.SleepAsync(startAt);
+        await _schedulerFactory.SleepAsync(startAt, stoppingToken);
     }
 
     /// <summary>
@@ -442,8 +442,8 @@ internal sealed class ScheduleHostedService : BackgroundService
         {
             _logger.LogInformation("Waiting for {Count} running jobs to complete before shutdown...", _runningTasks.Count);
 
-            // 最多等待 0.5 秒
-            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken));
+            // 最多等待 1.5 秒
+            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken));
             if (completedTask != Task.WhenAll(_runningTasks))
             {
                 _logger.LogWarning("Shutdown timeout reached. Some jobs may be terminated abruptly.");

@@ -118,16 +118,20 @@ internal sealed class TaskQueueHostedService : BackgroundService
         // 注册后台主机服务停止监听
         stoppingToken.Register(() => _logger.LogDebug($"TaskQueue hosted service is stopping."));
 
+        // 创建关联取消 Token
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        var cancellationToken = linkedCts.Token;
+
         // 启动一个独立的任务来处理同步队列中的任务
-        var serialQueueTask = Task.Run(async () => await ProcessQueueAsync(stoppingToken), stoppingToken);
+        var serialQueueTask = Task.Run(async () => await ProcessQueueAsync(cancellationToken), cancellationToken);
 
         try
         {
             // 监听服务是否取消
-            while (!stoppingToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 // 执行具体任务
-                await BackgroundProcessing(stoppingToken);
+                await BackgroundProcessing(cancellationToken);
             }
         }
         finally
@@ -135,10 +139,13 @@ internal sealed class TaskQueueHostedService : BackgroundService
             // 确保串行队列任务被取消
             _syncTaskWrapperQueue.CompleteAdding();
 
-            // 等待串行队列任务完成（最多 0.5 秒）
+            // 取消内部令牌通知串行队列任务
+            linkedCts.Cancel();
+
+            // 等待串行队列任务完成（最多 1.5 秒）
             try
             {
-                await Task.WhenAny(serialQueueTask, Task.Delay(TimeSpan.FromMilliseconds(500), stoppingToken));
+                await Task.WhenAny(serialQueueTask, Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken));
             }
             catch { }
         }
@@ -280,8 +287,8 @@ internal sealed class TaskQueueHostedService : BackgroundService
         {
             _logger.LogInformation("Waiting for {Count} running tasks to complete before shutdown...", _runningTasks.Count);
 
-            // 最多等待 0.5 秒
-            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken));
+            // 最多等待 1.5 秒
+            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken));
             if (completedTask != Task.WhenAll(_runningTasks))
             {
                 _logger.LogWarning("Shutdown timeout reached. Some tasks may be terminated abruptly.");
