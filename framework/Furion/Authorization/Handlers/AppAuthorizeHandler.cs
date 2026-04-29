@@ -26,6 +26,7 @@
 using Furion.FriendlyException;
 using Furion.UnifyResult;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -146,7 +147,7 @@ public abstract class AppAuthorizeHandler : IAuthorizationHandler
         if (pipeline)
         {
             // 获取所有未成功自定义验证的需求
-            var customRequirements = effectiveContext.PendingRequirements.Where(u => isRefreshSuccessful || u is IAppAuthorizationRequirement).ToList();
+            var customRequirements = effectiveContext.PendingRequirements.Where(u => isRefreshSuccessful || u is IAppAuthorizationRequirement or DenyAnonymousAuthorizationRequirement).ToList();
 
             // 验证自定义策略管道
             foreach (var requirement in customRequirements)
