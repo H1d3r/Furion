@@ -76,7 +76,7 @@ public class ViewEngineOptions
     /// <summary>
     /// 继承
     /// </summary>
-    public string Inherits { get; set; } = "Furion.ViewEngine.Template.Models";
+    public string Inherits { get; set; } = "Furion.ViewEngine.ViewEngineModel";
 
     /// <summary>
     /// 默认 Using

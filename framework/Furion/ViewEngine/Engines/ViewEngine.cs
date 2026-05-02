@@ -425,6 +425,7 @@ public class ViewEngine : IViewEngine
     /// <summary>
     /// 将模板内容编译并输出内存流
     /// </summary>
+    /// <remarks>参考文献：https://lebang2020.cn/details/201225gy5nu0gd.html</remarks>
     /// <param name="templateSource"></param>
     /// <param name="options"></param>
     /// <returns></returns>
