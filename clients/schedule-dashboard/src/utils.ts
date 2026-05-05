@@ -79,39 +79,27 @@ export function findMinUtcTimeString(utcTimeStrings: string[]) {
 }
 
 export function formatDuration(ms: number): string {
-  if (ms < 1000) {
-    return `${ms}ms`;
-  }
+  if (ms < 0) return "-" + formatDuration(-ms);
+  if (ms < 1000) return `${ms}ms`;
 
-  const seconds = ms / 1000;
-  if (seconds < 60) {
-    const val = Math.round(seconds * 10) / 10;
-    if (val >= 60) return formatDuration(val * 1000);
-    return val % 1 === 0 ? `${val}s` : `${val.toFixed(1)}s`;
-  }
+  const [value, unit] =
+    ms < 60_000
+      ? [ms / 1000, "s"]
+      : ms < 3_600_000
+        ? [ms / 60_000, "m"]
+        : ms < 86_400_000
+          ? [ms / 3_600_000, "h"]
+          : ms < 31_536_000_000
+            ? [ms / 86_400_000, "d"]
+            : [ms / 31_536_000_000, "y"];
 
-  const minutes = seconds / 60;
-  if (minutes < 60) {
-    const val = Math.round(minutes * 10) / 10;
-    if (val >= 60) return formatDuration(val * 60 * 1000);
-    return val % 1 === 0 ? `${val}min` : `${val.toFixed(1)}min`;
-  }
+  return formatValue(value, unit);
+}
 
-  const hours = minutes / 60;
-  if (hours < 24) {
-    const val = Math.round(hours * 10) / 10;
-    if (val >= 24) return formatDuration(val * 60 * 60 * 1000);
-    return val % 1 === 0 ? `${val}h` : `${val.toFixed(1)}h`;
-  }
-
-  const days = hours / 24;
-  if (days < 365) {
-    const val = Math.round(days * 10) / 10;
-    if (val >= 365) return formatDuration(val * 24 * 60 * 60 * 1000);
-    return val % 1 === 0 ? `${val}d` : `${val.toFixed(1)}d`;
-  }
-
-  const years = days / 365;
-  const val = Math.round(years * 10) / 10;
-  return val % 1 === 0 ? `${val}y` : `${val.toFixed(1)}y`;
+function formatValue(value: number, unit: string): string {
+  const rounded = Math.round(value * 10) / 10;
+  const isInteger = Math.abs(rounded % 1) < 0.0001;
+  return isInteger
+    ? `${Math.round(rounded)}${unit}`
+    : `${rounded.toFixed(1)}${unit}`;
 }

@@ -192,7 +192,7 @@ public sealed class Startup : AppStartup
 
         app.UseScheduleUI(options =>
         {
-            options.Title = "定时任务看板";
+            options.Title = "定时任务";
 
             options.LoginConfig.DefaultUsername = "furion";
             options.LoginConfig.DefaultPassword = "";

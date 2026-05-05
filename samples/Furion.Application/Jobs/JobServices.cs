@@ -3,7 +3,7 @@ using Furion.Schedule;
 namespace Furion.Application;
 
 /// <summary>
-/// 定时任务
+/// 瀹氭椂浠诲姟
 /// </summary>
 [ApiDescriptionSettings("Job")]
 public class JobServices : IDynamicApiController

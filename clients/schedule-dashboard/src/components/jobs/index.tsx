@@ -26,13 +26,7 @@ import {
   ExpandedRowRender,
   OnRow,
 } from "@douyinfe/semi-ui/lib/es/table/interface";
-import {
-  useCallback,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import useFetch from "use-http";
 import { JobDetail, Scheduler, TriggerTimeline } from "../../types";
 import apiconfig from "../../apiconfig";
@@ -42,6 +36,7 @@ import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import { dayFromNow, dayTime, formatDuration } from "../../utils";
 import styles from "./index.module.css";
 import clsx from "clsx";
+import CurrentTime from "../current-time";
 
 const style = {
   boxShadow: "var(--semi-shadow-elevated)",
@@ -52,9 +47,13 @@ const style = {
   width: "350px",
 };
 
-function getOValueByData(key: string, expandData: Data[]) {
-  var item = expandData.find((u) => u.key === key) as any;
-  return item?.ovalue || null;
+function getOValueByData(key: string, expandData: Data[]): any {
+  const item = expandData.find((u) => u.key === key) as any;
+  return item?.ovalue ?? null;
+}
+
+function safeToString(value: any): string {
+  return value == null ? "" : String(value);
 }
 
 export default function Jobs({ mode }: { mode: string }) {
@@ -62,41 +61,44 @@ export default function Jobs({ mode }: { mode: string }) {
    * 作业状态
    */
   const [jobs, setJobs] = useState<Scheduler[]>([]);
-  const [words, setWords] = useState<string>();
-  const deferredWords = useDeferredValue(words);
+  const [words, setWords] = useState<string>("");
   const [allTimelines, setAllTimelines] = useState<TriggerTimeline[]>([]);
 
   const jobList = useMemo(() => {
-    if (!deferredWords || deferredWords.trim().length === 0) {
-      return jobs;
-    }
+    const trimWords = words.trim();
+    if (!trimWords) return jobs;
 
-    const trimWords = deferredWords.trim();
+    return jobs.filter((u) => {
+      const matchJobDetail = () => {
+        const jd = u.jobDetail;
+        if (!jd) return false;
+        return (
+          jd.jobId?.includes(trimWords) ||
+          jd.groupName?.includes(trimWords) ||
+          jd.description?.includes(trimWords) ||
+          jd.jobType?.includes(trimWords) ||
+          jd.assemblyName?.includes(trimWords) ||
+          jd.properties?.includes(trimWords) ||
+          (jd.concurrent ? "并行" : "串行").includes(trimWords) ||
+          (jd.temporary ? "临时" : "").includes(trimWords)
+        );
+      };
 
-    return jobs.filter(
-      (u) =>
-        (u.jobDetail?.jobId ?? "").indexOf(trimWords) > -1 ||
-        (u.jobDetail?.groupName ?? "").indexOf(trimWords) > -1 ||
-        (u.jobDetail?.description ?? "").indexOf(trimWords) > -1 ||
-        (u.jobDetail?.jobType ?? "").indexOf(trimWords) > -1 ||
-        (u.jobDetail?.assemblyName ?? "").indexOf(trimWords) > -1 ||
-        (u.jobDetail?.properties ?? "").indexOf(trimWords) > -1 ||
-        (u.jobDetail?.concurrent === true ? "并行" : "串行").indexOf(
-          trimWords,
-        ) > -1 ||
-        (u.jobDetail?.temporary === true ? "临时" : "").indexOf(trimWords) >
-          -1 ||
-        // ==== 触发器搜索
-        (u.triggers || []).findIndex(
-          (t) =>
-            (t.triggerId ?? "").indexOf(trimWords) > -1 ||
-            (t.description ?? "").indexOf(trimWords) > -1 ||
-            (t.triggerType ?? "").indexOf(trimWords) > -1 ||
-            (t.assemblyName ?? "").indexOf(trimWords) > -1 ||
-            (t.args ?? "").indexOf(trimWords) > -1,
-        ) > -1,
-    );
-  }, [jobs, deferredWords]);
+      const matchTriggers = () => {
+        return (u.triggers || []).some((t) =>
+          [
+            t.triggerId,
+            t.description,
+            t.triggerType,
+            t.assemblyName,
+            t.args,
+          ].some((val) => val?.includes(trimWords)),
+        );
+      };
+
+      return matchJobDetail() || matchTriggers();
+    });
+  }, [jobs, words]);
 
   /**
    * 初始化请求配置
@@ -106,265 +108,279 @@ export default function Jobs({ mode }: { mode: string }) {
   /**
    * 获取内存中所有作业
    */
-  const loadJobs = async () => {
-    const data = await post("/get-jobs");
-    if (response.ok) setJobs((s) => data);
-  };
+  const loadJobs = useCallback(async () => {
+    try {
+      const data = await post("/get-jobs");
+      if (response.ok) {
+        setJobs(data || []);
+      }
+    } catch (error) {
+      console.error("加载作业列表失败:", error);
+      Toast.error({ content: "加载作业列表失败", duration: 3 });
+    }
+  }, [post, response]);
 
   /**
    * 获取内存中所有运行记录
    */
-  const loadAllTimelines = async () => {
-    const data = await post("/timelines-log");
-    if (response.ok) setAllTimelines((s) => data);
-  };
+  const loadAllTimelines = useCallback(async () => {
+    try {
+      const data = await post("/timelines-log");
+      if (response.ok) {
+        setAllTimelines(data || []);
+      }
+    } catch (error) {
+      console.error("加载运行记录失败:", error);
+    }
+  }, [post, response]);
 
   /**
    * 操作作业触发器
    */
-  const callAction = async (
-    jobid: string,
-    triggerid: string,
-    action: string,
-  ) => {
-    await post(
-      "/operate-trigger?jobid=" +
-        jobid +
-        "&triggerid=" +
-        triggerid +
-        "&action=" +
-        action,
-    );
+  const callAction = useCallback(
+    async (jobid: string, triggerid: string, action: string) => {
+      try {
+        const params = new URLSearchParams({ jobid, triggerid, action });
+        await post(`/operate-trigger?${params.toString()}`);
 
-    if (response.ok) {
-      Toast.success({
-        content: "操作成功",
-        duration: 3,
-      });
-    } else {
-      Toast.error({
-        content: "操作失败",
-        duration: 3,
-      });
-    }
-  };
+        if (response.ok) {
+          Toast.success({ content: "操作成功", duration: 3 });
+          loadJobs();
+          loadAllTimelines();
+        } else {
+          throw new Error(response.statusText || "请求失败");
+        }
+      } catch (error: any) {
+        console.error("操作失败:", error);
+        Toast.error({ content: error.message || "操作失败", duration: 3 });
+      }
+    },
+    [post, response, loadJobs, loadAllTimelines],
+  );
 
   /**
    * 生成表格类型数据
    */
   const data: JobDetail[] = useMemo(() => {
-    const jobDetails: JobDetail[] = [];
-    if (!jobList || jobList.length === 0) return jobDetails;
+    if (!jobList?.length) return [];
 
-    for (const scheduler of jobList) {
-      let jobDetail = scheduler.jobDetail!;
-      jobDetail.triggers = scheduler.triggers;
-      jobDetail.refreshDate = new Date();
-
-      if (
-        apiconfig.displayEmptyTriggerJobs === "false" &&
-        scheduler.triggers?.length === 0
-      ) {
-        continue;
-      }
-
-      jobDetails.push(jobDetail);
-    }
-
-    return jobDetails;
+    return jobList
+      .filter((scheduler) => {
+        if (
+          apiconfig.displayEmptyTriggerJobs === "false" &&
+          !scheduler.triggers?.length
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .map((scheduler) => {
+        return {
+          ...scheduler.jobDetail!,
+          triggers: scheduler.triggers,
+          refreshDate: new Date(),
+        } as JobDetail;
+      });
   }, [jobList]);
 
   useEffect(() => {
     loadJobs();
     loadAllTimelines();
 
-    var eventSource = new EventSource(apiconfig.hostAddress + "/check-change");
+    const eventSource = new EventSource(
+      `${apiconfig.hostAddress}/check-change`,
+    );
 
-    eventSource.onmessage = function (e) {
+    eventSource.onmessage = () => {
       loadJobs();
       loadAllTimelines();
+    };
+
+    eventSource.onerror = (err) => {
+      console.warn("EventSource 连接异常:", err);
     };
 
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [loadJobs, loadAllTimelines]);
 
   /**
    * 展开行渲染
    */
   const expandRowRender: ExpandedRowRender<JobDetail> = useCallback(
-    (jobDetail, index) => {
-      // 查找作业计划
-      var scheduler = jobList.find(
+    (jobDetail) => {
+      const scheduler = jobList.find(
         (u) => u.jobDetail?.jobId === jobDetail?.jobId,
       );
-      if (!scheduler) return <></>;
+      if (!scheduler) return null;
 
       // 构建触发器列表
-      const triggerData: Data[][] = [];
-      for (const trigger of scheduler?.triggers!) {
-        const triggerItem: Data[] = [];
-        for (const prop in trigger) {
-          triggerItem.push({
-            key: prop.charAt(0).toUpperCase() + prop.slice(1),
-            value: (
-              <RenderValue
-                prop={prop}
-                value={trigger[prop]}
-                trigger={trigger}
-              />
-            ),
-            ovalue: trigger[prop],
-          } as Data);
-        }
-
-        triggerData.push(triggerItem);
-      }
+      const triggerData: Data[][] =
+        scheduler.triggers?.map((trigger) => {
+          return Object.entries(trigger).map(
+            ([prop, value]) =>
+              ({
+                key: prop.charAt(0).toUpperCase() + prop.slice(1),
+                value: (
+                  <RenderValue prop={prop} value={value} trigger={trigger} />
+                ),
+                ovalue: value,
+              }) as Data,
+          );
+        }) || [];
 
       return (
         <div style={{ display: "flex", flexWrap: "wrap" }}>
-          {triggerData.map((expandData, index) => (
-            <div
-              style={style}
-              key={
-                getOValueByData("TriggerId", expandData).toString() +
-                "_" +
-                getOValueByData("JobId", expandData).toString() +
-                index
-              }
-            >
-              <div
-                style={{
-                  marginTop: 3,
-                  marginRight: 5,
-                  marginLeft: 5,
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                {Number(getOValueByData("Status", expandData)) === 3 ? (
-                  <Tooltip content="启动">
-                    <IconPlayCircle
-                      style={{ color: "red", cursor: "pointer" }}
-                      size="large"
-                      onClick={() =>
-                        callAction(
-                          getOValueByData("JobId", expandData).toString(),
-                          getOValueByData("TriggerId", expandData).toString(),
-                          "start",
-                        )
-                      }
-                    />
-                  </Tooltip>
-                ) : (
-                  <span></span>
-                )}
-                <FlipClockCountdown
-                  to={getOValueByData("NextRunTime", expandData)}
-                  labels={["天", "时", "分", "秒"]}
-                  labelStyle={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "var(--semi-color-text-0)",
+          {triggerData.map((expandData, index) => {
+            const triggerId = safeToString(
+              getOValueByData("TriggerId", expandData),
+            );
+            const jobId = safeToString(getOValueByData("JobId", expandData));
+
+            return (
+              <div style={style} key={`${jobId}_${triggerId}_${index}`}>
+                <div
+                  style={{
+                    marginTop: 3,
+                    marginRight: 5,
+                    marginLeft: 5,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
                   }}
-                  digitBlockStyle={{ width: 20, height: 30, fontSize: 15 }}
-                  hideOnComplete={false}
-                />
-                <Dropdown
-                  render={
-                    <Dropdown.Menu>
-                      <Dropdown.Item
+                >
+                  {Number(getOValueByData("Status", expandData)) === 3 ? (
+                    <Tooltip content="启动">
+                      <IconPlayCircle
+                        style={{ color: "red", cursor: "pointer" }}
+                        size="large"
                         onClick={() =>
                           callAction(
-                            getOValueByData("JobId", expandData).toString(),
-                            getOValueByData("TriggerId", expandData).toString(),
+                            safeToString(getOValueByData("JobId", expandData)),
+                            safeToString(
+                              getOValueByData("TriggerId", expandData),
+                            ),
                             "start",
                           )
                         }
-                      >
-                        <IconPlayCircle size="extra-large" /> 启动
-                      </Dropdown.Item>
-                      <Dropdown.Item
-                        onClick={() =>
-                          callAction(
-                            getOValueByData("JobId", expandData).toString(),
-                            getOValueByData("TriggerId", expandData).toString(),
-                            "pause",
-                          )
-                        }
-                      >
-                        <IconStop size="extra-large" /> 暂停
-                      </Dropdown.Item>
-                      <Dropdown.Item>
-                        <Popconfirm
-                          zIndex={10000000}
-                          title={
-                            "确定要删除当前触发器 [" +
-                            getOValueByData(
-                              "TriggerId",
-                              expandData,
-                            ).toString() +
-                            "]？"
-                          }
-                          onConfirm={() =>
+                      />
+                    </Tooltip>
+                  ) : (
+                    <span></span>
+                  )}
+
+                  <FlipClockCountdown
+                    to={getOValueByData("NextRunTime", expandData)}
+                    labels={["天", "时", "分", "秒"]}
+                    labelStyle={{
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: "var(--semi-color-text-0)",
+                    }}
+                    digitBlockStyle={{ width: 20, height: 30, fontSize: 15 }}
+                    hideOnComplete={false}
+                  />
+
+                  <Dropdown
+                    render={
+                      <Dropdown.Menu>
+                        <Dropdown.Item
+                          onClick={() =>
                             callAction(
-                              getOValueByData("JobId", expandData).toString(),
-                              getOValueByData(
-                                "TriggerId",
-                                expandData,
-                              ).toString(),
-                              "remove",
+                              safeToString(
+                                getOValueByData("JobId", expandData),
+                              ),
+                              safeToString(
+                                getOValueByData("TriggerId", expandData),
+                              ),
+                              "start",
                             )
                           }
                         >
-                          <IconDelete size="small" /> &nbsp;删除
-                        </Popconfirm>
-                      </Dropdown.Item>
-                      <Dropdown.Item
-                        onClick={() =>
-                          callAction(
-                            getOValueByData("JobId", expandData).toString(),
-                            getOValueByData("TriggerId", expandData).toString(),
-                            "run",
-                          )
-                        }
-                      >
-                        <IconVigoLogo size="extra-large" /> 手动执行
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  }
-                >
-                  <IconMore style={{ cursor: "pointer" }} size="large" />
-                </Dropdown>
-              </div>
+                          <IconPlayCircle size="extra-large" /> 启动
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          onClick={() =>
+                            callAction(
+                              safeToString(
+                                getOValueByData("JobId", expandData),
+                              ),
+                              safeToString(
+                                getOValueByData("TriggerId", expandData),
+                              ),
+                              "pause",
+                            )
+                          }
+                        >
+                          <IconStop size="extra-large" /> 暂停
+                        </Dropdown.Item>
+                        <Dropdown.Item>
+                          <Popconfirm
+                            zIndex={10000000}
+                            title={`确定要删除当前触发器 [${safeToString(
+                              getOValueByData("TriggerId", expandData),
+                            )}]？`}
+                            onConfirm={() =>
+                              callAction(
+                                safeToString(
+                                  getOValueByData("JobId", expandData),
+                                ),
+                                safeToString(
+                                  getOValueByData("TriggerId", expandData),
+                                ),
+                                "remove",
+                              )
+                            }
+                          >
+                            <IconDelete size="small" /> &nbsp;删除
+                          </Popconfirm>
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          onClick={() =>
+                            callAction(
+                              safeToString(
+                                getOValueByData("JobId", expandData),
+                              ),
+                              safeToString(
+                                getOValueByData("TriggerId", expandData),
+                              ),
+                              "run",
+                            )
+                          }
+                        >
+                          <IconVigoLogo size="extra-large" /> 手动执行
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    }
+                  >
+                    <IconMore style={{ cursor: "pointer" }} size="large" />
+                  </Dropdown>
+                </div>
 
-              <Divider margin="8px" />
-              <Descriptions align="left" data={expandData} />
-            </div>
-          ))}
+                <Divider margin="8px" />
+                <Descriptions align="left" data={expandData} />
+              </div>
+            );
+          })}
         </div>
       );
     },
-    [jobList],
+    [jobList, callAction],
   );
 
-  const handleRow: OnRow<JobDetail> = (jobDetail, index) => {
-    // 给偶数行设置斑马纹
-    if (index! % 2 === 0) {
+  const handleRow: OnRow<JobDetail> = (_, index = 0) => {
+    if (index % 2 === 0) {
       return {
         style: {
           background: "var(--semi-color-fill-0)",
         },
       };
-    } else {
-      return {};
     }
+    return {};
   };
 
-  var invalidJobCount = data.filter(
-    (u) => (u.triggers?.length || 0) === 0,
-  ).length;
+  const invalidJobCount = data.filter((u) => !u.triggers?.length).length;
 
   return (
     <>
@@ -379,9 +395,10 @@ export default function Jobs({ mode }: { mode: string }) {
           showClear
           placeholder="搜索关键字..."
           value={words}
-          onChange={(val) => setWords(val)}
+          onChange={(val) => setWords(val || "")}
           autoFocus
         />
+
         <Table
           rowKey="jobId"
           columns={columns}
@@ -397,31 +414,29 @@ export default function Jobs({ mode }: { mode: string }) {
             !!(
               jobDetail?.jobId &&
               jobList.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)
-                ?.triggers?.length !== 0
+                ?.triggers?.length
             )
           }
         />
         <Typography.Paragraph type="secondary" style={{ padding: 10 }}>
-          {(words?.trim().length || 0) > 0 ? (
+          {words.trim().length > 0 ? (
             <>
-              搜索 "<b>{words?.trim()}</b>" 共 <b>{jobList.length}</b> 项结果。
+              搜索 "<b>{words.trim()}</b>" 共 <b>{jobList.length}</b> 项结果。
             </>
           ) : (
             <>
               共有 <b>{data.length}</b> 项作业任务
-              {invalidJobCount > 0 ? (
+              {invalidJobCount > 0 && (
                 <>
-                  ， 其中 <b>{invalidJobCount}</b> 项未设置触发器
+                  ，其中 <b>{invalidJobCount}</b> 项未设置触发器
                 </>
-              ) : (
-                <></>
               )}
               。
             </>
           )}
         </Typography.Paragraph>
       </div>
-      {(words?.trim().length || 0) === 0 && (
+      {words.trim().length === 0 && (
         <div>
           <Typography.Title heading={5} style={{ margin: "24px 0 16px 0" }}>
             # 运行记录
@@ -429,7 +444,7 @@ export default function Jobs({ mode }: { mode: string }) {
           <div style={{ color: "var(--semi-color-text-0)" }}>
             {allTimelines.map((timeline, i) => (
               <div
-                key={timeline.jobId! + timeline.triggerId! + i}
+                key={`${timeline.jobId || ""}_${timeline.triggerId || ""}_${i}`}
                 style={{ marginBottom: 8, fontSize: 14 }}
                 className={clsx(
                   styles.timelineItem,
@@ -452,12 +467,12 @@ export default function Jobs({ mode }: { mode: string }) {
                 </Tag>{" "}
                 次运行，耗时{" "}
                 <Tooltip
-                  content={<>{timeline.elapsedTime}ms</>}
+                  content={`${timeline.elapsedTime}ms`}
                   zIndex={10000000001}
                 >
                   <span>
                     <Tag color="lime" type="light">
-                      {formatDuration(timeline.elapsedTime!)}
+                      {formatDuration(timeline.elapsedTime || 0)}
                     </Tag>
                   </span>
                 </Tooltip>{" "}
@@ -472,10 +487,7 @@ export default function Jobs({ mode }: { mode: string }) {
                     content={
                       <div
                         className="exception-box"
-                        style={{
-                          padding: 10,
-                          width: 400,
-                        }}
+                        style={{ padding: 10, width: 400 }}
                       >
                         <TextArea value={timeline.exception} rows={10} />
                       </div>
