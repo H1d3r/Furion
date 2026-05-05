@@ -48,22 +48,24 @@ const showProps = [
 ];
 
 /**
- * 获取触发器简要渲染
- * @param trigger
- * @returns
+ * 获取触发器简要渲染数据
+ * @param trigger - 触发器对象
+ * @returns Descriptions 组件所需的数据数组
  */
 function getData(trigger: Trigger): Data[] {
-  var data: Data[] = [];
+  const data: Data[] = [];
   for (const prop of showProps) {
+    const value = trigger[prop as keyof Trigger];
     data.push({
       key: prop.charAt(0).toUpperCase() + prop.slice(1),
-      value: (
-        <RenderValue prop={prop} value={trigger[prop]} trigger={trigger} />
-      ),
+      value: <RenderValue prop={prop} value={value} trigger={trigger} />,
     });
   }
-
   return data;
+}
+
+function safeToString(value: unknown): string {
+  return value == null ? "" : String(value);
 }
 
 /**
@@ -75,7 +77,14 @@ const columns: ColumnProps<JobDetail>[] = [
     dataIndex: "jobId",
     width: 250,
     fixed: true,
-    render: (text, jobDetail, index) => {
+    render: (_, jobDetail) => {
+      const triggerCount = jobDetail.triggers?.length || 0;
+      const allStarted =
+        triggerCount > 0 && jobDetail.triggers?.every((t) => t.status === 3);
+      const isHttpJob =
+        jobDetail.jobType === "Furion.Schedule.HttpJob" ||
+        jobDetail.jobType === "Furion.Pure.Schedule.HttpJob";
+
       return (
         <>
           <Popover
@@ -92,39 +101,42 @@ const columns: ColumnProps<JobDetail>[] = [
                       }}
                     >
                       {jobDetail.description}
-                    </div>{" "}
+                    </div>
                     <Divider />
                   </>
                 )}
                 <div style={style}>
-                  {(jobDetail.triggers?.length || 0) === 0 && "暂无触发器"}
-                  {jobDetail.triggers?.map((t, i) => (
-                    <div key={t.triggerId}>
-                      <div
-                        style={{ display: "flex", justifyContent: "center" }}
-                      >
-                        <FlipClockCountdown
-                          to={t.nextRunTime || null!}
-                          labels={["天", "时", "分", "秒"]}
-                          labelStyle={{
-                            fontSize: 12,
-                            fontWeight: 500,
-                            color: "var(--semi-color-text-0)",
-                          }}
-                          digitBlockStyle={{
-                            width: 20,
-                            height: 30,
-                            fontSize: 15,
-                          }}
-                          hideOnComplete={false}
-                        />
+                  {triggerCount === 0 && "暂无触发器"}
+                  {jobDetail.triggers?.map((t, i) => {
+                    const triggerCount = jobDetail.triggers?.length || 0;
+                    return (
+                      <div key={t.triggerId}>
+                        <div
+                          style={{ display: "flex", justifyContent: "center" }}
+                        >
+                          <FlipClockCountdown
+                            to={t.nextRunTime || null!}
+                            labels={["天", "时", "分", "秒"]}
+                            labelStyle={{
+                              fontSize: 12,
+                              fontWeight: 500,
+                              color: "var(--semi-color-text-0)",
+                            }}
+                            digitBlockStyle={{
+                              width: 20,
+                              height: 30,
+                              fontSize: 15,
+                            }}
+                            hideOnComplete={false}
+                          />
+                        </div>
+                        <Descriptions data={getData(t)} />
+                        {i < triggerCount - 1 && (
+                          <Divider margin="8px" style={{ marginBottom: 16 }} />
+                        )}
                       </div>
-                      <Descriptions data={getData(t)} />
-                      {i !== jobDetail.triggers?.length! - 1 && (
-                        <Divider margin="8px" style={{ marginBottom: 16 }} />
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             }
@@ -137,21 +149,20 @@ const columns: ColumnProps<JobDetail>[] = [
               strong
               style={{ display: "inline-block" }}
             >
-              {text}
+              {jobDetail.jobId}
             </Paragraph>
             <Typography.Text type="secondary" style={{ marginLeft: 5 }}>
-              ({jobDetail.triggers?.length || 0})
+              ({triggerCount})
             </Typography.Text>
           </Popover>
-          {(jobDetail.triggers?.length || 0) > 0 &&
-            jobDetail.triggers?.filter((u) => u.status === 3).length ===
-              jobDetail.triggers?.length && (
-              <span style={{ marginLeft: 5 }}>
-                <StatusText value={3} />
-              </span>
-            )}
-          {(jobDetail.jobType === "Furion.Schedule.HttpJob" ||
-            jobDetail.jobType === "Furion.Pure.Schedule.HttpJob") && (
+
+          {allStarted && (
+            <span style={{ marginLeft: 5 }}>
+              <StatusText value={3} />
+            </span>
+          )}
+
+          {isHttpJob && (
             <Tooltip content="HTTP 作业">
               <IconLink
                 style={{
@@ -184,15 +195,15 @@ const columns: ColumnProps<JobDetail>[] = [
   {
     title: "Description",
     dataIndex: "description",
-    render: (text, jobDetail, index) => {
-      const value: string = text || "";
+    width: 250,
+    render: (text) => {
+      const value = safeToString(text);
       return (
-        <Tooltip content={text}>
-          {value.length >= 8 ? value.substring(0, 8) + "..." : value}
+        <Tooltip content={text || undefined}>
+          {value.length >= 8 ? `${value.substring(0, 8)}...` : value}
         </Tooltip>
       );
     },
-    width: 250,
   },
   {
     title: "JobType",
@@ -204,30 +215,24 @@ const columns: ColumnProps<JobDetail>[] = [
     dataIndex: "assemblyName",
     width: 150,
   },
-
   {
     title: "Concurrent",
     dataIndex: "concurrent",
     align: "center",
     width: 120,
-    render: (text, jobDetail, index) => {
-      return jobDetail.concurrent === true ? (
-        <Tooltip content={"任务会按触发顺序立即执行，不会等待前一个任务完成。"}>
-          <span>
-            <Tag color="red" type="light">
-              并行
-            </Tag>
-          </span>
-        </Tooltip>
-      ) : (
+    render: (_, jobDetail) => {
+      const isParallel = jobDetail.concurrent === true;
+      return (
         <Tooltip
           content={
-            "若前一个任务尚未完成，则当前任务将进入阻塞状态，并在下一个触发时间点尝试执行。"
+            isParallel
+              ? "任务会按触发顺序立即执行，不会等待前一个任务完成。"
+              : "若前一个任务尚未完成，则当前任务将进入阻塞状态，并在下一个触发时间点尝试执行。"
           }
         >
           <span>
-            <Tag color="red" type="solid">
-              串行
+            <Tag color="red" type={isParallel ? "light" : "solid"}>
+              {isParallel ? "并行" : "串行"}
             </Tag>
           </span>
         </Tooltip>
@@ -239,14 +244,11 @@ const columns: ColumnProps<JobDetail>[] = [
     dataIndex: "includeAnnotations",
     width: 180,
     align: "center",
-    render: (text, jobDetail, index) => {
-      return jobDetail.includeAnnotations === true ? (
-        <Tag color="blue" type="light">
-          是
-        </Tag>
-      ) : (
-        <Tag color="blue" type="ghost">
-          否
+    render: (_, jobDetail) => {
+      const included = jobDetail.includeAnnotations === true;
+      return (
+        <Tag color="blue" type={included ? "light" : "ghost"}>
+          {included ? "是" : "否"}
         </Tag>
       );
     },
@@ -255,7 +257,7 @@ const columns: ColumnProps<JobDetail>[] = [
     title: "Properties",
     dataIndex: "properties",
     width: 200,
-    render: (text, jobDetail, index) => {
+    render: (text) => {
       return (
         <Typography.Paragraph
           ellipsis={{
@@ -270,7 +272,7 @@ const columns: ColumnProps<JobDetail>[] = [
           style={{ width: 200 }}
           copyable
         >
-          {text}
+          {safeToString(text)}
         </Typography.Paragraph>
       );
     },
@@ -279,7 +281,7 @@ const columns: ColumnProps<JobDetail>[] = [
     title: "UpdatedTime",
     dataIndex: "updatedTime",
     width: 180,
-    render: (text, jobDetail, index) => {
+    render: (text) => {
       return text ? dayTime(text).format("YYYY/MM/DD HH:mm:ss") : "";
     },
   },
@@ -289,23 +291,21 @@ const columns: ColumnProps<JobDetail>[] = [
     width: 200,
     fixed: "right",
     resize: false,
-    render: (text, jobDetail, index) => {
-      var lastRunTimes =
+    render: (_, jobDetail) => {
+      const lastRunTimes =
         jobDetail.triggers
-          ?.filter((u) => !!u.lastRunTime)
-          ?.map((u) => u.lastRunTime!) || [];
+          ?.filter((u) => u.lastRunTime)
+          .map((u) => u.lastRunTime!) || [];
 
       const lastRunTime =
-        lastRunTimes.length === 0 ? null : findMaxUtcTimeString(lastRunTimes);
+        lastRunTimes.length > 0 ? findMaxUtcTimeString(lastRunTimes) : null;
 
       return lastRunTime ? (
         <Tag color="grey" type="light" style={{ verticalAlign: "middle" }}>
           {dayTime(lastRunTime).format("YYYY/MM/DD HH:mm:ss")} (
           {dayFromNow(lastRunTime)})
         </Tag>
-      ) : (
-        <></>
-      );
+      ) : null;
     },
   },
   {
@@ -314,14 +314,14 @@ const columns: ColumnProps<JobDetail>[] = [
     width: 200,
     fixed: "right",
     resize: false,
-    render: (text, jobDetail, index) => {
-      var nextRunTimes =
+    render: (_, jobDetail) => {
+      const nextRunTimes =
         jobDetail.triggers
-          ?.filter((u) => !!u.nextRunTime)
-          ?.map((u) => u.nextRunTime!) || [];
+          ?.filter((u) => u.nextRunTime)
+          .map((u) => u.nextRunTime!) || [];
 
-      var nextRunTime =
-        nextRunTimes.length === 0 ? null : findMinUtcTimeString(nextRunTimes);
+      const nextRunTime =
+        nextRunTimes.length > 0 ? findMinUtcTimeString(nextRunTimes) : null;
 
       return nextRunTime ? (
         <Tag
@@ -332,9 +332,7 @@ const columns: ColumnProps<JobDetail>[] = [
           {dayTime(nextRunTime).format("YYYY/MM/DD HH:mm:ss")} (
           {dayFromNow(nextRunTime)})
         </Tag>
-      ) : (
-        <></>
-      );
+      ) : null;
     },
   },
   {
@@ -343,26 +341,23 @@ const columns: ColumnProps<JobDetail>[] = [
     width: 50,
     fixed: "right",
     resize: false,
-    render: (text, jobDetail, index) => (
+    render: (_, jobDetail) => (
       <Operation
         jobid={jobDetail.jobId}
         hasTrigger={(jobDetail.triggers?.length || 0) > 0}
       />
     ),
-    onCell: (jobDetail, index) => {
-      return {
-        onClick: (e) => {
-          e.stopPropagation();
-        },
-      };
-    },
+    onCell: () => ({
+      onClick: (e: React.MouseEvent) => {
+        e.stopPropagation();
+      },
+    }),
   },
 ];
 
 /**
- * 操作按钮
- * @param props
- * @returns
+ * 操作按钮组件
+ * @param props - 组件参数
  */
 function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
   const { jobid, hasTrigger } = props;
@@ -379,17 +374,23 @@ function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
    * 操作作业
    */
   const callAction = async (action: string) => {
-    await post("/operate-job?jobid=" + jobid + "&action=" + action);
-    if (response.ok) {
-      Toast.success({
-        content: "操作成功",
-        duration: 3,
-      });
-    } else {
-      Toast.error({
-        content: "操作失败",
-        duration: 3,
-      });
+    if (!jobid) {
+      Toast.error({ content: "作业 ID 无效", duration: 3 });
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams({ jobid, action });
+      await post(`/operate-job?${params.toString()}`);
+
+      if (response.ok) {
+        Toast.success({ content: "操作成功", duration: 3 });
+      } else {
+        throw new Error(response.statusText || "请求失败");
+      }
+    } catch (error: any) {
+      console.error("操作失败:", error);
+      Toast.error({ content: error.message || "操作失败", duration: 3 });
     }
   };
 
@@ -399,36 +400,40 @@ function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
         <Dropdown.Menu>
           <Dropdown.Item
             onClick={() => callAction("start")}
-            disabled={!hasTrigger}
+            disabled={!hasTrigger || loading}
           >
             <IconPlayCircle size="extra-large" /> 启动
           </Dropdown.Item>
           <Dropdown.Item
             onClick={() => callAction("pause")}
-            disabled={!hasTrigger}
+            disabled={!hasTrigger || loading}
           >
             <IconStop size="extra-large" /> 暂停
           </Dropdown.Item>
           <Dropdown.Item>
             <Popconfirm
               zIndex={10000000}
-              title={"确定要删除当前作业 [" + jobid + "]？"}
+              title={`确定要删除当前作业 [${safeToString(jobid)}]？`}
               onConfirm={() => callAction("remove")}
             >
               <IconDelete size="small" /> &nbsp;删除
             </Popconfirm>
           </Dropdown.Item>
-
           <Dropdown.Item
             onClick={() => callAction("run")}
-            disabled={!hasTrigger}
+            disabled={!hasTrigger || loading}
           >
             <IconVigoLogo size="extra-large" /> 手动执行
           </Dropdown.Item>
         </Dropdown.Menu>
       }
     >
-      <IconMore style={{ cursor: "pointer" }} />
+      <IconMore
+        style={{
+          cursor: loading ? "not-allowed" : "pointer",
+          color: loading ? "var(--semi-color-disabled-text)" : undefined,
+        }}
+      />
     </Dropdown>
   );
 }

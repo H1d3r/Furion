@@ -7,20 +7,14 @@ import {
   IconMoon,
   IconSun,
 } from "@douyinfe/semi-icons";
-import {
-  BackTop,
-  Button,
-  Layout,
-  Nav,
-  Tag,
-  Tooltip,
-} from "@douyinfe/semi-ui";
+import { BackTop, Button, Layout, Nav, Tag, Tooltip } from "@douyinfe/semi-ui";
 import { useState } from "react";
 import Jobs from "./components/jobs";
 import apiconfig from "./apiconfig";
 import { useAuth } from "./auth";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
 import { useNavigate } from "react-router";
+import CurrentTime from "./components/current-time";
 
 function App() {
   const { Header, Content } = Layout;
@@ -66,6 +60,8 @@ function App() {
               }}
             >
               <Nav.Footer>
+                <CurrentTime />
+
                 {apiconfig.useUtcTimestamp === "true" && (
                   <Tooltip content="当前时间标准为 UTC 时间">
                     <span>
