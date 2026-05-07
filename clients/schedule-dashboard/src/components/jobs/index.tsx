@@ -405,7 +405,29 @@ export default function Jobs({ mode }: { mode: string }) {
           dataSource={data}
           onRow={handleRow}
           expandedRowRender={expandRowRender}
-          pagination={false}
+          pagination={{
+            size: "small",
+            formatPageText: () => (
+              <Typography.Paragraph type="secondary" style={{ padding: 10 }}>
+                {words.trim().length > 0 ? (
+                  <>
+                    搜索 "<b>{words.trim()}</b>" 共 <b>{jobList.length}</b>{" "}
+                    项结果。
+                  </>
+                ) : (
+                  <>
+                    共有 <b>{data.length}</b> 项作业任务
+                    {invalidJobCount > 0 && (
+                      <>
+                        ，其中 <b>{invalidJobCount}</b> 项未设置触发器
+                      </>
+                    )}
+                    。
+                  </>
+                )}
+              </Typography.Paragraph>
+            ),
+          }}
           resizable
           bordered
           expandRowByClick
@@ -418,23 +440,6 @@ export default function Jobs({ mode }: { mode: string }) {
             )
           }
         />
-        <Typography.Paragraph type="secondary" style={{ padding: 10 }}>
-          {words.trim().length > 0 ? (
-            <>
-              搜索 "<b>{words.trim()}</b>" 共 <b>{jobList.length}</b> 项结果。
-            </>
-          ) : (
-            <>
-              共有 <b>{data.length}</b> 项作业任务
-              {invalidJobCount > 0 && (
-                <>
-                  ，其中 <b>{invalidJobCount}</b> 项未设置触发器
-                </>
-              )}
-              。
-            </>
-          )}
-        </Typography.Paragraph>
       </div>
       {words.trim().length === 0 && (
         <div>
