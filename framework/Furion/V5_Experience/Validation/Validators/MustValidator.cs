@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -119,6 +120,30 @@ public class MustValidator<T> : ValidatorBase<T>
         ArgumentNullException.ThrowIfNull(condition);
 
         Condition = condition;
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="MustValidator{T}" />
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    public MustValidator(Func<T, Task<bool>> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        Condition = (instance, _) => AsyncUtility.RunSync(() => condition(instance));
+    }
+
+    /// <summary>
+    ///     <inheritdoc cref="MustValidator{T}" />
+    /// </summary>
+    /// <param name="condition">条件委托</param>
+    public MustValidator(Func<T, ValidationContext<T>, Task<bool>> condition)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(condition);
+
+        Condition = (instance, context) => AsyncUtility.RunSync(() => condition(instance, context));
     }
 
     /// <summary>
