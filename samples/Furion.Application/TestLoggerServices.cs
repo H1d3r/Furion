@@ -1,6 +1,7 @@
 ﻿using Furion.Application.Persons;
 using Furion.Logging;
 using Furion.Logging.Extensions;
+using Furion.Templates;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 using System.Text.Json.Nodes;
@@ -248,6 +249,34 @@ public class TestLoggerServices : IDynamicApiController
             items.Add("框架名称", "Furion");
             items.Add("User-Agent", httpContext.Request.Headers.UserAgent); // 支持解析 HttpContext
         });
+    }
+
+    public void 测试矩形日志模板()
+    {
+        // 左对齐
+        var template = TP.WrapperRectangle(new[] {
+  "百小僧",
+  "让 .NET 开发更简单，更通用，更流行。",
+  "一个应用程序框架，您可以将它集成到任何 .NET/C# 应用程序中。"
+}, -1); // -1 表示左对齐
+
+        // 居中对齐
+        var template2 = TP.WrapperRectangle(new[] {
+  "百小僧",
+  "让 .NET 开发更简单，更通用，更流行。",
+  "一个应用程序框架，您可以将它集成到任何 .NET/C# 应用程序中。"
+}, 0); // 0 表示居中对齐
+
+        // 右对齐
+        var template3 = TP.WrapperRectangle(new[] {
+  "百小僧",
+  "让 .NET 开发更简单，更通用，更流行。",
+  "一个应用程序框架，您可以将它集成到任何 .NET/C# 应用程序中。"
+}, 1); // 1 表示右对齐
+
+        _logger.LogInformation(template);
+        _logger.LogInformation(template2);
+        _logger.LogInformation(template3);
     }
 }
 
