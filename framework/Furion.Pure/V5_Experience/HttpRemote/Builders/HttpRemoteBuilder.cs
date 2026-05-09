@@ -24,12 +24,12 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Reflection;
-using System.Text;
 
 namespace Furion.HttpRemote;
 
@@ -279,7 +279,7 @@ public sealed class HttpRemoteBuilder
     internal void Build(IServiceCollection services)
     {
         // 注册 CodePagesEncodingProvider，使得程序能够识别并使用 Windows 代码页中的各种编码
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        EncodingUtility.Initialize();
 
         // 注册日志服务
         services.AddLogging();

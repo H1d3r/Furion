@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Furion.Utilities;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -44,15 +45,6 @@ public static class TP
     private static readonly Encoding _gbkEncoding = Encoding.GetEncoding("gbk");
 
     /// <summary>
-    /// 静态构造函数
-    /// </summary>
-    static TP()
-    {
-        // 注册编码提供器，支持 GBK 等非 UTF-8 编码
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-    }
-
-    /// <summary>
     /// 生成规范日志模板
     /// </summary>
     /// <param name="title">标题</param>
@@ -62,6 +54,9 @@ public static class TP
     /// <returns><see cref="string"/></returns>
     public static string Wrapper(string title, string description, string[] items, Func<string, bool>? filter)
     {
+        // 注册 CodePagesEncodingProvider，使得程序能够识别并使用 Windows 代码页中的各种编码
+        EncodingUtility.Initialize();
+
         var itemFilter = filter ?? (_ => true);
 
         var stringBuilder = new StringBuilder(512);
@@ -145,6 +140,9 @@ public static class TP
     /// <returns><see cref="string"/></returns>
     public static string WrapperRectangle(string[] lines, int align = 0, int pad = 20)
     {
+        // 注册 CodePagesEncodingProvider，使得程序能够识别并使用 Windows 代码页中的各种编码
+        EncodingUtility.Initialize();
+
         if (lines == null || lines.Length == 0)
             return "+--+";
 

@@ -27,6 +27,7 @@ using Furion;
 using Furion.DistributedIDGenerator;
 using Furion.JsonSerialization;
 using Furion.UnifyResult;
+using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
@@ -238,8 +239,8 @@ public static class AppServiceCollectionExtensions
         // 添加对象映射
         services.AddObjectMapper();
 
-        // 默认内置 GBK，Windows-1252, Shift-JIS, GB2312 编码支持
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // 注册 CodePagesEncodingProvider，使得程序能够识别并使用 Windows 代码页中的各种编码
+        EncodingUtility.Initialize();
 
         // 自定义服务
         configure?.Invoke(services);
