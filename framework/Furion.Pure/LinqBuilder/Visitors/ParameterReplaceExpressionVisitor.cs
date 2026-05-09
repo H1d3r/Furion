@@ -35,7 +35,7 @@ internal sealed class ParameterReplaceExpressionVisitor : ExpressionVisitor
     /// <summary>
     /// 参数表达式映射集合
     /// </summary>
-    private readonly Dictionary<ParameterExpression, ParameterExpression> parameterExpressionSetter;
+    private readonly Dictionary<ParameterExpression, ParameterExpression> _parameterExpressionSetter;
 
     /// <summary>
     /// 构造函数
@@ -43,7 +43,7 @@ internal sealed class ParameterReplaceExpressionVisitor : ExpressionVisitor
     /// <param name="parameterExpressionSetter">参数表达式映射集合</param>
     public ParameterReplaceExpressionVisitor(Dictionary<ParameterExpression, ParameterExpression> parameterExpressionSetter)
     {
-        this.parameterExpressionSetter = parameterExpressionSetter ?? [];
+        _parameterExpressionSetter = parameterExpressionSetter ?? [];
     }
 
     /// <summary>
@@ -58,17 +58,14 @@ internal sealed class ParameterReplaceExpressionVisitor : ExpressionVisitor
     }
 
     /// <summary>
-    /// 重写基类参数访问器
+    /// 重写基类参数访问器，执行参数替换
     /// </summary>
-    /// <param name="parameterExpression"></param>
-    /// <returns></returns>
-    protected override Expression VisitParameter(ParameterExpression parameterExpression)
+    /// <param name="node">参数表达式节点</param>
+    /// <returns><see cref="Expression"/></returns>
+    protected override Expression VisitParameter(ParameterExpression node)
     {
-        if (parameterExpressionSetter.TryGetValue(parameterExpression, out var replacement))
-        {
-            parameterExpression = replacement;
-        }
-
-        return base.VisitParameter(parameterExpression);
+        return _parameterExpressionSetter.TryGetValue(node, out var replacement)
+            ? replacement
+            : base.VisitParameter(node);
     }
 }
