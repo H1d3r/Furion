@@ -43,6 +43,9 @@ public static class ExpressionExtensions
     /// <returns>新的表达式</returns>
     public static Expression<TSource> Compose<TSource>(this Expression<TSource> expression, Expression<TSource> extendExpression, Func<Expression, Expression, Expression> mergeWay)
     {
+        if (expression == null) return extendExpression;
+        if (extendExpression == null) return expression;
+
         var parameterExpressionSetter = expression.Parameters
             .Select((u, i) => new { u, Parameter = extendExpression.Parameters[i] })
             .ToDictionary(d => d.Parameter, d => d.u);
@@ -152,32 +155,30 @@ public static class ExpressionExtensions
     }
 
     /// <summary>
-    /// 获取Lambda表达式属性名，只限 u=>u.Property 表达式
+    /// 获取 Lambda 表达式属性名，支持 u=>u.Property 或 u=>u.Property.SubProperty 形式
     /// </summary>
     /// <typeparam name="TSource">泛型类型</typeparam>
+    /// <typeparam name="TProperty">属性类型</typeparam>
     /// <param name="expression">表达式</param>
     /// <returns>属性名</returns>
-    public static string GetExpressionPropertyName<TSource>(this Expression<Func<TSource, object>> expression)
+    public static string GetExpressionPropertyName<TSource, TProperty>(this Expression<Func<TSource, TProperty>> expression)
     {
-        if (expression.Body is UnaryExpression unaryExpression)
-        {
-            return ((MemberExpression)unaryExpression.Operand).Member.Name;
-        }
-        else if (expression.Body is MemberExpression memberExpression)
-        {
-            return memberExpression.Member.Name;
-        }
-        else if (expression.Body is ParameterExpression parameterExpression)
-        {
-            return parameterExpression.Type.Name;
-        }
+        if (expression == null)
+            throw new ArgumentNullException(nameof(expression));
 
-        throw new InvalidCastException(nameof(expression));
+        return expression.Body switch
+        {
+            MemberExpression member => member.Member.Name,
+            UnaryExpression unary when unary.Operand is MemberExpression member => member.Member.Name,
+            ParameterExpression parameter => parameter.Type.Name,
+            _ => throw new InvalidCastException($"Expression type '{expression.Body.GetType().Name}' is not supported. Only member access expressions are allowed.")
+        };
     }
 
     /// <summary>
     /// 是否是空集合
     /// </summary>
+    /// <remarks>兼容 null 和空枚举。</remarks>
     /// <typeparam name="TSource">泛型类型</typeparam>
     /// <param name="sources">集合对象</param>
     /// <returns>是否为空集合</returns>

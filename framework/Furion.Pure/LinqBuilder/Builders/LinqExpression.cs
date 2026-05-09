@@ -32,6 +32,12 @@ namespace Furion.LinqBuilder;
 /// </summary>
 public static class LinqExpression
 {
+    private static class Cache<T>
+    {
+        public static readonly Expression<Func<T, bool>> True = _ => true;
+        public static readonly Expression<Func<T, bool>> False = _ => false;
+    }
+
     /// <summary>
     /// 创建 Linq/Lambda 表达式
     /// </summary>
@@ -61,7 +67,7 @@ public static class LinqExpression
     /// <returns>新的表达式</returns>
     public static Expression<Func<TSource, bool>> And<TSource>()
     {
-        return u => true;
+        return Cache<TSource>.True;
     }
 
     /// <summary>
@@ -81,7 +87,7 @@ public static class LinqExpression
     /// <returns>新的表达式</returns>
     public static Expression<Func<TSource, bool>> Or<TSource>()
     {
-        return u => false;
+        return Cache<TSource>.False;
     }
 
     /// <summary>
