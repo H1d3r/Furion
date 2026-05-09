@@ -162,14 +162,29 @@ internal class FileLoggingWriter
     /// </summary>
     private void GetCurrentFileName()
     {
-        // 获取日志基础文件名并将其缓存
         var baseFileName = GetBaseFileName();
+        var baseNameChanged = baseFileName != _lastBaseFileName;
+
+        // 总是更新缓存，确保下次能检测到变化
         _lastBaseFileName = baseFileName;
 
         // 是否配置了日志文件最大存储大小
         if (_options.FileSizeLimitBytes <= 0)
         {
             _fileName = baseFileName;
+            return;
+        }
+
+        // 检查基础文件名是否变化
+        if (baseNameChanged)
+        {
+            _fileName = baseFileName;
+
+            // 滚动日志文件名规则变更后重建列表
+            if (_isEnabledRollingFiles)
+            {
+                RebuildRollingFileNames();
+            }
             return;
         }
 
@@ -181,6 +196,16 @@ internal class FileLoggingWriter
 
         // 如果没有配置文件路径则默认放置根目录
         if (string.IsNullOrEmpty(logDirName)) logDirName = Directory.GetCurrentDirectory();
+
+        // 如果目录变化，清空缓存
+        if (_cachedLogFiles != null && _cachedLogFiles.Count > 0)
+        {
+            var cachedDir = Path.GetDirectoryName(_cachedLogFiles[0]?.FullName);
+            if (!string.Equals(cachedDir, logDirName, StringComparison.OrdinalIgnoreCase))
+            {
+                _cachedLogFiles = null; // 强制重建缓存
+            }
+        }
 
         var now = Stopwatch.GetTimestamp();
         var elapsedMs = (now - _lastScanTimestamp) * 1000L / Stopwatch.Frequency;
@@ -293,7 +318,8 @@ internal class FileLoggingWriter
 
         // 返回下一个匹配的日志文件名（完整路径）
         var nextFileName = baseFileNameOnly + (nextFileIndex > 0 ? nextFileIndex.ToString() : "") + Path.GetExtension(baseFileName);
-        return Path.Combine(Path.GetDirectoryName(baseFileName), nextFileName);
+        var directory = Path.GetDirectoryName(baseFileName);
+        return string.IsNullOrEmpty(directory) ? nextFileName : Path.Combine(directory, nextFileName);
     }
 
     /// <summary>
@@ -375,10 +401,13 @@ internal class FileLoggingWriter
     /// </summary>
     private async Task WriteWithCompatibleModeAsync(string message)
     {
+        // 解析当前写入日志的文件名
+        GetCurrentFileName();
+
         var directory = Path.GetDirectoryName(_fileName);
 
         // 空检查
-        if (!string.IsNullOrWhiteSpace(directory))
+        if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);
         }
@@ -497,7 +526,6 @@ internal class FileLoggingWriter
                         {
                             if (File.Exists(filePath))
                             {
-                                await Task.Yield();
                                 File.Delete(filePath);
                             }
                         }
@@ -536,23 +564,16 @@ internal class FileLoggingWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsFileMissingException(Exception ex)
     {
-        // 常见异常类型直接判断
-        if (ex is FileNotFoundException or DirectoryNotFoundException or ObjectDisposedException)
-            return true;
-
-        // IOException：检查 HResult（低 16 位为 Win32 错误码）
-        if (ex is IOException ioEx)
+        return ex switch
         {
-            var code = ioEx.HResult & 0xFFFF;
+            FileNotFoundException or DirectoryNotFoundException or ObjectDisposedException => true,
+            // IOException：检查 HResult（低 16 位为 Win32 错误码）
             // 2=FILE_NOT_FOUND, 3=PATH_NOT_FOUND, 6=INVALID_HANDLE, 32=SHARING_VIOLATION
-            return code is 2 or 3 or 6 or 32;
-        }
-
-        // UnauthorizedAccessException：文件被删除后权限检查可能报此错
-        if (ex is UnauthorizedAccessException)
-            return true;
-
-        return false;
+            IOException ioEx => (ioEx.HResult & 0xFFFF) is 2 or 3 or 6 or 32,
+            // UnauthorizedAccessException：文件被删除后权限检查可能报此错
+            UnauthorizedAccessException => true,
+            _ => false
+        };
     }
 
     /// <summary>
