@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.Common;
@@ -36,6 +37,11 @@ namespace Furion.DatabaseAccessor;
 /// </summary>
 public static class DbDataConvertExtensions
 {
+    /// <summary>
+    /// 缓存类型的属性信息和列名映射
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, (PropertyInfo[] Properties, Dictionary<string, string> ColumnMap)> _reflectionCache = new();
+
     /// <summary>
     /// 将 DataTable 转 List 集合
     /// </summary>
@@ -206,98 +212,14 @@ public static class DbDataConvertExtensions
             returnTypes = Enumerable.Range(0, dataTables.Count).Select(u => typeof(List<object>)).ToArray();
         }
 
-        // 处理 8 个结果集
-        if (returnTypes.Length >= 8)
+        // 使用数组索引访问
+        var results = new List<object>(returnTypes.Length);
+        var count = Math.Min(returnTypes.Length, dataTables.Count);
+        for (var i = 0; i < count; i++)
         {
-            return
-                [
-                    dataTables[0].ToList(returnTypes[0]),
-                    dataTables[1].ToList(returnTypes[1]),
-                    dataTables[2].ToList(returnTypes[2]),
-                    dataTables[3].ToList(returnTypes[3]),
-                    dataTables[4].ToList(returnTypes[4]),
-                    dataTables[5].ToList(returnTypes[5]),
-                    dataTables[6].ToList(returnTypes[6]),
-                    dataTables[7].ToList(returnTypes[7])
-                ];
+            results.Add(dataTables[i].ToList(returnTypes[i]));
         }
-        // 处理 7 个结果集
-        else if (returnTypes.Length == 7)
-        {
-            return
-                [
-                    dataTables[0].ToList(returnTypes[0]),
-                    dataTables[1].ToList(returnTypes[1]),
-                    dataTables[2].ToList(returnTypes[2]),
-                    dataTables[3].ToList(returnTypes[3]),
-                    dataTables[4].ToList(returnTypes[4]),
-                    dataTables[5].ToList(returnTypes[5]),
-                    dataTables[6].ToList(returnTypes[6])
-                ];
-        }
-        // 处理 6 个结果集
-        else if (returnTypes.Length == 6)
-        {
-            return
-                [
-                    dataTables[0].ToList(returnTypes[0]),
-                    dataTables[1].ToList(returnTypes[1]),
-                    dataTables[2].ToList(returnTypes[2]),
-                    dataTables[3].ToList(returnTypes[3]),
-                    dataTables[4].ToList(returnTypes[4]),
-                    dataTables[5].ToList(returnTypes[5])
-                ];
-        }
-        // 处理 5 个结果集
-        else if (returnTypes.Length == 5)
-        {
-            return
-                [
-                    dataTables[0].ToList(returnTypes[0]),
-                    dataTables[1].ToList(returnTypes[1]),
-                    dataTables[2].ToList(returnTypes[2]),
-                    dataTables[3].ToList(returnTypes[3]),
-                    dataTables[4].ToList(returnTypes[4])
-                ];
-        }
-        // 处理 4 个结果集
-        else if (returnTypes.Length == 4)
-        {
-            return
-                [
-                    dataTables[0].ToList(returnTypes[0]),
-                    dataTables[1].ToList(returnTypes[1]),
-                    dataTables[2].ToList(returnTypes[2]),
-                    dataTables[3].ToList(returnTypes[3])
-                ];
-        }
-        // 处理 3 个结果集
-        else if (returnTypes.Length == 3)
-        {
-            return
-                [
-                    dataTables[0].ToList(returnTypes[0]),
-                    dataTables[1].ToList(returnTypes[1]),
-                    dataTables[2].ToList(returnTypes[2])
-                ];
-        }
-        // 处理 2 个结果集
-        else if (returnTypes.Length == 2)
-        {
-            return
-                [
-                    dataTables[0].ToList(returnTypes[0]),
-                    dataTables[1].ToList(returnTypes[1])
-                ];
-        }
-        // 处理 1 个结果集
-        else
-        {
-            return
-                [
-                    dataTables[0].ToList(returnTypes[0])
-                ];
-        }
+        return results;
     }
 
     /// <summary>
@@ -367,10 +289,31 @@ public static class DbDataConvertExtensions
             var isArrayType = underlyingType.IsArray;
             var actType = isArrayType ? underlyingType.GetElementType() : underlyingType;
 
-            // 获取所有的数据列和类公开实例属性
-            var dataColumns = dataTable.Columns;
-            var properties = actType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            //.Where(p => !p.IsDefined(typeof(NotMappedAttribute), true));  // sql 数据转换无需判断 [NotMapperd] 特性
+            // 缓存反射信息
+            var (properties, columnMap) = _reflectionCache.GetOrAdd(actType, type =>
+            {
+                var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var prop in props)
+                {
+                    // 获取属性对应的真实列名（支持 [Column] 特性）
+                    var columnName = prop.Name;
+                    if (prop.IsDefined(typeof(ColumnAttribute), true))
+                    {
+                        var columnAttribute = prop.GetCustomAttribute<ColumnAttribute>(true);
+                        if (!string.IsNullOrWhiteSpace(columnAttribute?.Name))
+                        {
+                            columnName = columnAttribute.Name;
+                        }
+                    }
+                    map[prop.Name] = columnName;
+                }
+                return (props, map);
+            });
+
+            // 预构建列名查找表
+            var columnNames = new HashSet<string>(dataTable.Columns.Cast<DataColumn>().Select(c => c.ColumnName), StringComparer.OrdinalIgnoreCase);
 
             // 遍历所有行
             foreach (var dataRow in dataRows)
@@ -381,29 +324,19 @@ public static class DbDataConvertExtensions
                 foreach (var property in properties)
                 {
                     // 获取属性对应的真实列名
-                    var columnName = property.Name;
-                    if (property.IsDefined(typeof(ColumnAttribute), true))
-                    {
-                        var columnAttribute = property.GetCustomAttribute<ColumnAttribute>(true);
-                        if (!string.IsNullOrWhiteSpace(columnAttribute.Name)) columnName = columnAttribute.Name;
-                    }
+                    var columnName = columnMap[property.Name];
 
                     // 如果 DataTable 不包含该列名，则跳过
-                    if (!dataColumns.Contains(columnName))
+                    if (!columnNames.Contains(columnName))
                     {
+                        // 降级处理：尝试多种命名风格匹配
                         var splitColumnName = string.Join('_', property.Name.SplitCamelCase());
+                        var candidates = new[] { splitColumnName, splitColumnName.ToUpper(), splitColumnName.ToLower(),
+                                                columnName.ToUpper(), columnName.ToLower() };
 
-                        // 继续检查带下划线的
-                        if (dataColumns.Contains(splitColumnName)) columnName = splitColumnName;
-                        // 检查下划线大写的
-                        else if (dataColumns.Contains(splitColumnName.ToUpper())) columnName = splitColumnName.ToUpper();
-                        // 检查下划线小写的
-                        else if (dataColumns.Contains(splitColumnName.ToLower())) columnName = splitColumnName.ToLower();
-                        // 检查全大写的
-                        else if (dataColumns.Contains(columnName.ToUpper())) columnName = columnName.ToUpper();
-                        // 检查全小写的
-                        else if (dataColumns.Contains(columnName.ToLower())) columnName = columnName.ToLower();
-                        else continue;
+                        var matched = candidates.FirstOrDefault(c => columnNames.Contains(c));
+                        if (matched == null) continue;
+                        columnName = matched;
                     }
 
                     // 获取列值

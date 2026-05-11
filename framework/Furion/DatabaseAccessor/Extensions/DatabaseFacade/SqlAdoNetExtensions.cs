@@ -48,17 +48,21 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
 
-        // 读取数据
-        using var dbDataReader = dbCommand.ExecuteReader(behavior);
+        try
+        {
+            // 读取数据
+            using var dbDataReader = dbCommand.ExecuteReader(behavior);
 
-        // 填充到 DataTable
-        var dataTable = dbDataReader.ToDataTable();
+            // 填充到 DataTable
+            var dataTable = dbDataReader.ToDataTable();
 
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        dbCommand.Dispose();
-
-        return dataTable;
+            return dataTable;
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            dbCommand.Dispose();
+        }
     }
 
     /// <summary>
@@ -75,17 +79,21 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
 
-        // 读取数据
-        using var dbDataReader = dbCommand.ExecuteReader(behavior);
+        try
+        {
+            // 读取数据
+            using var dbDataReader = dbCommand.ExecuteReader(behavior);
 
-        // 填充到 DataTable
-        var dataTable = dbDataReader.ToDataTable();
+            // 填充到 DataTable
+            var dataTable = dbDataReader.ToDataTable();
 
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        dbCommand.Dispose();
-
-        return (dataTable, dbParameters);
+            return (dataTable, dbParameters);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            dbCommand.Dispose();
+        }
     }
 
     /// <summary>
@@ -103,17 +111,21 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
 
-        // 读取数据
-        using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
+        try
+        {
+            // 读取数据
+            using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
 
-        // 填充到 DataTable
-        var dataTable = dbDataReader.ToDataTable();
+            // 填充到 DataTable
+            var dataTable = dbDataReader.ToDataTable();
 
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        await dbCommand.DisposeAsync();
-
-        return dataTable;
+            return dataTable;
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            await dbCommand.DisposeAsync();
+        }
     }
 
     /// <summary>
@@ -131,17 +143,21 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
 
-        // 读取数据
-        using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
+        try
+        {
+            // 读取数据
+            using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
 
-        // 填充到 DataTable
-        var dataTable = dbDataReader.ToDataTable();
+            // 填充到 DataTable
+            var dataTable = dbDataReader.ToDataTable();
 
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        await dbCommand.DisposeAsync();
-
-        return (dataTable, dbParameters);
+            return (dataTable, dbParameters);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            await dbCommand.DisposeAsync();
+        }
     }
 
     /// <summary>
@@ -157,14 +173,16 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
 
-        // 执行返回受影响行数
-        var rowEffects = dbCommand.ExecuteNonQuery();
-
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        dbCommand.Dispose();
-
-        return rowEffects;
+        try
+        {
+            // 执行返回受影响行数
+            return dbCommand.ExecuteNonQuery();
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            dbCommand.Dispose();
+        }
     }
 
     /// <summary>
@@ -180,14 +198,17 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
 
-        // 执行返回受影响行数
-        var rowEffects = dbCommand.ExecuteNonQuery();
-
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        dbCommand.Dispose();
-
-        return (rowEffects, dbParameters);
+        try
+        {
+            // 执行返回受影响行数
+            var rowEffects = dbCommand.ExecuteNonQuery();
+            return (rowEffects, dbParameters);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            dbCommand.Dispose();
+        }
     }
 
     /// <summary>
@@ -204,14 +225,16 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
 
-        // 执行返回受影响行数
-        var rowEffects = await dbCommand.ExecuteNonQueryAsync(cancellationToken);
-
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        await dbCommand.DisposeAsync();
-
-        return rowEffects;
+        try
+        {
+            // 执行返回受影响行数
+            return await dbCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            await dbCommand.DisposeAsync();
+        }
     }
 
     /// <summary>
@@ -228,14 +251,17 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
 
-        // 执行返回受影响行数
-        var rowEffects = await dbCommand.ExecuteNonQueryAsync(cancellationToken);
-
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        await dbCommand.DisposeAsync();
-
-        return (rowEffects, dbParameters);
+        try
+        {
+            // 执行返回受影响行数
+            var rowEffects = await dbCommand.ExecuteNonQueryAsync(cancellationToken);
+            return (rowEffects, dbParameters);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            await dbCommand.DisposeAsync();
+        }
     }
 
     /// <summary>
@@ -251,14 +277,17 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
 
-        // 执行返回单行单列的值
-        var result = dbCommand.ExecuteScalar();
-
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        dbCommand.Dispose();
-
-        return result != DBNull.Value ? result : default;
+        try
+        {
+            // 执行返回单行单列的值
+            var result = dbCommand.ExecuteScalar();
+            return result != DBNull.Value ? result : default;
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            dbCommand.Dispose();
+        }
     }
 
     /// <summary>
@@ -274,14 +303,17 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
 
-        // 执行返回单行单列的值
-        var result = dbCommand.ExecuteScalar();
-
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        dbCommand.Dispose();
-
-        return (result != DBNull.Value ? result : default, dbParameters);
+        try
+        {
+            // 执行返回单行单列的值
+            var result = dbCommand.ExecuteScalar();
+            return (result != DBNull.Value ? result : default, dbParameters);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            dbCommand.Dispose();
+        }
     }
 
     /// <summary>
@@ -298,14 +330,17 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
 
-        // 执行返回单行单列的值
-        var result = await dbCommand.ExecuteScalarAsync(cancellationToken);
-
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        await dbCommand.DisposeAsync();
-
-        return result != DBNull.Value ? result : default;
+        try
+        {
+            // 执行返回单行单列的值
+            var result = await dbCommand.ExecuteScalarAsync(cancellationToken);
+            return result != DBNull.Value ? result : default;
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            await dbCommand.DisposeAsync();
+        }
     }
 
     /// <summary>
@@ -322,14 +357,17 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
 
-        // 执行返回单行单列的值
-        var result = await dbCommand.ExecuteScalarAsync(cancellationToken);
-
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        await dbCommand.DisposeAsync();
-
-        return (result != DBNull.Value ? result : default, dbParameters);
+        try
+        {
+            // 执行返回单行单列的值
+            var result = await dbCommand.ExecuteScalarAsync(cancellationToken);
+            return (result != DBNull.Value ? result : default, dbParameters);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            await dbCommand.DisposeAsync();
+        }
     }
 
     /// <summary>
@@ -346,17 +384,21 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand) = databaseFacade.PrepareDbCommand(sql, parameters, commandType);
 
-        // 读取数据
-        using var dbDataReader = dbCommand.ExecuteReader(behavior);
+        try
+        {
+            // 读取数据
+            using var dbDataReader = dbCommand.ExecuteReader(behavior);
 
-        // 填充到 DataSet
-        var dataSet = dbDataReader.ToDataSet();
+            // 填充到 DataSet
+            var dataSet = dbDataReader.ToDataSet();
 
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        dbCommand.Dispose();
-
-        return dataSet;
+            return dataSet;
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            dbCommand.Dispose();
+        }
     }
 
     /// <summary>
@@ -373,17 +415,21 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand, dbParameters) = databaseFacade.PrepareDbCommand(sql, model, commandType);
 
-        // 读取数据
-        using var dbDataReader = dbCommand.ExecuteReader(behavior);
+        try
+        {
+            // 读取数据
+            using var dbDataReader = dbCommand.ExecuteReader(behavior);
 
-        // 填充到 DataSet
-        var dataSet = dbDataReader.ToDataSet();
+            // 填充到 DataSet
+            var dataSet = dbDataReader.ToDataSet();
 
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        dbCommand.Dispose();
-
-        return (dataSet, dbParameters);
+            return (dataSet, dbParameters);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            dbCommand.Dispose();
+        }
     }
 
     /// <summary>
@@ -401,17 +447,21 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand) = await databaseFacade.PrepareDbCommandAsync(sql, parameters, commandType, cancellationToken);
 
-        // 读取数据
-        using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
+        try
+        {
+            // 读取数据
+            using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
 
-        // 填充到 DataSet
-        var dataSet = dbDataReader.ToDataSet();
+            // 填充到 DataSet
+            var dataSet = dbDataReader.ToDataSet();
 
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        await dbCommand.DisposeAsync();
-
-        return dataSet;
+            return dataSet;
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            await dbCommand.DisposeAsync();
+        }
     }
 
     /// <summary>
@@ -429,16 +479,20 @@ public static class SqlAdoNetExtensions
         // 初始化数据库连接对象和数据库命令对象
         var (_, dbCommand, dbParameters) = await databaseFacade.PrepareDbCommandAsync(sql, model, commandType, cancellationToken);
 
-        // 读取数据
-        using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
+        try
+        {
+            // 读取数据
+            using var dbDataReader = await dbCommand.ExecuteReaderAsync(behavior, cancellationToken);
 
-        // 填充到 DataSet
-        var dataSet = dbDataReader.ToDataSet();
+            // 填充到 DataSet
+            var dataSet = dbDataReader.ToDataSet();
 
-        // 释放命令对象
-        dbCommand.Parameters?.Clear();
-        await dbCommand.DisposeAsync();
-
-        return (dataSet, dbParameters);
+            return (dataSet, dbParameters);
+        }
+        finally
+        {
+            dbCommand.Parameters?.Clear();
+            await dbCommand.DisposeAsync();
+        }
     }
 }
