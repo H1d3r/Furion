@@ -151,7 +151,7 @@ public class PersonService : IDynamicApiController
         {
             Id = 1,
             Name = "Furion"
-        });
+        }).ToList<Person>();
     }
 
     /// <summary>

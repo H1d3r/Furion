@@ -64,13 +64,21 @@ public static class DbObjectExtensions
     {
         // 创建数据库连接对象及数据库命令对象
         var (dbConnection, dbCommand) = databaseFacade.CreateDbCommand(sql, commandType);
-        SetDbParameters(databaseFacade.ProviderName, ref dbCommand, parameters);
+        try
+        {
+            SetDbParameters(databaseFacade.ProviderName, ref dbCommand, parameters);
 
-        // 打开数据库连接
-        OpenConnection(databaseFacade, dbConnection, dbCommand);
+            // 打开数据库连接
+            OpenConnection(databaseFacade, dbConnection, dbCommand);
 
-        // 返回
-        return (dbConnection, dbCommand);
+            // 返回
+            return (dbConnection, dbCommand);
+        }
+        catch
+        {
+            dbCommand?.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -85,13 +93,21 @@ public static class DbObjectExtensions
     {
         // 创建数据库连接对象及数据库命令对象
         var (dbConnection, dbCommand) = databaseFacade.CreateDbCommand(sql, commandType);
-        SetDbParameters(databaseFacade.ProviderName, ref dbCommand, model, out var dbParameters);
+        try
+        {
+            SetDbParameters(databaseFacade.ProviderName, ref dbCommand, model, out var dbParameters);
 
-        // 打开数据库连接
-        OpenConnection(databaseFacade, dbConnection, dbCommand);
+            // 打开数据库连接
+            OpenConnection(databaseFacade, dbConnection, dbCommand);
 
-        // 返回
-        return (dbConnection, dbCommand, dbParameters);
+            // 返回
+            return (dbConnection, dbCommand, dbParameters);
+        }
+        catch
+        {
+            dbCommand?.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -107,13 +123,21 @@ public static class DbObjectExtensions
     {
         // 创建数据库连接对象及数据库命令对象
         var (dbConnection, dbCommand) = databaseFacade.CreateDbCommand(sql, commandType);
-        SetDbParameters(databaseFacade.ProviderName, ref dbCommand, parameters);
+        try
+        {
+            SetDbParameters(databaseFacade.ProviderName, ref dbCommand, parameters);
 
-        // 打开数据库连接
-        await OpenConnectionAsync(databaseFacade, dbConnection, dbCommand, cancellationToken);
+            // 打开数据库连接
+            await OpenConnectionAsync(databaseFacade, dbConnection, dbCommand, cancellationToken);
 
-        // 返回
-        return (dbConnection, dbCommand);
+            // 返回
+            return (dbConnection, dbCommand);
+        }
+        catch
+        {
+            await (dbCommand?.DisposeAsync() ?? ValueTask.CompletedTask);
+            throw;
+        }
     }
 
     /// <summary>
@@ -129,13 +153,21 @@ public static class DbObjectExtensions
     {
         // 创建数据库连接对象及数据库命令对象
         var (dbConnection, dbCommand) = databaseFacade.CreateDbCommand(sql, commandType);
-        SetDbParameters(databaseFacade.ProviderName, ref dbCommand, model, out var dbParameters);
+        try
+        {
+            SetDbParameters(databaseFacade.ProviderName, ref dbCommand, model, out var dbParameters);
 
-        // 打开数据库连接
-        await OpenConnectionAsync(databaseFacade, dbConnection, dbCommand, cancellationToken);
+            // 打开数据库连接
+            await OpenConnectionAsync(databaseFacade, dbConnection, dbCommand, cancellationToken);
 
-        // 返回
-        return (dbConnection, dbCommand, dbParameters);
+            // 返回
+            return (dbConnection, dbCommand, dbParameters);
+        }
+        catch
+        {
+            await (dbCommand?.DisposeAsync() ?? ValueTask.CompletedTask);
+            throw;
+        }
     }
 
     /// <summary>
@@ -282,6 +314,6 @@ public static class DbObjectExtensions
 
         // 打印日志
         var logger = databaseFacade.GetService<ILogger<Microsoft.EntityFrameworkCore.Database.SqlExecuteCommand>>();
-        logger.LogInformation(sqlLogBuilder.ToString());
+        logger?.LogInformation(sqlLogBuilder.ToString());
     }
 }
