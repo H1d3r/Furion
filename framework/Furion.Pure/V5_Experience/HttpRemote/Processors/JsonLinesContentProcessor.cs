@@ -24,20 +24,22 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
+using Furion.HttpRemote.Extensions;
 using System.Net.Http.Headers;
-using System.Net.Mime;
 using System.Text;
 
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     URL 编码的表单内容处理器
+///     JSON Lines 内容处理器
 /// </summary>
-public class FormUrlEncodedContentProcessor : HttpContentProcessorBase
+/// <remarks>参考文献：https://jsonlines.org/</remarks>
+public class JsonLinesContentProcessor : HttpContentProcessorBase
 {
     /// <inheritdoc />
     public override bool CanProcess(object? rawContent, string contentType) =>
-        rawContent is FormUrlEncodedContent || contentType.IsIn([MediaTypeNames.Application.FormUrlEncoded],
+        contentType.IsIn(
+            ["application/x-ndjson", "application/x-jsonlines", "application/jsonlines", "application/jsonl"],
             StringComparer.OrdinalIgnoreCase);
 
     /// <inheritdoc />
@@ -49,15 +51,36 @@ public class FormUrlEncodedContentProcessor : HttpContentProcessorBase
             return httpContent;
         }
 
-        // 将原始请求类型转换为字符串字典类型
-        var nameValueCollection = rawContent.ObjectToDictionary()!.ToDictionary(u => u.Key.ToInvariantCultureString()!,
-            u => u.Value?.ToInvariantCultureString());
+        // 检查原始请求内容是否为枚举类型，且其元素类型为引用类型（非字符串）
+        if (!rawContent.GetType().IsArrayOrCollection(out var underlyingType) || !underlyingType.IsClass ||
+            underlyingType == typeof(string))
+        {
+            throw new InvalidOperationException(
+                $"Expected IEnumerable<T> where T is a class type other than string, but received type `{rawContent.GetType()}`.");
+        }
 
-        // 初始化 FormUrlEncodedContent 实例
-        var formUrlEncodedContent = new FormUrlEncodedContent(nameValueCollection);
-        formUrlEncodedContent.Headers.ContentType =
-            new MediaTypeHeaderValue(contentType) { CharSet = encoding?.WebName };
+        // 将原始请求内容转换为 IEnumerable 类型
+        var enumerable = (IEnumerable)rawContent;
 
-        return formUrlEncodedContent;
+        // 初始化 StringBuilder 实例
+        var stringBuilder = new StringBuilder();
+
+        // 解析 JSON 序列化配置
+        var jsonSerializerOptions = ResolveJsonSerializerOptions();
+
+        // 构建 JSON Lines 格式内容
+        foreach (var item in enumerable)
+        {
+            stringBuilder.Append(item.ToJsonString(jsonSerializerOptions)).Append('\n');
+        }
+
+        // 移除末尾多余换行
+        var content = stringBuilder.ToString().TrimEnd('\n');
+
+        // 初始化 StringContent 实例
+        var stringContent = new StringContent(content, encoding,
+            new MediaTypeHeaderValue(contentType) { CharSet = encoding?.WebName });
+
+        return stringContent;
     }
 }

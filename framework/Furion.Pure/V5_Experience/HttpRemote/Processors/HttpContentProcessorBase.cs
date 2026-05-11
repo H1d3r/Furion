@@ -23,9 +23,12 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 
 namespace Furion.HttpRemote;
 
@@ -69,7 +72,7 @@ public abstract class HttpContentProcessorBase : IHttpContentProcessor, IService
             case HttpContent content:
                 // 设置 Content-Type
                 content.Headers.ContentType ??=
-                    new MediaTypeHeaderValue(contentType) { CharSet = encoding?.BodyName };
+                    new MediaTypeHeaderValue(contentType) { CharSet = encoding?.WebName };
 
                 httpContent = content;
                 return true;
@@ -78,4 +81,14 @@ public abstract class HttpContentProcessorBase : IHttpContentProcessor, IService
                 return false;
         }
     }
+
+    /// <summary>
+    ///     解析 JSON 序列化配置
+    /// </summary>
+    /// <returns>
+    ///     <see cref="JsonSerializerOptions" />
+    /// </returns>
+    public virtual JsonSerializerOptions ResolveJsonSerializerOptions() =>
+        this.GetService<IOptions<HttpRemoteOptions>>()?.Value.JsonSerializerOptions ??
+        HttpRemoteOptions.JsonSerializerOptionsDefault;
 }
