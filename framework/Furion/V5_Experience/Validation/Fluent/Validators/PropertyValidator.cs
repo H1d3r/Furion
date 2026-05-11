@@ -182,10 +182,10 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
         // 对于 ValidatorProxy<T, TValidator>（对象级代理），传入整个对象；否则传入属性值
         return GetRuleMode() switch
         {
-            Furion.Validation.RuleMode.FailFast or Furion.Validation.RuleMode.All => Validators.All(u =>
+            Validation.RuleMode.FailFast or Validation.RuleMode.All => Validators.All(u =>
                 u.IsValid(u.IsTypedProxy ? instance : propertyValue,
                     u.IsTypedProxy ? validationContext : validationContextForProperty)),
-            Furion.Validation.RuleMode.Any => Validators.Any(u => u.IsValid(u.IsTypedProxy ? instance : propertyValue,
+            Validation.RuleMode.Any => Validators.Any(u => u.IsValid(u.IsTypedProxy ? instance : propertyValue,
                 u.IsTypedProxy ? validationContext : validationContextForProperty)),
             _ => throw new NotSupportedException()
         };
@@ -245,13 +245,13 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
                 customValidationResults.AddRange(results);
 
                 // 检查验证规则的执行聚合模式是否是遇到首个验证失败即停止后续验证
-                if (ruleMode is Furion.Validation.RuleMode.FailFast)
+                if (ruleMode is Validation.RuleMode.FailFast)
                 {
                     break;
                 }
             }
             // 检查验证规则的执行聚合模式是否是任一验证器验证成功，即视为整体验证通过
-            else if (ruleMode is Furion.Validation.RuleMode.Any)
+            else if (ruleMode is Validation.RuleMode.Any)
             {
                 // 清空验证结果列表
                 customValidationResults.Clear();
@@ -324,13 +324,13 @@ public abstract partial class PropertyValidator<T, TProperty, TSelf> : FluentVal
                 }
 
                 // 检查验证规则的执行聚合模式是否是遇到首个验证失败即停止后续验证
-                if (ruleMode is Furion.Validation.RuleMode.FailFast or Furion.Validation.RuleMode.All)
+                if (ruleMode is Validation.RuleMode.FailFast or Validation.RuleMode.All)
                 {
                     validator.Validate(validatingObject, currentValidationContext);
                 }
             }
             // 检查验证规则的执行聚合模式是否是任一验证器验证成功，即视为整体验证通过
-            else if (ruleMode is Furion.Validation.RuleMode.Any)
+            else if (ruleMode is Validation.RuleMode.Any)
             {
                 return;
             }

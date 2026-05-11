@@ -227,7 +227,8 @@ public abstract class ValidatorBase
     /// <summary>
     ///     外部程序集用于覆盖默认验证信息的【强制约定类型全名】
     /// </summary>
-    internal const string ExternalValidationMessagesFullTypeName = "Furion.Validation.Resources.Overrides.ValidationMessages";
+    internal const string ExternalValidationMessagesFullTypeName =
+        "Furion.Validation.Resources.Overrides.ValidationMessages";
 
     /// <summary>
     ///     错误信息
