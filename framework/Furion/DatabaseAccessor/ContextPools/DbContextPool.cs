@@ -55,6 +55,11 @@ public class DbContextPool : IDbContextPool, IDisposable
     private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
+    /// 事件处理程序引用
+    /// </summary>
+    private readonly ConcurrentDictionary<Guid, EventHandler<SaveChangesFailedEventArgs>> _eventHandlers;
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="serviceProvider"></param>
@@ -63,6 +68,7 @@ public class DbContextPool : IDbContextPool, IDisposable
         _serviceProvider = serviceProvider;
         _dbContexts = new ConcurrentDictionary<Guid, DbContext>();
         _failedDbContexts = new ConcurrentDictionary<Guid, DbContext>();
+        _eventHandlers = new ConcurrentDictionary<Guid, EventHandler<SaveChangesFailedEventArgs>>();
     }
 
     /// <summary>
@@ -92,7 +98,7 @@ public class DbContextPool : IDbContextPool, IDisposable
         if (!_dbContexts.TryAdd(instanceId, dbContext)) return;
 
         // 订阅数据库上下文操作失败事件
-        dbContext.SaveChangesFailed += (s, e) =>
+        EventHandler<SaveChangesFailedEventArgs> handler = (s, e) =>
         {
             // 排除已经存在的数据库上下文
             if (!_failedDbContexts.TryAdd(instanceId, dbContext)) return;
@@ -105,12 +111,13 @@ public class DbContextPool : IDbContextPool, IDisposable
             // 只有事务不等于空且支持自动回滚
             if (!(currentTransaction != null && context.FailedAutoRollback == true)) return;
 
-            // 获取数据库连接信息
-            var connection = database.GetDbConnection();
-
             // 回滚事务
-            currentTransaction.Rollback();
+            currentTransaction?.Rollback();
         };
+
+        // 订阅事件并缓存处理程序引用
+        dbContext.SaveChangesFailed += handler;
+        _eventHandlers.TryAdd(instanceId, handler);
     }
 
     /// <summary>
@@ -131,8 +138,8 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         return _dbContexts
-            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.Contains(u))
-            .Select(u => u.Value.SaveChanges()).Count();
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Select(u => u.Value.SaveChanges()).Sum();
     }
 
     /// <summary>
@@ -144,8 +151,8 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         return _dbContexts
-            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.Contains(u))
-            .Select(u => u.Value.SaveChanges(acceptAllChangesOnSuccess)).Count();
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Select(u => u.Value.SaveChanges(acceptAllChangesOnSuccess)).Sum();
     }
 
     /// <summary>
@@ -157,12 +164,12 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         var tasks = _dbContexts
-            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.Contains(u))
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChangesAsync(cancellationToken));
 
         // 等待所有异步完成
         var results = await Task.WhenAll(tasks);
-        return results.Length;
+        return results.Sum();
     }
 
     /// <summary>
@@ -175,12 +182,12 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         var tasks = _dbContexts
-            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.Contains(u))
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken));
 
         // 等待所有异步完成
         var results = await Task.WhenAll(tasks);
-        return results.Length;
+        return results.Sum();
     }
 
     /// <summary>
@@ -194,7 +201,7 @@ public class DbContextPool : IDbContextPool, IDisposable
         if (Transaction.Current != null) return;
 
         // 判断 dbContextPool 中是否包含DbContext，如果是，则使用第一个数据库上下文开启事务，并应用于其他数据库上下文
-        EnsureTransaction: if (!_dbContexts.IsEmpty)
+    EnsureTransaction: if (!_dbContexts.IsEmpty)
         {
             // 如果共享事务不为空，则直接共享
             if (DbContextTransaction != null) goto ShareTransaction;
@@ -207,7 +214,7 @@ public class DbContextPool : IDbContextPool, IDisposable
                    // 如果没有任何上下文有事务，则将第一个开启事务
                    : _dbContexts.First().Value.Database.BeginTransaction();
 
-        // 共享事务
+            // 共享事务
         ShareTransaction: ShareTransaction(DbContextTransaction.GetDbTransaction());
         }
         else
@@ -259,8 +266,8 @@ public class DbContextPool : IDbContextPool, IDisposable
         {
             if (DbContextTransaction?.GetDbTransaction()?.Connection != null)
             {
-                DbContextTransaction = null;
                 DbContextTransaction?.Dispose();
+                DbContextTransaction = null;
             }
         }
 
@@ -298,7 +305,7 @@ public class DbContextPool : IDbContextPool, IDisposable
             if (CheckDbContextDispose(item.Value)) continue;
 
             var conn = item.Value.Database.GetDbConnection();
-            if (conn.State != ConnectionState.Open) continue;
+            if (conn == null || conn.State != ConnectionState.Open) continue;
 
             conn.Close();
         }
@@ -323,7 +330,38 @@ public class DbContextPool : IDbContextPool, IDisposable
     /// </summary>
     public void Dispose()
     {
+        // 取消所有事件订阅
+        foreach (var kvp in _eventHandlers)
+        {
+            if (_dbContexts.TryGetValue(kvp.Key, out var dbContext) && dbContext != null)
+            {
+                dbContext.SaveChangesFailed -= kvp.Value;
+            }
+        }
+        _eventHandlers.Clear();
+
+        // 释放所有数据库上下文
+        foreach (var item in _dbContexts)
+        {
+            try
+            {
+                item.Value?.Dispose();
+            }
+            catch { }
+        }
         _dbContexts.Clear();
+        _failedDbContexts.Clear();
+
+        // 释放事务资源
+        if (DbContextTransaction != null)
+        {
+            try
+            {
+                DbContextTransaction.Dispose();
+            }
+            catch { }
+            DbContextTransaction = null;
+        }
     }
 
     /// <summary>
