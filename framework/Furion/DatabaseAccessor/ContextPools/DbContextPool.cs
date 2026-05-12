@@ -138,7 +138,7 @@ public class DbContextPool : IDbContextPool, IDisposable, IAsyncDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         return _dbContexts
-            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChanges()).Sum();
     }
 
@@ -151,7 +151,7 @@ public class DbContextPool : IDbContextPool, IDisposable, IAsyncDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         return _dbContexts
-            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChanges(acceptAllChangesOnSuccess)).Sum();
     }
 
@@ -164,7 +164,7 @@ public class DbContextPool : IDbContextPool, IDisposable, IAsyncDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         var tasks = _dbContexts
-            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChangesAsync(cancellationToken));
 
         // 等待所有异步完成
@@ -182,7 +182,7 @@ public class DbContextPool : IDbContextPool, IDisposable, IAsyncDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         var tasks = _dbContexts
-            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken));
 
         // 等待所有异步完成
@@ -322,7 +322,7 @@ public class DbContextPool : IDbContextPool, IDisposable, IAsyncDisposable
 
         foreach (var item in _dbContexts)
         {
-            if (GetDisposedRef(item.Value)) continue;
+            if (CheckDbContextDispose(item.Value)) continue;
 
             var conn = item.Value.Database.GetDbConnection();
             if (conn == null || conn.State != ConnectionState.Open) continue;
@@ -346,7 +346,7 @@ public class DbContextPool : IDbContextPool, IDisposable, IAsyncDisposable
     {
         // 跳过第一个数据库上下文并设置共享事务
         var tasks = _dbContexts
-            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && ((dynamic)u.Value).UseUnitOfWork == true && u.Value.Database.CurrentTransaction == null)
+            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && ((dynamic)u.Value).UseUnitOfWork == true && u.Value.Database.CurrentTransaction == null)
             .Select(u => u.Value.Database.UseTransactionAsync(transaction, cancellationToken));
 
         if (tasks.Any())
@@ -453,5 +453,5 @@ public class DbContextPool : IDbContextPool, IDisposable, IAsyncDisposable
     /// <param name="dbContext"></param>
     /// <returns></returns>
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_disposed")]
-    private static extern ref bool GetDisposedRef(DbContext dbContext);
+    private static extern ref bool CheckDbContextDispose(DbContext dbContext);
 }
