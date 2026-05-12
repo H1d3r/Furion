@@ -403,6 +403,13 @@
              - `Furion`：内部依赖 `Furion.Core` 且无第三方依赖，**聚焦 `Web` 应用**，采用共享框架 `<FrameworkReference Include="Microsoft.AspNetCore.App" />` 模式
               </remarks>
         </member>
+        <member name="M:Furion.Application.PersonService.TestUnitOfWork(System.Int32)">
+            <summary>
+            测试工作单元事务
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
         <member name="M:Furion.Application.PersonService.我是DisplayName">
             <summary>
             如果同时存在显示这个

@@ -105,5 +105,5 @@ public interface IPrivateSqlRepository : IPrivateSqlExecutableRepository
     /// <summary>
     /// 确保工作单元（事务）可用
     /// </summary>
-    void EnsureTransaction();
+    Task EnsureTransactionAsync();
 }
