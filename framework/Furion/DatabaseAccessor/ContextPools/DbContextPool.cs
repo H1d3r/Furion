@@ -29,7 +29,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System.Collections.Concurrent;
 using System.Data;
 using System.Data.Common;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Transactions;
 
 namespace Furion.DatabaseAccessor;
@@ -138,7 +138,7 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         return _dbContexts
-            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChanges()).Sum();
     }
 
@@ -151,7 +151,7 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         return _dbContexts
-            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChanges(acceptAllChangesOnSuccess)).Sum();
     }
 
@@ -164,7 +164,7 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         var tasks = _dbContexts
-            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChangesAsync(cancellationToken));
 
         // 等待所有异步完成
@@ -182,7 +182,7 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 查找所有已改变的数据库上下文并保存更改
         var tasks = _dbContexts
-            .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
+            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && u.Value.ChangeTracker.HasChanges() && !_failedDbContexts.ContainsKey(u.Key))
             .Select(u => u.Value.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken));
 
         // 等待所有异步完成
@@ -302,7 +302,7 @@ public class DbContextPool : IDbContextPool, IDisposable
 
         foreach (var item in _dbContexts)
         {
-            if (CheckDbContextDispose(item.Value)) continue;
+            if (GetDisposedRef(item.Value)) continue;
 
             var conn = item.Value.Database.GetDbConnection();
             if (conn == null || conn.State != ConnectionState.Open) continue;
@@ -320,7 +320,7 @@ public class DbContextPool : IDbContextPool, IDisposable
     {
         // 跳过第一个数据库上下文并设置共享事务
         _ = _dbContexts
-               .Where(u => u.Value != null && !CheckDbContextDispose(u.Value) && ((dynamic)u.Value).UseUnitOfWork == true && u.Value.Database.CurrentTransaction == null)
+               .Where(u => u.Value != null && !GetDisposedRef(u.Value) && ((dynamic)u.Value).UseUnitOfWork == true && u.Value.Database.CurrentTransaction == null)
                .Select(u => u.Value.Database.UseTransaction(transaction))
                .Count();
     }
@@ -369,13 +369,6 @@ public class DbContextPool : IDbContextPool, IDisposable
     /// </summary>
     /// <param name="dbContext"></param>
     /// <returns></returns>
-    private static bool CheckDbContextDispose(DbContext dbContext)
-    {
-        // 反射获取 _disposed 字段，判断数据库上下文是否已释放
-        var _disposedField = typeof(DbContext).GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic);
-        if (_disposedField == null) return false;
-
-        var _disposed = Convert.ToBoolean(_disposedField.GetValue(dbContext));
-        return _disposed;
-    }
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_disposed")]
+    private static extern ref bool GetDisposedRef(DbContext dbContext);
 }
