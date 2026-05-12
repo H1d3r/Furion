@@ -320,8 +320,13 @@ public class PersonService : IDynamicApiController
         });
     }
 
-    [UnitOfWork]
-    public async Task 测试环境事务(int id)
+    /// <summary>
+    /// 测试工作单元事务
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    [HttpGet, UnitOfWork]
+    public async Task TestUnitOfWork(int id)
     {
         await _personRepository.DeleteNowAsync(id);
         var d = await _personRepository.SqlQueriesAsync("select * from persion2 d");

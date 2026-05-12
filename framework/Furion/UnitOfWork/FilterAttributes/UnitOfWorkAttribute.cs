@@ -121,18 +121,24 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
         // 创建分布式环境事务
         (var transactionScope, var logger) = CreateTransactionScope(context);
 
+        // 解析工作单元服务
+        var unitOfWork = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
+
+        // 获取工作单元特性
+        var unitOfWorkAttribute = method.GetCustomAttribute<UnitOfWorkAttribute>();
+
         try
         {
             logger.LogInformation("Database transaction started. Location: {Location}", location);
 
             // 开始事务
-            BeginTransaction(context, method, out var _unitOfWork, out var unitOfWorkAttribute);
+            await BeginTransactionAsync(context, unitOfWork, unitOfWorkAttribute);
 
             // 获取执行 Action 结果
             var resultContext = await next();
 
             // 提交事务
-            CommitTransaction(context, _unitOfWork, unitOfWorkAttribute, resultContext);
+            await CommitTransactionAsync(context, unitOfWork, unitOfWorkAttribute, resultContext);
 
             // 提交分布式环境事务
             if (resultContext.Exception == null)
@@ -192,18 +198,24 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
         // 创建分布式环境事务
         (var transactionScope, var logger) = CreateTransactionScope(context);
 
+        // 解析工作单元服务
+        var unitOfWork = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
+
+        // 获取工作单元特性
+        var unitOfWorkAttribute = method.GetCustomAttribute<UnitOfWorkAttribute>();
+
         try
         {
             logger.LogInformation("Database transaction started. Location: {Location}", location);
 
             // 开始事务
-            BeginTransaction(context, method, out var _unitOfWork, out var unitOfWorkAttribute);
+            await BeginTransactionAsync(context, unitOfWork, unitOfWorkAttribute);
 
             // 获取执行 Action 结果
             var resultContext = await next.Invoke();
 
             // 提交事务
-            CommitTransaction(context, _unitOfWork, unitOfWorkAttribute, resultContext);
+            await CommitTransactionAsync(context, unitOfWork, unitOfWorkAttribute, resultContext);
 
             // 提交分布式环境事务
             if (resultContext.Exception == null)
@@ -252,29 +264,22 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
     /// 开始事务
     /// </summary>
     /// <param name="context"></param>
-    /// <param name="method"></param>
-    /// <param name="_unitOfWork"></param>
+    /// <param name="unitOfWork"></param>
     /// <param name="unitOfWorkAttribute"></param>
-    private static void BeginTransaction(FilterContext context, MethodInfo method, out IUnitOfWork _unitOfWork, out UnitOfWorkAttribute unitOfWorkAttribute)
+    private static async Task BeginTransactionAsync(FilterContext context, IUnitOfWork unitOfWork, UnitOfWorkAttribute unitOfWorkAttribute)
     {
-        // 解析工作单元服务
-        _unitOfWork = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
-
-        // 获取工作单元特性
-        unitOfWorkAttribute = method.GetCustomAttribute<UnitOfWorkAttribute>();
-
         // 调用开启事务方法
-        _unitOfWork.BeginTransaction(context, unitOfWorkAttribute);
+        await unitOfWork.BeginTransactionAsync(context, unitOfWorkAttribute);
     }
 
     /// <summary>
     /// 提交事务
     /// </summary>
     /// <param name="context"></param>
-    /// <param name="_unitOfWork"></param>
+    /// <param name="unitOfWork"></param>
     /// <param name="unitOfWorkAttribute"></param>
     /// <param name="resultContext"></param>
-    private static void CommitTransaction(FilterContext context, IUnitOfWork _unitOfWork, UnitOfWorkAttribute unitOfWorkAttribute, FilterContext resultContext)
+    private static async Task CommitTransactionAsync(FilterContext context, IUnitOfWork unitOfWork, UnitOfWorkAttribute unitOfWorkAttribute, FilterContext resultContext)
     {
         // 获取动态结果上下文
         dynamic dynamicResultContext = resultContext;
@@ -282,15 +287,15 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
         if (dynamicResultContext.Exception == null)
         {
             // 调用提交事务方法
-            _unitOfWork.CommitTransaction(resultContext, unitOfWorkAttribute);
+            await unitOfWork.CommitTransactionAsync(resultContext, unitOfWorkAttribute);
         }
         else
         {
             // 调用回滚事务方法
-            _unitOfWork.RollbackTransaction(resultContext, unitOfWorkAttribute);
+            await unitOfWork.RollbackTransactionAsync(resultContext, unitOfWorkAttribute);
         }
 
         // 调用执行完毕方法
-        _unitOfWork.OnCompleted(context, resultContext);
+        await unitOfWork.OnCompletedAsync(context, resultContext);
     }
 }

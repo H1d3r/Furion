@@ -52,10 +52,10 @@ public sealed class EFCoreUnitOfWork : IUnitOfWork
     /// <param name="context"></param>
     /// <param name="unitOfWork"></param>
     /// <exception cref="NotImplementedException"></exception>
-    public void BeginTransaction(FilterContext context, UnitOfWorkAttribute unitOfWork)
+    public async Task BeginTransactionAsync(FilterContext context, UnitOfWorkAttribute unitOfWork)
     {
         // 开启事务，如果已经开启分布式事务，则无需创建本地事务
-        _dbContextPool.BeginTransaction(unitOfWork.EnsureTransaction);
+        await _dbContextPool.BeginTransactionAsync(unitOfWork.EnsureTransaction);
     }
 
     /// <summary>
@@ -64,10 +64,10 @@ public sealed class EFCoreUnitOfWork : IUnitOfWork
     /// <param name="resultContext"></param>
     /// <param name="unitOfWork"></param>
     /// <exception cref="NotImplementedException"></exception>
-    public void CommitTransaction(FilterContext resultContext, UnitOfWorkAttribute unitOfWork)
+    public async Task CommitTransactionAsync(FilterContext resultContext, UnitOfWorkAttribute unitOfWork)
     {
         // 提交事务
-        _dbContextPool.CommitTransaction();
+        await _dbContextPool.CommitTransactionAsync();
     }
 
     /// <summary>
@@ -77,10 +77,10 @@ public sealed class EFCoreUnitOfWork : IUnitOfWork
     /// <param name="unitOfWork"></param>
     /// <exception cref="NotImplementedException"></exception>
 
-    public void RollbackTransaction(FilterContext resultContext, UnitOfWorkAttribute unitOfWork)
+    public async Task RollbackTransactionAsync(FilterContext resultContext, UnitOfWorkAttribute unitOfWork)
     {
         // 回滚事务
-        _dbContextPool.RollbackTransaction();
+        await _dbContextPool.RollbackTransactionAsync();
     }
 
     /// <summary>
@@ -89,9 +89,9 @@ public sealed class EFCoreUnitOfWork : IUnitOfWork
     /// <param name="context"></param>
     /// <param name="resultContext"></param>
     /// <exception cref="NotImplementedException"></exception>
-    public void OnCompleted(FilterContext context, FilterContext resultContext)
+    public async Task OnCompletedAsync(FilterContext context, FilterContext resultContext)
     {
         // 手动关闭
-        _dbContextPool.CloseAll();
+        await _dbContextPool.CloseAllAsync();
     }
 }

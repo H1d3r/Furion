@@ -88,24 +88,29 @@ public interface IDbContextPool
     /// <summary>
     /// 打开事务
     /// </summary>
-    /// <param name="ensureTransaction"></param>
+    /// <param name="ensureTransaction">是否确保事务强制可用</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    void BeginTransaction(bool ensureTransaction = false);
+    Task BeginTransactionAsync(bool ensureTransaction = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 提交事务
     /// </summary>
     /// <param name="withCloseAll">是否自动关闭所有连接</param>
-    void CommitTransaction(bool withCloseAll = false);
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns></returns>
+    Task CommitTransactionAsync(bool withCloseAll = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 回滚事务
     /// </summary>
     /// <param name="withCloseAll">是否自动关闭所有连接</param>
-    void RollbackTransaction(bool withCloseAll = false);
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns></returns>
+    Task RollbackTransactionAsync(bool withCloseAll = false, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// 关闭所有数据库链接
+    /// 释放所有数据库上下文
     /// </summary>
-    void CloseAll();
+    Task CloseAllAsync();
 }

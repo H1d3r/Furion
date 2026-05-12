@@ -37,7 +37,7 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 数据库上下文池
 /// </summary>
-public class DbContextPool : IDbContextPool, IDisposable
+public class DbContextPool : IDbContextPool, IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// 线程安全的数据库上下文集合
@@ -121,7 +121,7 @@ public class DbContextPool : IDbContextPool, IDisposable
     }
 
     /// <summary>
-    /// 保存数据库上下文（异步）
+    /// 保存数据库上下文
     /// </summary>
     /// <param name="dbContext"></param>
     public Task AddToPoolAsync(DbContext dbContext)
@@ -193,9 +193,10 @@ public class DbContextPool : IDbContextPool, IDisposable
     /// <summary>
     /// 打开事务
     /// </summary>
-    /// <param name="ensureTransaction"></param>
+    /// <param name="ensureTransaction">是否确保事务强制可用</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    public void BeginTransaction(bool ensureTransaction = false)
+    public async Task BeginTransactionAsync(bool ensureTransaction = false, CancellationToken cancellationToken = default)
     {
         // 判断是否启用了分布式环境事务，如果是，则跳过
         if (Transaction.Current != null) return;
@@ -212,10 +213,10 @@ public class DbContextPool : IDbContextPool, IDisposable
             DbContextTransaction = transactionDbContext.Value != null
                    ? transactionDbContext.Value.Database.CurrentTransaction
                    // 如果没有任何上下文有事务，则将第一个开启事务
-                   : _dbContexts.First().Value.Database.BeginTransaction();
+                   : await _dbContexts.First().Value.Database.BeginTransactionAsync(cancellationToken);
 
             // 共享事务
-        ShareTransaction: ShareTransaction(DbContextTransaction.GetDbTransaction());
+        ShareTransaction: await ShareTransactionAsync(DbContextTransaction.GetDbTransaction(), cancellationToken);
         }
         else
         {
@@ -227,7 +228,7 @@ public class DbContextPool : IDbContextPool, IDisposable
 
             // 创建一个新的上下文
             var newDbContext = Db.GetDbContext(defaultDbContextLocator.Key, _serviceProvider);
-            DbContextTransaction = newDbContext.Database.BeginTransaction();
+            DbContextTransaction = await newDbContext.Database.BeginTransactionAsync(cancellationToken);
             goto EnsureTransaction;
         }
     }
@@ -236,69 +237,88 @@ public class DbContextPool : IDbContextPool, IDisposable
     /// 提交事务
     /// </summary>
     /// <param name="withCloseAll">是否自动关闭所有连接</param>
-    public void CommitTransaction(bool withCloseAll = false)
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns></returns>
+    public async Task CommitTransactionAsync(bool withCloseAll = false, CancellationToken cancellationToken = default)
     {
         // 判断是否启用了分布式环境事务，如果是，则跳过
         if (Transaction.Current != null) return;
 
         try
         {
-            // 将所有数据库上下文修改 SaveChanges();，这里另外判断是否需要手动提交
-            var hasChangesCount = SavePoolNow();
+            // 将所有数据库上下文修改 SaveChangesAsync();，这里另外判断是否需要手动提交
+            var hasChangesCount = await SavePoolNowAsync(cancellationToken);
 
             // 如果事务为空，则执行完毕后关闭连接
             if (DbContextTransaction == null)
             {
-                if (withCloseAll) CloseAll();
+                if (withCloseAll) await CloseAllAsync();
                 return;
             }
 
             // 提交共享事务
-            DbContextTransaction?.Commit();
+            if (DbContextTransaction != null)
+            {
+                await DbContextTransaction.CommitAsync(cancellationToken);
+            }
         }
         catch
         {
             // 回滚事务
-            if (DbContextTransaction?.GetDbTransaction()?.Connection != null) DbContextTransaction?.Rollback();
+            if (DbContextTransaction?.GetDbTransaction()?.Connection != null)
+            {
+                await DbContextTransaction.RollbackAsync(cancellationToken);
+            }
             throw;
         }
         finally
         {
             if (DbContextTransaction?.GetDbTransaction()?.Connection != null)
             {
-                DbContextTransaction?.Dispose();
+                await DbContextTransaction.DisposeAsync();
                 DbContextTransaction = null;
             }
         }
 
         // 关闭所有连接
-        if (withCloseAll) CloseAll();
+        if (withCloseAll) await CloseAllAsync();
     }
 
     /// <summary>
     /// 回滚事务
     /// </summary>
     /// <param name="withCloseAll">是否自动关闭所有连接</param>
-    public void RollbackTransaction(bool withCloseAll = false)
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns></returns>
+    public async Task RollbackTransactionAsync(bool withCloseAll = false, CancellationToken cancellationToken = default)
     {
         // 判断是否启用了分布式环境事务，如果是，则跳过
         if (Transaction.Current != null) return;
 
         // 回滚事务
-        if (DbContextTransaction?.GetDbTransaction()?.Connection != null) DbContextTransaction?.Rollback();
-        DbContextTransaction?.Dispose();
-        DbContextTransaction = null;
+        if (DbContextTransaction?.GetDbTransaction()?.Connection != null)
+        {
+            await DbContextTransaction.RollbackAsync(cancellationToken);
+        }
+
+        if (DbContextTransaction != null)
+        {
+            await DbContextTransaction.DisposeAsync();
+            DbContextTransaction = null;
+        }
 
         // 关闭所有连接
-        if (withCloseAll) CloseAll();
+        if (withCloseAll) await CloseAllAsync();
     }
 
     /// <summary>
     /// 释放所有数据库上下文
     /// </summary>
-    public void CloseAll()
+    public async Task CloseAllAsync()
     {
         if (_dbContexts.IsEmpty) return;
+
+        var tasks = new List<Task>();
 
         foreach (var item in _dbContexts)
         {
@@ -307,22 +327,32 @@ public class DbContextPool : IDbContextPool, IDisposable
             var conn = item.Value.Database.GetDbConnection();
             if (conn == null || conn.State != ConnectionState.Open) continue;
 
-            conn.Close();
+            tasks.Add(conn.CloseAsync());
+        }
+
+        if (tasks.Count > 0)
+        {
+            await Task.WhenAll(tasks);
         }
     }
 
     /// <summary>
     /// 设置数据库上下文共享事务
     /// </summary>
-    /// <param name="transaction"></param>
+    /// <param name="transaction">数据库事务</param>
+    /// <param name="cancellationToken">取消令牌</param>
     /// <returns></returns>
-    private void ShareTransaction(DbTransaction transaction)
+    private async Task ShareTransactionAsync(DbTransaction transaction, CancellationToken cancellationToken = default)
     {
         // 跳过第一个数据库上下文并设置共享事务
-        _ = _dbContexts
-               .Where(u => u.Value != null && !GetDisposedRef(u.Value) && ((dynamic)u.Value).UseUnitOfWork == true && u.Value.Database.CurrentTransaction == null)
-               .Select(u => u.Value.Database.UseTransaction(transaction))
-               .Count();
+        var tasks = _dbContexts
+            .Where(u => u.Value != null && !GetDisposedRef(u.Value) && ((dynamic)u.Value).UseUnitOfWork == true && u.Value.Database.CurrentTransaction == null)
+            .Select(u => u.Value.Database.UseTransactionAsync(transaction, cancellationToken));
+
+        if (tasks.Any())
+        {
+            await Task.WhenAll(tasks);
+        }
     }
 
     /// <summary>
@@ -358,6 +388,59 @@ public class DbContextPool : IDbContextPool, IDisposable
             try
             {
                 DbContextTransaction.Dispose();
+            }
+            catch { }
+            DbContextTransaction = null;
+        }
+    }
+
+    /// <summary>
+    /// 释放所有上下文
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        // 取消所有事件订阅
+        foreach (var kvp in _eventHandlers)
+        {
+            if (_dbContexts.TryGetValue(kvp.Key, out var dbContext) && dbContext != null)
+            {
+                dbContext.SaveChangesFailed -= kvp.Value;
+            }
+        }
+        _eventHandlers.Clear();
+
+        // 释放所有数据库上下文
+        var disposeTasks = new List<ValueTask>();
+        foreach (var item in _dbContexts)
+        {
+            try
+            {
+                if (item.Value is IAsyncDisposable asyncDisposable)
+                {
+                    disposeTasks.Add(asyncDisposable.DisposeAsync());
+                }
+                else
+                {
+                    item.Value?.Dispose();
+                }
+            }
+            catch { }
+        }
+
+        if (disposeTasks.Count > 0)
+        {
+            await Task.WhenAll(disposeTasks.Select(t => t.AsTask()));
+        }
+
+        _dbContexts.Clear();
+        _failedDbContexts.Clear();
+
+        // 释放事务资源
+        if (DbContextTransaction != null)
+        {
+            try
+            {
+                await DbContextTransaction.DisposeAsync();
             }
             catch { }
             DbContextTransaction = null;

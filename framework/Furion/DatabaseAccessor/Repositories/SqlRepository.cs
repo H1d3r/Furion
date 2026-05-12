@@ -159,7 +159,7 @@ public partial class PrivateSqlRepository : IPrivateSqlRepository
     /// <summary>
     /// 确保工作单元（事务）可用
     /// </summary>
-    public virtual void EnsureTransaction()
+    public virtual async Task EnsureTransactionAsync()
     {
         var httpContext = App.HttpContext;
 
@@ -171,9 +171,9 @@ public partial class PrivateSqlRepository : IPrivateSqlRepository
         if (dbContextPool == null) return;
 
         // 追加上下文
-        dbContextPool.AddToPool(Context);
+        await dbContextPool.AddToPoolAsync(Context);
         // 开启事务
-        dbContextPool.BeginTransaction();
+        await dbContextPool.BeginTransactionAsync();
     }
 
     /// <summary>

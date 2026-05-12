@@ -76,7 +76,7 @@ internal sealed class AutoSaveChangesFilter : IAsyncActionFilter, IOrderedFilter
         // 判断是否异常，并且没有贴 [ManualCommit] 特性
         if (resultContext.Exception == null && !isManualSaveChanges)
         {
-            httpContext.RequestServices.GetRequiredService<IDbContextPool>().SavePoolNow();
+            await httpContext.RequestServices.GetRequiredService<IDbContextPool>().SavePoolNowAsync();
         }
     }
 }

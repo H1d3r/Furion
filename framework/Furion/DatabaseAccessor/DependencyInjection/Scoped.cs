@@ -71,29 +71,41 @@ public static partial class Scoped
             dbContextPool = scoped.ServiceProvider.GetService<IDbContextPool>();
 
             // 开启事务
-            dbContextPool?.BeginTransaction(true);
+            if (dbContextPool != null)
+            {
+                await dbContextPool.BeginTransactionAsync(true);
+            }
 
             // 执行方法
             await handler(scopeFactory, scoped);
 
             // 提交事务
-            dbContextPool?.CommitTransaction(true);
+            if (dbContextPool != null)
+            {
+                await dbContextPool.CommitTransactionAsync(true);
+            }
         }
         catch
         {
             // 回滚事务
-            dbContextPool?.RollbackTransaction(true);
+            if (dbContextPool != null)
+            {
+                await dbContextPool.RollbackTransactionAsync(true);
+            }
 
             throw;
         }
         finally
         {
             // 关闭连接
-            dbContextPool?.CloseAll();
+            if (dbContextPool != null)
+            {
+                await dbContextPool.CloseAllAsync();
+            }
 
             // 释放
-            scoped.Dispose();
             if (serviceProvider != null) await serviceProvider.DisposeAsync();
+            scoped.Dispose();
         }
     }
 }
