@@ -33,28 +33,28 @@ namespace Furion.DatabaseAccessor;
 public interface IUnitOfWork
 {
     /// <summary>
-    /// 开启工作单元处理
+    /// 开始事务
     /// </summary>
     /// <param name="context"></param>
     /// <param name="unitOfWork"></param>
     Task BeginTransactionAsync(FilterContext context, UnitOfWorkAttribute unitOfWork);
 
     /// <summary>
-    /// 提交工作单元处理
+    /// 提交事务
     /// </summary>
     /// <param name="resultContext"></param>
     /// <param name="unitOfWork"></param>
     Task CommitTransactionAsync(FilterContext resultContext, UnitOfWorkAttribute unitOfWork);
 
     /// <summary>
-    /// 回滚工作单元处理
+    /// 回滚事务
     /// </summary>
     /// <param name="resultContext"></param>
     /// <param name="unitOfWork"></param>
     Task RollbackTransactionAsync(FilterContext resultContext, UnitOfWorkAttribute unitOfWork);
 
     /// <summary>
-    /// 执行完毕（无论成功失败）
+    /// 执行完毕（无论成功或失败）
     /// </summary>
     /// <param name="context"></param>
     /// <param name="resultContext"></param>
