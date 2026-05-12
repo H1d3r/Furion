@@ -1,5 +1,8 @@
 import {
+  IconCalendar,
+  IconCopyAdd,
   IconDelete,
+  IconList,
   IconMore,
   IconPlayCircle,
   IconSearch,
@@ -8,13 +11,17 @@ import {
   IconVigoLogo,
 } from "@douyinfe/semi-icons";
 import {
+  Button,
   Descriptions,
   Divider,
   Dropdown,
   Input,
+  JsonViewer,
   Popconfirm,
   Popover,
   Table,
+  TabPane,
+  Tabs,
   Tag,
   TextArea,
   Toast,
@@ -36,7 +43,6 @@ import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import { dayFromNow, dayTime, formatDuration } from "../../utils";
 import styles from "./index.module.css";
 import clsx from "clsx";
-import CurrentTime from "../current-time";
 
 const style = {
   boxShadow: "var(--semi-shadow-elevated)",
@@ -56,6 +62,70 @@ function safeToString(value: any): string {
   return value == null ? "" : String(value);
 }
 
+/**
+ * 生成唯一作业ID：job_20260513111300345
+ */
+function generateJobId(prefix: string = "job"): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  const timestamp =
+    now.getFullYear() +
+    pad(now.getMonth() + 1) +
+    pad(now.getDate()) +
+    pad(now.getHours()) +
+    pad(now.getMinutes()) +
+    pad(now.getSeconds()) +
+    pad(now.getMilliseconds());
+
+  return `${prefix}_${timestamp}`;
+}
+
+function getDefaultJsonValue() {
+  let _jobId = generateJobId();
+
+  return `{
+   	"jobDetail": {
+      		"jobId": "${_jobId}",
+      		"groupName": null,
+      		"jobType": "Furion.Application.TestJob",
+      		"assemblyName": "Furion.Application",
+      		"description": null,
+      		"concurrent": true,
+      		"includeAnnotations": false,
+      		"properties": "{}",
+      		"updatedTime": "2026-01-01 00:00:00.483"
+   	},
+   	"triggers": [{
+      		"triggerId": null,
+      		"jobId": "${_jobId}",
+      		"triggerType": "Furion.Schedule.PeriodTrigger",
+      		"assemblyName": "Furion",
+      		"args": "[5000]",
+      		"description": null,
+      		"status": 2,
+      		"startTime": null,
+      		"endTime": null,
+      		"lastRunTime": "2026-01-01 00:00:00.768",
+      		"nextRunTime": "2026-01-01 17:52:34.769",
+      		"numberOfRuns": 1,
+      		"maxNumberOfRuns": 0,
+      		"numberOfErrors": 0,
+      		"maxNumberOfErrors": 0,
+      		"numRetries": 0,
+      		"retryTimeout": 1000,
+      		"startNow": true,
+      		"runOnStart": false,
+      		"resetOnlyOnce": true,
+      		"result": null,
+      		"elapsedTime": 100,
+      		"updatedTime": "2026-01-01 00:00:00.803"
+   	}]
+}`;
+}
+
+let defaultJsonValue = getDefaultJsonValue();
+
 export default function Jobs({ mode }: { mode: string }) {
   /**
    * 作业状态
@@ -63,6 +133,13 @@ export default function Jobs({ mode }: { mode: string }) {
   const [jobs, setJobs] = useState<Scheduler[]>([]);
   const [words, setWords] = useState<string>("");
   const [allTimelines, setAllTimelines] = useState<TriggerTimeline[]>([]);
+  const [jsonValue, setJsonValue] = useState(defaultJsonValue);
+  const [submitting, setSubmitting] = useState(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
   const jobList = useMemo(() => {
     const trimWords = words.trim();
@@ -145,8 +222,6 @@ export default function Jobs({ mode }: { mode: string }) {
 
         if (response.ok) {
           Toast.success({ content: "操作成功", duration: 3 });
-          loadJobs();
-          loadAllTimelines();
         } else {
           throw new Error(response.statusText || "请求失败");
         }
@@ -155,8 +230,37 @@ export default function Jobs({ mode }: { mode: string }) {
         Toast.error({ content: error.message || "操作失败", duration: 3 });
       }
     },
-    [post, response, loadJobs, loadAllTimelines],
+    [post, response],
   );
+
+  /**
+   * 提交新增作业数据
+   */
+  const handleSubmitJob = useCallback(async () => {
+    if (submitting) return;
+
+    try {
+      setSubmitting(true);
+
+      const payload = JSON.parse(jsonValue);
+      const result = await post("/add-job", payload);
+
+      if (response.ok) {
+        Toast.success({ content: "作业添加成功", duration: 3 });
+
+        var newJsonValue = getDefaultJsonValue();
+        setJsonValue(newJsonValue); // 重置表单
+        defaultJsonValue = newJsonValue;
+      } else {
+        throw new Error(response.statusText || "请求失败");
+      }
+    } catch (error: any) {
+      console.error("提交失败:", error);
+      Toast.error({ content: error.message || "操作失败", duration: 3 });
+    } finally {
+      setSubmitting(false);
+    }
+  }, [post, response, jsonValue]);
 
   /**
    * 生成表格类型数据
@@ -183,6 +287,12 @@ export default function Jobs({ mode }: { mode: string }) {
       });
   }, [jobList]);
 
+  const paginatedData = useMemo(() => {
+    const start = (pagination.currentPage - 1) * pagination.pageSize;
+    const end = start + pagination.pageSize;
+    return data.slice(start, end); // 🔥 手动切片：只取当前页的数据
+  }, [data, pagination.currentPage, pagination.pageSize]);
+
   useEffect(() => {
     loadJobs();
     loadAllTimelines();
@@ -203,7 +313,7 @@ export default function Jobs({ mode }: { mode: string }) {
     return () => {
       eventSource.close();
     };
-  }, [loadJobs, loadAllTimelines]);
+  }, []);
 
   /**
    * 展开行渲染
@@ -384,73 +494,107 @@ export default function Jobs({ mode }: { mode: string }) {
 
   return (
     <>
-      <div
-        style={{
-          border: "1px solid var(--semi-color-border)",
-          borderRadius: "10px",
-        }}
-      >
-        <Input
-          prefix={<IconSearch />}
-          showClear
-          placeholder="搜索关键字..."
-          value={words}
-          onChange={(val) => setWords(val || "")}
-          autoFocus
-        />
+      <Tabs type="card" contentStyle={{ padding: 10, boxSizing: "border-box" }}>
+        <TabPane
+          tab={
+            <span>
+              <IconList />
+              作业列表
+            </span>
+          }
+          itemKey="list"
+        >
+          <div
+            style={{
+              border: "1px solid var(--semi-color-border)",
+              borderRadius: "10px",
+            }}
+          >
+            <Input
+              prefix={<IconSearch />}
+              showClear
+              placeholder="搜索关键字..."
+              value={words}
+              onChange={(val) => {
+                setWords(val || "");
+                setPagination((prev) => ({ ...prev, currentPage: 1 }));
+              }}
+              autoFocus
+            />
 
-        <Table
-          rowKey="jobId"
-          columns={columns}
-          dataSource={data}
-          onRow={handleRow}
-          expandedRowRender={expandRowRender}
-          pagination={{
-            size: "small",
-            formatPageText: () => (
-              <Typography.Paragraph type="secondary" style={{ padding: 10 }}>
-                {words.trim().length > 0 ? (
-                  <>
-                    搜索 "<b>{words.trim()}</b>" 共 <b>{jobList.length}</b>{" "}
-                    项结果。
-                  </>
-                ) : (
-                  <>
-                    共有 <b>{data.length}</b> 项作业任务
-                    {invalidJobCount > 0 && (
+            <Table
+              rowKey="jobId"
+              columns={columns}
+              dataSource={paginatedData}
+              onRow={handleRow}
+              expandedRowRender={expandRowRender}
+              pagination={{
+                size: "small",
+                currentPage: pagination.currentPage,
+                pageSize: pagination.pageSize,
+                total: data.length,
+                onPageChange: (page: number) => {
+                  setPagination((prev) => ({ ...prev, currentPage: page }));
+                },
+                onPageSizeChange: (pageSize: number) => {
+                  setPagination((prev) => ({
+                    ...prev,
+                    pageSize,
+                    currentPage: 1,
+                  }));
+                },
+                formatPageText: () => (
+                  <Typography.Paragraph
+                    type="secondary"
+                    style={{ padding: 10 }}
+                  >
+                    {words.trim().length > 0 ? (
                       <>
-                        ，其中 <b>{invalidJobCount}</b> 项未设置触发器
+                        搜索 "<b>{words.trim()}</b>" 共 <b>{jobList.length}</b>{" "}
+                        项结果。
+                      </>
+                    ) : (
+                      <>
+                        共有 <b>{data.length}</b> 项作业任务
+                        {invalidJobCount > 0 && (
+                          <>
+                            ，其中 <b>{invalidJobCount}</b> 项未设置触发器
+                          </>
+                        )}
+                        。
                       </>
                     )}
-                    。
-                  </>
-                )}
-              </Typography.Paragraph>
-            ),
-          }}
-          resizable
-          bordered
-          expandRowByClick
-          expandAllRows={apiconfig.defaultExpandAllJobs === "true"}
-          rowExpandable={(jobDetail) =>
-            !!(
-              jobDetail?.jobId &&
-              jobList.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)
-                ?.triggers?.length
-            )
+                  </Typography.Paragraph>
+                ),
+              }}
+              resizable
+              bordered
+              expandRowByClick
+              expandAllRows={apiconfig.defaultExpandAllJobs === "true"}
+              rowExpandable={(jobDetail) =>
+                !!(
+                  jobDetail?.jobId &&
+                  jobList.find((u) => u.jobDetail?.jobId === jobDetail?.jobId)
+                    ?.triggers?.length
+                )
+              }
+            />
+          </div>
+        </TabPane>
+        <TabPane
+          tab={
+            <span>
+              <IconCalendar />
+              运行记录
+            </span>
           }
-        />
-      </div>
-      {words.trim().length === 0 && (
-        <div>
-          <Typography.Title heading={5} style={{ margin: "24px 0 16px 0" }}>
-            # 运行记录
-          </Typography.Title>
+          itemKey="timelines"
+        >
           <div style={{ color: "var(--semi-color-text-0)" }}>
             {allTimelines.map((timeline, i) => (
               <div
                 key={`${timeline.jobId || ""}_${timeline.triggerId || ""}_${i}`}
-                style={{ marginBottom: 8, fontSize: 14 }}
+                style={{ marginBottom: 12, fontSize: 14 }}
                 className={clsx(
                   styles.timelineItem,
                   mode === "dark" && styles.dark,
@@ -531,8 +675,35 @@ export default function Jobs({ mode }: { mode: string }) {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        </TabPane>
+        <TabPane
+          tab={
+            <span>
+              <IconCopyAdd />
+              添加作业
+            </span>
+          }
+          itemKey="addjob"
+        >
+          <JsonViewer
+            height={560}
+            width="100%"
+            showSearch={false}
+            value={defaultJsonValue}
+            onChange={(v) => setJsonValue(v)}
+          />
+          <Button
+            theme="solid"
+            type="danger"
+            style={{ marginTop: 10 }}
+            onClick={handleSubmitJob}
+            loading={submitting}
+            disabled={submitting}
+          >
+            {submitting ? "提交中..." : "提交数据"}
+          </Button>
+        </TabPane>
+      </Tabs>
     </>
   );
 }
