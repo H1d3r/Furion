@@ -228,7 +228,7 @@ public sealed class ScheduleUIMiddleware
                     // 添加作业
                     var sResult = _schedulerFactory.TryAddJob(SchedulerBuilder.From(jsonContent), out _);
 
-                    // 处理找不到作业情况
+                    // 处理添加识别情况
                     if (sResult != ScheduleResult.Succeed)
                     {
                         // 标识状态码为 500
