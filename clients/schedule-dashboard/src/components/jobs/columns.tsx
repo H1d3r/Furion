@@ -1,4 +1,5 @@
 import {
+  IconCode,
   IconDelete,
   IconLink,
   IconMore,
@@ -345,6 +346,7 @@ const columns: ColumnProps<JobDetail>[] = [
       <Operation
         jobid={jobDetail.jobId}
         hasTrigger={(jobDetail.triggers?.length || 0) > 0}
+        jobDetail={jobDetail}
       />
     ),
     onCell: () => ({
@@ -355,12 +357,27 @@ const columns: ColumnProps<JobDetail>[] = [
   },
 ];
 
+function reshapeJobDetail(data: JobDetail) {
+  if (!data) return { jobDetail: {}, triggers: [] };
+
+  const { triggers, refreshDate, temporary, ...jobDetailRest } = data;
+
+  return {
+    jobDetail: jobDetailRest,
+    triggers: triggers ?? [],
+  };
+}
+
 /**
  * 操作按钮组件
  * @param props - 组件参数
  */
-function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
-  const { jobid, hasTrigger } = props;
+function Operation(props: {
+  jobid?: string | null;
+  hasTrigger: boolean;
+  jobDetail: JobDetail;
+}) {
+  const { jobid, hasTrigger, jobDetail } = props;
 
   /**
    * 初始化请求配置
@@ -394,6 +411,17 @@ function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
     }
   };
 
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      Toast.success({ content: "复制成功", duration: 3 });
+      return true;
+    } catch (err) {
+      Toast.error({ content: "复制失败", duration: 3 });
+      return false;
+    }
+  }
+
   return (
     <Dropdown
       render={
@@ -424,6 +452,16 @@ function Operation(props: { jobid?: string | null; hasTrigger: boolean }) {
             disabled={!hasTrigger || loading}
           >
             <IconVigoLogo size="extra-large" /> 手动执行
+          </Dropdown.Item>
+          <Dropdown.Item
+            onClick={() =>
+              copyToClipboard(
+                JSON.stringify(reshapeJobDetail(jobDetail), null, 2),
+              )
+            }
+            disabled={loading}
+          >
+            <IconCode size="extra-large" /> 复制 JSON
           </Dropdown.Item>
         </Dropdown.Menu>
       }
