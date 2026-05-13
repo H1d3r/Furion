@@ -32,18 +32,8 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 自动调用 SaveChanges 拦截器
 /// </summary>
-internal sealed class AutoSaveChangesFilter : IAsyncActionFilter, IOrderedFilter
+internal sealed class AutoSaveChangesFilter : IAsyncActionFilter
 {
-    /// <summary>
-    /// 过滤器排序
-    /// </summary>
-    private const int FilterOrder = 9999;
-
-    /// <summary>
-    /// 排序属性
-    /// </summary>
-    public int Order => FilterOrder;
-
     /// <summary>
     /// 拦截请求
     /// </summary>

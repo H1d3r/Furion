@@ -98,7 +98,7 @@ public static class UnifyResultServiceCollectionExtensions
         services.AddUnifyProvider<TUnifyResultProvider>(string.Empty);
 
         // 添加成功规范化结果筛选器
-        services.AddMvcFilter<SucceededUnifyResultFilter>();
+        services.AddMvcFilter<SucceededUnifyResultFilter>(order: 8888);
 
         return services;
     }

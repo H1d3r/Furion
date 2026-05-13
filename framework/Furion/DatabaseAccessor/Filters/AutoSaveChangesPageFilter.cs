@@ -31,18 +31,8 @@ namespace Furion.DatabaseAccessor;
 /// <summary>
 /// 自动调用 SaveChanges 拦截器（Razor Pages）
 /// </summary>
-internal sealed class AutoSaveChangesPageFilter : IAsyncPageFilter, IOrderedFilter
+internal sealed class AutoSaveChangesPageFilter : IAsyncPageFilter
 {
-    /// <summary>
-    /// 过滤器排序
-    /// </summary>
-    private const int FilterOrder = 9999;
-
-    /// <summary>
-    /// 排序属性
-    /// </summary>
-    public int Order => FilterOrder;
-
     /// <summary>
     /// 模型绑定拦截
     /// </summary>
