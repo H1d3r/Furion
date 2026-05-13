@@ -19,6 +19,7 @@ import {
   JsonViewer,
   Popconfirm,
   Popover,
+  Space,
   Table,
   TabPane,
   Tabs,
@@ -33,7 +34,7 @@ import {
   ExpandedRowRender,
   OnRow,
 } from "@douyinfe/semi-ui/lib/es/table/interface";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useFetch from "use-http";
 import { JobDetail, Scheduler, TriggerTimeline } from "../../types";
 import apiconfig from "../../apiconfig";
@@ -85,42 +86,44 @@ function getDefaultJsonValue() {
   let _jobId = generateJobId();
 
   return `{
-   	"jobDetail": {
-      		"jobId": "${_jobId}",
-      		"groupName": null,
-      		"jobType": "Furion.Application.TestJob",
-      		"assemblyName": "Furion.Application",
-      		"description": null,
-      		"concurrent": true,
-      		"includeAnnotations": false,
-      		"properties": "{}",
-      		"updatedTime": "2026-01-01 00:00:00.483"
-   	},
-   	"triggers": [{
-      		"triggerId": null,
-      		"jobId": "${_jobId}",
-      		"triggerType": "Furion.Schedule.PeriodTrigger",
-      		"assemblyName": "Furion",
-      		"args": "[5000]",
-      		"description": null,
-      		"status": 2,
-      		"startTime": null,
-      		"endTime": null,
-      		"lastRunTime": "2026-01-01 00:00:00.768",
-      		"nextRunTime": "2026-01-01 17:52:34.769",
-      		"numberOfRuns": 1,
-      		"maxNumberOfRuns": 0,
-      		"numberOfErrors": 0,
-      		"maxNumberOfErrors": 0,
-      		"numRetries": 0,
-      		"retryTimeout": 1000,
-      		"startNow": true,
-      		"runOnStart": false,
-      		"resetOnlyOnce": true,
-      		"result": null,
-      		"elapsedTime": 100,
-      		"updatedTime": "2026-01-01 00:00:00.803"
-   	}]
+  "jobDetail": {
+    "jobId": "${_jobId}",
+    "groupName": null,
+    "jobType": "Furion.Application.TestJob",
+    "assemblyName": "Furion.Application",
+    "description": null,
+    "concurrent": true,
+    "includeAnnotations": false,
+    "properties": "{}",
+    "updatedTime": "2026-01-01 00:00:00.483"
+  },
+  "triggers": [
+    {
+      "triggerId": null,
+      "jobId": "${_jobId}",
+      "triggerType": "Furion.Schedule.PeriodTrigger",
+      "assemblyName": "Furion",
+      "args": "[5000]",
+      "description": null,
+      "status": 2,
+      "startTime": null,
+      "endTime": null,
+      "lastRunTime": "2026-01-01 00:00:00.768",
+      "nextRunTime": "2026-01-01 17:52:34.769",
+      "numberOfRuns": 1,
+      "maxNumberOfRuns": 0,
+      "numberOfErrors": 0,
+      "maxNumberOfErrors": 0,
+      "numRetries": 0,
+      "retryTimeout": 1000,
+      "startNow": true,
+      "runOnStart": false,
+      "resetOnlyOnce": true,
+      "result": null,
+      "elapsedTime": 100,
+      "updatedTime": "2026-01-01 00:00:00.803"
+    }
+  ]
 }`;
 }
 
@@ -140,6 +143,7 @@ export default function Jobs({ mode }: { mode: string }) {
     pageSize: 10,
     total: 0,
   });
+  const jsonviewerRef = useRef<JsonViewer>(null!);
 
   const jobList = useMemo(() => {
     const trimWords = words.trim();
@@ -686,22 +690,27 @@ export default function Jobs({ mode }: { mode: string }) {
           itemKey="addjob"
         >
           <JsonViewer
+            ref={jsonviewerRef}
             height={560}
             width="100%"
             showSearch={false}
             value={defaultJsonValue}
             onChange={(v) => setJsonValue(v)}
           />
-          <Button
-            theme="solid"
-            type="danger"
-            style={{ marginTop: 10 }}
-            onClick={handleSubmitJob}
-            loading={submitting}
-            disabled={submitting}
-          >
-            {submitting ? "提交中..." : "提交数据"}
-          </Button>
+          <Space style={{ marginTop: 10 }} spacing={12}>
+            <Button
+              theme="solid"
+              type="danger"
+              onClick={handleSubmitJob}
+              loading={submitting}
+              disabled={submitting}
+            >
+              {submitting ? "提交中..." : "提交数据"}
+            </Button>
+            <Button onClick={() => jsonviewerRef.current.format()}>
+              格式化
+            </Button>
+          </Space>
         </TabPane>
       </Tabs>
     </>
