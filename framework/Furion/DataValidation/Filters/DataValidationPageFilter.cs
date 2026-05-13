@@ -34,7 +34,7 @@ namespace Furion.DataValidation;
 /// <summary>
 /// 数据验证拦截器（Razor Pages）
 /// </summary>
-public sealed class DataValidationPageFilter : IAsyncPageFilter, IOrderedFilter
+public sealed class DataValidationPageFilter : IAsyncPageFilter
 {
     /// <summary>
     /// Api 行为配置选项
@@ -49,16 +49,6 @@ public sealed class DataValidationPageFilter : IAsyncPageFilter, IOrderedFilter
     {
         _apiBehaviorOptions = options.Value;
     }
-
-    /// <summary>
-    /// 过滤器排序
-    /// </summary>
-    private const int FilterOrder = -1000;
-
-    /// <summary>
-    /// 排序属性
-    /// </summary>
-    public int Order => FilterOrder;
 
     /// <summary>
     /// 是否是可重复使用的

@@ -38,18 +38,8 @@ namespace Furion.UnifyResult;
 /// <summary>
 /// 规范化结构（请求成功）过滤器
 /// </summary>
-public class SucceededUnifyResultFilter : IAsyncActionFilter, IOrderedFilter
+public class SucceededUnifyResultFilter : IAsyncActionFilter
 {
-    /// <summary>
-    /// 过滤器排序
-    /// </summary>
-    private const int FilterOrder = 8888;
-
-    /// <summary>
-    /// 排序属性
-    /// </summary>
-    public int Order => FilterOrder;
-
     /// <summary>
     /// 处理规范化结果
     /// </summary>

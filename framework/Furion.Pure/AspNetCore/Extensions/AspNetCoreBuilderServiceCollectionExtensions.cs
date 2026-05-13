@@ -40,14 +40,15 @@ public static class AspNetCoreBuilderServiceCollectionExtensions
     /// <summary>
     /// 注册 Mvc 过滤器
     /// </summary>
-    /// <typeparam name="TFilter"></typeparam>
-    /// <param name="mvcBuilder"></param>
-    /// <param name="configure"></param>
-    /// <returns></returns>
-    public static IMvcBuilder AddMvcFilter<TFilter>(this IMvcBuilder mvcBuilder, Action<MvcOptions> configure = default)
+    /// <typeparam name="TFilter">过滤器类型</typeparam>
+    /// <param name="mvcBuilder">Mvc 构建器</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <param name="order">过滤器执行顺序（可选）。值越小优先级越高，越早执行</param>
+    /// <returns><see cref="IMvcBuilder"/></returns>
+    public static IMvcBuilder AddMvcFilter<TFilter>(this IMvcBuilder mvcBuilder, Action<MvcOptions> configure = default, int? order = null)
         where TFilter : IFilterMetadata
     {
-        mvcBuilder.Services.AddMvcFilter<TFilter>(configure);
+        mvcBuilder.Services.AddMvcFilter<TFilter>(configure, order);
 
         return mvcBuilder;
     }
@@ -55,11 +56,12 @@ public static class AspNetCoreBuilderServiceCollectionExtensions
     /// <summary>
     /// 注册 Mvc 过滤器
     /// </summary>
-    /// <typeparam name="TFilter"></typeparam>
-    /// <param name="services"></param>
-    /// <param name="configure"></param>
-    /// <returns></returns>
-    public static IServiceCollection AddMvcFilter<TFilter>(this IServiceCollection services, Action<MvcOptions> configure = default)
+    /// <typeparam name="TFilter">过滤器类型</typeparam>
+    /// <param name="services">服务集合</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <param name="order">过滤器执行顺序（可选）。值越小优先级越高，越早执行</param>
+    /// <returns><see cref="IServiceCollection"/></returns>
+    public static IServiceCollection AddMvcFilter<TFilter>(this IServiceCollection services, Action<MvcOptions> configure = default, int? order = null)
         where TFilter : IFilterMetadata
     {
         // 非 Web 环境跳过注册
@@ -67,7 +69,14 @@ public static class AspNetCoreBuilderServiceCollectionExtensions
 
         services.Configure<MvcOptions>(options =>
         {
-            options.Filters.Add<TFilter>();
+            if (order.HasValue)
+            {
+                options.Filters.Add<TFilter>(order.Value);
+            }
+            else
+            {
+                options.Filters.Add<TFilter>();
+            }
 
             // 其他额外配置
             configure?.Invoke(options);
@@ -79,10 +88,10 @@ public static class AspNetCoreBuilderServiceCollectionExtensions
     /// <summary>
     /// 注册 Mvc 过滤器
     /// </summary>
-    /// <param name="services"></param>
-    /// <param name="filter"></param>
-    /// <param name="configure"></param>
-    /// <returns></returns>
+    /// <param name="services">服务集合</param>
+    /// <param name="filter">过滤器实例</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns><see cref="IServiceCollection"/></returns>
     public static IServiceCollection AddMvcFilter(this IServiceCollection services, IFilterMetadata filter, Action<MvcOptions> configure = default)
     {
         // 非 Web 环境跳过注册
@@ -102,9 +111,9 @@ public static class AspNetCoreBuilderServiceCollectionExtensions
     /// <summary>
     /// 添加 [FromConvert] 模型绑定
     /// </summary>
-    /// <param name="mvcBuilder"></param>
-    /// <param name="configure"></param>
-    /// <returns></returns>
+    /// <param name="mvcBuilder">Mvc 构建器</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns><see cref="IMvcBuilder"/></returns>
     public static IMvcBuilder AddFromConvertBinding(this IMvcBuilder mvcBuilder, Action<ConcurrentDictionary<Type, Type>> configure = default)
     {
         mvcBuilder.Services.AddFromConvertBinding(configure);
@@ -115,9 +124,9 @@ public static class AspNetCoreBuilderServiceCollectionExtensions
     /// <summary>
     /// 添加 [FromConvert] 模型绑定
     /// </summary>
-    /// <param name="services"></param>
-    /// <param name="configure"></param>
-    /// <returns></returns>
+    /// <param name="services">服务集合</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns><see cref="IServiceCollection"/></returns>
     public static IServiceCollection AddFromConvertBinding(this IServiceCollection services, Action<ConcurrentDictionary<Type, Type>> configure = default)
     {
         // 非 Web 环境跳过注册

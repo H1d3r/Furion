@@ -119,14 +119,14 @@ public static class DataValidationServiceCollectionExtensions
             {
                 // 关闭空引用对象验证
                 options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = configureOptions.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes;
-            });
+            }, order: -1000);
 
             // 添加全局数据验证（Razor Pages）
             services.AddMvcFilter<DataValidationPageFilter>(options =>
             {
                 // 关闭空引用对象验证
                 options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = configureOptions.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes;
-            });
+            }, order: -1000);
         }
 
         return services;

@@ -102,10 +102,10 @@ public static class DatabaseAccessorServiceCollectionExtensions
         services.AddUnitOfWork<EFCoreUnitOfWork>();
 
         // 注册自动 SaveChanges
-        services.AddMvcFilter<AutoSaveChangesFilter>();
+        services.AddMvcFilter<AutoSaveChangesFilter>(order: 9999);
 
         // 注册自动 SaveChanges（Razor Pages）
-        services.AddMvcFilter<AutoSaveChangesPageFilter>();
+        services.AddMvcFilter<AutoSaveChangesPageFilter>(order: 9999);
 
         return services;
     }
