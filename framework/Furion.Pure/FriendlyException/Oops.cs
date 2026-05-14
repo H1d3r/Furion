@@ -33,6 +33,7 @@ using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Furion.FriendlyException;
 
@@ -44,12 +45,12 @@ public static class Oops
     /// <summary>
     /// 方法错误异常特性
     /// </summary>
-    private static readonly ConcurrentDictionary<MethodBase, MethodIfException> _errorMethods;
+    private static readonly ConditionalWeakTable<MethodBase, MethodIfException> _errorMethods;
 
     /// <summary>
     /// 错误代码类型
     /// </summary>
-    private static readonly IEnumerable<Type> _errorCodeTypes;
+    private static readonly HashSet<Type> _errorCodeTypes;
 
     /// <summary>
     /// 错误消息字典
@@ -62,14 +63,20 @@ public static class Oops
     private static readonly FriendlyExceptionSettingsOptions _friendlyExceptionSettings;
 
     /// <summary>
+    /// 枚举字段信息缓存
+    /// </summary>
+    private static readonly ConcurrentDictionary<(Type, string), (object Key, string Value)> _enumFieldCache;
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     static Oops()
     {
-        _errorMethods = new ConcurrentDictionary<MethodBase, MethodIfException>();
+        _errorMethods = new();
         _friendlyExceptionSettings = App.GetConfig<FriendlyExceptionSettingsOptions>("FriendlyExceptionSettings", true);
-        _errorCodeTypes = GetErrorCodeTypes();
+        _errorCodeTypes = new(GetErrorCodeTypes());
         _errorCodeMessages = GetErrorCodeMessages();
+        _enumFieldCache = new();
     }
 
     /// <summary>
@@ -249,12 +256,26 @@ public static class Oops
         var errorType = errorCode.GetType();
 
         // 判断是否是内置枚举类型，如果是解析特性
-        if (_errorCodeTypes.Any(u => u == errorType))
+        if (_errorCodeTypes.Contains(errorType))
         {
-            var fieldinfo = errorType.GetField(Enum.GetName(errorType, errorCode));
-            if (fieldinfo.IsDefined(typeof(ErrorCodeItemMetadataAttribute), true))
+            var enumName = Enum.GetName(errorType, errorCode);
+            if (enumName != null)
             {
-                errorCode = GetErrorCodeItemInformation(fieldinfo).Key;
+                var cacheKey = (errorType, enumName);
+                var (Key, Value) = _enumFieldCache.GetOrAdd(cacheKey, key =>
+                {
+                    var field = key.Item1.GetField(key.Item2, BindingFlags.Public | BindingFlags.Static);
+                    if (field != null && field.IsDefined(typeof(ErrorCodeItemMetadataAttribute), true))
+                    {
+                        return GetErrorCodeItemInformation(field);
+                    }
+                    return (errorCode, null);
+                });
+
+                if (Value != null)
+                {
+                    errorCode = Key;
+                }
             }
         }
 
@@ -307,9 +328,9 @@ public static class Oops
         var defaultErrorCodeMessages = new ConcurrentDictionary<string, string>();
 
         // 查找所有 [ErrorCodeType] 类型中的 [ErrorCodeMetadata] 元数据定义
-        var errorCodeMessages = _errorCodeTypes.SelectMany(u => u.GetFields().Where(u => u.IsDefined(typeof(ErrorCodeItemMetadataAttribute))))
-            .Select(u => GetErrorCodeItemInformation(u))
-           .ToDictionary(u => u.Key.ToString(), u => u.Value);
+        var errorCodeMessages = _errorCodeTypes.SelectMany(u => u.GetFields(BindingFlags.Public | BindingFlags.Static).Where(u => u.IsDefined(typeof(ErrorCodeItemMetadataAttribute), true)))
+            .Select(GetErrorCodeItemInformation)
+            .ToDictionary(u => u.Key.ToString(), u => u.Value);
 
         defaultErrorCodeMessages.AddOrUpdate(errorCodeMessages);
 
@@ -356,18 +377,19 @@ public static class Oops
 
             // 获取出错的堆栈信息，在 web 请求中获取控制器或动态API的方法，除外获取第一个出错的方法
             var stackFrame = stackTrace.FirstOrDefault(u => typeof(ControllerBase).IsAssignableFrom(u.MethodInfo.DeclaringType) || typeof(IDynamicApiController).IsAssignableFrom(u.MethodInfo.DeclaringType))
-                ?? stackTrace.FirstOrDefault(u => u.GetMethod().DeclaringType.Namespace != typeof(Oops).Namespace);
+                ?? stackTrace.FirstOrDefault(u => u.GetMethod().DeclaringType?.Namespace != typeof(Oops).Namespace);
+
+            if (stackFrame?.MethodInfo?.MethodBase == null) return null;
 
             // 获取出错的方法
             var errorMethod = stackFrame.MethodInfo.MethodBase;
 
             // 判断是否已经缓存过该方法，避免重复解析
-            var isCached = _errorMethods.TryGetValue(errorMethod, out var methodIfException);
-            if (isCached) return methodIfException;
+            if (_errorMethods.TryGetValue(errorMethod, out var methodIfException)) return methodIfException;
 
             // 获取堆栈中所有的 [IfException] 特性
             var ifExceptionAttributes = stackTrace
-                .Where(u => u.MethodInfo.MethodBase != null && u.MethodInfo.MethodBase.IsDefined(typeof(IfExceptionAttribute), true))
+                .Where(u => u.MethodInfo?.MethodBase != null && u.MethodInfo.MethodBase.IsDefined(typeof(IfExceptionAttribute), true))
                 .SelectMany(u => u.MethodInfo.MethodBase.GetCustomAttributes<IfExceptionAttribute>(true));
 
             // 组装方法异常对象
@@ -377,10 +399,7 @@ public static class Oops
                 IfExceptionAttributes = ifExceptionAttributes
             };
 
-            // 存入缓存
-            _errorMethods.TryAdd(errorMethod, methodIfException);
-
-            return methodIfException;
+            return _errorMethods.GetValue(errorMethod, _ => methodIfException);
         }
         catch
         {
