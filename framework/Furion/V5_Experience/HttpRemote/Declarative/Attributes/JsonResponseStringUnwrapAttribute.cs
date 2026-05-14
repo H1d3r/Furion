@@ -23,22 +23,30 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Utilities;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     字节数组内容转换器
+///     HTTP 声明式启用 JSON 响应内容字符串的解包处理（双重序列化）
 /// </summary>
-public class ByteArrayContentConverter : HttpContentConverterBase<byte[]>
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
+public sealed class JsonResponseStringUnwrapAttribute : Attribute
 {
-    /// <inheritdoc />
-    public override byte[]? Read(HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default) =>
-        AsyncUtility.RunSync(() => ReadAsync(httpResponseMessage, cancellationToken));
+    /// <summary>
+    ///     <inheritdoc cref="JsonResponseStringUnwrapAttribute" />
+    /// </summary>
+    public JsonResponseStringUnwrapAttribute()
+        : this(true)
+    {
+    }
 
-    /// <inheritdoc />
-    public override async Task<byte[]?> ReadAsync(HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default) =>
-        await httpResponseMessage.Content.ReadAsByteArrayAsync(cancellationToken);
+    /// <summary>
+    ///     <inheritdoc cref="JsonResponseStringUnwrapAttribute" />
+    /// </summary>
+    /// <param name="enabled">是否启用</param>
+    public JsonResponseStringUnwrapAttribute(bool enabled) => Enabled = enabled;
+
+    /// <summary>
+    ///     是否启用
+    /// </summary>
+    public bool Enabled { get; set; }
 }

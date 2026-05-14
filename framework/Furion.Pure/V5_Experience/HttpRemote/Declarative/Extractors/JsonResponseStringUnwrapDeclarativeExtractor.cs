@@ -23,22 +23,23 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.Utilities;
-
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     字节数组内容转换器
+///     HTTP 声明式 <see cref="JsonResponseStringUnwrapAttribute" /> 特性提取器
 /// </summary>
-public class ByteArrayContentConverter : HttpContentConverterBase<byte[]>
+internal sealed class JsonResponseStringUnwrapDeclarativeExtractor : IHttpDeclarativeExtractor
 {
     /// <inheritdoc />
-    public override byte[]? Read(HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default) =>
-        AsyncUtility.RunSync(() => ReadAsync(httpResponseMessage, cancellationToken));
+    public void Extract(HttpRequestBuilder httpRequestBuilder, HttpDeclarativeExtractorContext context)
+    {
+        // 检查方法或接口是否贴有 [JsonResponseStringUnwrap] 特性
+        if (!context.IsMethodDefined<JsonResponseStringUnwrapAttribute>(out var jsonResponseWrapperAttribute, true))
+        {
+            return;
+        }
 
-    /// <inheritdoc />
-    public override async Task<byte[]?> ReadAsync(HttpResponseMessage httpResponseMessage,
-        CancellationToken cancellationToken = default) =>
-        await httpResponseMessage.Content.ReadAsByteArrayAsync(cancellationToken);
+        // 设置是否启用 JSON 响应内容字符串的解包处理（双重序列化）
+        httpRequestBuilder.UseJsonResponseStringUnwrap(jsonResponseWrapperAttribute.Enabled);
+    }
 }

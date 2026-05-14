@@ -140,9 +140,10 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
             // 提交事务
             await CommitTransactionAsync(context, unitOfWork, unitOfWorkAttribute, resultContext);
 
-            // 提交分布式环境事务
+            // 检查请求是否发生异常
             if (resultContext.Exception == null)
             {
+                // 提交分布式环境事务
                 transactionScope?.Complete();
 
                 logger.LogInformation("Database transaction committed. Location: {Location}", location);
@@ -217,9 +218,10 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
             // 提交事务
             await CommitTransactionAsync(context, unitOfWork, unitOfWorkAttribute, resultContext);
 
-            // 提交分布式环境事务
+            // 检查请求是否发生异常
             if (resultContext.Exception == null)
             {
+                // 提交分布式环境事务
                 transactionScope?.Complete();
 
                 logger.LogInformation("Database transaction committed. Location: {Location}", location);
@@ -250,9 +252,9 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
         // 是否启用分布式环境事务
         var transactionScope = UseAmbientTransaction
              ? new TransactionScope(TransactionScope,
-            new TransactionOptions { IsolationLevel = TransactionIsolationLevel, Timeout = TransactionTimeout > 0 ? TimeSpan.FromSeconds(TransactionTimeout) : default }
+            new TransactionOptions { IsolationLevel = TransactionIsolationLevel, Timeout = TransactionTimeout > 0 ? TimeSpan.FromSeconds(TransactionTimeout) : TransactionManager.DefaultTimeout }
             , TransactionScopeAsyncFlow)
-             : default;
+             : null;
 
         // 创建日志记录器
         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<UnitOfWork>>();
@@ -281,10 +283,8 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
     /// <param name="resultContext"></param>
     private static async Task CommitTransactionAsync(FilterContext context, IUnitOfWork unitOfWork, UnitOfWorkAttribute unitOfWorkAttribute, FilterContext resultContext)
     {
-        // 获取动态结果上下文
-        dynamic dynamicResultContext = resultContext;
-
-        if (dynamicResultContext.Exception == null)
+        // 检查请求是否发生异常
+        if (GetFilterException(resultContext) == null)
         {
             // 调用提交事务方法
             await unitOfWork.CommitTransactionAsync(resultContext, unitOfWorkAttribute);
@@ -297,5 +297,20 @@ public sealed class UnitOfWorkAttribute : Attribute, IAsyncActionFilter, IAsyncP
 
         // 调用执行完毕方法
         await unitOfWork.OnCompletedAsync(context, resultContext);
+    }
+
+    /// <summary>
+    /// 获取筛选器异常
+    /// </summary>
+    /// <param name="context"></param>
+    /// <returns></returns>
+    private static Exception GetFilterException(FilterContext context)
+    {
+        return context switch
+        {
+            ActionExecutedContext actionCtx => actionCtx.Exception,
+            PageHandlerExecutedContext pageCtx => pageCtx.Exception,
+            _ => null
+        };
     }
 }
