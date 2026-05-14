@@ -396,7 +396,7 @@ public partial class Clay
                 "Max depth must be greater than zero.");
         }
 
-        // 处理对象或数组类型双重序列化问题
+        // 处理对象或数组类型双重 JSON 序列化问题
         var scalarValueKey = Options.ScalarValueKey;
         var clay = IsScalarValue && IsJsonObjectOrArray(this[scalarValueKey] as string)
             ? Unwrap(scalarValueKey)[scalarValueKey]
@@ -415,7 +415,7 @@ public partial class Clay
 
             // 创建快照用来避免枚举修改异常问题（Collection was modified; enumeration operation may not execute.）
             // 此操作会有一点性能损耗
-            var snapshot = current.AsEnumerable().ToList();
+            var snapshot = current.AsEnumerable().ToArray();
             foreach (var (key, value) in snapshot)
             {
                 // 仅当值为字符串且表示 JSON 对象（{}）或数组（[]）时才解析
