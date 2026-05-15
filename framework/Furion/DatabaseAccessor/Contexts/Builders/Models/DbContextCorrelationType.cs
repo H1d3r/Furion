@@ -44,7 +44,6 @@ internal sealed class DbContextCorrelationType
         EntityChangedTypes = [];
         ModelBuilderFilterTypes = [];
         EntityMutableTableTypes = [];
-        ModelBuilderFilterInstances = [];
         DbFunctionMethods = [];
     }
 
@@ -97,9 +96,4 @@ internal sealed class DbContextCorrelationType
     /// 数据库函数方法集合
     /// </summary>
     internal List<MethodInfo> DbFunctionMethods { get; set; }
-
-    /// <summary>
-    /// 模型构建器筛选器实例
-    /// </summary>
-    internal List<IPrivateModelBuilderFilter> ModelBuilderFilterInstances { get; set; }
 }

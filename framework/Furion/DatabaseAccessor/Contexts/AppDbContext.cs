@@ -67,7 +67,7 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
     /// <param name="options"></param>
     public AppDbContext(DbContextOptions<TDbContext> options) : base(options)
     {
-        ChangeTrackerEntities ??= [];
+        ChangeTrackerEntities = [];
     }
 
     /// <summary>
@@ -165,6 +165,14 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
             // 从分布式缓存中读取或查询数据库
             var tenantCachedKey = $"MULTI_TENANT:{host}";
             var distributedCache = serviceProvider.GetService<IDistributedCache>();
+
+            // 设置缓存选项：10分钟过期 + 滑动过期5分钟
+            var cacheOptions = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+                SlidingExpiration = TimeSpan.FromMinutes(5)
+            };
+
             var cachedValue = distributedCache?.GetString(tenantCachedKey);
 
             // 当前租户
@@ -186,10 +194,10 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
                 currentTenant = tenantDbContext.Set<Tenant>().AsNoTracking().FirstOrDefault(u => u.Host == host);
                 if (currentTenant != null)
                 {
-                    distributedCache?.SetString(tenantCachedKey, jsonSerializerProvider.Serialize(currentTenant));
+                    distributedCache?.SetString(tenantCachedKey, jsonSerializerProvider?.Serialize(currentTenant), cacheOptions);
                 }
             }
-            else currentTenant = jsonSerializerProvider.Deserialize<Tenant>(cachedValue);
+            else currentTenant = jsonSerializerProvider?.Deserialize<Tenant>(cachedValue);
 
             return currentTenant;
         }
@@ -232,20 +240,31 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
     /// <param name="result"></param>
     internal void SavingChangesEventInner(DbContextEventData eventData, InterceptionResult<int> result)
     {
-        // 附加实体更改通知
-        if (EnabledEntityChangedListener)
+        try
         {
-            var dbContext = eventData.Context;
+            // 附加实体更改通知
+            if (EnabledEntityChangedListener)
+            {
+                var dbContext = eventData.Context;
 
-            // 获取获取数据库操作上下文，跳过贴了 [NotChangedListener] 特性的实体
-            ChangeTrackerEntities = dbContext.ChangeTracker.Entries()
-                .Where(u => !u.Entity.GetType().IsDefined(typeof(SuppressChangedListenerAttribute), true) && (u.State == EntityState.Added || u.State == EntityState.Modified || u.State == EntityState.Deleted))
-                .ToDictionary(u => u, u => u.State == EntityState.Added ? default : u.GetDatabaseValues());
+                // 获取获取数据库操作上下文，跳过贴了 [NotChangedListener] 特性的实体
+                ChangeTrackerEntities = dbContext.ChangeTracker.Entries()
+                    .Where(u => !u.Entity.GetType().IsDefined(typeof(SuppressChangedListenerAttribute), true)
+                        && (u.State == EntityState.Added || u.State == EntityState.Modified || u.State == EntityState.Deleted))
+                    .ToDictionary(u => u, u => u.State == EntityState.Added ? default : u.GetDatabaseValues());
 
-            AttachEntityChangedListener(eventData.Context, "OnChanging", ChangeTrackerEntities);
+                AttachEntityChangedListener(eventData.Context, "OnChanging", ChangeTrackerEntities);
+            }
+
+            SavingChangesEvent(eventData, result);
         }
-
-        SavingChangesEvent(eventData, result);
+        finally
+        {
+            if (!EnabledEntityChangedListener)
+            {
+                ChangeTrackerEntities?.Clear();
+            }
+        }
     }
 
     /// <summary>
@@ -255,13 +274,17 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
     /// <param name="result"></param>
     internal void SavedChangesEventInner(SaveChangesCompletedEventData eventData, int result)
     {
-        // 附加实体更改通知
-        if (EnabledEntityChangedListener) AttachEntityChangedListener(eventData.Context, "OnChanged", ChangeTrackerEntities);
+        try
+        {
+            // 附加实体更改通知
+            if (EnabledEntityChangedListener) AttachEntityChangedListener(eventData.Context, "OnChanged", ChangeTrackerEntities);
 
-        SavedChangesEvent(eventData, result);
-
-        // 清空跟踪实体
-        ChangeTrackerEntities.Clear();
+            SavedChangesEvent(eventData, result);
+        }
+        finally
+        {
+            ChangeTrackerEntities?.Clear();
+        }
     }
 
     /// <summary>
@@ -270,13 +293,17 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
     /// <param name="eventData"></param>
     internal void SaveChangesFailedEventInner(DbContextErrorEventData eventData)
     {
-        // 附加实体更改通知
-        if (EnabledEntityChangedListener) AttachEntityChangedListener(eventData.Context, "OnChangeFailed", ChangeTrackerEntities);
+        try
+        {
+            // 附加实体更改通知
+            if (EnabledEntityChangedListener) AttachEntityChangedListener(eventData.Context, "OnChangeFailed", ChangeTrackerEntities);
 
-        SaveChangesFailedEvent(eventData);
-
-        // 清空跟踪实体
-        ChangeTrackerEntities.Clear();
+            SaveChangesFailedEvent(eventData);
+        }
+        finally
+        {
+            ChangeTrackerEntities?.Clear();
+        }
     }
 
     /// <summary>
@@ -288,7 +315,10 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
     private static void AttachEntityChangedListener(DbContext dbContext, string triggerMethodName, Dictionary<EntityEntry, PropertyValues> changeTrackerEntities = null)
     {
         // 获取所有改变的类型
-        var entityChangedTypes = AppDbContextBuilder.DbContextLocatorCorrelationTypes[typeof(TDbContextLocator)].EntityChangedTypes;
+        var entityChangedTypes = AppDbContextBuilder.DbContextLocatorCorrelationTypes.TryGetValue(typeof(TDbContextLocator), out var correlation)
+            ? correlation.EntityChangedTypes
+            : [];
+
         if (entityChangedTypes.Count == 0) return;
 
         // 遍历所有的改变的实体
@@ -309,25 +339,24 @@ public abstract class AppDbContext<TDbContext, TDbContextLocator> : DbContext
             // 获取该实体类型监听配置
             var entitiesTypeByChanged = entityChangedTypes
                 .Where(u => u.GetInterfaces()
-                    .Any(i => i.HasImplementedRawGeneric(typeof(IPrivateEntityChangedListener<>)) && i.GenericTypeArguments.Contains(entity.GetType())));
+                    .Any(i => i.HasImplementedRawGeneric(typeof(IPrivateEntityChangedListener<>)) && i.GenericTypeArguments.Contains(entity.GetType()))).ToList();
 
-            if (!entitiesTypeByChanged.Any()) continue;
+            if (entitiesTypeByChanged.Count == 0) continue;
 
             // 通知所有的监听类型
             foreach (var entityChangedType in entitiesTypeByChanged)
             {
                 var OnChangeMethod = entityChangedType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                                                                .Where(u => u.Name == triggerMethodName
+                                                                .FirstOrDefault(u => u.Name == triggerMethodName
                                                                     && u.GetParameters().Length > 0
-                                                                    && u.GetParameters().First().ParameterType == entity.GetType())
-                                                                .FirstOrDefault();
+                                                                    && u.GetParameters()[0].ParameterType == entity.GetType());
                 if (OnChangeMethod == null) continue;
 
                 var instance = Activator.CreateInstance(entityChangedType);
                 var state = stateProperty == null ? EntityState.Unchanged : (EntityState)stateProperty.GetValue(entity);
 
                 // 对 OnChanged 进行特别处理
-                if (triggerMethodName.Equals("OnChanged"))
+                if (triggerMethodName.Equals("OnChanged", StringComparison.Ordinal))
                 {
                     // 获取实体旧值
                     var oldEntity = trackerEntities.Value?.ToObject();
