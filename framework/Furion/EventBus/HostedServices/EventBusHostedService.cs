@@ -28,6 +28,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Logging;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -41,9 +42,11 @@ namespace Furion.EventBus;
 internal sealed class EventBusHostedService : BackgroundService
 {
     /// <summary>
-    /// GC 回收默认间隔
+    /// GC 垃圾回收间隔
     /// </summary>
-    private const int GC_COLLECT_INTERVAL_SECONDS = 10;
+    /// <remarks>单位毫秒</remarks>
+    private static readonly TimeSpan GC_INTERVAL = TimeSpan.FromMilliseconds(10000);
+    private static Stopwatch _lastGcStopwatch = Stopwatch.StartNew();
 
     /// <summary>
     /// 避免由 CLR 的终结器捕获该异常从而终止应用程序，让所有未觉察异常被觉察
@@ -90,7 +93,6 @@ internal sealed class EventBusHostedService : BackgroundService
     /// <param name="eventSubscribers">事件订阅者集合</param>
     /// <param name="useUtcTimestamp">是否使用 Utc 时间</param>
     /// <param name="fuzzyMatch">是否启用模糊匹配事件消息</param>
-    /// <param name="gcCollect">是否启用执行完成触发 GC 回收</param>
     /// <param name="logEnabled">是否启用日志记录</param>
     public EventBusHostedService(ILogger<EventBusService> logger
         , IServiceProvider serviceProvider
@@ -99,7 +101,6 @@ internal sealed class EventBusHostedService : BackgroundService
         , IEnumerable<IEventSubscriber> eventSubscribers
         , bool useUtcTimestamp
         , bool fuzzyMatch
-        , bool gcCollect
         , bool logEnabled)
     {
         _logger = logger;
@@ -111,7 +112,6 @@ internal sealed class EventBusHostedService : BackgroundService
         Executor = serviceProvider.GetService<IEventHandlerExecutor>();
         UseUtcTimestamp = useUtcTimestamp;
         FuzzyMatch = fuzzyMatch;
-        GCCollect = gcCollect;
         LogEnabled = logEnabled;
 
         var bindingAttr = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
@@ -143,7 +143,6 @@ internal sealed class EventBusHostedService : BackgroundService
                         HandlerMethod = eventHandlerMethod,
                         Attribute = eventSubscribeAttribute,
                         Pattern = CheckIsSetFuzzyMatch(eventSubscribeAttribute.FuzzyMatch) ? new Regex(eventSubscribeAttribute.EventId, RegexOptions.Singleline) : default,
-                        GCCollect = CheckIsSetGCCollect(eventSubscribeAttribute.GCCollect),
                         Order = eventSubscribeAttribute.Order
                     };
 
@@ -174,19 +173,9 @@ internal sealed class EventBusHostedService : BackgroundService
     private bool FuzzyMatch { get; }
 
     /// <summary>
-    /// 是否启用执行完成触发 GC 回收
-    /// </summary>
-    private bool GCCollect { get; }
-
-    /// <summary>
     /// 是否启用日志记录
     /// </summary>
     private bool LogEnabled { get; }
-
-    /// <summary>
-    /// 最近一次收集时间
-    /// </summary>
-    private DateTime? LastGCCollectTime { get; set; }
 
     /// <summary>
     /// 执行后台任务
@@ -383,14 +372,8 @@ internal sealed class EventBusHostedService : BackgroundService
                 await Monitor.OnExecutedAsync(eventHandlerExecutedContext);
             }
 
-            // 判断是否执行完成后调用 GC 回收
-            var nowTime = DateTime.UtcNow;
-            if (eventHandlerThatShouldRun.GCCollect && (LastGCCollectTime == null || (nowTime - LastGCCollectTime.Value).TotalSeconds > GC_COLLECT_INTERVAL_SECONDS))
-            {
-                LastGCCollectTime = nowTime;
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-            }
+            // GC 垃圾回收器回收处理
+            GCCollect();
         }
     }
 
@@ -415,7 +398,6 @@ internal sealed class EventBusHostedService : BackgroundService
                 HandlerMethod = subscribeOperateSource.HandlerMethod,
                 Handler = subscribeOperateSource.Handler,
                 Pattern = CheckIsSetFuzzyMatch(subscribeOperateSource.Attribute?.FuzzyMatch) ? new Regex(eventId, RegexOptions.Singleline) : default,
-                GCCollect = CheckIsSetGCCollect(subscribeOperateSource.Attribute?.GCCollect),
                 Order = subscribeOperateSource.Attribute?.Order ?? 0
             };
 
@@ -455,18 +437,6 @@ internal sealed class EventBusHostedService : BackgroundService
         return fuzzyMatch == null
             ? FuzzyMatch
             : Convert.ToBoolean(fuzzyMatch);
-    }
-
-    /// <summary>
-    /// 检查是否开启执行完成触发 GC 回收
-    /// </summary>
-    /// <param name="gcCollect"></param>
-    /// <returns></returns>
-    private bool CheckIsSetGCCollect(object gcCollect)
-    {
-        return gcCollect == null
-            ? GCCollect
-            : Convert.ToBoolean(gcCollect);
     }
 
     /// <summary>
@@ -525,5 +495,24 @@ internal sealed class EventBusHostedService : BackgroundService
             if (!task.IsCompleted) running.Add(task);
         }
         foreach (var t in running) _runningTasks.Add(t);
+    }
+
+    /// <summary>
+    /// GC 垃圾回收器回收处理
+    /// </summary>
+    /// <remarks>避免频繁 GC 回收</remarks>
+    private void GCCollect()
+    {
+        if (_lastGcStopwatch.Elapsed >= GC_INTERVAL)
+        {
+            _lastGcStopwatch.Restart();
+
+            // 通知 GC 垃圾回收器立即回收，使用 Task.Run 避免阻塞当前线程
+            Task.Run(() =>
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            });
+        }
     }
 }
