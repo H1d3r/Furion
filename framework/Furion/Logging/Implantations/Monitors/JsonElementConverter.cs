@@ -36,6 +36,24 @@ namespace Furion.Logging;
 public class JsonElementConverter : JsonConverter<System.Text.Json.JsonElement>
 {
     /// <summary>
+    /// 缓存 JsonSerializerOptions 实例
+    /// </summary>
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonSerializerOptions = new()
+    {
+        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    /// <summary>
+    /// 静态构造函数
+    /// </summary>
+    static JsonElementConverter()
+    {
+        _jsonSerializerOptions.Converters.Add(new SystemTextJsonLongToStringJsonConverter());
+        _jsonSerializerOptions.Converters.Add(new SystemTextJsonNullableLongToStringJsonConverter());
+    }
+
+    /// <summary>
     /// 反序列化
     /// </summary>
     /// <param name="reader"></param>
@@ -58,14 +76,6 @@ public class JsonElementConverter : JsonConverter<System.Text.Json.JsonElement>
     /// <param name="serializer"></param>
     public override void WriteJson(JsonWriter writer, System.Text.Json.JsonElement value, JsonSerializer serializer)
     {
-        var jsonSerializerOptions = new System.Text.Json.JsonSerializerOptions()
-        {
-            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        jsonSerializerOptions.Converters.Add(new SystemTextJsonLongToStringJsonConverter());
-        jsonSerializerOptions.Converters.Add(new SystemTextJsonNullableLongToStringJsonConverter());
-
-        serializer.Serialize(writer, System.Text.Json.JsonSerializer.Serialize(value, jsonSerializerOptions));
+        serializer.Serialize(writer, System.Text.Json.JsonSerializer.Serialize(value, _jsonSerializerOptions));
     }
 }

@@ -568,8 +568,10 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
                 httpContext.Request.Body.Position = 0;
 
                 // 读取原始内容
-                using var reader = new StreamReader(httpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
-                rawBody = await reader.ReadToEndAsync();
+                using (var reader = new StreamReader(httpContext.Request.Body, Encoding.UTF8, leaveOpen: true))
+                {
+                    rawBody = await reader.ReadToEndAsync();
+                }
 
                 templates.Add($"##原始数据## {rawBody}");
 
@@ -657,46 +659,7 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
 
         try
         {
-            var contractResolver = GetContractResolver(ContractResolver, monitorMethod);
-
-            // 序列化默认配置
-            var jsonSerializerSettings = new JsonSerializerSettings()
-            {
-                // 解决属性忽略问题
-                ContractResolver = contractResolver == ContractResolverTypes.CamelCase
-                ? new CamelCasePropertyNamesContractResolverWithIgnoreProperties(GetIgnorePropertyNames(monitorMethod), GetIgnorePropertyTypes(monitorMethod))
-                : new DefaultContractResolverWithIgnoreProperties(GetIgnorePropertyNames(monitorMethod), GetIgnorePropertyTypes(monitorMethod)),
-
-                // 解决循环引用问题
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-
-                // 解决 DateTimeOffset 序列化/反序列化问题
-                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-                DateParseHandling = DateParseHandling.None,
-            };
-
-            if (CheckIsSetLongTypeConverter(monitorMethod))
-            {
-                // 解决 long 精度问题
-                jsonSerializerSettings.Converters.AddLongTypeConverters();
-            }
-
-            // 解决 JsonElement 序列化问题
-            jsonSerializerSettings.Converters.Add(new JsonElementConverter());
-
-            // 解决粘土对象 序列化问题
-            jsonSerializerSettings.Converters.AddClayConverters();
-
-            // 解决 JsonObject 和 JsonArray 序列化问题
-            jsonSerializerSettings.Converters.Add(new NewtonsoftJsonJsonObjectJsonConverter());
-            jsonSerializerSettings.Converters.Add(new NewtonsoftJsonJsonArrayJsonConverter());
-
-            // 解决 DateTimeOffset 序列化/反序列化问题
-            if (obj is DateTimeOffset)
-            {
-                jsonSerializerSettings.Converters.Add(new IsoDateTimeConverter { DateTimeStyles = Globalization.DateTimeStyles.AssumeUniversal });
-            }
-
+            var jsonSerializerSettings = CreateSerializerSettings(monitorMethod, obj);
             var result = Newtonsoft.Json.JsonConvert.SerializeObject(obj, jsonSerializerSettings);
 
             succeed = true;
@@ -707,6 +670,55 @@ public sealed class LoggingMonitorAttribute : Attribute, IAsyncActionFilter, IAs
             succeed = true;
             return "{}";
         }
+    }
+
+    /// <summary>
+    /// 创建 JsonSerializerSettings 实例
+    /// </summary>
+    /// <param name="monitorMethod"></param>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    private JsonSerializerSettings CreateSerializerSettings(LoggingMonitorMethod monitorMethod, object obj)
+    {
+        // 序列化默认配置
+        var settings = new JsonSerializerSettings
+        {
+            // 解决属性忽略问题
+            ContractResolver = GetContractResolver(ContractResolver, monitorMethod) == ContractResolverTypes.CamelCase
+                ? new CamelCasePropertyNamesContractResolverWithIgnoreProperties(GetIgnorePropertyNames(monitorMethod), GetIgnorePropertyTypes(monitorMethod))
+                : new DefaultContractResolverWithIgnoreProperties(GetIgnorePropertyNames(monitorMethod), GetIgnorePropertyTypes(monitorMethod)),
+
+            // 解决循环引用问题
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+
+            // 解决 DateTimeOffset 序列化/反序列化问题
+            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            DateParseHandling = DateParseHandling.None,
+        };
+
+        if (CheckIsSetLongTypeConverter(monitorMethod))
+        {
+            // 解决 long 精度问题
+            settings.Converters.AddLongTypeConverters();
+        }
+
+        // 解决 JsonElement 序列化问题
+        settings.Converters.Add(new JsonElementConverter());
+
+        // 解决粘土对象 序列化问题
+        settings.Converters.AddClayConverters();
+
+        // 解决 JsonObject 和 JsonArray 序列化问题
+        settings.Converters.Add(new NewtonsoftJsonJsonObjectJsonConverter());
+        settings.Converters.Add(new NewtonsoftJsonJsonArrayJsonConverter());
+
+        // 解决 DateTimeOffset 序列化/反序列化问题
+        if (obj is DateTimeOffset)
+        {
+            settings.Converters.Add(new IsoDateTimeConverter { DateTimeStyles = Globalization.DateTimeStyles.AssumeUniversal });
+        }
+
+        return settings;
     }
 
     /// <summary>
