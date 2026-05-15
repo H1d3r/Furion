@@ -99,19 +99,15 @@ public class SystemTextJsonSerializerProvider : IJsonSerializerProvider
     /// <returns></returns>
     private JsonSerializerOptions GetJsonSerializerOptions(object jsonSerializerOptions = null)
     {
-        var jsonSerializerOptionsValue = (jsonSerializerOptions ?? GetSerializerOptions() ?? new JsonSerializerOptions()) as JsonSerializerOptions;
+        var source = (jsonSerializerOptions as JsonSerializerOptions)
+                      ?? GetSerializerOptions() as JsonSerializerOptions
+                      ?? new JsonSerializerOptions();
 
-#if !NET6_0 && !NET7_0
-        if (!jsonSerializerOptionsValue.IsReadOnly && !jsonSerializerOptionsValue.PropertyNameCaseInsensitive)
-        {
-            // 默认不区分大小写匹配
-            jsonSerializerOptionsValue.PropertyNameCaseInsensitive = true;
-        }
-#else
+        var optionsCopy = new JsonSerializerOptions(source);
+
         // 默认不区分大小写匹配
-        if (!jsonSerializerOptionsValue.PropertyNameCaseInsensitive) jsonSerializerOptionsValue.PropertyNameCaseInsensitive = true;
-#endif
+        optionsCopy.PropertyNameCaseInsensitive = true;
 
-        return jsonSerializerOptionsValue;
+        return optionsCopy;
     }
 }

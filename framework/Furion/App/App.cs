@@ -50,13 +50,6 @@ namespace Furion;
 public static class App
 {
     /// <summary>
-    /// GC 垃圾回收间隔
-    /// </summary>
-    /// <remarks>单位毫秒</remarks>
-    private static readonly TimeSpan GC_INTERVAL = TimeSpan.FromMilliseconds(10000);
-    private static Stopwatch _lastGcStopwatch = Stopwatch.StartNew();
-
-    /// <summary>
     /// 私有设置，避免重复解析
     /// </summary>
     internal static AppSettingsOptions _settings;
@@ -812,7 +805,7 @@ public static class App
         // 强制手动回收 GC 内存
         if (!UnmanagedObjects.IsEmpty)
         {
-            GCCollect();
+            InternalGCUtility.Collect();
         }
 
         UnmanagedObjects.Clear();
@@ -835,25 +828,6 @@ public static class App
         catch
         {
             return defaultValue ?? null;
-        }
-    }
-
-    /// <summary>
-    /// GC 垃圾回收器回收处理
-    /// </summary>
-    /// <remarks>避免频繁 GC 回收</remarks>
-    private static void GCCollect()
-    {
-        if (_lastGcStopwatch.Elapsed >= GC_INTERVAL)
-        {
-            _lastGcStopwatch.Restart();
-
-            // 通知 GC 垃圾回收器立即回收，使用 Task.Run 避免阻塞当前线程
-            Task.Run(() =>
-            {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-            });
         }
     }
 }

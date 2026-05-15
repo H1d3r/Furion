@@ -65,10 +65,6 @@ public static partial class Scoped
             // 执行方法
             await handler(scopeFactory, scoped);
         }
-        catch
-        {
-            throw;
-        }
         finally
         {
             // 释放

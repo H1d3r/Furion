@@ -45,5 +45,5 @@ public class GenerationOptions
     /// <summary>
     /// 设置短 ID 长度
     /// </summary>
-    public int Length { get; set; } = RandomHelpers.GenerateNumberInRange(Constants.MinimumAutoLength, Constants.MaximumAutoLength);
+    public int Length { get; set; } = Random.Shared.Next(Constants.MinimumAutoLength, Constants.MaximumAutoLength);
 }
