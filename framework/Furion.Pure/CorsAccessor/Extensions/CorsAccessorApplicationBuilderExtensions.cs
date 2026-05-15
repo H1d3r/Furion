@@ -25,6 +25,7 @@
 
 using Furion.CorsAccessor;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -45,6 +46,46 @@ public static class CorsAccessorApplicationBuilderExtensions
     {
         // 获取选项
         var corsAccessorSettings = app.ApplicationServices.GetService<IOptions<CorsAccessorSettingsOptions>>().Value;
+
+        // 解决 [DisableCors] 在预检请求中无效以及非预检请求缺少 CORS 响应头的问题
+        app.Use(async (context, next) =>
+        {
+            // 判断是否为预检请求
+            var isPreflight = HttpMethods.IsOptions(context.Request.Method)
+                              && context.Request.Headers.ContainsKey("Origin")
+                              && context.Request.Headers.ContainsKey("Access-Control-Request-Method");
+
+            var endpoint = context.GetEndpoint();
+            var hasDisableCors = endpoint?.Metadata.GetMetadata<IDisableCorsAttribute>() != null;
+
+            // 如果是预检请求则直接短路并返回允许跨域的响应
+            if (isPreflight)
+            {
+                if (hasDisableCors)
+                {
+                    context.Response.Headers.AccessControlAllowOrigin = context.Request.Headers["Origin"];
+                    context.Response.Headers.AccessControlAllowMethods = "*";
+                    context.Response.Headers.AccessControlAllowHeaders = "*";
+                    context.Response.Headers.AccessControlMaxAge = "86400";
+                    context.Response.StatusCode = StatusCodes.Status204NoContent;
+                    return;
+                }
+            }
+            // 如果是非预检请求且带有 [DisableCors] 且为跨域请求，则在响应发送前补上 CORS 头
+            else if (hasDisableCors && context.Request.Headers.ContainsKey("Origin"))
+            {
+                context.Response.OnStarting(() =>
+                {
+                    if (!context.Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
+                    {
+                        context.Response.Headers["Access-Control-Allow-Origin"] = context.Request.Headers["Origin"];
+                    }
+                    return Task.CompletedTask;
+                });
+            }
+
+            await next();
+        });
 
         // 判断是否启用 SignalR 跨域支持
         if (corsAccessorSettings.SignalRSupport == false)
