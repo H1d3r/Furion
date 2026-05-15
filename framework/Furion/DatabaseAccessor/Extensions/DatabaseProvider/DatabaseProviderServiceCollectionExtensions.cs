@@ -28,7 +28,6 @@ using Furion.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Query;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -240,15 +239,6 @@ public static class DatabaseProviderServiceCollectionExtensions
             {
                 dbContextOptionsBuilder = UseMethod
                     .Invoke(null, [options, connectionMetadata, MySqlVersion, MigrationsAssemblyAction]) as DbContextOptionsBuilder;
-            }
-            // 处理 SqlServer 2005-2008 兼容问题
-            else if (DbProvider.IsDatabaseFor(providerName, DbProvider.SqlServer) && (version == "2008" || version == "2005"))
-            {
-                // 替换工厂
-                dbContextOptionsBuilder.ReplaceService<IQueryTranslationPostprocessorFactory, SqlServer2008QueryTranslationPostprocessorFactory>();
-
-                dbContextOptionsBuilder = UseMethod
-                    .Invoke(null, [options, connectionMetadata, MigrationsAssemblyAction]) as DbContextOptionsBuilder;
             }
             // 处理 Oracle 11 兼容问题
             else if (DbProvider.IsDatabaseFor(providerName, DbProvider.Oracle) && !string.IsNullOrWhiteSpace(version))
