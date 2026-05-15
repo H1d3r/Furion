@@ -69,11 +69,6 @@ internal sealed class EventHandlerWrapper
     internal Regex Pattern { get; set; }
 
     /// <summary>
-    /// 是否启用执行完成触发 GC 回收
-    /// </summary>
-    public bool GCCollect { get; set; }
-
-    /// <summary>
     /// 排序
     /// </summary>
     /// <remarks>数值越大的先执行</remarks>

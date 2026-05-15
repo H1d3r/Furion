@@ -141,11 +141,6 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
     private bool PreloadCompleted { get; set; } = false;
 
     /// <summary>
-    /// GC 最近一次回收时间
-    /// </summary>
-    private DateTime? LastGCCollectTime { get; set; }
-
-    /// <summary>
     /// 作业调度器初始化
     /// </summary>
     /// <param name="stoppingToken">取消任务 Token</param>
