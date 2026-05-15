@@ -23,34 +23,50 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-namespace Furion.DistributedIDGenerator;
+using System.Diagnostics;
+
+namespace Furion;
 
 /// <summary>
-/// 随机数帮助类
+/// 内部 GC 回收工具类
 /// </summary>
-internal static class RandomHelpers
+internal static class InternalGCUtility
 {
     /// <summary>
-    /// 随机数对象
+    /// 默认冷却时间
     /// </summary>
-    private static readonly Random Random = new();
+    internal static TimeSpan CollectInterval = TimeSpan.FromSeconds(10);
+
+    private static readonly object _gcLock = new object();
+    private static Stopwatch _lastCollectStopwatch = Stopwatch.StartNew();
 
     /// <summary>
-    /// 线程锁
+    /// 执行一次全代强制垃圾回收
     /// </summary>
-    private static readonly object ThreadLock = new();
-
-    /// <summary>
-    /// 生成线程安全的范围内随机数
-    /// </summary>
-    /// <param name="min"></param>
-    /// <param name="max"></param>
-    /// <returns></returns>
-    public static int GenerateNumberInRange(int min, int max)
+    internal static void Collect()
     {
-        lock (ThreadLock)
+        // 频率控制
+        if (_lastCollectStopwatch.Elapsed < CollectInterval) return;
+
+
+        lock (_gcLock)
         {
-            return Random.Next(min, max);
+            if (_lastCollectStopwatch.Elapsed < CollectInterval) return;
+
+            _lastCollectStopwatch.Restart();
+
+            try
+            {
+                // 强制回收所有代，并等待当前线程完成
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true);
+                GC.WaitForPendingFinalizers();
+
+                // 回收终结器释放的对象
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true);
+            }
+            catch
+            {
+            }
         }
     }
 }

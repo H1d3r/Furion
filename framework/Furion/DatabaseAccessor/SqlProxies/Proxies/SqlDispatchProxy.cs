@@ -49,9 +49,9 @@ public class SqlDispatchProxy : AspectDispatchProxy, IDispatchProxy
     public IServiceProvider Services { get; set; }
 
     /// <summary>
-    /// 数据库上下文定位器类型
+    /// 当前异步上下文中的数据库上下文定位器
     /// </summary>
-    private Type DbContextLocator { get; set; }
+    private static readonly AsyncLocal<Type> _currentDbLocator = new();
 
     /// <summary>
     /// 拦截同步方法
@@ -64,14 +64,14 @@ public class SqlDispatchProxy : AspectDispatchProxy, IDispatchProxy
         // 切换数据库上下文
         if (method.IsGenericMethod && method.Name == nameof(ISqlDispatchProxy.Change) && method.ReturnType == typeof(void))
         {
-            DbContextLocator = method.GetGenericArguments().First();
+            _currentDbLocator.Value = method.GetGenericArguments().First();
             return default;
         }
 
         // 重置数据库上下文定位器
         if (method.Name == nameof(ISqlDispatchProxy.ResetIt) && method.ReturnType == typeof(void))
         {
-            DbContextLocator = default;
+            _currentDbLocator.Value = default;
             return default;
         }
 
@@ -88,6 +88,20 @@ public class SqlDispatchProxy : AspectDispatchProxy, IDispatchProxy
     /// <returns></returns>
     public async override Task InvokeAsync(MethodInfo method, object[] args)
     {
+        // 切换数据库上下文
+        if (method.IsGenericMethod && method.Name == nameof(ISqlDispatchProxy.Change) && method.ReturnType == typeof(void))
+        {
+            _currentDbLocator.Value = method.GetGenericArguments().First();
+            return;
+        }
+
+        // 重置数据库上下文定位器
+        if (method.Name == nameof(ISqlDispatchProxy.ResetIt) && method.ReturnType == typeof(void))
+        {
+            _currentDbLocator.Value = default;
+            return;
+        }
+
         // 获取 Sql 代理方法信息
         var sqlProxyMethod = GetProxyMethod(method, args);
         await ExecuteSqlAsync(sqlProxyMethod);
@@ -102,6 +116,20 @@ public class SqlDispatchProxy : AspectDispatchProxy, IDispatchProxy
     /// <returns></returns>
     public async override Task<T> InvokeAsyncT<T>(MethodInfo method, object[] args)
     {
+        // 切换数据库上下文
+        if (method.IsGenericMethod && method.Name == nameof(ISqlDispatchProxy.Change) && method.ReturnType == typeof(void))
+        {
+            _currentDbLocator.Value = method.GetGenericArguments().First();
+            return default;
+        }
+
+        // 重置数据库上下文定位器
+        if (method.Name == nameof(ISqlDispatchProxy.ResetIt) && method.ReturnType == typeof(void))
+        {
+            _currentDbLocator.Value = default;
+            return default;
+        }
+
         // 获取 Sql 代理方法信息
         var sqlProxyMethod = GetProxyMethod(method, args);
         return await ExecuteSqlOfTAsync<T>(sqlProxyMethod);
@@ -464,7 +492,7 @@ public class SqlDispatchProxy : AspectDispatchProxy, IDispatchProxy
     private DbContext GetDbContext(MethodInfo method)
     {
         // 解析数据库上下文定位器
-        var dbContextLocator = DbContextLocator
+        var dbContextLocator = _currentDbLocator.Value
             ?? method.GetFoundAttribute<SqlDbContextLocatorAttribute>(true)?.Locator
             ?? typeof(MasterDbContextLocator);
 

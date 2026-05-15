@@ -61,7 +61,12 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
     /// <summary>
     /// 模板正则表达式
     /// </summary>
-    private const string commonTemplatePattern = @"\{(?<p>.+?)\}";
+    private static readonly Regex _commonTemplateRegex = new Regex(@"\{(?<p>.+?)\}", RegexOptions.Compiled);
+
+    /// <summary>
+    /// 花括号内容匹配正则
+    /// </summary>
+    private static readonly Regex _bracesRegex = new Regex(@"\{.*?\}", RegexOptions.Compiled);
 
     /// <summary>
     /// 构造函数
@@ -72,7 +77,7 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
         _services = services;
         _dynamicApiControllerSettings = App.GetConfig<DynamicApiControllerSettingsOptions>("DynamicApiControllerSettings", true);
         LoadVerbToHttpMethodsConfigure();
-        _nameVersionRegex = new Regex(@"V(?<version>[0-9_]+$)");
+        _nameVersionRegex = new Regex(@"V(?<version>[0-9_]+$)", RegexOptions.Compiled);
     }
 
     /// <summary>
@@ -206,7 +211,7 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
     /// 强制处理了 ForceWithDefaultPrefix 的控制器
     /// </summary>
     /// <remarks>避免路由无限追加</remarks>
-    private ConcurrentBag<Type> ForceWithDefaultPrefixRouteControllerTypes { get; } = [];
+    private static readonly ConcurrentDictionary<Type, byte> ForceWithDefaultPrefixRouteControllerTypes = new();
 
     /// <summary>
     /// 配置控制器路由特性
@@ -220,16 +225,18 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
         if (CheckIsForceWithDefaultRoute(controllerApiDescriptionSettings)
             && !string.IsNullOrWhiteSpace(_dynamicApiControllerSettings.DefaultRoutePrefix)
             && controller.Selectors[0] != null
-            && controller.Selectors[0].AttributeRouteModel != null
-            && !ForceWithDefaultPrefixRouteControllerTypes.Contains(controller.ControllerType))
+            && controller.Selectors[0].AttributeRouteModel != null)
         {
-            // 读取模块
-            var module = controllerApiDescriptionSettings?.Module ?? _dynamicApiControllerSettings.DefaultModule;
-            var template = $"{_dynamicApiControllerSettings.DefaultRoutePrefix}/{module}";
+            if (ForceWithDefaultPrefixRouteControllerTypes.TryAdd(controller.ControllerType, 0))
+            {
+                // 读取模块
+                var module = controllerApiDescriptionSettings?.Module ?? _dynamicApiControllerSettings.DefaultModule;
+                var template = $"{_dynamicApiControllerSettings.DefaultRoutePrefix}/{module}";
 
-            controller.Selectors[0].AttributeRouteModel = AttributeRouteModel.CombineAttributeRouteModel(new AttributeRouteModel(new RouteAttribute(isLowercaseRoute ? template?.ToLower() : template))
-                , controller.Selectors[0].AttributeRouteModel);
-            ForceWithDefaultPrefixRouteControllerTypes.Add(controller.ControllerType);
+                controller.Selectors[0].AttributeRouteModel = AttributeRouteModel.CombineAttributeRouteModel(
+                    new AttributeRouteModel(new RouteAttribute(isLowercaseRoute ? template?.ToLower() : template)),
+                    controller.Selectors[0].AttributeRouteModel);
+            }
         }
     }
 
@@ -947,14 +954,14 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
         foreach (var part in paths)
         {
             // 不包含 {} 模板的直接添加
-            if (!Regex.IsMatch(part, commonTemplatePattern))
+            if (!_commonTemplateRegex.IsMatch(part))
             {
                 routeParts.Add(part);
                 continue;
             }
             else
             {
-                var templates = Regex.Matches(part, commonTemplatePattern).Select(t => t.Value);
+                var templates = _commonTemplateRegex.Matches(part).Select(t => t.Value);
                 foreach (var temp in templates)
                 {
                     // 处理带路由约束的路由参数模板 https://gitee.com/zuohuaijun/Admin.NET/issues/I736XJ
@@ -990,11 +997,8 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
         // 将整个字符串转为小写
         var lowerCaseInput = input.ToLower();
 
-        // 匹配花括号内的内容
-        var regex = new Regex(@"\{.*?\}");
-
-        // 找到花括号内容并替换回原始大写形式
-        var matches = regex.Matches(input);
+        // 匹配花括号内的内容并替换回原始大写形式
+        var matches = _bracesRegex.Matches(input);
         foreach (Match match in matches)
         {
             var startIndex = match.Index;

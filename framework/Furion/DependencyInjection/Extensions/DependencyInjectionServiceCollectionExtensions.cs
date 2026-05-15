@@ -256,20 +256,18 @@ public static class DependencyInjectionServiceCollectionExtensions
     private static void RegisterNamedService<TDependency>(IServiceCollection services)
         where TDependency : IPrivateDependency
     {
-        var lifetime = TryGetServiceLifetime(typeof(TDependency));
-
         // 注册命名服务
         services.Add(ServiceDescriptor.Describe(typeof(Func<string, TDependency, object>), provider =>
         {
             object ResolveService(string named, TDependency _)
             {
                 var isRegister = TypeNamedCollection.TryGetValue(named, out var serviceType);
+                if (!isRegister) return null;
 
-                // 暂不支持 AOP
-                return isRegister ? provider.GetService(serviceType) : null;
+                return provider.GetService(serviceType);
             }
             return (Func<string, TDependency, object>)ResolveService;
-        }, lifetime));
+        }, ServiceLifetime.Transient));
     }
 
     /// <summary>

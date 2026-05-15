@@ -28,7 +28,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Logging;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -41,13 +40,6 @@ namespace Furion.EventBus;
 /// </summary>
 internal sealed class EventBusHostedService : BackgroundService
 {
-    /// <summary>
-    /// GC 垃圾回收间隔
-    /// </summary>
-    /// <remarks>单位毫秒</remarks>
-    private static readonly TimeSpan GC_INTERVAL = TimeSpan.FromMilliseconds(10000);
-    private static Stopwatch _lastGcStopwatch = Stopwatch.StartNew();
-
     /// <summary>
     /// 避免由 CLR 的终结器捕获该异常从而终止应用程序，让所有未觉察异常被觉察
     /// </summary>
@@ -371,9 +363,6 @@ internal sealed class EventBusHostedService : BackgroundService
 
                 await Monitor.OnExecutedAsync(eventHandlerExecutedContext);
             }
-
-            // GC 垃圾回收器回收处理
-            GCCollect();
         }
     }
 
@@ -495,24 +484,5 @@ internal sealed class EventBusHostedService : BackgroundService
             if (!task.IsCompleted) running.Add(task);
         }
         foreach (var t in running) _runningTasks.Add(t);
-    }
-
-    /// <summary>
-    /// GC 垃圾回收器回收处理
-    /// </summary>
-    /// <remarks>避免频繁 GC 回收</remarks>
-    private void GCCollect()
-    {
-        if (_lastGcStopwatch.Elapsed >= GC_INTERVAL)
-        {
-            _lastGcStopwatch.Restart();
-
-            // 通知 GC 垃圾回收器立即回收，使用 Task.Run 避免阻塞当前线程
-            Task.Run(() =>
-            {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-            });
-        }
     }
 }

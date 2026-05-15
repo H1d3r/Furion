@@ -162,49 +162,57 @@ public static class SpecificationDocumentBuilder
     /// <returns></returns>
     public static SpecificationOpenApiInfo GetGroupOpenApiInfo(string group)
     {
-        return GetGroupOpenApiInfoCached.GetOrAdd(group, Function);
+        var groupInfo = GetGroupOpenApiInfoCached.GetOrAdd(group, CreateBaseGroupOpenApiInfo);
+        ApplyExternalConfig(groupInfo, group);
+        return groupInfo;
+    }
 
-        // 本地函数
-        static SpecificationOpenApiInfo Function(string group)
+    /// <summary>
+    /// 创建基础的分组信息
+    /// </summary>
+    private static SpecificationOpenApiInfo CreateBaseGroupOpenApiInfo(string group)
+    {
+        // 替换路由模板
+        var routeTemplate = _specificationDocumentSettings.RouteTemplate.Replace("{documentName}", Uri.EscapeDataString(group));
+        if (!string.IsNullOrWhiteSpace(_specificationDocumentSettings.ServerDir))
         {
-            // 替换路由模板
-            var routeTemplate = _specificationDocumentSettings.RouteTemplate.Replace("{documentName}", Uri.EscapeDataString(group));
-            if (!string.IsNullOrWhiteSpace(_specificationDocumentSettings.ServerDir))
-            {
-                routeTemplate = _specificationDocumentSettings.ServerDir + "/" + routeTemplate;
-            }
-
-            // 处理虚拟目录问题
-            var template = $"{_appSettings.VirtualPath}/{routeTemplate}";
-
-            var groupInfo = _specificationDocumentSettings.GroupOpenApiInfos.FirstOrDefault(u => u.Group == group);
-            if (groupInfo != null)
-            {
-                groupInfo.RouteTemplate = template;
-                groupInfo.Title ??= group;
-            }
-            else
-            {
-                groupInfo = new SpecificationOpenApiInfo { Group = group, RouteTemplate = template };
-            }
-
-            // 处理外部定义
-            var groupKey = "[openapi:{0}]";
-            if (App.Configuration.Exists(string.Format(groupKey, group)))
-            {
-                SetProperty<int>(group, nameof(SpecificationOpenApiInfo.Order), value => groupInfo.Order = value);
-                SetProperty<bool>(group, nameof(SpecificationOpenApiInfo.Visible), value => groupInfo.Visible = value);
-                SetProperty<string>(group, nameof(SpecificationOpenApiInfo.RouteTemplate), value => groupInfo.RouteTemplate = value);
-                SetProperty<string>(group, nameof(SpecificationOpenApiInfo.Title), value => groupInfo.Title = value);
-                SetProperty<string>(group, nameof(SpecificationOpenApiInfo.Description), value => groupInfo.Description = value);
-                SetProperty<string>(group, nameof(SpecificationOpenApiInfo.Version), value => groupInfo.Version = value);
-                SetProperty<Uri>(group, nameof(SpecificationOpenApiInfo.TermsOfService), value => groupInfo.TermsOfService = value);
-                SetProperty<OpenApiContact>(group, nameof(SpecificationOpenApiInfo.Contact), value => groupInfo.Contact = value);
-                SetProperty<OpenApiLicense>(group, nameof(SpecificationOpenApiInfo.License), value => groupInfo.License = value);
-            }
-
-            return groupInfo;
+            routeTemplate = _specificationDocumentSettings.ServerDir + "/" + routeTemplate;
         }
+
+        // 处理虚拟目录问题
+        var template = $"{_appSettings.VirtualPath}/{routeTemplate}";
+
+        var groupInfo = _specificationDocumentSettings.GroupOpenApiInfos.FirstOrDefault(u => u.Group == group);
+        if (groupInfo != null)
+        {
+            groupInfo.RouteTemplate = template;
+            groupInfo.Title ??= group;
+        }
+        else
+        {
+            groupInfo = new SpecificationOpenApiInfo { Group = group, RouteTemplate = template };
+        }
+
+        return groupInfo;
+    }
+
+    /// <summary>
+    /// 应用外部配置（appsettings.json 的 [openapi:{group}] 节点）
+    /// </summary>
+    private static void ApplyExternalConfig(SpecificationOpenApiInfo groupInfo, string group)
+    {
+        var groupKey = string.Format("[openapi:{0}]", group);
+        if (!App.Configuration.Exists(groupKey)) return;
+
+        SetProperty<int>(group, nameof(SpecificationOpenApiInfo.Order), value => groupInfo.Order = value);
+        SetProperty<bool>(group, nameof(SpecificationOpenApiInfo.Visible), value => groupInfo.Visible = value);
+        SetProperty<string>(group, nameof(SpecificationOpenApiInfo.RouteTemplate), value => groupInfo.RouteTemplate = value);
+        SetProperty<string>(group, nameof(SpecificationOpenApiInfo.Title), value => groupInfo.Title = value);
+        SetProperty<string>(group, nameof(SpecificationOpenApiInfo.Description), value => groupInfo.Description = value);
+        SetProperty<string>(group, nameof(SpecificationOpenApiInfo.Version), value => groupInfo.Version = value);
+        SetProperty<Uri>(group, nameof(SpecificationOpenApiInfo.TermsOfService), value => groupInfo.TermsOfService = value);
+        SetProperty<OpenApiContact>(group, nameof(SpecificationOpenApiInfo.Contact), value => groupInfo.Contact = value);
+        SetProperty<OpenApiLicense>(group, nameof(SpecificationOpenApiInfo.License), value => groupInfo.License = value);
     }
 
     /// <summary>

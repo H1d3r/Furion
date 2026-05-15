@@ -44,6 +44,11 @@ internal class DynamicApiRuntimeChangeProvider : IDynamicApiRuntimeChangeProvide
     private readonly MvcActionDescriptorChangeProvider _mvcActionDescriptorChangeProvider;
 
     /// <summary>
+    /// 线程同步锁
+    /// </summary>
+    private readonly object _lock = new object();
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="applicationPartManager">应用程序部件管理器</param>
@@ -63,9 +68,12 @@ internal class DynamicApiRuntimeChangeProvider : IDynamicApiRuntimeChangeProvide
     {
         if (assemblies != null && assemblies.Length > 0)
         {
-            foreach (var assembly in assemblies)
+            lock (_lock)
             {
-                _applicationPartManager.ApplicationParts.Add(new AssemblyPart(assembly));
+                foreach (var assembly in assemblies)
+                {
+                    _applicationPartManager.ApplicationParts.Add(new AssemblyPart(assembly));
+                }
             }
         }
     }
@@ -91,14 +99,14 @@ internal class DynamicApiRuntimeChangeProvider : IDynamicApiRuntimeChangeProvide
     {
         if (assemblyNames != null && assemblyNames.Length > 0)
         {
-            foreach (var assemblyName in assemblyNames)
+            lock (_lock)
             {
-                var applicationPart = _applicationPartManager.ApplicationParts.FirstOrDefault(p => p.Name == assemblyName);
-                if (applicationPart != null) _applicationPartManager.ApplicationParts.Remove(applicationPart);
+                foreach (var assemblyName in assemblyNames)
+                {
+                    var applicationPart = _applicationPartManager.ApplicationParts.FirstOrDefault(p => p.Name == assemblyName);
+                    if (applicationPart != null) _applicationPartManager.ApplicationParts.Remove(applicationPart);
+                }
             }
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
         }
     }
 

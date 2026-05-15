@@ -104,26 +104,51 @@ public static class Native
         // 创建窗口实例
         var windowInstance = Activator.CreateInstance(windowType, ctorParameters.Concat(parameters).ToArray());
 
-        // 获取 Owner 属性并绑定关闭事件
-        var ownerProperty = windowType.GetProperty("Owner", BindingFlags.Instance | BindingFlags.Public);
-        if (ownerProperty != null
-            && (ownerProperty.PropertyType.FullName.StartsWith("System.Windows.Forms.Form")
-                || ownerProperty.PropertyType.FullName.StartsWith("System.Windows.Window")))
-        {
-            var propertyType = ownerProperty.PropertyType;
-
-            // 监听窗口关闭事件
-            void ClosedHandler(object s, EventArgs e)
-            {
-                // 释放作用域
-                serviceScope.Dispose();
-            }
-
-            var closedEventInfo = windowType.GetEvent("Closed", BindingFlags.Instance | BindingFlags.Public);
-            closedEventInfo.AddEventHandler(windowInstance, new EventHandler((Action<object, EventArgs>)ClosedHandler));
-        }
+        // 确保作用域在窗口关闭时释放
+        AttachScopeDisposeOnClose(windowInstance, serviceScope);
 
         return windowInstance;
+    }
+
+    /// <summary>
+    /// 在窗口关闭时释放服务作用域
+    /// </summary>
+    private static void AttachScopeDisposeOnClose(object window, IDisposable scope)
+    {
+        // 查找可用的关闭事件（WinForms FormClosed 或 WPF Closed）
+        EventInfo closeEvent = null;
+        string eventName = null;
+
+        var type = window.GetType();
+
+        // 尝试 WinForms FormClosed 事件
+        closeEvent = type.GetEvent("FormClosed", BindingFlags.Instance | BindingFlags.Public);
+        if (closeEvent != null) eventName = "FormClosed";
+
+        // 尝试 WPF Closed 事件
+        if (closeEvent == null)
+        {
+            closeEvent = type.GetEvent("Closed", BindingFlags.Instance | BindingFlags.Public);
+            if (closeEvent != null) eventName = "Closed";
+        }
+
+        if (closeEvent != null)
+        {
+            // 创建事件处理程序（只需释放作用域）
+            EventHandler handler = null;
+            handler = (s, e) =>
+            {
+                scope.Dispose();
+                closeEvent.RemoveEventHandler(window, handler);
+            };
+
+            closeEvent.AddEventHandler(window, handler);
+        }
+        else
+        {
+            // 无法找到关闭事件，立即释放作用域
+            scope.Dispose();
+        }
     }
 
     /// <summary>
