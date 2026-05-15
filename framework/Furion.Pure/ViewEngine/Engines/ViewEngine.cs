@@ -27,6 +27,7 @@ using Furion.DataEncryption;
 using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Concurrent;
 using System.Text;
 
@@ -45,12 +46,10 @@ public class ViewEngine : IViewEngine
     /// <summary>
     /// 编译结果缓存
     /// </summary>
-    private static readonly ConcurrentDictionary<string, byte[]> _compilationCache = new();
-
-    /// <summary>
-    /// 缓存最大条目数
-    /// </summary>
-    private const int MaxCacheSize = 500;
+    private static readonly MemoryCache _compilationCache = new(new MemoryCacheOptions
+    {
+        SizeLimit = 500 // 缓存最大条目数
+    });
 
     /// <summary>
     /// 缓存是否启用
@@ -294,7 +293,7 @@ public class ViewEngine : IViewEngine
         var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
 
         MemoryStream memoryStream;
-        if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out var cachedBytes))
+        if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out byte[] cachedBytes))
         {
             memoryStream = new MemoryStream(cachedBytes, writable: false);
         }
@@ -305,11 +304,11 @@ public class ViewEngine : IViewEngine
             // 缓存编译结果
             if (_enableCache && !string.IsNullOrEmpty(cacheKey))
             {
-                // 超过阈值清空旧缓存
-                if (_compilationCache.Count >= MaxCacheSize)
-                    _compilationCache.Clear();
-
-                _compilationCache[cacheKey] = memoryStream.ToArray();
+                _compilationCache.Set(cacheKey, memoryStream.ToArray(), new MemoryCacheEntryOptions
+                {
+                    Size = 1,
+                    SlidingExpiration = TimeSpan.FromHours(1)
+                });
             }
         }
 
@@ -348,7 +347,7 @@ public class ViewEngine : IViewEngine
         var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
 
         MemoryStream memoryStream;
-        if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out var cachedBytes))
+        if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out byte[] cachedBytes))
         {
             memoryStream = new MemoryStream(cachedBytes, writable: false);
         }
@@ -359,11 +358,11 @@ public class ViewEngine : IViewEngine
             // 缓存编译结果
             if (_enableCache && !string.IsNullOrEmpty(cacheKey))
             {
-                // 超过阈值清空旧缓存
-                if (_compilationCache.Count >= MaxCacheSize)
-                    _compilationCache.Clear();
-
-                _compilationCache[cacheKey] = memoryStream.ToArray();
+                _compilationCache.Set(cacheKey, memoryStream.ToArray(), new MemoryCacheEntryOptions
+                {
+                    Size = 1,
+                    SlidingExpiration = TimeSpan.FromHours(1)
+                });
             }
         }
 
