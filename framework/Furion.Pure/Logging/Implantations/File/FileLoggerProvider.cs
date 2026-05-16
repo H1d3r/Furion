@@ -198,18 +198,25 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
         // 持续读取通道中的消息，直到通道关闭
         while (await _logMessageChannel.Reader.WaitToReadAsync())
         {
+            // 读取一批消息（最多 100 条）
             var batch = new List<LogMessage>(100);
             while (_logMessageChannel.Reader.TryRead(out var logMsg) && batch.Count < 100)
             {
                 batch.Add(logMsg);
             }
 
+            // 如果本次没有读取到任何消息
+            if (batch.Count == 0) continue;
+
+            // 判断通道中是否还有更多消息
             var hasMore = _logMessageChannel.Reader.Count > 0;
+
             for (var i = 0; i < batch.Count; i++)
             {
                 var item = batch[i];
                 try
                 {
+                    // 调用文件日志写入器的写入方法
                     await _fileLoggingWriter.WriteAsync(item, !hasMore && i == batch.Count - 1);
                 }
                 finally
