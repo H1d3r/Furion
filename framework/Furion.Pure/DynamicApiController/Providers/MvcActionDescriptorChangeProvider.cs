@@ -62,5 +62,6 @@ public class MvcActionDescriptorChangeProvider : IActionDescriptorChangeProvider
         var oldCancellationTokenSource = Interlocked.Exchange(ref _cancellationTokenSource, new CancellationTokenSource());
         _stoppingToken = new CancellationChangeToken(_cancellationTokenSource.Token);
         oldCancellationTokenSource.Cancel();
+        oldCancellationTokenSource.Dispose();
     }
 }
