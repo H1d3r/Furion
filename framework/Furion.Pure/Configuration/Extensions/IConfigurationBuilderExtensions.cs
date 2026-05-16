@@ -221,9 +221,9 @@ public static class IConfigurationBuilderExtensions
         , ref bool value)
     {
         // 只有包含该参数才改变值
-        if (parameters.ContainsKey(parameterName))
+        if (parameters.TryGetValue(parameterName, out var value1))
         {
-            value = parameters[parameterName];
+            value = value1;
         }
     }
 }
