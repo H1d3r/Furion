@@ -36,10 +36,11 @@ public static class MessageCenter
     /// 发布一条消息
     /// </summary>
     /// <param name="eventSource">事件源</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    public static Task PublishAsync(IEventSource eventSource)
+    public static Task PublishAsync(IEventSource eventSource, CancellationToken cancellationToken = default)
     {
-        return GetEventPublisher().PublishAsync(eventSource);
+        return GetEventPublisher().PublishAsync(eventSource, cancellationToken);
     }
 
     /// <summary>
@@ -47,10 +48,11 @@ public static class MessageCenter
     /// </summary>
     /// <param name="eventSource">事件源</param>
     /// <param name="delay">延迟数（毫秒）</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    public static Task PublishDelayAsync(IEventSource eventSource, long delay)
+    public static Task PublishDelayAsync(IEventSource eventSource, long delay, CancellationToken cancellationToken = default)
     {
-        return GetEventPublisher().PublishDelayAsync(eventSource, delay);
+        return GetEventPublisher().PublishDelayAsync(eventSource, delay, cancellationToken);
     }
 
     /// <summary>
