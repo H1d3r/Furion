@@ -123,7 +123,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
         var cancellationToken = linkedCts.Token;
 
         // 启动一个独立的任务来处理同步队列中的任务
-        var serialQueueTask = Task.Run(async () => await ProcessQueueAsync(cancellationToken), cancellationToken);
+        var serialQueueTask = Task.Factory.StartNew(() => ProcessQueueAsync(cancellationToken), cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
 
         try
         {
