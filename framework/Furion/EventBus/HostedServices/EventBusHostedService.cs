@@ -528,12 +528,15 @@ internal sealed class EventBusHostedService : BackgroundService
     /// <returns><see cref="Task"/></returns>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        Log(LogLevel.Information, "EventBus hosted service is stopping, waiting for running event handlers to complete...");
+        Log(LogLevel.Information, "EventBus hosted service is stopping...");
 
         // 等待正在运行的事件处理程序完成
         if (!_runningTasks.IsEmpty)
         {
             var tasks = _runningTasks.ToArray();
+            Log(LogLevel.Information, "Waiting for {Count} running event handlers to complete before shutdown...", [tasks.Length]);
+
+            // 最多等待 1.5 秒
             var timeoutTask = Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken);
             var whenAllTask = Task.WhenAll(tasks);
 

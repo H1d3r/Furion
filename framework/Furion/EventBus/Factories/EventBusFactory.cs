@@ -85,6 +85,6 @@ internal class EventBusFactory : IEventBusFactory
         {
             SubscribeEventId = eventId,
             Operate = EventSubscribeOperates.Remove
-        }, default);
+        }, cancellationToken);
     }
 }

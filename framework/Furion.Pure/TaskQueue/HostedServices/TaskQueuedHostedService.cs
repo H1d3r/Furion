@@ -73,7 +73,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
     private readonly int _retryTimeout;
 
     /// <summary>
-    /// 追踪当前正在运行的任务
+    /// 追踪当前正在运行的并行任务
     /// </summary>
     private readonly ConcurrentBag<Task> _runningTasks = [];
 
@@ -180,7 +180,9 @@ internal sealed class TaskQueueHostedService : BackgroundService
             // 添加待执行的任务程序
             var task = DequeueHandleAsync(taskWrapper, stoppingToken);
             _runningTasks.Add(task);
-            _ = task;
+
+            // 任务完成后自动从集合中移除
+            _ = task.ContinueWith(t => _runningTasks.TryTake(out _), TaskContinuationOptions.ExecuteSynchronously);
         }
         else
         {
@@ -195,9 +197,6 @@ internal sealed class TaskQueueHostedService : BackgroundService
                 catch { }
             }
         }
-
-        // 清理已完成的任务引用
-        CleanCompletedTasks();
     }
 
     /// <summary>
@@ -282,16 +281,26 @@ internal sealed class TaskQueueHostedService : BackgroundService
     /// <returns><see cref="Task"/></returns>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        // 等待正在运行的任务完成
+        _logger.LogInformation("TaskQueue hosted service is stopping...");
+
+        // 等待正在运行的并行任务完成
         if (!_runningTasks.IsEmpty)
         {
-            _logger.LogInformation("Waiting for {Count} running tasks to complete before shutdown...", _runningTasks.Count);
+            var tasks = _runningTasks.ToArray();
+            _logger.LogInformation("Waiting for {Count} running tasks to complete before shutdown...", tasks.Length);
 
             // 最多等待 1.5 秒
-            var completedTask = await Task.WhenAny(Task.WhenAll(_runningTasks), Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken));
-            if (completedTask != Task.WhenAll(_runningTasks))
+            var timeoutTask = Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken);
+            var whenAllTask = Task.WhenAll(tasks);
+
+            var completedTask = await Task.WhenAny(whenAllTask, timeoutTask);
+            if (completedTask == timeoutTask)
             {
                 _logger.LogWarning("Shutdown timeout reached. Some tasks may be terminated abruptly.");
+            }
+            else
+            {
+                _logger.LogInformation("All running tasks completed.");
             }
         }
 
@@ -305,18 +314,5 @@ internal sealed class TaskQueueHostedService : BackgroundService
 
         // 标记同步任务队列停止写入
         _syncTaskWrapperQueue.CompleteAdding();
-    }
-
-    /// <summary>
-    /// 清理已完成的任务引用
-    /// </summary>
-    private void CleanCompletedTasks()
-    {
-        var running = new List<Task>();
-        while (_runningTasks.TryTake(out var task))
-        {
-            if (!task.IsCompleted) running.Add(task);
-        }
-        foreach (var t in running) _runningTasks.Add(t);
     }
 }
