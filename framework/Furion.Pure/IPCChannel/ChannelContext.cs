@@ -95,15 +95,15 @@ public sealed class ChannelContext<TMessage, THandler>
         var reader = channel.Reader;
 
         // 创建长时间线程管道读取器
-        _ = Task.Factory.StartNew(async () =>
-          {
-              while (await reader.WaitToReadAsync())
-              {
-                  if (!reader.TryRead(out var message)) continue;
+        Task.Factory.StartNew(async () =>
+        {
+            while (await reader.WaitToReadAsync())
+            {
+                if (!reader.TryRead(out var message)) continue;
 
-                  // 并行执行（非等待）
-                  await Retry.InvokeAsync(async () => await Activator.CreateInstance<THandler>().InvokeAsync(message), 3, 1000, finalThrow: false);
-              }
-          }, TaskCreationOptions.LongRunning).Unwrap();
+                // 并行执行（非等待）
+                await Retry.InvokeAsync(async () => await Activator.CreateInstance<THandler>().InvokeAsync(message), 3, 1000, finalThrow: false);
+            }
+        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
     }
 }
