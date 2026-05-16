@@ -426,8 +426,29 @@ internal class FileLoggingWriter
             }
         }
 
-        // 使用 AppendAllTextAsync，每次写入独立打开/关闭文件，避免文件占用问题
-        await File.AppendAllTextAsync(_fileName, message + Environment.NewLine, _utf8Encoding);
+        try
+        {
+            // 每次写入独立打开/关闭文件，避免文件占用问题
+            using var fileStream = new FileStream(
+                _fileName,
+                FileMode.Append,
+                FileAccess.Write,
+                FileShare.ReadWrite | FileShare.Delete,
+                4096,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+
+            var bytes = _utf8Encoding.GetBytes(message + Environment.NewLine);
+            await fileStream.WriteAsync(bytes);
+            await fileStream.FlushAsync();
+        }
+        catch (Exception ex)
+        {
+            if (_options.HandleWriteError != null)
+            {
+                var fileWriteError = new FileWriteError(_fileName, ex);
+                _options.HandleWriteError(fileWriteError);
+            }
+        }
     }
 
     /// <summary>

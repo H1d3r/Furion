@@ -27,6 +27,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Concurrent;
+using System.Threading.Channels;
 
 namespace Furion.Logging;
 
@@ -45,7 +46,7 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
     /// <summary>
     /// 日志消息队列（线程安全）
     /// </summary>
-    private readonly BlockingCollection<LogMessage> _logMessageQueue = new(12000);
+    private readonly Channel<LogMessage> _logMessageChannel;
 
     /// <summary>
     /// 日志作用域提供器
@@ -111,9 +112,16 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
             }
         });
 
+        _logMessageChannel = Channel.CreateBounded<LogMessage>(new BoundedChannelOptions(12000)
+        {
+            FullMode = BoundedChannelFullMode.DropWrite,
+            SingleReader = true,
+            SingleWriter = false
+        });
+
         // 创建长时间运行的后台任务，并将日志消息队列中数据写入存储中
         _processQueueTask = Task.Factory.StartNew(async state => await ((DatabaseLoggerProvider)state).ProcessQueueAsync()
-            , this, TaskCreationOptions.LongRunning);
+            , this, TaskCreationOptions.LongRunning).Unwrap();
     }
 
     /// <summary>
@@ -154,8 +162,8 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
     /// <remarks>控制日志消息队列</remarks>
     public void Dispose()
     {
-        // 标记日志消息队列停止写入
-        _logMessageQueue.CompleteAdding();
+        // 标记通道已完成写入
+        _logMessageChannel.Writer.Complete();
 
         try
         {
@@ -179,30 +187,41 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
     /// <param name="logMsg">结构化日志消息</param>
     internal void WriteToQueue(LogMessage logMsg)
     {
-        // 只有队列可持续入队才写入
-        if (_logMessageQueue.IsAddingCompleted) return;
-
-        if (_logMessageQueue.TryAdd(logMsg)) return;
+        // 非阻塞写入
+        _logMessageChannel.Writer.TryWrite(logMsg);
     }
 
     /// <summary>
-    /// 将日志消息写入数据库中
+    /// 将日志消息批量写入数据库中
     /// </summary>
-    /// <remarks></remarks>
     private async Task ProcessQueueAsync()
     {
         // 获取数据库日志写入器实例（仅第一次执行时解析）
         var databaseLoggingWriter = _writerLazy.Value;
 
-        foreach (var logMsg in _logMessageQueue.GetConsumingEnumerable())
+        // 持续读取通道中的消息，直到通道关闭
+        while (await _logMessageChannel.Reader.WaitToReadAsync())
         {
+            // 读取一批消息（最多 100 条）
+            var batch = new List<LogMessage>(100);
+            while (_logMessageChannel.Reader.TryRead(out var logMsg) && batch.Count < 100)
+            {
+                batch.Add(logMsg);
+            }
+
+            // 如果本次没有读取到任何消息
+            if (batch.Count == 0) continue;
+
+            // 判断通道中是否还有更多消息
+            var hasMore = _logMessageChannel.Reader.Count > 0;
+
             // 记录当前正在执行的写入器类型
             CurrentWritingWriterType.Value = databaseLoggingWriter?.GetType();
 
             try
             {
-                // 调用数据库写入器写入数据库方法
-                await databaseLoggingWriter.WriteAsync(logMsg, _logMessageQueue.Count == 0);
+                // 调用数据库写入器的批量写入方法
+                await databaseLoggingWriter.WriteAsync(batch, !hasMore);
             }
             catch (Exception ex)
             {
@@ -212,13 +231,16 @@ public sealed class DatabaseLoggerProvider : ILoggerProvider, ISupportExternalSc
                     var databaseWriteError = new DatabaseWriteError(ex);
                     LoggerOptions.HandleWriteError(databaseWriteError);
                 }
-                // 这里不抛出异常，避免中断日志写入
-                else { }
             }
             finally
             {
                 CurrentWritingWriterType.Value = null;
-                logMsg.Context?.Dispose();
+
+                // 释放批次中每条日志的作用域上下文
+                foreach (var logMsg in batch)
+                {
+                    logMsg.Context?.Dispose();
+                }
             }
         }
     }
