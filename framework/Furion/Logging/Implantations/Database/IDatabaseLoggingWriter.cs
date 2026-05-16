@@ -33,8 +33,8 @@ public interface IDatabaseLoggingWriter
     /// <summary>
     /// 写入数据库
     /// </summary>
-    /// <param name="logMsg">结构化日志消息</param>
-    /// <param name="flush">清除缓冲区</param>
+    /// <param name="batchLogMsgs">一批结构化日志消息（一批最多 100 条）</param>
+    /// <param name="flush">是否立即提交（刷新缓冲区/事务）</param>
     /// <returns><see cref="Task"/></returns>
-    Task WriteAsync(LogMessage logMsg, bool flush);
+    Task WriteAsync(IReadOnlyList<LogMessage> batchLogMsgs, bool flush);
 }

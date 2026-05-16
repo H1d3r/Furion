@@ -104,6 +104,6 @@ public sealed class ChannelContext<TMessage, THandler>
                   // 并行执行（非等待）
                   await Retry.InvokeAsync(async () => await Activator.CreateInstance<THandler>().InvokeAsync(message), 3, 1000, finalThrow: false);
               }
-          }, TaskCreationOptions.LongRunning);
+          }, TaskCreationOptions.LongRunning).Unwrap();
     }
 }

@@ -25,6 +25,7 @@
 
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Threading.Channels;
 
 namespace Furion.Logging;
 
@@ -43,7 +44,7 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
     /// <summary>
     /// 日志消息队列（线程安全）
     /// </summary>
-    private readonly BlockingCollection<LogMessage> _logMessageQueue = new(12000);
+    private readonly Channel<LogMessage> _logMessageChannel;
 
     /// <summary>
     /// 日志作用域提供器
@@ -100,9 +101,16 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
         // 创建文件日志写入器
         _fileLoggingWriter = new FileLoggingWriter(this);
 
+        _logMessageChannel = Channel.CreateBounded<LogMessage>(new BoundedChannelOptions(12000)
+        {
+            FullMode = BoundedChannelFullMode.DropWrite,
+            SingleReader = true,
+            SingleWriter = false
+        });
+
         // 创建长时间运行的后台任务，并将日志消息队列中数据写入文件中
         _processQueueTask = Task.Factory.StartNew(async state => await ((FileLoggerProvider)state).ProcessQueueAsync()
-            , this, TaskCreationOptions.LongRunning);
+            , this, TaskCreationOptions.LongRunning).Unwrap();
     }
 
     /// <summary>
@@ -145,8 +153,8 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
     /// <remarks>控制日志消息队列</remarks>
     public void Dispose()
     {
-        // 标记日志消息队列停止写入
-        _logMessageQueue.CompleteAdding();
+        // 标记通道已完成写入
+        _logMessageChannel.Writer.Complete();
 
         try
         {
@@ -177,21 +185,38 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
     /// <param name="logMsg">日志消息</param>
     internal void WriteToQueue(LogMessage logMsg)
     {
-        // 只有队列可持续入队才写入
-        if (_logMessageQueue.IsAddingCompleted) return;
-
-        if (_logMessageQueue.TryAdd(logMsg)) return;
+        // 非阻塞写入
+        _logMessageChannel.Writer.TryWrite(logMsg);
     }
 
     /// <summary>
     /// 将日志消息写入文件中
     /// </summary>
-    /// <returns></returns>
+    /// <remarks>使用批处理读取以提高文件写入吞吐量</remarks>
     private async Task ProcessQueueAsync()
     {
-        foreach (var logMsg in _logMessageQueue.GetConsumingEnumerable())
+        // 持续读取通道中的消息，直到通道关闭
+        while (await _logMessageChannel.Reader.WaitToReadAsync())
         {
-            await _fileLoggingWriter.WriteAsync(logMsg, _logMessageQueue.Count == 0);
+            var batch = new List<LogMessage>(100);
+            while (_logMessageChannel.Reader.TryRead(out var logMsg) && batch.Count < 100)
+            {
+                batch.Add(logMsg);
+            }
+
+            var hasMore = _logMessageChannel.Reader.Count > 0;
+            for (var i = 0; i < batch.Count; i++)
+            {
+                var item = batch[i];
+                try
+                {
+                    await _fileLoggingWriter.WriteAsync(item, !hasMore && i == batch.Count - 1);
+                }
+                finally
+                {
+                    item.Context?.Dispose();
+                }
+            }
         }
     }
 }
