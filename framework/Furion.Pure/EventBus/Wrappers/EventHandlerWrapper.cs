@@ -72,16 +72,5 @@ internal sealed class EventHandlerWrapper
     /// 排序
     /// </summary>
     /// <remarks>数值越大的先执行</remarks>
-    public int Order { get; set; } = 0;
-
-    /// <summary>
-    /// 是否符合条件执行处理程序
-    /// </summary>
-    /// <remarks>支持正则表达式</remarks>
-    /// <param name="eventId">事件 Id</param>
-    /// <returns><see cref="bool"/></returns>
-    internal bool ShouldRun(string eventId)
-    {
-        return EventId == eventId || (Pattern?.IsMatch(eventId) ?? false);
-    }
+    internal int Order { get; set; } = 0;
 }

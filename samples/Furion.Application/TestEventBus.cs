@@ -105,7 +105,7 @@ public class ToDoEventSubscriber : IEventSubscriber, ISingleton
         await Task.CompletedTask;
     }
 
-    [EventSubscribe("(^1[3456789][0-9]{9}$)|((^[0-9]{3,4}\\-[0-9]{3,8}$)|(^[0-9]{3,8}$)|(^\\([0-9]{3,4}\\)[0-9]{3,8}$)|(^0{0,1}13[0-9]{9}$))")]
+    [EventSubscribe("(^1[3456789][0-9]{9}$)|((^[0-9]{3,4}\\-[0-9]{3,8}$)|(^[0-9]{3,8}$)|(^\\([0-9]{3,4}\\)[0-9]{3,8}$)|(^0{0,1}13[0-9]{9}$))", FuzzyMatch = true)]
     public async Task 测试电话正则表达式(EventHandlerExecutingContext context)
     {
         Console.WriteLine(context.Source.EventId);
