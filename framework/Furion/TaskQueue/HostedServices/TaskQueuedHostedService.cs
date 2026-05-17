@@ -28,6 +28,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Logging;
+using System.Threading.Channels;
 
 namespace Furion.TaskQueue;
 
@@ -78,9 +79,15 @@ internal sealed class TaskQueueHostedService : BackgroundService
     private readonly ConcurrentBag<Task> _runningTasks = [];
 
     /// <summary>
-    /// 同步任务队列（线程安全）
+    /// 同步任务队列
     /// </summary>
-    private readonly BlockingCollection<TaskWrapper> _syncTaskWrapperQueue = new(12000);
+    private readonly Channel<TaskWrapper> _syncTaskWrapperQueue = Channel.CreateBounded<TaskWrapper>(new BoundedChannelOptions(12000)
+    {
+        FullMode = BoundedChannelFullMode.Wait,
+        SingleWriter = true,
+        SingleReader = true,
+        AllowSynchronousContinuations = true
+    });
 
     /// <summary>
     /// 构造函数
@@ -136,8 +143,8 @@ internal sealed class TaskQueueHostedService : BackgroundService
         }
         finally
         {
-            // 确保串行队列任务被取消
-            _syncTaskWrapperQueue.CompleteAdding();
+            // 标记同步任务队列停止写入
+            _syncTaskWrapperQueue.Writer.Complete();
 
             // 取消内部令牌通知串行队列任务
             linkedCts.Cancel();
@@ -145,7 +152,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
             // 等待串行队列任务完成（最多 1.5 秒）
             try
             {
-                await Task.WhenAny(serialQueueTask, Task.Delay(TimeSpan.FromMilliseconds(1500), cancellationToken));
+                await Task.WhenAny(serialQueueTask, Task.Delay(TimeSpan.FromMilliseconds(1500), CancellationToken.None));
             }
             catch { }
         }
@@ -187,15 +194,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
         else
         {
             // 只有队列可持续入队才写入
-            if (!_syncTaskWrapperQueue.IsAddingCompleted)
-            {
-                try
-                {
-                    _syncTaskWrapperQueue.TryAdd(taskWrapper, 0, stoppingToken);
-                }
-                catch (InvalidOperationException) { }
-                catch { }
-            }
+            _syncTaskWrapperQueue.Writer.TryWrite(taskWrapper);
         }
     }
 
@@ -206,7 +205,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
     /// <returns><see cref="Task"/></returns>
     private async Task ProcessQueueAsync(CancellationToken stoppingToken)
     {
-        foreach (var taskWrapper in _syncTaskWrapperQueue.GetConsumingEnumerable(stoppingToken))
+        await foreach (var taskWrapper in _syncTaskWrapperQueue.Reader.ReadAllAsync(stoppingToken))
         {
             await DequeueHandleAsync(taskWrapper, stoppingToken);
         }
@@ -313,6 +312,6 @@ internal sealed class TaskQueueHostedService : BackgroundService
         base.Dispose();
 
         // 标记同步任务队列停止写入
-        _syncTaskWrapperQueue.CompleteAdding();
+        _syncTaskWrapperQueue.Writer.TryComplete();
     }
 }

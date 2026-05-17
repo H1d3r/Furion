@@ -142,6 +142,8 @@ public sealed class Startup : AppStartup
             options.AddJob<TestJob>(builder => builder.SetTemporary(), Triggers.PeriodMinutes(1));
 
             options.AddJob<TestJob>(u => u.SetIncludeAnnotations(true), Triggers.At("2025-11-26 14:58:20"));
+
+            options.AddPersistence<TestJobPersistence>();
         });
 
         // 新版本任务队列
