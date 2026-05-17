@@ -1,7 +1,5 @@
 ﻿using Furion.Application;
-using Furion.Localization;
 using Furion.Schedule;
-using Furion.Shapeless;
 using Furion.VirtualFileServer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -218,9 +216,9 @@ public sealed class Startup : AppStartup
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             endpoints.MapGet("/mini", () => "Hello, World!")
-            .WithTags("miniapi 分组")
-            .WithSummary("这是描述")
-            .WithGroupName("minimal");
+                     .WithTags("miniapi 分组")
+                     .WithSummary("这是描述")
+                     .WithGroupName("minimal");
         });
     }
 }

@@ -177,9 +177,12 @@ public static class SpecificationDocumentBuilder
     /// <returns></returns>
     public static SpecificationOpenApiInfo GetGroupOpenApiInfo(string group)
     {
-        var groupInfo = GetGroupOpenApiInfoCached.GetOrAdd(group, CreateBaseGroupOpenApiInfo);
-        ApplyExternalConfig(groupInfo, group);
-        return groupInfo;
+        return GetGroupOpenApiInfoCached.GetOrAdd(group, u =>
+        {
+            var groupInfo = CreateBaseGroupOpenApiInfo(u);
+            ApplyExternalConfig(groupInfo, u);
+            return groupInfo;
+        });
     }
 
     /// <summary>
@@ -399,6 +402,11 @@ public static class SpecificationDocumentBuilder
     }
 
     /// <summary>
+    /// 默认 ApiDescriptionSettings 特性实例
+    /// </summary>
+    private static readonly ApiDescriptionSettingsAttribute DefaultApiDescriptionSettings = new();
+
+    /// <summary>
     ///  配置 Action 排序
     /// </summary>
     /// <param name="swaggerGenOptions"></param>
@@ -407,8 +415,8 @@ public static class SpecificationDocumentBuilder
         swaggerGenOptions.OrderActionsBy(apiDesc =>
         {
             var apiDescriptionSettings = apiDesc.CustomAttributes()
-                                   .FirstOrDefault(u => u.GetType() == typeof(ApiDescriptionSettingsAttribute))
-                                   as ApiDescriptionSettingsAttribute ?? new ApiDescriptionSettingsAttribute();
+                                   .OfType<ApiDescriptionSettingsAttribute>()
+                                   .FirstOrDefault() ?? DefaultApiDescriptionSettings;
 
             return (int.MaxValue - apiDescriptionSettings.Order).ToString()
                             .PadLeft(int.MaxValue.ToString().Length, '0');
@@ -497,28 +505,32 @@ public static class SpecificationDocumentBuilder
 
             var xmlDoc = XDocument.Load(assemblyXmlPath, LoadOptions.PreserveWhitespace);
 
-            //  构建成员索引字典
-            var memberIndex = xmlDoc.XPathSelectElements("/doc/members/member[@name]")
-                .ToDictionary(m => m.Attribute("name").Value, m => m, StringComparer.Ordinal);
+            // 获取所有成员节点
+            var members = xmlDoc.XPathSelectElements("/doc/members/member[@name]").ToList();
 
-            // 遍历处理所有 member 节点
-            foreach (var memberElement in xmlDoc.XPathSelectElements("/doc/members/member[@name]"))
+            // 构建成员索引字典
+            var memberIndex = new Dictionary<string, XElement>(StringComparer.Ordinal);
+            foreach (var memberElement in members)
             {
                 var nameAttr = memberElement.Attribute("name");
                 if (nameAttr == null) continue;
 
                 var memberName = nameAttr.Value;
-                var inheritdocElement = memberElement.Element("inheritdoc");
+                // 普通注释：存入索引供 inheritdoc 引用
+                memberIndex[memberName] = memberElement;
+            }
 
-                if (inheritdocElement == null)
-                {
-                    // 普通注释：存入索引供 inheritdoc 引用
-                    memberIndex[memberName] = memberElement;
-                }
-                else
+            // 处理 inheritdoc 注释
+            foreach (var memberElement in members)
+            {
+                var nameAttr = memberElement.Attribute("name");
+                if (nameAttr == null) continue;
+
+                var inheritdocElement = memberElement.Element("inheritdoc");
+                if (inheritdocElement != null)
                 {
                     // inheritdoc 注释：解析 cref 并替换内容
-                    ProcessInheritdoc(memberElement, inheritdocElement, memberIndex, memberName);
+                    ProcessInheritdoc(memberElement, inheritdocElement, memberIndex, nameAttr.Value);
                 }
             }
 
