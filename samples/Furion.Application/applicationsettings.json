@@ -30,6 +30,10 @@
         "Group": "Job",
         "Title": "定时任务",
         "Order": 2
+      },
+      {
+        "Group": "minimal",
+        "Title": "最小API"
       }
     ],
     "LoginInfo": {
