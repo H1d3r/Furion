@@ -910,9 +910,10 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
     /// <returns>名称和版本号</returns>
     private (string name, string version) ResolveNameVersion(string name)
     {
-        if (!_nameVersionRegex.IsMatch(name)) return (name, default);
+        var match = _nameVersionRegex.Match(name);
+        if (!match.Success) return (name, default);
 
-        var version = _nameVersionRegex.Match(name).Groups["version"].Value.Replace("_", ".");
+        var version = match.Groups["version"].Value.Replace("_", ".");
         return (_nameVersionRegex.Replace(name, ""), version);
     }
 
@@ -950,7 +951,7 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
         var routeParts = new List<string>();
 
         // 参数模板
-        var paramTemplates = new List<string>();
+        var paramTemplates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var part in paths)
         {
             // 不包含 {} 模板的直接添加
@@ -971,11 +972,9 @@ internal sealed class DynamicApiControllerApplicationModelConvention : IApplicat
                             : temp[..temp.IndexOf(":")] + "}")
                         : temp[..temp.IndexOf("?")] + "}";
 
-                    if (!paramTemplates.Contains(t, StringComparer.OrdinalIgnoreCase))
+                    if (paramTemplates.Add(t))
                     {
                         routeParts.Add(part);
-                        paramTemplates.Add(t);
-                        continue;
                     }
                 }
             }
