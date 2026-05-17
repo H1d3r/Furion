@@ -105,7 +105,8 @@ public sealed class FileLoggerProvider : ILoggerProvider, ISupportExternalScope
         {
             FullMode = BoundedChannelFullMode.DropWrite,
             SingleReader = true,
-            SingleWriter = false
+            SingleWriter = false,
+            AllowSynchronousContinuations = true
         });
 
         // 创建长时间运行的后台任务，并将日志消息队列中数据写入文件中

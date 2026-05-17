@@ -25,6 +25,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
+using System.Threading.Channels;
 
 namespace Furion.Schedule;
 
@@ -83,7 +84,14 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
     /// <summary>
     /// 作业持久化记录消息队列（线程安全）
     /// </summary>
-    private readonly BlockingCollection<PersistenceContext> _persistenceMessageQueue = new(12000);
+    private readonly Channel<PersistenceContext> _persistenceMessageQueue = Channel.CreateBounded<PersistenceContext>(
+        new BoundedChannelOptions(12000)
+        {
+            SingleWriter = false,
+            SingleReader = true,
+            FullMode = BoundedChannelFullMode.DropWrite,
+            AllowSynchronousContinuations = true
+        });
 
     /// <summary>
     /// 不受控的作业 Id 集合
@@ -395,27 +403,16 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
         // 空检查
         if (Persistence == null) return;
 
-        // 只有队列可持续入队才写入
-        if (!_persistenceMessageQueue.IsAddingCompleted)
-        {
-            try
+        // 创建作业信息/触发器持久化上下文
+        var context = trigger == null
+            ? new PersistenceContext(jobDetail, behavior)
+            : new PersistenceTriggerContext(jobDetail, trigger, behavior)
             {
-                // 创建作业信息/触发器持久化上下文
-                var context = trigger == null ?
-                    new PersistenceContext(jobDetail, behavior)
-                    : new PersistenceTriggerContext(jobDetail, trigger, behavior)
-                    {
-                        Mode = trigger.Mode
-                    };
+                Mode = trigger.Mode
+            };
 
-                _persistenceMessageQueue.TryAdd(context);
-                return;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-            }
-        }
+        // 只有队列可持续入队才写入
+        _persistenceMessageQueue.Writer.TryWrite(context);
     }
 
     /// <summary>
@@ -442,8 +439,8 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
     /// </summary>
     public void Dispose()
     {
-        // 标记作业持久化记录消息队列停止写入
-        _persistenceMessageQueue.CompleteAdding();
+        // 标记持久化消息队列停止写入
+        _persistenceMessageQueue.Writer.TryComplete();
 
         try
         {
@@ -525,7 +522,7 @@ internal sealed partial class SchedulerFactory : ISchedulerFactory
     /// <returns><see cref="Task"/></returns>
     private async Task ProcessQueueAsync()
     {
-        foreach (var context in _persistenceMessageQueue.GetConsumingEnumerable())
+        await foreach (var context in _persistenceMessageQueue.Reader.ReadAllAsync())
         {
             try
             {

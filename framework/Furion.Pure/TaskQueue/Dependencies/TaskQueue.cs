@@ -49,14 +49,11 @@ internal sealed partial class TaskQueue : ITaskQueue
     /// <param name="capacity">队列通道默认容量，超过该容量进入等待</param>
     public TaskQueue(int capacity)
     {
-        // 配置通道，设置超出默认容量后进入等待
-        var boundedChannelOptions = new BoundedChannelOptions(capacity)
+        _queue = Channel.CreateBounded<TaskWrapper>(new BoundedChannelOptions(capacity)
         {
-            FullMode = BoundedChannelFullMode.Wait
-        };
-
-        // 创建有限容量通道
-        _queue = Channel.CreateBounded<TaskWrapper>(boundedChannelOptions);
+            FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = true,
+        });
     }
 
     /// <summary>
