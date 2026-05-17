@@ -27,9 +27,11 @@ using Furion.DynamicApiController;
 using Furion.Extensions;
 using Furion.Reflection;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -80,7 +82,7 @@ public static class SpecificationDocumentBuilder
     /// <summary>
     /// 文档分组列表
     /// </summary>
-    public static readonly IEnumerable<string> DocumentGroups;
+    public static readonly List<string> DocumentGroups;
 
     /// <summary>
     /// 构造函数
@@ -97,7 +99,7 @@ public static class SpecificationDocumentBuilder
         GetControllerGroupsCached = new ConcurrentDictionary<Type, IEnumerable<GroupExtraInfo>>();
         GetGroupOpenApiInfoCached = new ConcurrentDictionary<string, SpecificationOpenApiInfo>();
         GetControllerTagCached = new ConcurrentDictionary<string, string>();
-        GetActionTagCached = new ConcurrentDictionary<string, string>();
+        GetActionTagCached = new ConcurrentDictionary<string, IList<string>>();
 
         // 默认分组，支持多个逗号分割
         DocumentGroupExtras = new List<GroupExtraInfo> { ResolveGroupExtraInfo(_specificationDocumentSettings.DefaultGroupName) };
@@ -122,17 +124,30 @@ public static class SpecificationDocumentBuilder
             return false;
         }
 
-        // 处理贴有 [ApiExplorerSettings(IgnoreApi = true)] 或者 [ApiDescriptionSettings(false)] 特性的接口
-        var apiExplorerSettings = method.GetFoundAttribute<ApiExplorerSettingsAttribute>(true, true);
-        var apiDescriptionSettings = method.GetFoundAttribute<ApiDescriptionSettingsAttribute>(true, true);
-        if (apiExplorerSettings?.IgnoreApi == true || apiDescriptionSettings?.IgnoreApi == true) return false;
-
+        // 处理 All Groups
         if (currentGroup == AllGroupsKey)
         {
             return true;
         }
 
-        return GetActionGroups(method).Any(u => u.Group == currentGroup);
+        // 判断是否是 Minimal API
+        var isMinimalApi = apiDescription.ActionDescriptor is not ControllerActionDescriptor;
+        if (isMinimalApi)
+        {
+            var groupAttribute = apiDescription.ActionDescriptor?.EndpointMetadata?.OfType<EndpointGroupNameAttribute>().LastOrDefault();
+
+            var groupName = groupAttribute?.EndpointGroupName;
+            return (string.IsNullOrWhiteSpace(groupName) && currentGroup == _specificationDocumentSettings.DefaultGroupName) || currentGroup == groupName;
+        }
+        else
+        {
+            // 处理贴有 [ApiExplorerSettings(IgnoreApi = true)] 或者 [ApiDescriptionSettings(false)] 特性的接口
+            var apiExplorerSettings = method.GetFoundAttribute<ApiExplorerSettingsAttribute>(true, true);
+            var apiDescriptionSettings = method.GetFoundAttribute<ApiDescriptionSettingsAttribute>(true, true);
+            if (apiExplorerSettings?.IgnoreApi == true || apiDescriptionSettings?.IgnoreApi == true) return false;
+
+            return GetActionGroups(method).Any(u => u.Group == currentGroup);
+        }
     }
 
     /// <summary>
@@ -380,10 +395,7 @@ public static class SpecificationDocumentBuilder
     /// <param name="swaggerGenOptions"></param>
     private static void ConfigureTagsAction(SwaggerGenOptions swaggerGenOptions)
     {
-        swaggerGenOptions.TagActionsBy(apiDescription =>
-        {
-            return [GetActionTag(apiDescription)];
-        });
+        swaggerGenOptions.TagActionsBy(apiDescription => GetActionTag(apiDescription));
     }
 
     /// <summary>
@@ -737,58 +749,76 @@ public static class SpecificationDocumentBuilder
     /// <summary>
     /// 读取所有分组信息
     /// </summary>
-    /// <returns></returns>
-    private static IEnumerable<string> ReadGroups()
+    private static List<string> ReadGroups()
     {
-        // 获取所有的控制器和动作方法
-        var controllers = App.EffectiveTypes.Where(u => Penetrates.IsApiController(u)).ToArray();
-        if (controllers.Length == 0)
+        var finalGroups = new List<GroupExtraInfo>();
+
+        // 配置文件定义的分组
+        if (_specificationDocumentSettings.GroupOpenApiInfos?.Any() == true)
         {
-            var defaultGroups = new List<string>
-            {
-                _specificationDocumentSettings.DefaultGroupName
-            };
-
-            // 启用总分组功能
-            if (_specificationDocumentSettings.EnableAllGroups == true)
-            {
-                defaultGroups.Add(AllGroupsKey);
-            }
-
-            return defaultGroups;
+            finalGroups.AddRange(_specificationDocumentSettings.GroupOpenApiInfos
+                .Where(u => !string.IsNullOrWhiteSpace(u.Group))
+                .Select(u => new GroupExtraInfo
+                {
+                    Group = u.Group,
+                    Order = u.Order ?? 0,
+                    Visible = u.Visible ?? true
+                }));
         }
 
-        var actions = controllers.SelectMany(c => c.GetMethods().Where(u => IsApiAction(u, c)));
+        // 获取所有的控制器和动作方法
+        var controllers = App.EffectiveTypes.Where(Penetrates.IsApiController).ToArray();
 
-        // 合并所有分组
-        var groupOrders = controllers.SelectMany(u => GetControllerGroups(u))
-            .Union(
-                actions.SelectMany(u => GetActionGroups(u))
-            )
-            .Where(u => u != null && u.Visible)
-            // 分组后取最大排序
-            .GroupBy(u => u.Group)
-            .Select(u => new GroupExtraInfo
+        if (controllers.Length == 0)
+        {
+            // 添加默认分组
+            if (!string.IsNullOrWhiteSpace(_specificationDocumentSettings.DefaultGroupName))
             {
-                Group = u.Key,
-                Order = u.Max(x => x.Order),
-                Visible = true
-            });
+                finalGroups.Add(new GroupExtraInfo
+                {
+                    Group = _specificationDocumentSettings.DefaultGroupName,
+                    Order = 0,
+                    Visible = true
+                });
+            }
+        }
+        else
+        {
+            var actions = controllers.SelectMany(c =>
+                c.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                 .Where(u => IsApiAction(u, c)));
+
+            // 合并所有分组
+            var groupOrders = controllers.SelectMany(GetControllerGroups)
+                .Concat(actions.SelectMany(GetActionGroups))
+                .Where(u => u?.Visible == true && !string.IsNullOrWhiteSpace(u.Group))
+                .GroupBy(u => u.Group)
+                .Select(g => new GroupExtraInfo
+                {
+                    Group = g.Key,
+                    Order = g.Max(x => x.Order),
+                    Visible = true
+                });
+
+            finalGroups.AddRange(groupOrders);
+        }
 
         // 分组排序
-        var groups = groupOrders
+        var sortedGroups = finalGroups
             .OrderByDescending(u => u.Order)
             .ThenBy(u => u.Group)
             .Select(u => u.Group)
-            .Union(_specificationDocumentSettings.PackagesGroups);
+            .Union(_specificationDocumentSettings.PackagesGroups ?? [])
+            .Distinct()
+            .ToList();
 
         // 启用总分组功能
         if (_specificationDocumentSettings.EnableAllGroups == true)
         {
-            groups = groups.Concat([AllGroupsKey]);
+            sortedGroups.Add(AllGroupsKey);
         }
 
-        return groups;
+        return sortedGroups;
     }
 
     /// <summary>
@@ -890,31 +920,41 @@ public static class SpecificationDocumentBuilder
     /// <summary>
     /// <see cref="GetActionTag(ApiDescription)"/> 缓存集合
     /// </summary>
-    private static readonly ConcurrentDictionary<string, string> GetActionTagCached;
+    private static readonly ConcurrentDictionary<string, IList<string>> GetActionTagCached;
 
     /// <summary>
     /// 获取动作方法标签
     /// </summary>
     /// <param name="apiDescription">接口描述器</param>
     /// <returns></returns>
-    public static string GetActionTag(ApiDescription apiDescription)
+    public static IList<string> GetActionTag(ApiDescription apiDescription)
     {
-        var cacheKey = apiDescription.TryGetMethodInfo(out var method) && apiDescription.ActionDescriptor is ControllerActionDescriptor descriptor
+        // 判断是否是 Minimal API
+        var isMinimalApi = apiDescription.ActionDescriptor is not ControllerActionDescriptor;
+        if (isMinimalApi)
+        {
+            var tagsAttribute = apiDescription.ActionDescriptor?.EndpointMetadata?.OfType<TagsAttribute>().LastOrDefault();
+            return tagsAttribute?.Tags.ToArray() ?? [Assembly.GetEntryAssembly().GetName().Name];
+        }
+        else
+        {
+            var cacheKey = apiDescription.TryGetMethodInfo(out var method) && apiDescription.ActionDescriptor is ControllerActionDescriptor descriptor
             ? $"{descriptor.ControllerTypeInfo.FullName}::{descriptor.ActionName}::{apiDescription.HttpMethod}"
             : Assembly.GetEntryAssembly().GetName().Name;
 
-        return GetActionTagCached.GetOrAdd(cacheKey, _ =>
-        {
-            if (!apiDescription.TryGetMethodInfo(out var method)
-                || apiDescription.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor) return Assembly.GetEntryAssembly().GetName().Name;
+            return GetActionTagCached.GetOrAdd(cacheKey, _ =>
+            {
+                if (!apiDescription.TryGetMethodInfo(out var method)
+                    || apiDescription.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor) return [Assembly.GetEntryAssembly().GetName().Name];
 
-            // 如果动作方法没有定义 [ApiDescriptionSettings] 特性，则返回所在控制器名
-            if (!method.IsDefined(typeof(ApiDescriptionSettingsAttribute), true)) return GetControllerTag(controllerActionDescriptor);
+                // 如果动作方法没有定义 [ApiDescriptionSettings] 特性，则返回所在控制器名
+                if (!method.IsDefined(typeof(ApiDescriptionSettingsAttribute), true)) return [GetControllerTag(controllerActionDescriptor)];
 
-            // 读取标签
-            var apiDescriptionSettings = method.GetCustomAttribute<ApiDescriptionSettingsAttribute>(true);
-            return string.IsNullOrWhiteSpace(apiDescriptionSettings.Tag) ? GetControllerTag(controllerActionDescriptor) : apiDescriptionSettings.Tag;
-        });
+                // 读取标签
+                var apiDescriptionSettings = method.GetCustomAttribute<ApiDescriptionSettingsAttribute>(true);
+                return [string.IsNullOrWhiteSpace(apiDescriptionSettings.Tag) ? GetControllerTag(controllerActionDescriptor) : apiDescriptionSettings.Tag];
+            });
+        }
     }
 
     /// <summary>
