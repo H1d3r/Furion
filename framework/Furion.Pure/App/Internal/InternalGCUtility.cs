@@ -37,7 +37,7 @@ internal static class InternalGCUtility
     /// </summary>
     internal static TimeSpan CollectInterval = TimeSpan.FromSeconds(10);
 
-    private static readonly object _gcLock = new object();
+    private static readonly object _gcLock = new();
     private static Stopwatch _lastCollectStopwatch = Stopwatch.StartNew();
 
     /// <summary>
@@ -47,7 +47,6 @@ internal static class InternalGCUtility
     {
         // 频率控制
         if (_lastCollectStopwatch.Elapsed < CollectInterval) return;
-
 
         lock (_gcLock)
         {
@@ -64,9 +63,7 @@ internal static class InternalGCUtility
                 // 回收终结器释放的对象
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true);
             }
-            catch
-            {
-            }
+            catch { }
         }
     }
 }
