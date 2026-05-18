@@ -13,9 +13,9 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(net8)' == 'True' ">
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.26" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.27" />
 
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.26">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.27">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
