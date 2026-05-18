@@ -82,9 +82,6 @@ const columns: ColumnProps<JobDetail>[] = [
       const triggerCount = jobDetail.triggers?.length || 0;
       const allStarted =
         triggerCount > 0 && jobDetail.triggers?.every((t) => t.status === 3);
-      const isHttpJob =
-        jobDetail.jobType === "Furion.Schedule.HttpJob" ||
-        jobDetail.jobType === "Furion.Pure.Schedule.HttpJob";
 
       return (
         <>
@@ -163,18 +160,6 @@ const columns: ColumnProps<JobDetail>[] = [
             </span>
           )}
 
-          {isHttpJob && (
-            <Tooltip content="HTTP 作业">
-              <IconLink
-                style={{
-                  marginLeft: 5,
-                  position: "relative",
-                  top: 4,
-                  color: "#999",
-                }}
-              />
-            </Tooltip>
-          )}
           {jobDetail.temporary === true && (
             <Tooltip content="执行完毕后自动删除">
               <span>
