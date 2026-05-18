@@ -25,7 +25,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Reflection;
 
 namespace Furion.Schedule;
 
@@ -122,17 +121,5 @@ public static class Schedular
     public static T Deserialize<T>(string json)
     {
         return Penetrates.Deserialize<T>(json);
-    }
-
-    /// <summary>
-    /// 编译 C# 类定义代码
-    /// </summary>
-    /// <param name="csharpCode">字符串代码</param>
-    /// <param name="assemblyName">自定义程序集名称</param>
-    /// <param name="additionalAssemblies">附加的程序集</param>
-    /// <returns><see cref="Assembly"/></returns>
-    public static Assembly CompileCSharpClassCode(string csharpCode, string assemblyName = default, params Assembly[] additionalAssemblies)
-    {
-        return App.CompileCSharpClassCode(csharpCode, assemblyName, additionalAssemblies);
     }
 }
