@@ -426,13 +426,22 @@ public class JWTEncryption
             Debug.WriteLine("No register the code `services.AddJwt()` on Startup.cs.");
         }
 
-        var jwtSettingsOptions = FrameworkApp.GetMethod("GetOptions").MakeGenericMethod(typeof(JWTSettingsOptions)).Invoke(null, [null]) as JWTSettingsOptions;
+        var jwtSettingsOptions = _getJwtSettingsDelegate.Value();
         if (jwtSettingsOptions.Algorithm == null && jwtSettingsOptions.ExpiredTime == null)
         {
             SetDefaultJwtSettings(jwtSettingsOptions);
         }
         return jwtSettingsOptions;
     }
+
+    /// <summary>
+    /// 获取 JWT 配置方法委托
+    /// </summary>
+    private static Lazy<Func<JWTSettingsOptions>> _getJwtSettingsDelegate = new(() =>
+    {
+        var method = FrameworkApp.GetMethod("GetOptions").MakeGenericMethod(typeof(JWTSettingsOptions));
+        return (Func<JWTSettingsOptions>)Delegate.CreateDelegate(typeof(Func<JWTSettingsOptions>), method);
+    });
 
     /// <summary>
     /// 生成Token验证参数
