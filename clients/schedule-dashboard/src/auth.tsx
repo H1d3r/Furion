@@ -2,6 +2,8 @@ import React, { JSX } from "react";
 import apiconfig from "./apiconfig";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
+const AppSecretKey = "AppSecret";
+
 /**
  * 登录服务逻辑
  */
@@ -18,41 +20,37 @@ const loginService = {
 };
 
 interface AuthContextType {
-  user: any;
-  signin: (user: string, callback: VoidFunction) => void;
+  appSecret: string | null;
+  signin: (appSecret: string, callback: VoidFunction) => void;
   signout: (callback: VoidFunction) => void;
 }
 
 let AuthContext = React.createContext<AuthContextType>(null!);
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
-  const initialUser = () => {
-    const storedUser = sessionStorage.getItem(apiconfig.loginConfig.sessionKey);
-    return storedUser ? JSON.parse(storedUser) : null;
+  const initialAppSecret = () => {
+    return sessionStorage.getItem(AppSecretKey);
   };
 
-  const [user, setUser] = React.useState<any>(initialUser());
+  const [appSecret, setAppSecret] = React.useState<any>(initialAppSecret);
 
-  let signin = (newUser: string, callback: VoidFunction) => {
+  let signin = (newAppSecret: string, callback: VoidFunction) => {
     return loginService.signin(() => {
-      setUser(newUser);
-      sessionStorage.setItem(
-        apiconfig.loginConfig.sessionKey,
-        JSON.stringify(newUser),
-      );
+      setAppSecret(newAppSecret);
+      sessionStorage.setItem(AppSecretKey, newAppSecret);
       callback();
     });
   };
 
   let signout = (callback: VoidFunction) => {
     return loginService.signout(() => {
-      setUser(null);
-      sessionStorage.removeItem(apiconfig.loginConfig.sessionKey);
+      setAppSecret(null);
+      sessionStorage.removeItem(AppSecretKey);
       callback();
     });
   };
 
-  let value = { user, signin, signout };
+  let value = { appSecret, signin, signout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -61,13 +59,13 @@ function AuthStatus() {
   let auth = useAuth();
   let navigate = useNavigate();
 
-  if (!auth.user) {
+  if (!auth.appSecret) {
     return <p>You are not logged in.</p>;
   }
 
   return (
     <p>
-      Welcome {auth.user}!{" "}
+      Welcome {auth.appSecret}!{" "}
       <button
         onClick={() => {
           auth.signout(() => navigate("/"));
@@ -87,7 +85,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   let auth = useAuth();
   let location = useLocation();
 
-  if (!auth.user) {
+  if (!auth.appSecret) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

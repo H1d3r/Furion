@@ -44,6 +44,7 @@ import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import { dayFromNow, dayTime, formatDuration } from "../../utils";
 import styles from "./index.module.css";
 import clsx from "clsx";
+import { useAuth } from "../../auth";
 
 const style = {
   boxShadow: "var(--semi-shadow-elevated)",
@@ -130,9 +131,7 @@ function getDefaultJsonValue() {
 let defaultJsonValue = getDefaultJsonValue();
 
 export default function Jobs({ mode }: { mode: string }) {
-  /**
-   * 作业状态
-   */
+  const auth = useAuth();
   const [jobs, setJobs] = useState<Scheduler[]>([]);
   const [words, setWords] = useState<string>("");
   const [allTimelines, setAllTimelines] = useState<TriggerTimeline[]>([]);
@@ -184,7 +183,10 @@ export default function Jobs({ mode }: { mode: string }) {
   /**
    * 初始化请求配置
    */
-  const { post, response } = useFetch(apiconfig.hostAddress, apiconfig.options);
+  const { post, response } = useFetch(apiconfig.hostAddress, {
+    ...apiconfig.options,
+    headers: { ...apiconfig.options.headers, Authorization: auth.appSecret },
+  });
 
   /**
    * 获取内存中所有作业
@@ -302,7 +304,7 @@ export default function Jobs({ mode }: { mode: string }) {
     loadAllTimelines();
 
     const eventSource = new EventSource(
-      `${apiconfig.hostAddress}/check-change`,
+      `${apiconfig.hostAddress}/check-change?appsecret=${auth.appSecret}`,
     );
 
     eventSource.onmessage = () => {

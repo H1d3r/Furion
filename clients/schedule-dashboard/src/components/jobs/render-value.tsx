@@ -8,6 +8,7 @@ import { dayFromNow, dayTime, formatDuration } from "../../utils";
 import apiconfig from "../../apiconfig";
 import StatusText from "./state-text";
 import Timelines from "./timelines";
+import { useAuth } from "../../auth";
 
 /**
  * 渲染触发器属性值
@@ -236,13 +237,17 @@ function LogPanel(props: {
   handleOk: VoidFunction;
   handleCancel: VoidFunction;
 }) {
+  const auth = useAuth();
   const { trigger, visible, handleOk, handleCancel } = props;
   const [timelines, setTimelines] = useState<TriggerTimeline[]>([]);
 
   /**
    * 初始化请求配置
    */
-  const { post, response } = useFetch(apiconfig.hostAddress, apiconfig.options);
+  const { post, response } = useFetch(apiconfig.hostAddress, {
+    ...apiconfig.options,
+    headers: { ...apiconfig.options.headers, Authorization: auth.appSecret },
+  });
 
   /**
    * 操作作业触发器

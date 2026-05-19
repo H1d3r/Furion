@@ -13,7 +13,6 @@ window.apiconfig = {
   useUtcTimestamp: "false",
   title: "Schedule",
   loginConfig: {
-    sessionKey: "schedule_session_key",
     defaultUsername: "",
     defaultPassword: "",
   },
