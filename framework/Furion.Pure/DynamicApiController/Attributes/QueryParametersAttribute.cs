@@ -31,10 +31,4 @@ namespace Furion.DynamicApiController;
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class QueryParametersAttribute : Attribute
 {
-    /// <summary>
-    /// 默认构造函数
-    /// </summary>
-    public QueryParametersAttribute()
-    {
-    }
 }
