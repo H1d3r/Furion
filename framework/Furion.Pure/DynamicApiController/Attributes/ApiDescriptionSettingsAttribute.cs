@@ -23,15 +23,13 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.DynamicApiController;
-
 namespace Microsoft.AspNetCore.Mvc;
 
 /// <summary>
 /// 接口描述设置
 /// </summary>
 [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false)]
-public sealed class ApiDescriptionSettingsAttribute : Attribute/* : ApiExplorerSettingsAttribute*/
+public sealed class ApiDescriptionSettingsAttribute : Attribute
 {
     /// <summary>
     /// 构造函数
@@ -57,7 +55,6 @@ public sealed class ApiDescriptionSettingsAttribute : Attribute/* : ApiExplorerS
     /// <param name="groups">分组列表</param>
     public ApiDescriptionSettingsAttribute(params string[] groups) : base()
     {
-        GroupName = string.Join(Penetrates.GroupSeparator, groups);
         Groups = groups;
         Order = 0;
     }
@@ -136,11 +133,6 @@ public sealed class ApiDescriptionSettingsAttribute : Attribute/* : ApiExplorerS
     /// 禁止子类继承
     /// </summary>
     public bool DisableInherite { get; set; } = false;
-
-    /// <summary>
-    /// 分组名
-    /// </summary>
-    public string GroupName { get; set; }
 
     /// <summary>
     /// 是否忽略 API
