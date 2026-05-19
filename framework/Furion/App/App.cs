@@ -784,7 +784,8 @@ public static class App
         {
             return !u.Assembly.IsDefined(typeof(FurionAttribute), false)
                    && (u.IsPublic || ObsoleteObjectExtensions.IsInternal(u))    // 支持 public 和 internal 声明类型
-                   && !u.IsDefined(typeof(SuppressSnifferAttribute), false);
+                   && !u.IsDefined(typeof(SuppressSnifferAttribute), false)
+                   && !u.IsAnonymous(); // 排除匿名类型
         });
     }
 
