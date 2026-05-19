@@ -171,13 +171,7 @@ public sealed class SpecificationDocumentSettingsOptions : IConfigurableOptions<
             XmlComments ??= projectXmlComments.Concat(externalXmlComments).ToArray();
         }
 
-        GroupOpenApiInfos ??=
-        [
-                new SpecificationOpenApiInfo()
-                {
-                    Group=options.DefaultGroupName
-                }
-        ];
+        GroupOpenApiInfos ??= [];
 
         EnableAuthorized ??= true;
         if (EnableAuthorized == true)
