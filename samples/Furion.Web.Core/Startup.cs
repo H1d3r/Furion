@@ -197,6 +197,7 @@ public sealed class Startup : AppStartup
 
             options.LoginConfig.DefaultUsername = "furion";
             options.LoginConfig.DefaultPassword = "";
+            options.LoginConfig.AppSecret = "3f2d0ea0ef4df562719e70e41413658e";
 
             options.LoginConfig.OnLoging = async (username, password, httpContext) =>
             {

@@ -11,7 +11,7 @@ export default function Login() {
    */
   const { post, response, error } = useFetch(
     apiconfig.hostAddress,
-    apiconfig.options
+    apiconfig.options,
   );
 
   let navigate = useNavigate();
@@ -31,8 +31,9 @@ export default function Login() {
     const data = await post("/login", formData);
     if (response.ok) {
       Toast.success({ content: "登录成功", stack: true });
+      var appSecret = response.headers.get("access-token");
 
-      auth.signin(username, () => {
+      auth.signin(appSecret!, () => {
         navigate(from, { replace: true });
       });
     } else {

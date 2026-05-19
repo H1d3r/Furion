@@ -33,6 +33,7 @@ import apiconfig from "../../apiconfig";
 import RenderValue from "./render-value";
 import StatusText from "./state-text";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
+import { useAuth } from "../../auth";
 
 const style = {
   padding: "10px",
@@ -362,15 +363,16 @@ function Operation(props: {
   hasTrigger: boolean;
   jobDetail: JobDetail;
 }) {
+  const auth = useAuth();
   const { jobid, hasTrigger, jobDetail } = props;
 
   /**
    * 初始化请求配置
    */
-  const { post, response, loading } = useFetch(
-    apiconfig.hostAddress,
-    apiconfig.options,
-  );
+  const { post, response, loading } = useFetch(apiconfig.hostAddress, {
+    ...apiconfig.options,
+    headers: { ...apiconfig.options.headers, Authorization: auth.appSecret },
+  });
 
   /**
    * 操作作业
