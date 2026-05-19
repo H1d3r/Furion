@@ -226,7 +226,7 @@ public sealed class ScheduleUIMiddleware
             appSecret = context.Request.Query["appsecret"].FirstOrDefault();
         }
         // 验证密钥
-        if (action != "/login" && string.IsNullOrWhiteSpace(appSecret) && appSecret != Options.LoginConfig.AppSecret)
+        if (action != "/login" && !string.Equals(appSecret, Options.LoginConfig.AppSecret, StringComparison.Ordinal))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsync("非法操作");
@@ -455,6 +455,11 @@ public sealed class ScheduleUIMiddleware
                         queue.CompleteAdding();
                         queue.Dispose();
                     }
+                }
+                else
+                {
+                    context.Response.StatusCode = StatusCodes.Status405MethodNotAllowed;
+                    await context.Response.WriteAsync("Only SSE (text/event-stream) is supported.");
                 }
                 break;
             // 登录验证
