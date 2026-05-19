@@ -144,7 +144,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
         finally
         {
             // 标记同步任务队列停止写入
-            _syncTaskWrapperQueue.Writer.Complete();
+            _syncTaskWrapperQueue.Writer.TryComplete();
 
             // 取消内部令牌通知串行队列任务
             linkedCts.Cancel();

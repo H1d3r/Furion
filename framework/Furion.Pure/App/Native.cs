@@ -26,6 +26,7 @@
 using Furion;
 using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace System;
@@ -115,40 +116,82 @@ public static class Native
     /// </summary>
     private static void AttachScopeDisposeOnClose(object window, IDisposable scope)
     {
-        // 查找可用的关闭事件（WinForms FormClosed 或 WPF Closed）
-        EventInfo closeEvent = null;
-        string eventName = null;
-
         var type = window.GetType();
 
-        // 尝试 WinForms FormClosed 事件
-        closeEvent = type.GetEvent("FormClosed", BindingFlags.Instance | BindingFlags.Public);
-        if (closeEvent != null) eventName = "FormClosed";
+        // 尝试 WinForms 的 FormClosed 事件
+        var closeEvent = type.GetEvent("FormClosed", BindingFlags.Instance | BindingFlags.Public);
 
-        // 尝试 WPF Closed 事件
+        // 若没有则尝试 WPF 的 Closed 事件
         if (closeEvent == null)
         {
             closeEvent = type.GetEvent("Closed", BindingFlags.Instance | BindingFlags.Public);
-            if (closeEvent != null) eventName = "Closed";
         }
 
         if (closeEvent != null)
         {
-            // 创建事件处理程序（只需释放作用域）
-            EventHandler handler = null;
-            handler = (s, e) =>
+            // 获取事件真实的委托类型
+            var handlerType = closeEvent.EventHandlerType;
+
+            // 构造闭包对象
+            var closure = new CloseEventHandlerClosure
             {
-                scope.Dispose();
-                closeEvent.RemoveEventHandler(window, handler);
+                Scope = scope,
+                Event = closeEvent,
+                Window = window
             };
 
+            // 使用表达式树动态生成一个关闭事件处理委托
+            var handler = CreateCloseHandler(handlerType, closure);
+
+            // 将生成的委托存入闭包
+            closure.Handler = handler;
+
+            // 绑定事件
             closeEvent.AddEventHandler(window, handler);
         }
         else
         {
-            // 无法找到关闭事件，立即释放作用域
+            // 若窗口没有可用的关闭事件，则立即释放作用域
             scope.Dispose();
         }
+    }
+
+    /// <summary>
+    /// 使用表达式树动态生成一个关闭事件处理委托
+    /// </summary>
+    /// <param name="handlerType">事件委托类型（如 FormClosedEventHandler 或 EventHandler）</param>
+    /// <param name="closure">捕获的上下文对象</param>
+    /// <returns><see cref="Delegate"/></returns>
+    private static Delegate CreateCloseHandler(Type handlerType, CloseEventHandlerClosure closure)
+    {
+        // 获取委托 Invoke 方法的参数类型
+        var invokeMethod = handlerType.GetMethod("Invoke");
+        var parameters = invokeMethod.GetParameters();
+
+        // 定义事件处理方法的参数表达式：(object sender, TEventArgs e)
+        var senderParam = Expression.Parameter(parameters[0].ParameterType, "sender");
+        var eParam = Expression.Parameter(parameters[1].ParameterType, "e");
+
+        // 将闭包对象转为常量表达式
+        var closureExpr = Expression.Constant(closure);
+
+        // 生成 closure.Scope.Dispose() 调用
+        var disposeCall = Expression.Call(
+            Expression.PropertyOrField(closureExpr, nameof(CloseEventHandlerClosure.Scope)),
+            typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose)));
+
+        // 生成 closure.Event.RemoveEventHandler(closure.Window, closure.Handler) 调用
+        var removeHandlerMethod = typeof(EventInfo).GetMethod(nameof(EventInfo.RemoveEventHandler), [typeof(object), typeof(Delegate)]);
+        var removeCall = Expression.Call(
+            Expression.PropertyOrField(closureExpr, nameof(CloseEventHandlerClosure.Event)),
+            removeHandlerMethod,
+            Expression.PropertyOrField(closureExpr, nameof(CloseEventHandlerClosure.Window)),
+            Expression.PropertyOrField(closureExpr, nameof(CloseEventHandlerClosure.Handler)));
+
+        var body = Expression.Block(disposeCall, removeCall);
+
+        var lambda = Expression.Lambda(handlerType, body, senderParam, eParam);
+        return lambda.Compile();
     }
 
     /// <summary>
@@ -158,5 +201,32 @@ public static class Native
     public static int GetIdlePort()
     {
         return NetworkUtility.FindAvailableTcpPort();
+    }
+
+
+    /// <summary>
+    /// 内部闭包类
+    /// </summary>
+    private sealed class CloseEventHandlerClosure
+    {
+        /// <summary>
+        /// 服务作用域
+        /// </summary>
+        public IDisposable Scope;
+
+        /// <summary>
+        /// 关闭事件信息
+        /// </summary>
+        public EventInfo Event;
+
+        /// <summary>
+        /// 窗口实例
+        /// </summary>
+        public object Window;
+
+        /// <summary>
+        /// 动态生成的委托，用于事件移除
+        /// </summary>
+        public Delegate Handler;
     }
 }
