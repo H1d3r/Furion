@@ -414,11 +414,13 @@ public static class SpecificationDocumentBuilder
     {
         swaggerGenOptions.OrderActionsBy(apiDesc =>
         {
-            var apiDescriptionSettings = apiDesc.CustomAttributes()
-                                   .OfType<ApiDescriptionSettingsAttribute>()
-                                   .FirstOrDefault() ?? DefaultApiDescriptionSettings;
+            var apiDescriptionSettings = apiDesc.ActionDescriptor.EndpointMetadata
+                       .OfType<ApiDescriptionSettingsAttribute>()
+                       .FirstOrDefault();
 
-            return (int.MaxValue - apiDescriptionSettings.Order).ToString()
+            var order = apiDescriptionSettings?.Order ?? 0;
+
+            return (int.MaxValue - order).ToString()
                             .PadLeft(int.MaxValue.ToString().Length, '0');
         });
     }
