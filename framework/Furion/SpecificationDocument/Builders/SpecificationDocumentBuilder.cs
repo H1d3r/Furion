@@ -402,11 +402,6 @@ public static class SpecificationDocumentBuilder
     }
 
     /// <summary>
-    /// 默认 ApiDescriptionSettings 特性实例
-    /// </summary>
-    private static readonly ApiDescriptionSettingsAttribute DefaultApiDescriptionSettings = new();
-
-    /// <summary>
     ///  配置 Action 排序
     /// </summary>
     /// <param name="swaggerGenOptions"></param>
@@ -416,7 +411,7 @@ public static class SpecificationDocumentBuilder
         {
             var apiDescriptionSettings = apiDesc.ActionDescriptor.EndpointMetadata
                        .OfType<ApiDescriptionSettingsAttribute>()
-                       .FirstOrDefault();
+                       .LastOrDefault();
 
             var order = apiDescriptionSettings?.Order ?? 0;
 
