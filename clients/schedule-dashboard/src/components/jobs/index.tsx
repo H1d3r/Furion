@@ -52,7 +52,7 @@ const style = {
   borderRadius: "4px",
   padding: "10px",
   margin: "10px",
-  width: "350px",
+  width: "380px",
 };
 
 function getOValueByData(key: string, expandData: Data[]): any {

@@ -77,7 +77,7 @@ const columns: ColumnProps<JobDetail>[] = [
   {
     title: "JobId",
     dataIndex: "jobId",
-    width: 250,
+    width: 280,
     fixed: true,
     render: (_, jobDetail) => {
       const triggerCount = jobDetail.triggers?.length || 0;
@@ -195,12 +195,12 @@ const columns: ColumnProps<JobDetail>[] = [
   {
     title: "JobType",
     dataIndex: "jobType",
-    width: 250,
+    width: 260,
   },
   {
     title: "AssemblyName",
     dataIndex: "assemblyName",
-    width: 150,
+    width: 160,
   },
   {
     title: "Concurrent",
@@ -275,7 +275,7 @@ const columns: ColumnProps<JobDetail>[] = [
   {
     title: "LastRunTime",
     dataIndex: "lastRunTime",
-    width: 200,
+    width: 230,
     fixed: "right",
     resize: false,
     render: (_, jobDetail) => {
@@ -298,7 +298,7 @@ const columns: ColumnProps<JobDetail>[] = [
   {
     title: "NextRunTime",
     dataIndex: "nextRunTime",
-    width: 200,
+    width: 230,
     fixed: "right",
     resize: false,
     render: (_, jobDetail) => {
