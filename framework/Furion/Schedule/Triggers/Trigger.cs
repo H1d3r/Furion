@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 
 namespace Furion.Schedule;
@@ -202,7 +203,7 @@ public partial class Trigger
     /// 作业触发器最近运行记录
     /// </summary>
     /// <remarks>默认只保存 10 条</remarks>
-    internal Queue<TriggerTimeline> Timelines { get; set; } = new();
+    internal ConcurrentQueue<TriggerTimeline> Timelines { get; set; } = new();
 
     /// <summary>
     /// 触发模式
