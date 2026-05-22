@@ -734,7 +734,7 @@ public partial class PrivateRepository<TEntity> : PrivateSqlRepository, IPrivate
     /// <returns>bool</returns>
     public virtual bool IsMySql()
     {
-        return DbProvider.IsDatabaseFor(ProviderName, DbProvider.MySql);
+        return DbProvider.IsDatabaseFor(ProviderName, DbProvider.MySql) || DbProvider.IsDatabaseFor(ProviderName, DbProvider.MySqlMicroting);
     }
 
     /// <summary>

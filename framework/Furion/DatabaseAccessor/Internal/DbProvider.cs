@@ -64,6 +64,11 @@ public static class DbProvider
     public const string MySql = "Pomelo.EntityFrameworkCore.MySql";
 
     /// <summary>
+    /// MySql Microting 提供器程序集
+    /// </summary>
+    public const string MySqlMicroting = "Microting.EntityFrameworkCore.MySql";
+
+    /// <summary>
     /// MySql 官方包（更新不及时，只支持 8.0.23+ 版本， 所以单独弄一个分类）
     /// </summary>
     public const string MySqlOfficial = "MySql.EntityFrameworkCore";
@@ -137,6 +142,7 @@ public static class DbProvider
                 Sqlite,
                 InMemoryDatabase,
                 MySql,
+                MySqlMicroting,
                 MySqlOfficial,
                 Firebird,
                 Dm
