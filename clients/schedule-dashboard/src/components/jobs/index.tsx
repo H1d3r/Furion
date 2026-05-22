@@ -6,6 +6,7 @@ import {
   IconMore,
   IconPlayCircle,
   IconSearch,
+  IconSmallTriangleRight,
   IconStop,
   IconUploadError,
   IconVigoLogo,
@@ -600,13 +601,23 @@ export default function Jobs({ mode }: { mode: string }) {
             {allTimelines.map((timeline, i) => (
               <div
                 key={`${timeline.jobId || ""}_${timeline.triggerId || ""}_${i}`}
-                style={{ marginBottom: 12, fontSize: 14 }}
+                style={{ marginBottom: 14, fontSize: 14 }}
                 className={clsx(
                   styles.timelineItem,
                   mode === "dark" && styles.dark,
                 )}
               >
-                <Tag size="large" color="green" type="light">
+                <IconSmallTriangleRight
+                  style={{
+                    color: "var(--semi-color-text-2)",
+                  }}
+                />
+                <Tag
+                  size="large"
+                  color="green"
+                  type="light"
+                  style={{ fontWeight: 600 }}
+                >
                   {timeline.jobId}
                 </Tag>{" "}
                 <Tag size="large" color="green" type="light">
@@ -702,14 +713,18 @@ export default function Jobs({ mode }: { mode: string }) {
           <Space style={{ marginTop: 10 }} spacing={12}>
             <Button
               theme="solid"
-              type="danger"
+              type="primary"
               onClick={handleSubmitJob}
               loading={submitting}
               disabled={submitting}
             >
               {submitting ? "提交中..." : "提交数据"}
             </Button>
-            <Button onClick={() => jsonviewerRef.current.format()}>
+            <Button
+              type="tertiary"
+              theme="light"
+              onClick={() => jsonviewerRef.current.format()}
+            >
               格式化
             </Button>
           </Space>
