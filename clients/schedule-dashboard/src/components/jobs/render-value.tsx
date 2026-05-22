@@ -289,6 +289,11 @@ function LogPanel(props: {
       closeOnEsc={true}
       zIndex={10000000000}
       width={850}
+      footer={
+        <Button onClick={handleOk} type="tertiary" theme="light">
+          关闭
+        </Button>
+      }
     >
       <Timelines trigger={trigger} timelines={timelines} />
     </Modal>
