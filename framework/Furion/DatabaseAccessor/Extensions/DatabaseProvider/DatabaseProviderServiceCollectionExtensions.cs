@@ -235,7 +235,7 @@ public static class DatabaseProviderServiceCollectionExtensions
 
             // 处理最新第三方 MySql 包兼容问题
             // https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql/commit/83c699f5b747253dc1b6fa9c470f469467d77686
-            if (DbProvider.IsDatabaseFor(providerName, DbProvider.MySql))
+            if (DbProvider.IsDatabaseFor(providerName, DbProvider.MySql) || DbProvider.IsDatabaseFor(providerName, DbProvider.MySqlMicroting))
             {
                 dbContextOptionsBuilder = UseMethod
                     .Invoke(null, [options, connectionMetadata, MySqlVersion, MigrationsAssemblyAction]) as DbContextOptionsBuilder;
@@ -343,7 +343,7 @@ public static class DatabaseProviderServiceCollectionExtensions
                 DbProvider.Sqlite => "SqliteDbContextOptionsBuilderExtensions",
                 DbProvider.Cosmos => "CosmosDbContextOptionsExtensions",
                 DbProvider.InMemoryDatabase => "InMemoryDbContextOptionsExtensions",
-                DbProvider.MySql => "MySqlDbContextOptionsBuilderExtensions",
+                DbProvider.MySql or DbProvider.MySqlMicroting => "MySqlDbContextOptionsBuilderExtensions",
                 DbProvider.MySqlOfficial => "MySQLDbContextOptionsExtensions",
                 DbProvider.Npgsql => "NpgsqlDbContextOptionsBuilderExtensions",
                 DbProvider.Oracle => "OracleDbContextOptionsExtensions",
@@ -363,7 +363,7 @@ public static class DatabaseProviderServiceCollectionExtensions
                 DbProvider.Sqlite => $"Use{nameof(DbProvider.Sqlite)}",
                 DbProvider.Cosmos => $"Use{nameof(DbProvider.Cosmos)}",
                 DbProvider.InMemoryDatabase => $"Use{nameof(DbProvider.InMemoryDatabase)}",
-                DbProvider.MySql => $"Use{nameof(DbProvider.MySql)}",
+                DbProvider.MySql or DbProvider.MySqlMicroting => $"Use{nameof(DbProvider.MySql)}",
                 DbProvider.MySqlOfficial => $"UseMySQL",
                 DbProvider.Npgsql => $"Use{nameof(DbProvider.Npgsql)}",
                 DbProvider.Oracle => $"Use{nameof(DbProvider.Oracle)}",
@@ -378,7 +378,7 @@ public static class DatabaseProviderServiceCollectionExtensions
 
             // 处理最新 MySql 第三方包兼容问题
             // https://github.com/PomeloFoundation/Pomelo.EntityFrameworkCore.MySql/commit/83c699f5b747253dc1b6fa9c470f469467d77686
-            if (DbProvider.IsDatabaseFor(providerName, DbProvider.MySql))
+            if (DbProvider.IsDatabaseFor(providerName, DbProvider.MySql) || DbProvider.IsDatabaseFor(providerName, DbProvider.MySqlMicroting))
             {
                 useMethod = databaseProviderServiceExtensionType
                     .GetMethods(BindingFlags.Public | BindingFlags.Static)
