@@ -125,7 +125,7 @@ public static class SpecificationDocumentBuilder
         }
 
         // 处理 All Groups
-        if (currentGroup == AllGroupsKey)
+        if (currentGroup == AllGroupsKey && _specificationDocumentSettings.EnableAllGroups == true)
         {
             return true;
         }
@@ -766,7 +766,7 @@ public static class SpecificationDocumentBuilder
         if (_specificationDocumentSettings.GroupOpenApiInfos?.Any() == true)
         {
             finalGroups.AddRange(_specificationDocumentSettings.GroupOpenApiInfos
-                .Where(u => !string.IsNullOrWhiteSpace(u.Group))
+                .Where(u => !string.IsNullOrWhiteSpace(u.Group) && (_specificationDocumentSettings.EnableAllGroups != true || u.Group != AllGroupsKey)) // 确保"所有分组"最后添加
                 .Select(u => new GroupExtraInfo
                 {
                     Group = u.Group,
