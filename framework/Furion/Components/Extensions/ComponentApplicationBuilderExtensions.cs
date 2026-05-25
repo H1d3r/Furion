@@ -78,6 +78,12 @@ public static class ComponentApplicationBuilderExtensions
         // 逐条创建组件实例并调用
         foreach (var componentContext in componentContextLinkList)
         {
+            // 检查当前组件是否实现了 IApplicationComponent 接口
+            if (!typeof(IApplicationComponent).IsAssignableFrom(componentContext.ComponentType))
+            {
+                continue;
+            }
+
             // 创建组件实例
             var component = Activator.CreateInstance(componentContext.ComponentType) as IApplicationComponent;
 
