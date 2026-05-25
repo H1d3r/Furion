@@ -112,6 +112,11 @@ public static class App
     public static readonly ConcurrentBag<IDisposable> UnmanagedObjects;
 
     /// <summary>
+    /// 单例服务类型缓存
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, bool> _singletonServiceTypes = new();
+
+    /// <summary>
     /// 解析服务提供器
     /// </summary>
     /// <param name="serviceType"></param>
@@ -122,8 +127,13 @@ public static class App
         if (HostEnvironment == default) return RootServices;
 
         // 第一选择，判断是否是单例注册且单例服务不为空，如果是直接返回根服务提供器
-        if (RootServices != null && InternalApp.InternalServices.Where(u => u.ServiceType == (serviceType.IsGenericType ? serviceType.GetGenericTypeDefinition() : serviceType))
-                                                                .Any(u => u.Lifetime == ServiceLifetime.Singleton)) return RootServices;
+        if (RootServices != null)
+        {
+            var serviceKey = serviceType.IsGenericType ? serviceType.GetGenericTypeDefinition() : serviceType;
+            var isSingleton = _singletonServiceTypes.GetOrAdd(serviceKey, key =>
+                InternalApp.InternalServices.Any(u => u.ServiceType == key && u.Lifetime == ServiceLifetime.Singleton));
+            if (isSingleton) return RootServices;
+        }
 
         // 第二选择是获取 HttpContext 对象的 RequestServices
         var httpContext = HttpContext;
@@ -630,6 +640,14 @@ public static class App
         // 读取应用配置
         var supportPackageNamePrefixs = Settings.SupportPackageNamePrefixs ?? [];
 
+        var loadedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        Assembly LoadOnce(string name)
+        {
+            if (string.IsNullOrEmpty(name) || !loadedNames.Add(name)) return null;
+            return SafeGetAssembly(name);
+        }
+
         IEnumerable<Assembly> scanAssemblies;
 
         // 获取入口程序集
@@ -646,7 +664,8 @@ public static class App
                       (u.Type == "project" && !excludeAssemblyNames.Any(j => u.Name.EndsWith(j))) ||
                       (u.Type == "package" && (u.Name.StartsWith(nameof(Furion), StringComparison.OrdinalIgnoreCase) || supportPackageNamePrefixs.Any(p => IsMatchPattern(u.Name, p) && u.RuntimeAssemblyGroups.Count > 0))) ||
                       (Settings.EnabledReferenceAssemblyScan == true && u.Type == "reference"))    // 判断是否启用引用程序集扫描
-               .Select(u => Reflect.GetAssembly(u.Name));
+               .Select(u => LoadOnce(u.Name))
+               .Where(a => a != null);
         }
         // 独立发布/单文件发布
         else
@@ -662,19 +681,17 @@ public static class App
 
                 // 加载用户自定义配置单文件所需程序集
                 var nativeAssemblies = singleFilePublish.IncludeAssemblies();
-                var loadAssemblies = singleFilePublish.IncludeAssemblyNames()
-                                                .Select(u => Reflect.GetAssembly(u));
+                var loadAssemblies = singleFilePublish.IncludeAssemblyNames().Select(LoadOnce).Where(a => a != null);
 
-                fixedSingleFileAssemblies = fixedSingleFileAssemblies.Concat(nativeAssemblies)
-                                                            .Concat(loadAssemblies);
+                fixedSingleFileAssemblies = fixedSingleFileAssemblies.Concat(nativeAssemblies).Concat(loadAssemblies);
 
                 // 解决 Furion.Extras.ObjectMapper.Mapster 程序集不能加载问题
                 try
                 {
-                    if (!fixedSingleFileAssemblies.Any(u => u.GetName().Name.Equals(ObjectMapperServiceCollectionExtensions.ASSEMBLY_NAME)))
+                    var mapsterAss = LoadOnce(ObjectMapperServiceCollectionExtensions.ASSEMBLY_NAME);
+                    if (mapsterAss != null && !fixedSingleFileAssemblies.Any(u => u.GetName().Name.Equals(ObjectMapperServiceCollectionExtensions.ASSEMBLY_NAME)))
                     {
-                        fixedSingleFileAssemblies = fixedSingleFileAssemblies.Concat([
-                            Reflect.GetAssembly(ObjectMapperServiceCollectionExtensions.ASSEMBLY_NAME) ]);
+                        fixedSingleFileAssemblies = fixedSingleFileAssemblies.Concat([mapsterAss]);
                     }
                 }
                 catch { }
@@ -708,6 +725,8 @@ public static class App
         // 加载 appsettings.json 配置的外部程序集
         if (Settings.ExternalAssemblies != null && Settings.ExternalAssemblies.Length != 0)
         {
+            var externalList = new List<Assembly>();
+            var pathList = new List<string>();
             var externalDlls = new List<string>();
             foreach (var item in Settings.ExternalAssemblies)
             {
@@ -743,15 +762,16 @@ public static class App
                 // 根据路径加载程序集
                 var loadedAssembly = Reflect.LoadAssembly(assemblyFileFullPath);
                 if (loadedAssembly == default) continue;
-                var assembly = new[] { loadedAssembly };
 
-                if (scanAssemblies.Any(u => u == loadedAssembly)) continue;
+                if (!loadedNames.Add(loadedAssembly.GetName().Name)) continue;
 
-                // 合并程序集
-                scanAssemblies = scanAssemblies.Concat(assembly);
-                externalAssemblies = externalAssemblies.Concat(assembly);
-                pathOfExternalAssemblies = pathOfExternalAssemblies.Concat([assemblyFileFullPath]);
+                externalList.Add(loadedAssembly);
+                pathList.Add(assemblyFileFullPath);
             }
+
+            scanAssemblies = scanAssemblies.Concat(externalList);
+            externalAssemblies = externalList;
+            pathOfExternalAssemblies = pathList;
         }
 
         // 处理排除的程序集
@@ -786,12 +806,35 @@ public static class App
     }
 
     /// <summary>
+    /// 安全获取程序集
+    /// </summary>
+    /// <remarks>忽略 NuGet 扫描的脏依赖。</remarks>
+    /// <param name="assemblyName"></param>
+    /// <returns></returns>
+    private static Assembly SafeGetAssembly(string assemblyName)
+    {
+        try
+        {
+            return Reflect.GetAssembly(assemblyName);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// 加载程序集中的所有类型
     /// </summary>
     /// <param name="ass"></param>
     /// <returns></returns>
     private static IEnumerable<Type> GetTypes(Assembly ass)
     {
+        if (ass == null || ass.IsDefined(typeof(FurionAttribute), false))
+        {
+            return Array.Empty<Type>();
+        }
+
         var types = Array.Empty<Type>();
 
         try
@@ -805,8 +848,7 @@ public static class App
 
         return types.Where(u =>
         {
-            return !u.Assembly.IsDefined(typeof(FurionAttribute), false)
-                   && (u.IsPublic || ObsoleteObjectExtensions.IsInternal(u))    // 支持 public 和 internal 声明类型
+            return (u.IsPublic || ObsoleteObjectExtensions.IsInternal(u))    // 支持 public 和 internal 声明类型
                    && !u.IsDefined(typeof(SuppressSnifferAttribute), false)
                    && !u.IsAnonymous(); // 排除匿名类型
         });
