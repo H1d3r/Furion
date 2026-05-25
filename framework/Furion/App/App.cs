@@ -646,7 +646,9 @@ public static class App
                       (u.Type == "project" && !excludeAssemblyNames.Any(j => u.Name.EndsWith(j))) ||
                       (u.Type == "package" && (u.Name.StartsWith(nameof(Furion), StringComparison.OrdinalIgnoreCase) || supportPackageNamePrefixs.Any(p => IsMatchPattern(u.Name, p) && u.RuntimeAssemblyGroups.Count > 0))) ||
                       (Settings.EnabledReferenceAssemblyScan == true && u.Type == "reference"))    // 判断是否启用引用程序集扫描
-               .Select(u => Reflect.GetAssembly(u.Name));
+               .Select(u => SafeGetAssembly(u.Name))
+               .Where(a => a != null)
+               .ToList();
         }
         // 独立发布/单文件发布
         else
@@ -662,11 +664,9 @@ public static class App
 
                 // 加载用户自定义配置单文件所需程序集
                 var nativeAssemblies = singleFilePublish.IncludeAssemblies();
-                var loadAssemblies = singleFilePublish.IncludeAssemblyNames()
-                                                .Select(u => Reflect.GetAssembly(u));
+                var loadAssemblies = singleFilePublish.IncludeAssemblyNames().Select(Reflect.GetAssembly);
 
-                fixedSingleFileAssemblies = fixedSingleFileAssemblies.Concat(nativeAssemblies)
-                                                            .Concat(loadAssemblies);
+                fixedSingleFileAssemblies = fixedSingleFileAssemblies.Concat(nativeAssemblies).Concat(loadAssemblies);
 
                 // 解决 Furion.Extras.ObjectMapper.Mapster 程序集不能加载问题
                 try
@@ -699,7 +699,8 @@ public static class App
                                             && !ass.FullName.StartsWith(nameof(Microsoft))
                                             && !ass.FullName.StartsWith("netstandard"))
                                     .Concat(fixedSingleFileAssemblies)
-                                    .Distinct();
+                                    .Distinct()
+                                    .ToList();
         }
 
         IEnumerable<Assembly> externalAssemblies = [];
@@ -783,6 +784,24 @@ public static class App
         var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
         matcher.AddInclude(pattern);
         return matcher.Match(input).HasMatches;
+    }
+
+    /// <summary>
+    /// 安全获取程序集
+    /// </summary>
+    /// <remarks>忽略 NuGet 扫描的脏依赖。</remarks>
+    /// <param name="assemblyName"></param>
+    /// <returns></returns>
+    private static Assembly SafeGetAssembly(string assemblyName)
+    {
+        try
+        {
+            return Reflect.GetAssembly(assemblyName);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
