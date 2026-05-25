@@ -74,6 +74,12 @@ public static class ComponentServiceCollectionExtensions
         // 逐条创建组件实例并调用
         foreach (var context in componentContextLinkList)
         {
+            // 检查当前组件是否实现了 IServiceComponent 接口
+            if (!typeof(IServiceComponent).IsAssignableFrom(context.ComponentType))
+            {
+                continue;
+            }
+
             // 创建组件实例
             var component = Activator.CreateInstance(context.ComponentType) as IServiceComponent;
 
