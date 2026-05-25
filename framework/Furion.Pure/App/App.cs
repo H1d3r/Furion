@@ -819,6 +819,7 @@ public static class App
         }
         catch
         {
+            Console.WriteLine($"Error load `{assemblyName}` assembly.");
             return null;
         }
     }
