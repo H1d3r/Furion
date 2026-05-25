@@ -35,6 +35,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyModel;
+using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
@@ -643,7 +644,7 @@ public static class App
             scanAssemblies = dependencyContext.RuntimeLibraries
                .Where(u =>
                       (u.Type == "project" && !excludeAssemblyNames.Any(j => u.Name.EndsWith(j))) ||
-                      (u.Type == "package" && (u.Name.StartsWith(nameof(Furion)) || supportPackageNamePrefixs.Any(p => u.Name.StartsWith(p) && u.RuntimeAssemblyGroups.Count > 0))) ||
+                      (u.Type == "package" && (u.Name.StartsWith(nameof(Furion), StringComparison.OrdinalIgnoreCase) || supportPackageNamePrefixs.Any(p => IsMatchPattern(u.Name, p) && u.RuntimeAssemblyGroups.Count > 0))) ||
                       (Settings.EnabledReferenceAssemblyScan == true && u.Type == "reference"))    // 判断是否启用引用程序集扫描
                .Select(u => Reflect.GetAssembly(u.Name));
         }
@@ -715,7 +716,7 @@ public static class App
                 var path = Path.Combine(AppContext.BaseDirectory, item);
 
                 // 若以 .dll 结尾则认为是一个文件
-                if (item.EndsWith(".dll"))
+                if (item.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
                 {
                     if (File.Exists(path)) externalDlls.Add(path);
                 }
@@ -760,6 +761,28 @@ public static class App
         }
 
         return (scanAssemblies, externalAssemblies, pathOfExternalAssemblies);
+    }
+
+    /// <summary>
+    /// 通配符匹配
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="pattern"></param>
+    /// <returns></returns>
+    private static bool IsMatchPattern(string input, string pattern)
+    {
+        if (string.IsNullOrEmpty(pattern) || string.IsNullOrEmpty(input)) return false;
+
+        // 如果不包含通配符，使用 StartsWith 前缀匹配行为（旧行为）
+        if (pattern.IndexOf('*') < 0 && pattern.IndexOf('?') < 0)
+        {
+            return input.StartsWith(pattern, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // 否则使用 Matcher 进行 Glob 匹配
+        var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
+        matcher.AddInclude(pattern);
+        return matcher.Match(input).HasMatches;
     }
 
     /// <summary>
