@@ -128,6 +128,31 @@
             html.dark-mode #login-form .form-row label {
                 color: #e4e6e6;
             }
+
+        .swagger-logout-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            margin-left: 15px;
+            color: #3b4151;
+            padding: 5px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            color: #bcbdbd;
+            font-size: 22px!important;
+            position: relative;
+            top: -2px;
+        }
+
+            .swagger-logout-btn:hover {
+                opacity: 0.7;
+            }
+
+        html.dark-mode .swagger-logout-btn {
+            color: #f0f1f1;
+        }
     </style>
     %(HeadContent)
 </head>
@@ -251,6 +276,7 @@
 
         var tokenKey = "access-token";
         var cultureKey = "culture";
+        var loginSessionKey = "swagger-logged-in";
 
         // default response interceptor
         function defaultResponseInterceptor(response) {
@@ -350,6 +376,30 @@
             }
         }
 
+        function appendLogoutButton(loginObject) {
+            if (!loginObject || loginObject.Enabled !== true) return;
+
+            var topbarWrapper = document.querySelector('.topbar-wrapper');
+            if (!topbarWrapper) {
+                setTimeout(function() { appendLogoutButton(loginObject); }, 200);
+                return;
+            }
+
+            if (document.getElementById('swagger-logout-btn')) return;
+
+            var btn = document.createElement('button');
+            btn.id = 'swagger-logout-btn';
+            btn.className = 'swagger-logout-btn';
+            btn.innerHTML = '⏻';
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.sessionStorage.removeItem(loginSessionKey);
+                window.location.reload();
+            });
+
+            topbarWrapper.appendChild(btn);
+        }
+
         // init swagger ui
         function initSwaggerUI(configObject, oauthConfigObject) {
             configObject.onComplete = function () {
@@ -357,6 +407,8 @@
                 if (accessToken) {
                     ui.preauthorizeApiKey("Bearer", accessToken);
                 }
+
+                appendLogoutButton(window.__swaggerLoginInfo);
             };
 
             // Workaround for https://github.com/swagger-api/swagger-ui/issues/5945
@@ -400,8 +452,15 @@
             var configObject = JSON.parse('%(ConfigObject)');
             var oauthConfigObject = JSON.parse('%(OAuthConfigObject)');
 
+            window.__swaggerLoginInfo = configObject.LoginInfo;
+
             if (configObject.DarkMode === true) {
                 document.documentElement.classList.add("dark-mode");
+            }
+
+            if (window.sessionStorage.getItem(loginSessionKey) === "true") {
+                initSwaggerUI(configObject, oauthConfigObject);
+                return;
             }
 
             var loginObject = configObject.LoginInfo;
@@ -421,6 +480,7 @@
                     success: function (res, headerMap) {
                         if (res.toString() === "200") {
                             loginForm.style.display = "none";
+                            window.sessionStorage.setItem(loginSessionKey, "true");
                             initSwaggerUI(configObject, oauthConfigObject);
                         }
                         else {
@@ -448,6 +508,7 @@
                                     success: function (res, headerMap) {
                                         if (res.toString() === "200") {
                                             loginForm.style.display = "none";
+                                            window.sessionStorage.setItem(loginSessionKey, "true");
                                             initSwaggerUI(configObject, oauthConfigObject);
                                             defaultResponseInterceptor({ headers: headerMap });
                                         }
