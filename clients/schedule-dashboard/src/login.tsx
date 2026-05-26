@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useAuth } from "./auth";
 import styles from "./login.module.css";
 import { Button, Input, Space, Toast, Typography } from "@douyinfe/semi-ui";
@@ -19,6 +20,15 @@ export default function Login() {
   let auth = useAuth();
 
   let from = location.state?.from?.pathname || "/";
+
+  useEffect(() => {
+    const theme = localStorage.getItem("theme-mode");
+    if (theme === "dark") {
+      document.body.setAttribute("theme-mode", "dark");
+    } else {
+      document.body.removeAttribute("theme-mode");
+    }
+  }, []);
 
   /**
    * 操作作业触发器

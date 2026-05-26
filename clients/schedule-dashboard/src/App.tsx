@@ -8,7 +8,7 @@ import {
   IconSun,
 } from "@douyinfe/semi-icons";
 import { BackTop, Button, Layout, Nav, Tag, Tooltip } from "@douyinfe/semi-ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Jobs from "./components/jobs";
 import apiconfig from "./apiconfig";
 import { useAuth } from "./auth";
@@ -18,18 +18,31 @@ import CurrentTime from "./components/current-time";
 
 function App() {
   const { Header, Content } = Layout;
-  const [mode, setMode] = useState("light");
+
+  const [mode, setMode] = useState(() => {
+    return localStorage.getItem("theme-mode") || "light";
+  });
+
   let auth = useAuth();
   let navigate = useNavigate();
 
-  const switchMode = () => {
-    const body = document.body;
-    if (body.hasAttribute("theme-mode")) {
-      body.removeAttribute("theme-mode");
-      setMode("light");
+  useEffect(() => {
+    if (mode === "dark") {
+      document.body.setAttribute("theme-mode", "dark");
     } else {
-      body.setAttribute("theme-mode", "dark");
-      setMode("dark");
+      document.body.removeAttribute("theme-mode");
+    }
+  }, [mode]);
+
+  const switchMode = () => {
+    const newMode = mode === "light" ? "dark" : "light";
+    setMode(newMode);
+    localStorage.setItem("theme-mode", newMode);
+
+    if (newMode === "dark") {
+      document.body.setAttribute("theme-mode", "dark");
+    } else {
+      document.body.removeAttribute("theme-mode");
     }
   };
 
