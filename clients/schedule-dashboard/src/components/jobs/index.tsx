@@ -131,18 +131,82 @@ function getDefaultJsonValue() {
 
 let defaultJsonValue = getDefaultJsonValue();
 
+function getNumberFromUrl(key: string, fallback: number): number {
+  const params = new URLSearchParams(window.location.search);
+  const value = params.get(key);
+  if (value) {
+    const num = parseInt(value, 10);
+    return isNaN(num) ? fallback : num;
+  }
+  return fallback;
+}
+
+function syncUrlParams(
+  tab: string,
+  page: number,
+  pageSize: number,
+  search: string,
+) {
+  const params = new URLSearchParams(window.location.search);
+
+  // tab
+  if (tab && tab !== "list") {
+    params.set("tab", tab);
+  } else {
+    params.delete("tab");
+  }
+
+  // page
+  if (page > 1) {
+    params.set("page", String(page));
+  } else {
+    params.delete("page");
+  }
+
+  // pageSize
+  if (pageSize !== 10) {
+    params.set("pageSize", String(pageSize));
+  } else {
+    params.delete("pageSize");
+  }
+
+  // search
+  if (search) {
+    params.set("q", search);
+  } else {
+    params.delete("q");
+  }
+
+  const searchString = params.toString();
+  const newUrl =
+    window.location.pathname + (searchString ? `?${searchString}` : "");
+  window.history.replaceState(null, "", newUrl);
+}
+
 export default function Jobs({ mode }: { mode: string }) {
   const auth = useAuth();
+
+  const initialParams = useMemo(
+    () => new URLSearchParams(window.location.search),
+    [],
+  );
+  const [activeTab, setActiveTab] = useState(
+    () => initialParams.get("tab") || "list",
+  );
+  const [words, setWords] = useState<string>(
+    () => initialParams.get("q") || "",
+  );
+  const [pagination, setPagination] = useState({
+    currentPage: getNumberFromUrl("page", 1),
+    pageSize: getNumberFromUrl("pageSize", 10),
+    total: 0,
+  });
+
   const [jobs, setJobs] = useState<Scheduler[]>([]);
-  const [words, setWords] = useState<string>("");
   const [allTimelines, setAllTimelines] = useState<TriggerTimeline[]>([]);
   const [jsonValue, setJsonValue] = useState(defaultJsonValue);
   const [submitting, setSubmitting] = useState(false);
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    pageSize: 10,
-    total: 0,
-  });
+
   const jsonviewerRef = useRef<JsonViewer>(null!);
 
   const jobList = useMemo(() => {
@@ -297,8 +361,23 @@ export default function Jobs({ mode }: { mode: string }) {
   const paginatedData = useMemo(() => {
     const start = (pagination.currentPage - 1) * pagination.pageSize;
     const end = start + pagination.pageSize;
-    return data.slice(start, end); // 🔥 手动切片：只取当前页的数据
+    return data.slice(start, end);
   }, [data, pagination.currentPage, pagination.pageSize]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveTab(params.get("tab") || "list");
+      setWords(params.get("q") || "");
+      setPagination((prev) => ({
+        ...prev,
+        currentPage: getNumberFromUrl("page", 1),
+        pageSize: getNumberFromUrl("pageSize", 10),
+      }));
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     loadJobs();
@@ -501,7 +580,20 @@ export default function Jobs({ mode }: { mode: string }) {
 
   return (
     <>
-      <Tabs type="card" contentStyle={{ padding: 10, boxSizing: "border-box" }}>
+      <Tabs
+        type="card"
+        activeKey={activeTab}
+        onChange={(key) => {
+          setActiveTab(key);
+          syncUrlParams(
+            key,
+            pagination.currentPage,
+            pagination.pageSize,
+            words,
+          );
+        }}
+        contentStyle={{ padding: 10, boxSizing: "border-box" }}
+      >
         <TabPane
           tab={
             <span>
@@ -523,8 +615,10 @@ export default function Jobs({ mode }: { mode: string }) {
               placeholder="搜索关键字..."
               value={words}
               onChange={(val) => {
-                setWords(val || "");
+                const newVal = val || "";
+                setWords(newVal);
                 setPagination((prev) => ({ ...prev, currentPage: 1 }));
+                syncUrlParams(activeTab, 1, pagination.pageSize, newVal);
               }}
               autoFocus
             />
@@ -541,9 +635,11 @@ export default function Jobs({ mode }: { mode: string }) {
                 pageSize: pagination.pageSize,
                 total: data.length,
                 onPageChange: (page: number) => {
+                  syncUrlParams(activeTab, page, pagination.pageSize, words);
                   setPagination((prev) => ({ ...prev, currentPage: page }));
                 },
                 onPageSizeChange: (pageSize: number) => {
+                  syncUrlParams(activeTab, 1, pageSize, words);
                   setPagination((prev) => ({
                     ...prev,
                     pageSize,
