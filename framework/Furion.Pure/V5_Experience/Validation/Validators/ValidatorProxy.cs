@@ -26,7 +26,6 @@
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace Furion.Validation;
 
@@ -186,7 +185,8 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IValidatorInitial
     /// <summary>
     ///     验证器实例缓存字典
     /// </summary>
-    internal readonly ConcurrentDictionary<int, TValidator> _validatorCache = new();
+    internal readonly ConcurrentDictionary<object, TValidator>
+        _validatorCache = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>
     ///     验证器实例配置委托集合
@@ -238,8 +238,11 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IValidatorInitial
 
         _validatorConfigurations.Add(predicate);
 
-        // 清除缓存以确保新实例获取最新属性
-        _validatorCache.Clear();
+        // 遍历所有验证器实例并调用自定义配置委托
+        foreach (var validator in _validatorCache.Values)
+        {
+            predicate(validator);
+        }
 
         return this;
     }
@@ -298,6 +301,9 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IValidatorInitial
                 disposable.Dispose();
             }
         }
+
+        // 清除缓存
+        _validatorCache.Clear();
     }
 
     /// <summary>
@@ -316,7 +322,7 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IValidatorInitial
         ArgumentNullException.ThrowIfNull(instance);
         ArgumentNullException.ThrowIfNull(validationContext);
 
-        return _validatorCache.GetOrAdd(RuntimeHelpers.GetHashCode(instance), _ =>
+        return _validatorCache.GetOrAdd(instance, _ =>
         {
             // 反射创建验证器实例
             var validator = _constructorArgsFactory is null
@@ -381,7 +387,6 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IValidatorInitial
         }
     }
 
-
     /// <summary>
     ///     订阅属性变更事件
     /// </summary>
@@ -393,8 +398,21 @@ public class ValidatorProxy<T, TValidator> : ValidatorBase<T>, IValidatorInitial
     {
         _propertyChanges[eventArgs.PropertyName!] = eventArgs.PropertyValue;
 
-        // 清除缓存以确保新实例获取最新属性
-        _validatorCache.Clear();
+        // 根据变更的属性名查找对应的验证器实例属性
+        var validatorProperty =
+            typeof(TValidator).GetProperty(eventArgs.PropertyName!, BindingFlags.Instance | BindingFlags.Public);
+
+        // 检查验证器实例属性是否可写
+        if (validatorProperty is not { CanWrite: true })
+        {
+            return;
+        }
+
+        // 遍历所有验证器并更新对应属性值
+        foreach (var validator in _validatorCache.Values)
+        {
+            validatorProperty.SetValue(validator, eventArgs.PropertyValue);
+        }
     }
 
     /// <inheritdoc cref="IValidatorInitializer.InitializeServiceProvider" />
