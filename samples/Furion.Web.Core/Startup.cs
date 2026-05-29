@@ -89,7 +89,6 @@ public sealed class Startup : AppStartup
 
         services.AddFromConvertBinding();
 
-        // 新版本定时任务测试
         services.AddSchedule(options =>
         {
             //options.UseUtcTimestamp = true;
@@ -145,7 +144,6 @@ public sealed class Startup : AppStartup
             options.AddPersistence<TestJobPersistence>();
         });
 
-        // 新版本任务队列
         services.AddTaskQueue(options =>
         {
             //options.Concurrent = false;
