@@ -955,6 +955,41 @@ public abstract class FluentValidatorBuilder<T, TSelf> : IValidatorInitializer
         AddValidator(new RequiredValidator { AllowEmptyStrings = allowEmptyStrings });
 
     /// <summary>
+    ///     添加敏感词验证器
+    /// </summary>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf SensitiveWord(Action<SensitiveWordValidator>? configure = null) =>
+        AddValidator(new SensitiveWordValidator(), configure);
+
+    /// <summary>
+    ///     添加敏感词验证器
+    /// </summary>
+    /// <param name="dictionaryName">敏感词字典名称，不区分大小写</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf SensitiveWord(string dictionaryName, Action<SensitiveWordValidator>? configure = null) =>
+        AddValidator(new SensitiveWordValidator(dictionaryName), configure);
+
+    /// <summary>
+    ///     添加敏感词验证器
+    /// </summary>
+    /// <param name="sanitizer">
+    ///     <see cref="SensitiveWordSanitizer" />
+    /// </param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <typeparamref name="TSelf" />
+    /// </returns>
+    public virtual TSelf SensitiveWord(SensitiveWordSanitizer sanitizer,
+        Action<SensitiveWordValidator>? configure = null) =>
+        AddValidator(new SensitiveWordValidator(sanitizer), configure);
+
+    /// <summary>
     ///     添加单项验证器
     /// </summary>
     /// <returns>

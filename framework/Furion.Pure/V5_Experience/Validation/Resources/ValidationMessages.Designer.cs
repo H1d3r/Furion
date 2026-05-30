@@ -556,6 +556,24 @@ namespace Furion.Validation.Resources {
         }
         
         /// <summary>
+        ///   查找类似 The field {0} contains sensitive or prohibited words. 的本地化字符串。
+        /// </summary>
+        internal static string SensitiveWordValidator_ValidationError {
+            get {
+                return ResourceManager.GetString("SensitiveWordValidator_ValidationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The field {0} contains sensitive or prohibited words: {1}. 的本地化字符串。
+        /// </summary>
+        internal static string SensitiveWordValidator_ValidationError_ShowMatchedWords {
+            get {
+                return ResourceManager.GetString("SensitiveWordValidator_ValidationError_ShowMatchedWords", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The field {0} only allows a single item. 的本地化字符串。
         /// </summary>
         internal static string SingleValidator_ValidationError {

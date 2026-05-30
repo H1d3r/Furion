@@ -988,6 +988,66 @@ public static class Validators
         new() { AllowEmptyStrings = allowEmptyStrings };
 
     /// <summary>
+    ///     创建敏感词验证器
+    /// </summary>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="SensitiveWordValidator" />
+    /// </returns>
+    public static SensitiveWordValidator SensitiveWord(Action<SensitiveWordValidator>? configure = null)
+    {
+        // 初始化 SensitiveWordValidator 实例
+        var validator = new SensitiveWordValidator();
+
+        // 调用自定义配置委托
+        configure?.Invoke(validator);
+
+        return validator;
+    }
+
+    /// <summary>
+    ///     创建敏感词验证器
+    /// </summary>
+    /// <param name="dictionaryName">敏感词字典名称，不区分大小写</param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="SensitiveWordValidator" />
+    /// </returns>
+    public static SensitiveWordValidator SensitiveWord(string dictionaryName,
+        Action<SensitiveWordValidator>? configure = null)
+    {
+        // 初始化 SensitiveWordValidator 实例
+        var validator = new SensitiveWordValidator(dictionaryName);
+
+        // 调用自定义配置委托
+        configure?.Invoke(validator);
+
+        return validator;
+    }
+
+    /// <summary>
+    ///     创建敏感词验证器
+    /// </summary>
+    /// <param name="sanitizer">
+    ///     <see cref="SensitiveWordSanitizer" />
+    /// </param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns>
+    ///     <see cref="SensitiveWordValidator" />
+    /// </returns>
+    public static SensitiveWordValidator SensitiveWord(SensitiveWordSanitizer sanitizer,
+        Action<SensitiveWordValidator>? configure = null)
+    {
+        // 初始化 SensitiveWordValidator 实例
+        var validator = new SensitiveWordValidator(sanitizer);
+
+        // 调用自定义配置委托
+        configure?.Invoke(validator);
+
+        return validator;
+    }
+
+    /// <summary>
     ///     创建单项验证器
     /// </summary>
     /// <returns>
