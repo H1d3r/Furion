@@ -31,7 +31,6 @@ using Furion.Utilities;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
-using System.Text;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -255,29 +254,38 @@ public static class AppServiceCollectionExtensions
     /// <returns>服务集合</returns>
     internal static IServiceCollection AddStartups(this IServiceCollection services)
     {
-        // 扫描所有继承 AppStartup 的类
+        // 扫描所有继承 AppStartup 或标记 [AppStartup] 特性的类
         var startups = App.EffectiveTypes
-            .Where(u => typeof(AppStartup).IsAssignableFrom(u) && u.IsClass && !u.IsAbstract && !u.IsGenericType)
-            .OrderByDescending(u => GetStartupOrder(u));
+            .Where(u => (typeof(AppStartup).IsAssignableFrom(u) || u.IsDefined(typeof(AppStartupAttribute), true)) && u.IsClass && !u.IsAbstract && !u.IsGenericType)
+            .OrderByDescending(GetStartupOrder);
 
-        // 注册自定义 startup
         foreach (var type in startups)
         {
-            var startup = Activator.CreateInstance(type) as AppStartup;
-            App.AppStartups.Add(startup);
-
-            // 获取所有符合依赖注入格式的方法，如返回值void，且第一个参数是 IServiceCollection 类型
-            var serviceMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            // 获取所有符合依赖注入格式的方法，如返回值 void，且第一个参数是 IServiceCollection 类型
+            var serviceMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
                 .Where(u => u.ReturnType == typeof(void)
-                    && u.GetParameters().Length > 0
-                    && u.GetParameters().First().ParameterType == typeof(IServiceCollection));
+                            && u.GetParameters().Length > 0
+                            && u.GetParameters().First().ParameterType == typeof(IServiceCollection))
+                .ToList();
 
-            if (!serviceMethods.Any()) continue;
+            if (serviceMethods.Count == 0) continue;
 
-            // 自动安装属性调用
+            // 确定是否需要创建实例
+            object instance = null;
+            if (typeof(AppStartup).IsAssignableFrom(type))
+            {
+                instance = Activator.CreateInstance(type);
+                App.AppStartups.Add((AppStartup)instance);
+            }
+            else if (serviceMethods.Any(m => !m.IsStatic))
+            {
+                instance = Activator.CreateInstance(type);
+            }
+
             foreach (var method in serviceMethods)
             {
-                method.Invoke(startup, [services]);
+                var target = method.IsStatic ? null : instance;
+                method.Invoke(target, [services]);
             }
         }
 

@@ -34,6 +34,13 @@ public class AppStartupAttribute : Attribute
     /// <summary>
     /// 构造函数
     /// </summary>
+    public AppStartupAttribute()
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
     /// <param name="order"></param>
     public AppStartupAttribute(int order)
     {
