@@ -121,7 +121,7 @@ public class StartupFilter : IStartupFilter
     /// </summary>
     /// <param name="startups"></param>
     /// <param name="app"></param>
-    private static void UseStartups(IEnumerable<AppStartup> startups, IApplicationBuilder app)
+    private static void UseStartups(IEnumerable<object> startups, IApplicationBuilder app)
     {
         // 遍历所有
         foreach (var startup in startups)
@@ -129,17 +129,19 @@ public class StartupFilter : IStartupFilter
             var type = startup.GetType();
 
             // 获取所有符合依赖注入格式的方法，如返回值 void，且第一个参数是 IApplicationBuilder 类型
-            var configureMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            var configureMethods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
                 .Where(u => u.ReturnType == typeof(void)
                     && u.GetParameters().Length > 0
-                    && u.GetParameters().First().ParameterType == typeof(IApplicationBuilder));
+                    && u.GetParameters().First().ParameterType == typeof(IApplicationBuilder))
+                .ToList();
 
-            if (!configureMethods.Any()) continue;
+            if (configureMethods.Count == 0) continue;
 
             // 自动安装属性调用
             foreach (var method in configureMethods)
             {
-                method.Invoke(startup, ResolveMethodParameterInstances(app, method));
+                var target = method.IsStatic ? null : startup;
+                method.Invoke(target, ResolveMethodParameterInstances(app, method));
             }
         }
 

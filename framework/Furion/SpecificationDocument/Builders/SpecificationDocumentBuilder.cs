@@ -364,6 +364,15 @@ public static class SpecificationDocumentBuilder
         // 配置多语言和自动登录token
         AddDefaultInterceptor(swaggerUIOptions);
 
+        // 启用标签搜索
+        swaggerUIOptions.EnableFilter();
+
+        // 启用请求持续时间显示
+        swaggerUIOptions.DisplayRequestDuration();
+
+        // 启用记住展开的接口
+        swaggerUIOptions.EnableDeepLinking();
+
         // 自定义配置
         configure?.Invoke(swaggerUIOptions);
     }
