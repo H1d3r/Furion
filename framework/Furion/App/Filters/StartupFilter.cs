@@ -137,7 +137,6 @@ public class StartupFilter : IStartupFilter
 
             if (configureMethods.Count == 0) continue;
 
-            // 自动安装属性调用
             foreach (var method in configureMethods)
             {
                 var target = method.IsStatic ? null : startup;
