@@ -76,7 +76,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
     /// <summary>
     /// 追踪当前正在运行的并行任务
     /// </summary>
-    private readonly ConcurrentBag<Task> _runningTasks = [];
+    private readonly ConcurrentDictionary<Task, byte> _runningTasks = new();
 
     /// <summary>
     /// 同步任务队列
@@ -186,10 +186,10 @@ internal sealed class TaskQueueHostedService : BackgroundService
         {
             // 添加待执行的任务程序
             var task = DequeueHandleAsync(taskWrapper, stoppingToken);
-            _runningTasks.Add(task);
+            _runningTasks.TryAdd(task, 0);
 
             // 任务完成后自动从集合中移除
-            _ = task.ContinueWith(t => _runningTasks.TryTake(out _), TaskContinuationOptions.ExecuteSynchronously);
+            _ = task.ContinueWith(t => _runningTasks.TryRemove(t, out _), TaskContinuationOptions.ExecuteSynchronously);
         }
         else
         {
@@ -285,7 +285,7 @@ internal sealed class TaskQueueHostedService : BackgroundService
         // 等待正在运行的并行任务完成
         if (!_runningTasks.IsEmpty)
         {
-            var tasks = _runningTasks.ToArray();
+            var tasks = _runningTasks.Keys.ToArray();
             _logger.LogInformation("Waiting for {Count} running tasks to complete before shutdown...", tasks.Length);
 
             // 最多等待 1.5 秒
