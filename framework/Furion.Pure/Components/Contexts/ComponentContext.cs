@@ -24,6 +24,8 @@
 // ------------------------------------------------------------------------
 
 using Furion.Components;
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 
 namespace System;
 
@@ -60,7 +62,8 @@ public sealed class ComponentContext
     /// <summary>
     /// 上下文数据
     /// </summary>
-    private Dictionary<string, object> Properties { get; set; } = [];
+    /// <remarks>所有组件共享根上下文的字典。</remarks>
+    private ConcurrentDictionary<string, object> Properties { get; set; } = new();
 
     /// <summary>
     /// 是否是根组件
@@ -73,7 +76,7 @@ public sealed class ComponentContext
     /// <typeparam name="TComponent">派生自 <see cref="IComponent"/></typeparam>
     /// <param name="value">组件参数</param>
     /// <returns></returns>
-    public Dictionary<string, object> SetProperty<TComponent>(object value)
+    public ComponentContext SetProperty<TComponent>(object value)
         where TComponent : class, IComponent, new()
     {
         return SetProperty(typeof(TComponent), value);
@@ -85,7 +88,7 @@ public sealed class ComponentContext
     /// <param name="componentType">组件类型</param>
     /// <param name="value">组件参数</param>
     /// <returns></returns>
-    public Dictionary<string, object> SetProperty(Type componentType, object value)
+    public ComponentContext SetProperty(Type componentType, object value)
     {
         return SetProperty(componentType.FullName, value);
     }
@@ -96,19 +99,14 @@ public sealed class ComponentContext
     /// <param name="key">键</param>
     /// <param name="value">组件参数</param>
     /// <returns></returns>
-    public Dictionary<string, object> SetProperty(string key, object value)
+    public ComponentContext SetProperty(string key, object value)
     {
         if (string.IsNullOrWhiteSpace(key)) throw new ArgumentNullException(nameof(key));
 
         var properties = RootContext == null ? Properties : RootContext.Properties;
+        properties[key] = value;
 
-        if (!properties.ContainsKey(key))
-        {
-            properties.Add(key, value);
-        }
-        else properties[key] = value;
-
-        return properties;
+        return this;
     }
 
     /// <summary>
@@ -156,17 +154,18 @@ public sealed class ComponentContext
 
         var properties = RootContext == null ? Properties : RootContext.Properties;
 
-        return !properties.ContainsKey(key)
+        return !properties.TryGetValue(key, out var value)
             ? default
-            : (TComponentOptions)properties[key];
+            : (TComponentOptions)value;
     }
 
     /// <summary>
     /// 获取组件所有依赖参数
     /// </summary>
     /// <returns></returns>
-    public Dictionary<string, object> GetProperties()
+    public IReadOnlyDictionary<string, object> GetProperties()
     {
-        return RootContext == null ? Properties : RootContext.Properties;
+        var source = RootContext == null ? Properties : RootContext.Properties;
+        return new ReadOnlyDictionary<string, object>(source.ToDictionary(u => u.Key, u => u.Value));
     }
 }

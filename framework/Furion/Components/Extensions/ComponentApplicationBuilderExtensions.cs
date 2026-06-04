@@ -25,6 +25,7 @@
 
 using Furion.Components;
 using Microsoft.AspNetCore.Hosting;
+using System.Collections.Concurrent;
 
 namespace Microsoft.AspNetCore.Builder;
 
@@ -33,6 +34,11 @@ namespace Microsoft.AspNetCore.Builder;
 /// </summary>
 public static class ComponentApplicationBuilderExtensions
 {
+    /// <summary>
+    /// 已执行过中间件注册的根组件类型
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, byte> _loadedApplicationComponents = new();
+
     /// <summary>
     /// 注册依赖组件
     /// </summary>
@@ -72,6 +78,12 @@ public static class ComponentApplicationBuilderExtensions
     /// <returns><see cref="IApplicationBuilder"/></returns>
     public static IApplicationBuilder UseComponent(this IApplicationBuilder app, IWebHostEnvironment env, Type componentType, object options = default)
     {
+        // 防止重复注册同一个根组件
+        if (!_loadedApplicationComponents.TryAdd(componentType, 0))
+        {
+            return app;
+        }
+
         // 创建组件依赖链
         var componentContextLinkList = Penetrates.CreateDependLinkList(componentType, options);
 
@@ -89,6 +101,9 @@ public static class ComponentApplicationBuilderExtensions
 
             // 调用
             component.Load(app, env, componentContext);
+
+            // 释放资源
+            (component as IDisposable)?.Dispose();
         }
 
         return app;

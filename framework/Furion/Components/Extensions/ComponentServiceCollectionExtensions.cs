@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Furion.Components;
+using System.Collections.Concurrent;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -32,6 +33,11 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class ComponentServiceCollectionExtensions
 {
+    /// <summary>
+    /// 已执行过服务注册的根组件类型
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, byte> _loadedServiceComponents = new();
+
     /// <summary>
     /// 注册单个组件
     /// </summary>
@@ -68,6 +74,12 @@ public static class ComponentServiceCollectionExtensions
     /// <returns><see cref="IServiceCollection"/></returns>
     public static IServiceCollection AddComponent(this IServiceCollection services, Type componentType, object options = default)
     {
+        // 防止重复注册同一个根组件
+        if (!_loadedServiceComponents.TryAdd(componentType, 0))
+        {
+            return services;
+        }
+
         // 创建组件依赖链
         var componentContextLinkList = Penetrates.CreateDependLinkList(componentType, options);
 
@@ -85,6 +97,9 @@ public static class ComponentServiceCollectionExtensions
 
             // 调用
             component.Load(services, context);
+
+            // 释放资源
+            (component as IDisposable)?.Dispose();
         }
 
         return services;

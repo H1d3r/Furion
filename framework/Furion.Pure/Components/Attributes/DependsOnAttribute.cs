@@ -40,7 +40,7 @@ public sealed class DependsOnAttribute : Attribute
     private Type[] _dependComponents = [];
 
     /// <summary>
-    /// 连接组件列表
+    /// 链接组件列表
     /// </summary>
     private Type[] _links = [];
 
@@ -58,28 +58,7 @@ public sealed class DependsOnAttribute : Attribute
     /// <remarks>支持字符串类型程序集/类型配置</remarks>
     public DependsOnAttribute(params object[] dependComponents)
     {
-        var components = new List<Type>();
-
-        // 遍历所有依赖组件
-        if (dependComponents != null && dependComponents.Length > 0)
-        {
-            foreach (var component in dependComponents)
-            {
-                // 如果是类型自动载入
-                if (component is Type componentType)
-                {
-                    components.Add(componentType);
-                }
-                // 处理字符串配置模式
-                else if (component is string typeString)
-                {
-                    components.Add(Reflect.GetStringType(typeString));
-                }
-                else throw new InvalidOperationException("Component type can only be `Type` or `String` type of specific format.");
-            }
-        }
-
-        DependComponents = components.ToArray();
+        DependComponents = ParseTypes(dependComponents);
     }
 
     /// <summary>
@@ -91,16 +70,7 @@ public sealed class DependsOnAttribute : Attribute
         set
         {
             var components = value ?? [];
-
-            // 检查类型是否实现 IComponent 接口
-            foreach (var type in components)
-            {
-                if (!typeof(IComponent).IsAssignableFrom(type))
-                {
-                    throw new InvalidOperationException($"The type of `{type.FullName}` must be assignable from `{nameof(IComponent)}`.");
-                }
-            }
-
+            ValidateComponents(components);
             _dependComponents = components;
         }
     }
@@ -108,53 +78,58 @@ public sealed class DependsOnAttribute : Attribute
     /// <summary>
     /// 链接组件列表
     /// </summary>
-    public object[] Links
-    {
-        get => _links;
-        set
-        {
-            var components = new List<Type>();
-
-            // 遍历所有依赖组件
-            if (value != null && value.Length > 0)
-            {
-                foreach (var component in value)
-                {
-                    // 如果是类型自动载入
-                    if (component is Type componentType)
-                    {
-                        components.Add(componentType);
-                    }
-                    // 处理字符串配置模式
-                    else if (component is string typeString)
-                    {
-                        components.Add(Reflect.GetStringType(typeString));
-                    }
-                    else throw new InvalidOperationException("Component type can only be `Type` or `String` type of specific format.");
-                }
-            }
-
-            LinkComponents = _links = components.ToArray();
-        }
-    }
-
-    /// <summary>
-    /// 内部链接组件
-    /// </summary>
-    internal Type[] LinkComponents
+    public Type[] Links
     {
         get => _links;
         set
         {
             var components = value ?? [];
+            ValidateComponents(components);
+            _links = components;
+        }
+    }
 
-            // 检查类型是否实现 IComponent 接口
-            foreach (var type in components)
+    /// <summary>
+    /// 将 object 数组转换为 Type 数组，支持字符串
+    /// </summary>
+    /// <param name="components">原始组件集合</param>
+    /// <returns></returns>
+    private static Type[] ParseTypes(object[] components)
+    {
+        if (components == null || components.Length == 0) return [];
+
+        var types = new List<Type>(components.Length);
+
+        // 遍历所有依赖组件
+        foreach (var component in components)
+        {
+            // 如果是类型自动载入
+            if (component is Type componentType)
             {
-                if (!typeof(IComponent).IsAssignableFrom(type))
-                {
-                    throw new InvalidOperationException($"The type of `{type.FullName}` must be assignable from `{nameof(IComponent)}`.");
-                }
+                types.Add(componentType);
+            }
+            // 处理字符串配置模式
+            else if (component is string typeString)
+            {
+                types.Add(Reflect.GetStringType(typeString));
+            }
+            else throw new InvalidOperationException("Component type can only be `Type` or `String` type of specific format.");
+        }
+        return types.ToArray();
+    }
+
+    /// <summary>
+    /// 验证组件类型合法性
+    /// </summary>
+    /// <param name="types">待验证类型数组</param>
+    private static void ValidateComponents(Type[] types)
+    {
+        foreach (var type in types)
+        {
+            // 检查类型是否实现 IComponent 接口
+            if (!typeof(IComponent).IsAssignableFrom(type))
+            {
+                throw new InvalidOperationException($"The type of `{type.FullName}` must be assignable from `{nameof(IComponent)}`.");
             }
         }
     }

@@ -23,6 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace Furion.Components;
@@ -33,6 +34,12 @@ namespace Furion.Components;
 internal static class Penetrates
 {
     /// <summary>
+    /// 根组件上下文缓存
+    /// </summary>
+    /// <remarks>以根组件类型为键，确保共享同一上下文</remarks>
+    private static readonly ConcurrentDictionary<Type, ComponentContext> _cachedRootContexts = new();
+
+    /// <summary>
     /// 创建组件依赖链表
     /// </summary>
     /// <param name="componentType">组件类型</param>
@@ -40,23 +47,49 @@ internal static class Penetrates
     /// <returns></returns>
     internal static List<ComponentContext> CreateDependLinkList(Type componentType, object options = default)
     {
-        // 根组件上下文
-        var rootComponentContext = new ComponentContext
+        // 获取或创建根组件上下文
+        var rootContext = _cachedRootContexts.GetOrAdd(componentType, _ =>
         {
-            ComponentType = componentType,
-            IsRoot = true
-        };
-        rootComponentContext.SetProperty(componentType, options);
+            // 根组件上下文
+            var context = new ComponentContext
+            {
+                ComponentType = componentType,
+                IsRoot = true
+            };
 
+            if (options != null)
+            {
+                context.SetProperty(componentType, options);
+            }
+
+            return context;
+        });
+
+        if (options != null && rootContext != null)
+        {
+            rootContext.SetProperty(componentType, options);
+        }
+
+        return BuildDependLinkList(componentType, rootContext);
+    }
+
+    /// <summary>
+    /// 构建组件依赖链表
+    /// </summary>
+    /// <param name="componentType">根组件类型</param>
+    /// <param name="rootContext">已缓存的根组件上下文</param>
+    /// <returns></returns>
+    private static List<ComponentContext> BuildDependLinkList(Type componentType, ComponentContext rootContext)
+    {
         // 初始化组件依赖链
         var dependLinkList = new List<Type> { componentType };
         var componentContextLinkList = new List<ComponentContext>
         {
-            rootComponentContext
+            rootContext
         };
 
         // 创建组件依赖链
-        CreateDependLinkList(componentType, ref dependLinkList, ref componentContextLinkList, options);
+        CreateDependLinkList(componentType, ref dependLinkList, ref componentContextLinkList);
 
         return componentContextLinkList;
     }
@@ -118,8 +151,7 @@ internal static class Penetrates
         public ComponentContext GetComponentContext(Type componentType)
         {
             var index = GetIndexOf(componentType);
-            if (index > -1) return ComponentContextLinkList[index];
-            return RootContext;
+            return index > -1 ? ComponentContextLinkList[index] : RootContext;
         }
 
         /// <summary>
@@ -182,7 +214,8 @@ internal static class Penetrates
             var dependComponents = dependsOnAttribute?.DependComponents?.Distinct()?.Where(c => c != null)?.ToArray() ?? [];
 
             // 获取链接组件列表
-            var linkComponents = dependsOnAttribute?.LinkComponents?.Distinct()?.Where(c => c != null)?.ToArray() ?? [];
+            var linkComponents = dependsOnAttribute?.Links?.Distinct()?.Where(c => c != null)?.ToArray() ?? [];
+
 
             // 检查自引用
             if (dependComponents.Contains(componentType) || linkComponents.Contains(componentType))
