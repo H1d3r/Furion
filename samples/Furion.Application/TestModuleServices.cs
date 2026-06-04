@@ -760,6 +760,11 @@ public class TestModuleServices : IDynamicApiController
     {
         model.Validate(true, services);
     }
+
+    public void 测试规范化额外数据()
+    {
+        UnifyContext.Fill(new { id = 1 });
+    }
 }
 
 

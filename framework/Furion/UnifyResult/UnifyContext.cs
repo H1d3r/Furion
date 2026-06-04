@@ -38,7 +38,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Reflection;
 
 namespace Furion.UnifyResult;
@@ -163,14 +162,24 @@ public static class UnifyContext
     /// <param name="extras"></param>
     public static void Fill(object extras)
     {
+        Fill(UnifyResultExtrasKey, extras);
+    }
+
+    /// <summary>
+    /// 填充附加信息
+    /// </summary>
+    /// <param name="key">键</param>
+    /// <param name="extras"></param>
+    public static void Fill(object key, object extras)
+    {
         var items = App.HttpContext?.Items;
         if (items == null)
         {
             return;
         }
 
-        if (items.ContainsKey(UnifyResultExtrasKey)) items.Remove(UnifyResultExtrasKey);
-        items.Add(UnifyResultExtrasKey, extras);
+        if (items.ContainsKey(key)) items.Remove(key);
+        items.Add(key, extras);
     }
 
     /// <summary>
@@ -178,8 +187,17 @@ public static class UnifyContext
     /// </summary>
     public static object Take()
     {
+        return Take(UnifyResultExtrasKey);
+    }
+
+    /// <summary>
+    /// 读取附加信息
+    /// </summary>
+    /// <param name="key">键</param>
+    public static object Take(object key)
+    {
         object extras = null;
-        App.HttpContext?.Items?.TryGetValue(UnifyResultExtrasKey, out extras);
+        App.HttpContext?.Items?.TryGetValue(key, out extras);
         return extras;
     }
 
