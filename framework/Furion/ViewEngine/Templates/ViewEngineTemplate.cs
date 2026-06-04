@@ -24,7 +24,6 @@
 // ------------------------------------------------------------------------
 
 using Furion.Extensions;
-using Furion.Reflection;
 
 namespace Furion.ViewEngine;
 
@@ -34,14 +33,14 @@ namespace Furion.ViewEngine;
 public class ViewEngineTemplate : IViewEngineTemplate
 {
     /// <summary>
-    /// 内存流
+    /// 程序集字节码
     /// </summary>
-    private readonly MemoryStream assemblyByteCode;
+    private readonly byte[] _assemblyBytes;
 
     /// <summary>
     /// 模板类型
     /// </summary>
-    private readonly Type templateType;
+    private readonly Type _templateType;
 
     /// <summary>
     /// 是否已释放
@@ -51,11 +50,16 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="assemblyByteCode"></param>
-    internal ViewEngineTemplate(MemoryStream assemblyByteCode)
+    /// <param name="assemblyBytes">程序集字节数组</param>
+    /// <param name="templateType">模板类型</param>
+    internal ViewEngineTemplate(byte[] assemblyBytes, Type templateType)
     {
-        this.assemblyByteCode = assemblyByteCode;
-        templateType = Reflect.GetType(assemblyByteCode, "Furion.ViewEngine.Template");
+        // 空检查
+        ArgumentNullException.ThrowIfNull(assemblyBytes);
+        ArgumentNullException.ThrowIfNull(templateType);
+
+        _assemblyBytes = assemblyBytes;
+        _templateType = templateType;
     }
 
     /// <summary>
@@ -66,8 +70,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
 
-        assemblyByteCode.Position = 0;
-        assemblyByteCode.CopyTo(stream);
+        stream.Write(_assemblyBytes, 0, _assemblyBytes.Length);
     }
 
     /// <summary>
@@ -75,12 +78,10 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// </summary>
     /// <param name="stream"></param>
     /// <returns></returns>
-    public async Task SaveToStreamAsync(Stream stream)
+    public Task SaveToStreamAsync(Stream stream)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
-
-        assemblyByteCode.Position = 0;
-        await assemblyByteCode.CopyToAsync(stream);
+        SaveToStream(stream);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -91,17 +92,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
 
-        using var fileStream = new FileStream(
-            path: fullName,
-            mode: FileMode.Create,
-            access: FileAccess.Write,
-            share: FileShare.Read,
-            bufferSize: 8192,
-            options: FileOptions.None);
-
-        assemblyByteCode.Position = 0;
-        assemblyByteCode.CopyTo(fileStream);
-        fileStream.Flush();
+        File.WriteAllBytes(fullName, _assemblyBytes);
     }
 
     /// <summary>
@@ -109,21 +100,10 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// </summary>
     /// <param name="fullName"></param>
     /// <returns></returns>
-    public async Task SaveToFileAsync(string fullName)
+    public Task SaveToFileAsync(string fullName)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate));
-
-        using var fileStream = new FileStream(
-            path: fullName,
-            mode: FileMode.Create,
-            access: FileAccess.Write,
-            share: FileShare.Read,
-            bufferSize: 8192,
-            useAsync: true);
-
-        assemblyByteCode.Position = 0;
-        await assemblyByteCode.CopyToAsync(fileStream);
-        await fileStream.FlushAsync();
+        SaveToFile(fullName);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -140,7 +120,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
             model = new AnonymousTypeWrapper(model);
         }
 
-        var instance = (IViewEngineModel)Activator.CreateInstance(templateType);
+        var instance = (IViewEngineModel)Activator.CreateInstance(_templateType);
         instance.Model = model;
 
         instance.Execute();
@@ -161,7 +141,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
             model = new AnonymousTypeWrapper(model);
         }
 
-        var instance = (IViewEngineModel)Activator.CreateInstance(templateType);
+        var instance = (IViewEngineModel)Activator.CreateInstance(_templateType);
         instance.Model = model;
 
         await instance.ExecuteAsync();
@@ -176,7 +156,8 @@ public class ViewEngineTemplate : IViewEngineTemplate
     public static IViewEngineTemplate LoadFromFile(string fullName)
     {
         var bytes = File.ReadAllBytes(fullName);
-        return new ViewEngineTemplate(new MemoryStream(bytes, writable: false));
+        var type = Penetrates.LoadTemplateType(bytes);
+        return new ViewEngineTemplate(bytes, type);
     }
 
     /// <summary>
@@ -187,7 +168,8 @@ public class ViewEngineTemplate : IViewEngineTemplate
     public static async Task<IViewEngineTemplate> LoadFromFileAsync(string fullName)
     {
         var bytes = await File.ReadAllBytesAsync(fullName);
-        return new ViewEngineTemplate(new MemoryStream(bytes, writable: false));
+        var type = Penetrates.LoadTemplateType(bytes);
+        return new ViewEngineTemplate(bytes, type);
     }
 
     /// <summary>
@@ -197,11 +179,11 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public static IViewEngineTemplate LoadFromStream(Stream stream)
     {
-        var memoryStream = new MemoryStream();
-        stream.CopyTo(memoryStream);
-        memoryStream.Position = 0;
-
-        return new ViewEngineTemplate(memoryStream);
+        using var ms = new MemoryStream();
+        stream.CopyTo(ms);
+        var bytes = ms.ToArray();
+        var type = Penetrates.LoadTemplateType(bytes);
+        return new ViewEngineTemplate(bytes, type);
     }
 
     /// <summary>
@@ -211,21 +193,17 @@ public class ViewEngineTemplate : IViewEngineTemplate
     /// <returns></returns>
     public static async Task<IViewEngineTemplate> LoadFromStreamAsync(Stream stream)
     {
-        var memoryStream = new MemoryStream();
-        await stream.CopyToAsync(memoryStream);
-        memoryStream.Position = 0;
-
-        return new ViewEngineTemplate(memoryStream);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+        var type = Penetrates.LoadTemplateType(bytes);
+        return new ViewEngineTemplate(bytes, type);
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (!_disposed)
-        {
-            assemblyByteCode?.Dispose();
-            _disposed = true;
-        }
+        _disposed = true;
     }
 }
 
@@ -237,14 +215,14 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     where T : IViewEngineModel
 {
     /// <summary>
-    /// 内存流
+    /// 程序集字节码
     /// </summary>
-    private readonly MemoryStream assemblyByteCode;
+    private readonly byte[] _assemblyBytes;
 
     /// <summary>
     /// 模板类型
     /// </summary>
-    private readonly Type templateType;
+    private readonly Type _templateType;
 
     /// <summary>
     /// 是否已释放
@@ -254,11 +232,16 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="assemblyByteCode"></param>
-    internal ViewEngineTemplate(MemoryStream assemblyByteCode)
+    /// <param name="assemblyBytes">程序集字节数组</param>
+    /// <param name="templateType">模板类型</param>
+    internal ViewEngineTemplate(byte[] assemblyBytes, Type templateType)
     {
-        this.assemblyByteCode = assemblyByteCode;
-        templateType = Reflect.GetType(assemblyByteCode, "Furion.ViewEngine.Template");
+        // 空检查
+        ArgumentNullException.ThrowIfNull(assemblyBytes);
+        ArgumentNullException.ThrowIfNull(templateType);
+
+        _assemblyBytes = assemblyBytes;
+        _templateType = templateType;
     }
 
     /// <summary>
@@ -269,8 +252,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
 
-        assemblyByteCode.Position = 0;
-        assemblyByteCode.CopyTo(stream);
+        stream.Write(_assemblyBytes, 0, _assemblyBytes.Length);
     }
 
     /// <summary>
@@ -278,12 +260,10 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// </summary>
     /// <param name="stream"></param>
     /// <returns></returns>
-    public async Task SaveToStreamAsync(Stream stream)
+    public Task SaveToStreamAsync(Stream stream)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
-
-        assemblyByteCode.Position = 0;
-        await assemblyByteCode.CopyToAsync(stream);
+        SaveToStream(stream);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -294,17 +274,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
 
-        using var fileStream = new FileStream(
-            path: fullName,
-            mode: FileMode.Create,
-            access: FileAccess.Write,
-            share: FileShare.Read,
-            bufferSize: 8192,
-            options: FileOptions.None);
-
-        assemblyByteCode.Position = 0;
-        assemblyByteCode.CopyTo(fileStream);
-        fileStream.Flush();
+        File.WriteAllBytes(fullName, _assemblyBytes);
     }
 
     /// <summary>
@@ -312,21 +282,10 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// </summary>
     /// <param name="fullName"></param>
     /// <returns></returns>
-    public async Task SaveToFileAsync(string fullName)
+    public Task SaveToFileAsync(string fullName)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
-
-        using var fileStream = new FileStream(
-            path: fullName,
-            mode: FileMode.Create,
-            access: FileAccess.Write,
-            share: FileShare.Read,
-            bufferSize: 8192,
-            useAsync: true);
-
-        assemblyByteCode.Position = 0;
-        await assemblyByteCode.CopyToAsync(fileStream);
-        await fileStream.FlushAsync();
+        SaveToFile(fullName);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -338,7 +297,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
 
-        var instance = (T)Activator.CreateInstance(templateType);
+        var instance = (T)Activator.CreateInstance(_templateType);
         initializer(instance);
 
         instance.Execute();
@@ -354,7 +313,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
 
-        var instance = (T)Activator.CreateInstance(templateType);
+        var instance = (T)Activator.CreateInstance(_templateType);
         initializer(instance);
 
         await instance.ExecuteAsync();
@@ -369,7 +328,8 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     public static IViewEngineTemplate<T> LoadFromFile(string fullName)
     {
         var bytes = File.ReadAllBytes(fullName);
-        return new ViewEngineTemplate<T>(new MemoryStream(bytes, writable: false));
+        var type = Penetrates.LoadTemplateType(bytes);
+        return new ViewEngineTemplate<T>(bytes, type);
     }
 
     /// <summary>
@@ -380,7 +340,8 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     public static async Task<IViewEngineTemplate<T>> LoadFromFileAsync(string fullName)
     {
         var bytes = await File.ReadAllBytesAsync(fullName);
-        return new ViewEngineTemplate<T>(new MemoryStream(bytes, writable: false));
+        var type = Penetrates.LoadTemplateType(bytes);
+        return new ViewEngineTemplate<T>(bytes, type);
     }
 
     /// <summary>
@@ -390,11 +351,11 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public static IViewEngineTemplate<T> LoadFromStream(Stream stream)
     {
-        var memoryStream = new MemoryStream();
-        stream.CopyTo(memoryStream);
-        memoryStream.Position = 0;
-
-        return new ViewEngineTemplate<T>(memoryStream);
+        using var ms = new MemoryStream();
+        stream.CopyTo(ms);
+        var bytes = ms.ToArray();
+        var type = Penetrates.LoadTemplateType(bytes);
+        return new ViewEngineTemplate<T>(bytes, type);
     }
 
     /// <summary>
@@ -404,20 +365,16 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     /// <returns></returns>
     public static async Task<IViewEngineTemplate<T>> LoadFromStreamAsync(Stream stream)
     {
-        var memoryStream = new MemoryStream();
-        await stream.CopyToAsync(memoryStream);
-        memoryStream.Position = 0;
-
-        return new ViewEngineTemplate<T>(memoryStream);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+        var type = Penetrates.LoadTemplateType(bytes);
+        return new ViewEngineTemplate<T>(bytes, type);
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (!_disposed)
-        {
-            assemblyByteCode?.Dispose();
-            _disposed = true;
-        }
+        _disposed = true;
     }
 }

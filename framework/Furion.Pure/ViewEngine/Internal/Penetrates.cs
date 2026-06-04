@@ -23,6 +23,8 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
+using System.Reflection;
+
 namespace Furion.ViewEngine;
 
 /// <summary>
@@ -30,6 +32,11 @@ namespace Furion.ViewEngine;
 /// </summary>
 internal static class Penetrates
 {
+    /// <summary>
+    /// 模板类型全名
+    /// </summary>
+    private const string TemplateTypeName = "Furion.ViewEngine.Template";
+
     /// <summary>
     /// 获取模板文件名
     /// </summary>
@@ -44,5 +51,18 @@ internal static class Penetrates
         var templatePath = Path.Combine(templateSaveDir, "~" + fileName);
 
         return templatePath;
+    }
+
+    /// <summary>
+    /// 加载模板类型
+    /// </summary>
+    /// <param name="assemblyBytes"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    internal static Type LoadTemplateType(byte[] assemblyBytes)
+    {
+        var assembly = Assembly.Load(assemblyBytes);
+
+        return assembly.GetType(TemplateTypeName) ?? throw new InvalidOperationException("Template type not found in compiled assembly.");
     }
 }

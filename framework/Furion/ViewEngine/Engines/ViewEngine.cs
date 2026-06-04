@@ -52,6 +52,11 @@ public class ViewEngine : IViewEngine
     });
 
     /// <summary>
+    /// 模板类型缓存
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, Type> _templateTypeCache = new();
+
+    /// <summary>
     /// 缓存是否启用
     /// </summary>
     private static readonly bool _enableCache = Environment.GetEnvironmentVariable("FURION_VIEWENGINE_CACHE") != "false";
@@ -289,30 +294,35 @@ public class ViewEngine : IViewEngine
 
         builderAction?.Invoke(compilationOptionsBuilder);
 
-        // 尝试从缓存获取编译结果
+        // 获取缓存键
         var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
 
-        MemoryStream memoryStream;
-        if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out byte[] cachedBytes))
+        if (_enableCache && !string.IsNullOrEmpty(cacheKey)
+            && _compilationCache.TryGetValue(cacheKey, out byte[] assemblyBytes)
+            && _templateTypeCache.TryGetValue(cacheKey, out var templateType))
         {
-            memoryStream = new MemoryStream(cachedBytes, writable: false);
+            // 存在缓存数据直接使用
         }
         else
         {
-            memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+            // 编译并获取类型
+            using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+            assemblyBytes = memoryStream.ToArray();
+            templateType = Penetrates.LoadTemplateType(assemblyBytes);
 
-            // 缓存编译结果
+            // 缓存编译后的程序集字节和类型
             if (_enableCache && !string.IsNullOrEmpty(cacheKey))
             {
-                _compilationCache.Set(cacheKey, memoryStream.ToArray(), new MemoryCacheEntryOptions
+                _compilationCache.Set(cacheKey, assemblyBytes, new MemoryCacheEntryOptions
                 {
                     Size = 1,
                     SlidingExpiration = TimeSpan.FromHours(1)
                 });
+                _templateTypeCache[cacheKey] = templateType;
             }
         }
 
-        return new ViewEngineTemplate(memoryStream);
+        return new ViewEngineTemplate(assemblyBytes, templateType);
     }
 
     /// <summary>
@@ -343,30 +353,34 @@ public class ViewEngine : IViewEngine
 
         builderAction?.Invoke(compilationOptionsBuilder);
 
-        // 尝试从缓存获取编译结果
+        // 获取缓存键
         var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
 
-        MemoryStream memoryStream;
-        if (_enableCache && !string.IsNullOrEmpty(cacheKey) && _compilationCache.TryGetValue(cacheKey, out byte[] cachedBytes))
+        if (_enableCache && !string.IsNullOrEmpty(cacheKey)
+            && _compilationCache.TryGetValue(cacheKey, out byte[] assemblyBytes)
+            && _templateTypeCache.TryGetValue(cacheKey, out var templateType))
         {
-            memoryStream = new MemoryStream(cachedBytes, writable: false);
+            // 存在缓存数据直接使用
         }
         else
         {
-            memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+            using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+            assemblyBytes = memoryStream.ToArray();
+            templateType = Penetrates.LoadTemplateType(assemblyBytes);
 
-            // 缓存编译结果
+            // 缓存编译后的程序集字节和类型
             if (_enableCache && !string.IsNullOrEmpty(cacheKey))
             {
-                _compilationCache.Set(cacheKey, memoryStream.ToArray(), new MemoryCacheEntryOptions
+                _compilationCache.Set(cacheKey, assemblyBytes, new MemoryCacheEntryOptions
                 {
                     Size = 1,
                     SlidingExpiration = TimeSpan.FromHours(1)
                 });
+                _templateTypeCache[cacheKey] = templateType;
             }
         }
 
-        return new ViewEngineTemplate<T>(memoryStream);
+        return new ViewEngineTemplate<T>(assemblyBytes, templateType);
     }
 
     /// <summary>
