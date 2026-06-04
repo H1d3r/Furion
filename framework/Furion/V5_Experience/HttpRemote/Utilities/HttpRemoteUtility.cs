@@ -31,7 +31,6 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.Json;
 
 namespace Furion.HttpRemote;
 
@@ -149,7 +148,7 @@ public static class HttpRemoteUtility
         context, cancellationToken);
 
     /// <summary>
-    ///     根据 HTTP 响应消息和服务提供器，解析出 <see cref="HttpClient" /> 客户端对应的 JSON 响应反序列化时的上下文信息
+    ///     解析 <see cref="HttpClient" /> 客户端对应的 JSON 序列化上下文信息
     /// </summary>
     /// <param name="resultType">转换的目标类型</param>
     /// <param name="httpResponseMessage">
@@ -159,17 +158,16 @@ public static class HttpRemoteUtility
     ///     <see cref="IServiceProvider" />
     /// </param>
     /// <returns>
-    ///     <see cref="Tuple{T1,T2,T3}" />
+    ///     <see cref="JsonSerializationContext" />
     /// </returns>
-    public static (Type ResultType, JsonSerializerOptions JsonSerializerOptions, Func<object?, object?> GetResultValue)
-        ResolveJsonSerializationContext(Type resultType, HttpResponseMessage? httpResponseMessage,
-            IServiceProvider? serviceProvider)
+    public static JsonSerializationContext ResolveJsonSerializationContext(Type resultType,
+        HttpResponseMessage? httpResponseMessage, IServiceProvider? serviceProvider)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(resultType);
 
-        // 根据 HTTP 响应消息和服务提供器，解析出 HttpClient 客户端配置选项
-        var httpClientOptions = ResolveHttpClientOptions(httpResponseMessage, serviceProvider);
+        // 根据 HTTP 请求消息和服务提供器，解析出 HttpClient 客户端配置选项
+        var httpClientOptions = ResolveHttpClientOptions(httpResponseMessage?.RequestMessage, serviceProvider);
 
         // 获取 JsonSerializerOptions 配置
         // 优先级：指定名称的 HttpClientOptions -> HttpRemoteOptions -> 默认值
@@ -189,7 +187,7 @@ public static class HttpRemoteUtility
             ? resultType
             : jsonResponseWrapperType.MakeGenericType(resultType);
 
-        return (jsonResponseType, jsonSerializerOptions,
+        return new JsonSerializationContext(jsonResponseType, jsonSerializerOptions,
             jsonResponseWrapper is null ? u => u : jsonResponseWrapper.GetResultValue);
     }
 
@@ -294,10 +292,10 @@ public static class HttpRemoteUtility
     }
 
     /// <summary>
-    ///     根据 HTTP 响应消息和服务提供器，解析出 <see cref="HttpClient" /> 客户端配置选项
+    ///     根据 HTTP 请求消息和服务提供器，解析出 <see cref="HttpClient" /> 客户端配置选项
     /// </summary>
-    /// <param name="httpResponseMessage">
-    ///     <see cref="HttpResponseMessage" />
+    /// <param name="httpRequestMessage">
+    ///     <see cref="HttpRequestMessage" />
     /// </param>
     /// <param name="serviceProvider">
     ///     <see cref="IServiceProvider" />
@@ -305,12 +303,12 @@ public static class HttpRemoteUtility
     /// <returns>
     ///     <see cref="HttpClientOptions" />
     /// </returns>
-    internal static HttpClientOptions? ResolveHttpClientOptions(HttpResponseMessage? httpResponseMessage,
+    internal static HttpClientOptions? ResolveHttpClientOptions(HttpRequestMessage? httpRequestMessage,
         IServiceProvider? serviceProvider)
     {
         // 获取 HttpClient 实例的配置名称
-        if (httpResponseMessage?.RequestMessage?.Options.TryGetValue(
-                new HttpRequestOptionsKey<string>(Constants.HTTP_CLIENT_NAME), out var httpClientName) != true)
+        if (httpRequestMessage?.Options.TryGetValue(new HttpRequestOptionsKey<string>(Constants.HTTP_CLIENT_NAME),
+                out var httpClientName) != true)
         {
             httpClientName = string.Empty;
         }

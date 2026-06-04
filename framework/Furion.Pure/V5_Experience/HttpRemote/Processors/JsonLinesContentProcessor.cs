@@ -37,36 +37,36 @@ namespace Furion.HttpRemote;
 public class JsonLinesContentProcessor : HttpContentProcessorBase
 {
     /// <inheritdoc />
-    public override bool CanProcess(object? rawContent, string contentType) =>
-        contentType.IsIn(
+    public override bool CanProcess(HttpContentProcessorContext context) =>
+        context.ContentType.IsIn(
             ["application/x-ndjson", "application/x-jsonlines", "application/jsonlines", "application/jsonl"],
             StringComparer.OrdinalIgnoreCase);
 
     /// <inheritdoc />
-    public override HttpContent? Process(object? rawContent, string contentType, Encoding? encoding)
+    public override HttpContent? Process(HttpContentProcessorContext context)
     {
         // 尝试解析 HttpContent 类型
-        if (TryProcess(rawContent, contentType, encoding, out var httpContent))
+        if (TryProcess(context, out var httpContent))
         {
             return httpContent;
         }
 
         // 检查原始请求内容是否为枚举类型，且其元素类型为引用类型（非字符串）
-        if (!rawContent.GetType().IsArrayOrCollection(out var underlyingType) || !underlyingType.IsClass ||
+        if (!context.RawContent!.GetType().IsArrayOrCollection(out var underlyingType) || !underlyingType.IsClass ||
             underlyingType == typeof(string))
         {
             throw new InvalidOperationException(
-                $"Expected IEnumerable<T> where T is a class type other than string, but received type `{rawContent.GetType()}`.");
+                $"Expected IEnumerable<T> where T is a class type other than string, but received type `{context.RawContent.GetType()}`.");
         }
 
         // 将原始请求内容转换为 IEnumerable 类型
-        var enumerable = (IEnumerable)rawContent;
+        var enumerable = (IEnumerable)context.RawContent;
 
         // 初始化 StringBuilder 实例
         var stringBuilder = new StringBuilder();
 
         // 解析 JSON 序列化配置
-        var jsonSerializerOptions = ResolveJsonSerializerOptions();
+        var jsonSerializerOptions = ResolveJsonSerializerOptions(context.HttpClientName);
 
         // 构建 JSON Lines 格式内容
         foreach (var item in enumerable)
@@ -78,8 +78,8 @@ public class JsonLinesContentProcessor : HttpContentProcessorBase
         var content = stringBuilder.ToString().TrimEnd('\n');
 
         // 初始化 StringContent 实例
-        var stringContent = new StringContent(content, encoding,
-            new MediaTypeHeaderValue(contentType) { CharSet = encoding?.WebName });
+        var stringContent = new StringContent(content, context.Encoding,
+            new MediaTypeHeaderValue(context.ContentType) { CharSet = context.Encoding?.WebName });
 
         return stringContent;
     }

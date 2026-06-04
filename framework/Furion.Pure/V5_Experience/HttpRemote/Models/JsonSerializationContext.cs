@@ -23,42 +23,19 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     字节数组内容处理器
+///     JSON 序列化上下文
 /// </summary>
-public class ByteArrayContentProcessor : HttpContentProcessorBase
-{
-    /// <inheritdoc />
-    public override bool CanProcess(HttpContentProcessorContext context) =>
-        context.RawContent is (ByteArrayContent or byte[]) and not (FormUrlEncodedContent or StringContent);
-
-    /// <inheritdoc />
-    public override HttpContent? Process(HttpContentProcessorContext context)
-    {
-        // 尝试解析 HttpContent 类型
-        if (TryProcess(context, out var httpContent))
-        {
-            return httpContent;
-        }
-
-        // 检查是否是字节数组类型
-        if (context.RawContent is byte[] bytes)
-        {
-            // 初始化 ByteArrayContent 实例
-            var byteArrayContent = new ByteArrayContent(bytes);
-            byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue(context.ContentType)
-            {
-                CharSet = context.Encoding?.WebName
-            };
-
-            return byteArrayContent;
-        }
-
-        throw new InvalidOperationException(
-            $"Expected a byte array, but received an object of type `{context.RawContent!.GetType()}`.");
-    }
-}
+/// <param name="ResultType">目标类型</param>
+/// <param name="JsonSerializerOptions">
+///     <see cref="JsonSerializerOptions" />
+/// </param>
+/// <param name="GetResultValue">获取目标类型值的委托</param>
+public sealed record JsonSerializationContext(
+    Type ResultType,
+    JsonSerializerOptions JsonSerializerOptions,
+    Func<object?, object?> GetResultValue);

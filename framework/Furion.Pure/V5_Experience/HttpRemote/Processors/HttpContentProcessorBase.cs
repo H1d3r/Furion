@@ -25,9 +25,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 
 namespace Furion.HttpRemote;
@@ -41,10 +39,10 @@ public abstract class HttpContentProcessorBase : IHttpContentProcessor, IService
     public IServiceProvider? ServiceProvider { get; set; }
 
     /// <inheritdoc />
-    public abstract bool CanProcess(object? rawContent, string contentType);
+    public abstract bool CanProcess(HttpContentProcessorContext context);
 
     /// <inheritdoc />
-    public abstract HttpContent? Process(object? rawContent, string contentType, Encoding? encoding);
+    public abstract HttpContent? Process(HttpContentProcessorContext context);
 
     /// <inheritdoc />
     public object? GetService(Type serviceType) => ServiceProvider?.GetService(serviceType);
@@ -52,19 +50,18 @@ public abstract class HttpContentProcessorBase : IHttpContentProcessor, IService
     /// <summary>
     ///     尝试解析 <see cref="HttpContent" /> 类型
     /// </summary>
-    /// <param name="rawContent">原始请求内容</param>
-    /// <param name="contentType">内容类型</param>
-    /// <param name="encoding">内容编码</param>
+    /// <param name="context">
+    ///     <see cref="HttpContentProcessorContext" />
+    /// </param>
     /// <param name="httpContent">
     ///     <see cref="HttpContent" />
     /// </param>
     /// <returns>
     ///     <see cref="HttpContent" />
     /// </returns>
-    public virtual bool TryProcess([NotNullWhen(false)] object? rawContent, string contentType, Encoding? encoding,
-        out HttpContent? httpContent)
+    public virtual bool TryProcess(HttpContentProcessorContext context, out HttpContent? httpContent)
     {
-        switch (rawContent)
+        switch (context.RawContent)
         {
             case null:
                 httpContent = null;
@@ -72,7 +69,7 @@ public abstract class HttpContentProcessorBase : IHttpContentProcessor, IService
             case HttpContent content:
                 // 设置 Content-Type
                 content.Headers.ContentType ??=
-                    new MediaTypeHeaderValue(contentType) { CharSet = encoding?.WebName };
+                    new MediaTypeHeaderValue(context.ContentType) { CharSet = context.Encoding?.WebName };
 
                 httpContent = content;
                 return true;
@@ -85,10 +82,22 @@ public abstract class HttpContentProcessorBase : IHttpContentProcessor, IService
     /// <summary>
     ///     解析 JSON 序列化配置
     /// </summary>
+    /// <param name="httpClientName"><see cref="HttpClient" /> 实例的配置名称</param>
     /// <returns>
     ///     <see cref="JsonSerializerOptions" />
     /// </returns>
-    public virtual JsonSerializerOptions ResolveJsonSerializerOptions() =>
-        this.GetService<IOptions<HttpRemoteOptions>>()?.Value.JsonSerializerOptions ??
-        HttpRemoteOptions.JsonSerializerOptionsDefault;
+    public virtual JsonSerializerOptions ResolveJsonSerializerOptions(string? httpClientName)
+    {
+        // 获取 HttpClientOptions 实例
+        var httpClientOptions = this.GetService<IOptionsMonitor<HttpClientOptions>>()?.Get(httpClientName);
+
+        // 获取 JsonSerializerOptions 配置
+        // 优先级：指定名称的 HttpClientOptions -> HttpRemoteOptions -> 默认值
+        var jsonSerializerOptions =
+            (httpClientOptions?.IsDefault != false ? null : httpClientOptions.JsonSerializerOptions) ??
+            this.GetService<IOptions<HttpRemoteOptions>>()?.Value.JsonSerializerOptions ??
+            HttpRemoteOptions.JsonSerializerOptionsDefault;
+
+        return jsonSerializerOptions;
+    }
 }
