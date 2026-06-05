@@ -62,5 +62,8 @@
   },
   "CorsAccessorSettings": {
     "WithExposedHeaders": [ "access-token", "x-access-token", "environment" ]
+  },
+  "JWTSettings": {
+    "IssuerSigningKey": "U2FsdGVkX1+6H3D8Q//yQMhInzTdRZI9DbUGetbyaag="
   }
 }

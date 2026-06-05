@@ -118,4 +118,12 @@ internal sealed partial class TaskQueue : ITaskQueue
         }
         catch { }
     }
+
+    /// <summary>
+    /// 释放事件订阅
+    /// </summary>
+    public void Dispose()
+    {
+        OnExecuted = null;
+    }
 }

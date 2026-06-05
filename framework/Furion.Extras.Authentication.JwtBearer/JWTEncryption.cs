@@ -602,7 +602,12 @@ public class JWTEncryption
         options.ValidateIssuerSigningKey ??= true;
         if (options.ValidateIssuerSigningKey == true)
         {
-            options.IssuerSigningKey ??= "U2FsdGVkX1+6H3D8Q//yQMhInzTdRZI9DbUGetbyaag=";
+            // 强制要求显式配置签名密钥
+            if (string.IsNullOrWhiteSpace(options.IssuerSigningKey))
+            {
+                throw new InvalidOperationException(
+                    "The JWT signing key has not been configured. Please set 'JwtSettings:IssuerSigningKey' in your configuration.");
+            }
         }
         options.ValidateIssuer ??= true;
         if (options.ValidateIssuer == true)

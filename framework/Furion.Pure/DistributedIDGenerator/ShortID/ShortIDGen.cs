@@ -33,21 +33,11 @@ namespace Furion.DistributedIDGenerator;
 /// </summary>
 public static class ShortIDGen
 {
-    /// <summary>
-    /// 短 ID 生成器期初数据
-    /// </summary>
-    private static Random _random = new();
-
     private const string Bigs = "ABCDEFGHIJKLMNPQRSTUVWXY";
     private const string Smalls = "abcdefghjklmnopqrstuvwxyz";
     private const string Numbers = "0123456789";
     private const string Specials = "_-";
     private static string _pool = $"{Smalls}{Bigs}";
-
-    /// <summary>
-    /// 线程安全锁
-    /// </summary>
-    private static readonly object ThreadLock = new();
 
     /// <summary>
     /// 生成目前比较主流的短 ID
@@ -103,11 +93,8 @@ public static class ShortIDGen
         var output = new char[options.Length];
         for (var i = 0; i < options.Length; i++)
         {
-            lock (ThreadLock)
-            {
-                var charIndex = _random.Next(0, pool.Length);
-                output[i] = pool[charIndex];
-            }
+            var charIndex = Random.Shared.Next(0, pool.Length);
+            output[i] = pool[charIndex];
         }
 
         return new string(output);
@@ -136,22 +123,7 @@ public static class ShortIDGen
                 $"The replacement characters must be at least {Constants.MinimumCharacterSetLength} letters in length and without whitespace.");
         }
 
-        lock (ThreadLock)
-        {
-            _pool = new string(charSet);
-        }
-    }
-
-    /// <summary>
-    /// 设置种子步长
-    /// </summary>
-    /// <param name="seed"></param>
-    public static void SetSeed(int seed)
-    {
-        lock (ThreadLock)
-        {
-            _random = new Random(seed);
-        }
+        _pool = new string(charSet);
     }
 
     /// <summary>
@@ -159,10 +131,6 @@ public static class ShortIDGen
     /// </summary>
     public static void Reset()
     {
-        lock (ThreadLock)
-        {
-            _random = new Random();
-            _pool = $"{Smalls}{Bigs}";
-        }
+        _pool = $"{Smalls}{Bigs}";
     }
 }

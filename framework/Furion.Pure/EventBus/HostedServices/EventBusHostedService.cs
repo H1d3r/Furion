@@ -550,4 +550,13 @@ internal sealed class EventBusHostedService : BackgroundService
 
         await base.StopAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// 释放事件订阅
+    /// </summary>
+    public override void Dispose()
+    {
+        UnobservedTaskException = null;
+        base.Dispose();
+    }
 }

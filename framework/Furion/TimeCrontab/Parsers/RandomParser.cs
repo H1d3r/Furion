@@ -35,11 +35,6 @@ namespace Furion.TimeCrontab;
 internal sealed class RandomParser : ICronParser, ITimeParser
 {
     /// <summary>
-    /// 随机对象
-    /// </summary>
-    private static readonly Random random = new();
-
-    /// <summary>
     /// Cron 字段种类最小值
     /// </summary>
     private readonly int _minimumOfKind;
@@ -95,7 +90,7 @@ internal sealed class RandomParser : ICronParser, ITimeParser
     public int? Next(int currentValue)
     {
         // 生成最小值和最大值之间的随机数
-        return random.Next(_minimumOfKind, _maximumOfKind + 1);
+        return Random.Shared.Next(_minimumOfKind, _maximumOfKind + 1);
     }
 
     /// <summary>
@@ -107,7 +102,7 @@ internal sealed class RandomParser : ICronParser, ITimeParser
     public int? Previous(int currentValue)
     {
         // 生成最小值和最大值之间的随机数
-        return random.Next(_minimumOfKind, _maximumOfKind + 1);
+        return Random.Shared.Next(_minimumOfKind, _maximumOfKind + 1);
     }
 
     /// <summary>

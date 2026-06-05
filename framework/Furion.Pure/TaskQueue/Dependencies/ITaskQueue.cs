@@ -28,7 +28,7 @@ namespace Furion.TaskQueue;
 /// <summary>
 /// 任务队列接口
 /// </summary>
-public interface ITaskQueue
+public interface ITaskQueue : IDisposable
 {
     /// <summary>
     /// 任务委托执行事件
