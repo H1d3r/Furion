@@ -26,6 +26,7 @@
 using Furion.Converters.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net.Mime;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -62,7 +63,7 @@ public sealed class HttpRemoteOptions
     /// <summary>
     ///     默认请求内容类型
     /// </summary>
-    public string? DefaultContentType { get; set; } = Constants.TEXT_PLAIN_MIME_TYPE;
+    public string? DefaultContentType { get; set; } = MediaTypeNames.Text.Plain;
 
     /// <summary>
     ///     默认文件下载保存目录
