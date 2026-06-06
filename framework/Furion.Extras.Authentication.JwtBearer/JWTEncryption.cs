@@ -664,7 +664,7 @@ public class JWTEncryption
 
         // 获取 Furion 程序集名称
         var furionAssemblyName = executeAssembly.GetReferencedAssemblies()
-            .FirstOrDefault(u => u.Name == "Furion" || u.Name == "Furion.Pure")
+            .FirstOrDefault(u => u.Name == "Furion")
             ?? throw new InvalidOperationException("No `Furion` assembly installed in the current project was detected.");
 
         // 加载 Furion 程序集
