@@ -23,26 +23,43 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Text;
+using System.Net.Http.Headers;
 
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     <see cref="IHttpContentProcessor" /> 内容处理器上下文
+///     <see cref="FileInfo" /> 内容处理器
 /// </summary>
-/// <param name="RawContent">原始内容</param>
-/// <param name="ContentType">内容类型</param>
-/// <param name="Encoding">内容编码</param>
-public sealed record HttpContentProcessorContext(object? RawContent, string ContentType, Encoding? Encoding = null)
+public class FileInfoContentProcessor : HttpContentProcessorBase
 {
-    /// <summary>
-    ///     <see cref="HttpClient" /> 实例的配置名称
-    /// </summary>
-    public string? HttpClientName { get; init; }
+    /// <inheritdoc />
+    public override bool CanProcess(HttpContentProcessorContext context) =>
+        context.RawContent is FileInfo;
 
-    /// <summary>
-    ///     表示是否作为表单的一项
-    /// </summary>
-    /// <remarks>默认值为：<c>false</c>。</remarks>
-    public bool AsFormItem { get; init; }
+    /// <inheritdoc />
+    public override HttpContent? Process(HttpContentProcessorContext context)
+    {
+        // 尝试解析 HttpContent 类型
+        if (TryProcess(context, out var httpContent))
+        {
+            return httpContent;
+        }
+
+        // 获取 FileInfo 实例
+        var fileInfo = (FileInfo)context.RawContent!;
+
+        // 初始化 StreamContent 实例
+        var streamContent = new StreamContent(fileInfo.OpenRead());
+        streamContent.Headers.ContentType =
+            new MediaTypeHeaderValue(context.ContentType) { CharSet = context.Encoding?.WebName };
+
+        // 设置请求内容 Content-Disposition 标头
+        streamContent.Headers.ContentDisposition =
+            new ContentDispositionHeaderValue(context.AsFormItem ? "form-data" : "attachment")
+            {
+                FileName = fileInfo.Name
+            };
+
+        return streamContent;
+    }
 }
