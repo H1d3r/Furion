@@ -126,22 +126,49 @@ public class JWTEncryption
     /// <returns></returns>
     public static string GenerateRefreshToken(string accessToken, int expiredTime = 43200)
     {
-        // 分割Token
-        var tokenParagraphs = accessToken.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        // 空检查
+        ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
 
-        var s = RandomNumberGenerator.GetInt32(10, tokenParagraphs[1].Length / 2 + 2);
+        // 分割Token
+        var segments = accessToken.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+        // 检查 JWT 字符串是否是三部分组成
+        if (segments.Length != 3)
+        {
+            throw new ArgumentException("Invalid JWT format. Token must consist of three parts separated by '.'.", nameof(accessToken));
+        }
+
+        // 读取 JWT 三部分字符串
+        var header = segments[0];
+        var payload = segments[1];
+        var signature = segments[2];
+
+        // 检查每部分是否为空
+        if (header.Length == 0 || payload.Length == 0 || signature.Length == 0)
+        {
+            throw new ArgumentException("JWT header, payload or signature is empty.", nameof(accessToken));
+        }
+
+        const int minPayloadLength = 27;
+        if (payload.Length < minPayloadLength)
+        {
+            throw new ArgumentException($"JWT payload length is too short. Minimum required length is {minPayloadLength} characters.", nameof(accessToken));
+        }
+
+        var s = RandomNumberGenerator.GetInt32(10, payload.Length / 2 + 2);
         var l = RandomNumberGenerator.GetInt32(3, 13);
 
-        var payload = new Dictionary<string, object>
-            {
-                { "f",tokenParagraphs[0] },
-                { "e",tokenParagraphs[2] },
-                { "s",s },
-                { "l",l },
-                { "k",tokenParagraphs[1].Substring(s,l) }
-            };
+        var refreshPayload = new Dictionary<string, object>
+        {
+            { "f", header },
+            { "e", signature },
+            { "s", s },
+            { "l", l },
+            { "k", payload.Substring(s, l) }
+        };
 
-        return Encrypt(payload, expiredTime);
+
+        return Encrypt(refreshPayload, expiredTime);
     }
 
     /// <summary>
@@ -491,7 +518,7 @@ public class JWTEncryption
         return _keyCache.GetOrAdd(cacheKey, _ =>
         {
             var algorithmUpper = algorithm.ToUpperInvariant();
-            var keyContent = issuerSigningKey.Trim();
+            var keyContent = issuerSigningKey?.Trim();
 
             // HS* 对称加密
             if (algorithmUpper.StartsWith("HS"))
