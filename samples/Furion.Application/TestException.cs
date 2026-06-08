@@ -7,7 +7,12 @@ public class TestException : IDynamicApiController
 {
     public string GetText(string errorCode, bool hideErrorCode = false)
     {
-        return Oops.Text(errorCode, hideErrorCode);
+        return Oops.Text("ErrorCodes.z1000", hideErrorCode);
+    }
+
+    public string 测试多语言()
+    {
+        throw Oops.Oh(ErrorCodes.z1000);
     }
 }
 

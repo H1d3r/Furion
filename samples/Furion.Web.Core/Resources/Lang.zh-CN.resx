@@ -120,6 +120,9 @@
   <data name="API 接口" xml:space="preserve">
     <value>API 接口</value>
   </data>
+  <data name="ErrorCodes.z1000" xml:space="preserve">
+    <value>测试异常信息</value>
+  </data>
   <data name="定时任务" xml:space="preserve">
     <value>定时任务</value>
   </data>

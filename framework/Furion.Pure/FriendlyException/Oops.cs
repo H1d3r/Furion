@@ -113,7 +113,7 @@ public static class Oops
     /// <returns>异常实例</returns>
     public static AppFriendlyException Oh(string errorMessage, params object[] args)
     {
-        var friendlyException = new AppFriendlyException(MontageErrorMessage(errorMessage, default, null, args), default);
+        var friendlyException = new AppFriendlyException(MontageErrorMessage(errorMessage, default, null, null, null, args), default);
 
         // 处理默认配置为业务异常问题
         if (_friendlyExceptionSettings.ThrowBah == true)
@@ -133,7 +133,7 @@ public static class Oops
     /// <returns>异常实例</returns>
     public static AppFriendlyException Oh(string errorMessage, Type exceptionType, params object[] args)
     {
-        var exceptionMessage = MontageErrorMessage(errorMessage, default, null, args);
+        var exceptionMessage = MontageErrorMessage(errorMessage, default, null, null, null, args);
         return new AppFriendlyException(exceptionMessage, default,
             Activator.CreateInstance(exceptionType, [exceptionMessage]) as Exception);
     }
@@ -221,6 +221,17 @@ public static class Oops
     /// <returns></returns>
     private static (object ErrorCode, string Message) GetErrorCodeMessage(object errorCode, bool? hideErrorCode, params object[] args)
     {
+        // 提取枚举字段名和全名
+        string fieldName = null, fullName = null;
+        if (errorCode != null && errorCode.GetType().IsEnum)
+        {
+            fieldName = Enum.GetName(errorCode.GetType(), errorCode);
+            if (!string.IsNullOrEmpty(fieldName))
+            {
+                fullName = $"{errorCode.GetType().Name}.{fieldName}";
+            }
+        }
+
         errorCode = HandleEnumErrorCode(errorCode);
 
         // 获取出错的方法
@@ -241,8 +252,8 @@ public static class Oops
         }
 
         // 字符串格式化
-        return (errorCode, MontageErrorMessage(errorCodeMessage, errorCode.ToString(), hideErrorCode
-            , args != null && args.Length > 0 ? args : ifExceptionAttribute?.Args));
+        return (errorCode, MontageErrorMessage(errorCodeMessage, errorCode.ToString(), hideErrorCode, fieldName, fullName,
+            args != null && args.Length > 0 ? args : ifExceptionAttribute?.Args));
     }
 
     /// <summary>
@@ -424,15 +435,23 @@ public static class Oops
     /// <param name="errorMessage"></param>
     /// <param name="errorCode"></param>
     /// <param name="hideErrorCode">隐藏错误码</param>
+    /// <param name="fieldName">枚举字段名</param>
+    /// <param name="fullName">枚举全名，如 ErrorCodes.z1000</param>
     /// <param name="args"></param>
     /// <returns></returns>
-    private static string MontageErrorMessage(string errorMessage, string errorCode, bool? hideErrorCode, params object[] args)
+    private static string MontageErrorMessage(string errorMessage, string errorCode, bool? hideErrorCode, string fieldName, string fullName, params object[] args)
     {
         // 支持读取配置渲染
         var realErrorMessage = errorMessage.Render();
 
+        // 空检查
+        if (realErrorMessage is null)
+        {
+            throw new InvalidOperationException($"No error message configured for error code [{errorCode}].");
+        }
+
         // 多语言处理
-        realErrorMessage = L.Text == null ? realErrorMessage : L.Text[realErrorMessage];
+        realErrorMessage = TryLocalize(realErrorMessage, fullName);
 
         // 判断是否隐藏错误码
         var msg = (hideErrorCode == true || _friendlyExceptionSettings.HideErrorCode == true || string.IsNullOrWhiteSpace(errorCode)
@@ -440,5 +459,29 @@ public static class Oops
             : $"[{errorCode}] ") + realErrorMessage;
 
         return msg.Format(args);
+    }
+
+    /// <summary>
+    /// 尝试获取多语言翻译文本
+    /// </summary>
+    /// <param name="errorMessage">原始错误消息</param>
+    /// <param name="fullName">枚举全名，如 ErrorCodes.z1000</param>
+    /// <returns></returns>
+    private static string TryLocalize(string errorMessage, string fullName)
+    {
+        if (L.Text == null) return errorMessage;
+
+        // 尝试使用 ErrorMessage 原文作为键
+        var localizedString = L.Text[errorMessage];
+        if (!localizedString.ResourceNotFound) return localizedString.Value;
+
+        // 若未找到，尝试使用枚举全名（如 ErrorCodes.z1000）
+        if (!string.IsNullOrEmpty(fullName))
+        {
+            localizedString = L.Text[fullName];
+            if (!localizedString.ResourceNotFound) return localizedString.Value;
+        }
+
+        return errorMessage;
     }
 }
