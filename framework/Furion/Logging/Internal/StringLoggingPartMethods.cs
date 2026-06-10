@@ -24,6 +24,7 @@
 // ------------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace Furion.Logging;
 
@@ -89,7 +90,7 @@ public sealed partial class StringLoggingPart
         if (Message == null) return;
 
         // 获取日志实例
-        var (logger, loggerFactory, hasException) = GetLogger();
+        var (logger, _, _) = GetLogger();
         using var scope = logger.ScopeContext(LogContext);
 
         // 如果没有异常且事件 Id 为空
@@ -113,13 +114,12 @@ public sealed partial class StringLoggingPart
             logger.Log(Level, EventId.Value, Exception, Message, Args);
         }
         else { }
-
-        // 释放临时日志工厂
-        if (hasException == true)
-        {
-            loggerFactory?.Dispose();
-        }
     }
+
+    /// <summary>
+    /// 已创建的日志记录器缓存
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, ILogger> _cachedLoggers = new();
 
     /// <summary>
     /// 获取日志实例
@@ -127,45 +127,83 @@ public sealed partial class StringLoggingPart
     /// <returns></returns>
     internal (ILogger, ILoggerFactory, bool) GetLogger()
     {
-        // 解析日志分类名
         var categoryType = CategoryType ?? typeof(System.Logging.StringLogging);
 
-        ILoggerFactory loggerFactory = null;
         ILogger logger = null;
         var hasException = false;
 
-        // 解决启动时打印日志问题
-        if (App.RootServices == null)
-        {
-            hasException = true;
-            loggerFactory = CreateDisposeLoggerFactory();
-        }
-        else
+        // 尝试从容器中解析日志服务
+        if (App.RootServices != null)
         {
             try
             {
+                // 尝试从缓存获取
+                if (_cachedLoggers.TryGetValue(categoryType, out var cachedLogger))
+                {
+                    return (cachedLogger, null, false);
+                }
+
                 logger = App.GetRequiredService(typeof(ILogger<>).MakeGenericType(categoryType)) as ILogger;
+
+                if (logger != null)
+                {
+                    _cachedLoggers.TryAdd(categoryType, logger);
+                    return (logger, null, false);
+                }
             }
             catch
             {
                 hasException = true;
-                loggerFactory = CreateDisposeLoggerFactory();
             }
         }
+        else
+        {
+            hasException = true;
+        }
 
-        // 创建日志实例
-        logger ??= loggerFactory.CreateLogger(categoryType.FullName);
+        if (logger == null)
+        {
+            var factory = GetOrCreateFallbackLoggerFactory();
+            logger = factory.CreateLogger(categoryType.FullName);
+            return (logger, factory, hasException);
+        }
 
-        return (logger, loggerFactory, hasException);
+        return (logger, null, false);
     }
 
     /// <summary>
-    /// 创建待释放的日志工厂
+    /// 静态缓存的回退日志工厂
+    /// </summary>
+    private static ILoggerFactory _fallbackLoggerFactory;
+
+    /// <summary>
+    /// 用于同步初始化工厂的锁对象
+    /// </summary>
+    private static readonly object _factoryLock = new();
+
+    /// <summary>
+    /// 获取或创建静态回退日志工厂
     /// </summary>
     /// <returns></returns>
-    private static ILoggerFactory CreateDisposeLoggerFactory()
+    private static ILoggerFactory GetOrCreateFallbackLoggerFactory()
     {
-        var consoleFormatterExtendOptions = App.GetOptions<ConsoleFormatterExtendOptions>();
+        if (_fallbackLoggerFactory == null)
+        {
+            lock (_factoryLock)
+            {
+                _fallbackLoggerFactory ??= CreateFallbackLoggerFactory();
+            }
+        }
+        return _fallbackLoggerFactory;
+    }
+
+    /// <summary>
+    /// 创建回退日志工厂
+    /// </summary>
+    /// <returns></returns>
+    private static ILoggerFactory CreateFallbackLoggerFactory()
+    {
+        var consoleFormatterExtendOptions = App.GetConfig<ConsoleFormatterExtendOptions>(nameof(ConsoleFormatterExtendOptions), false);
 
         Action<ConsoleFormatterExtendOptions> configure = consoleFormatterExtendOptions is not null
             ? (opt =>
@@ -182,7 +220,7 @@ public sealed partial class StringLoggingPart
                 opt.WithStackFrame = consoleFormatterExtendOptions.WithStackFrame;
                 opt.MessageProcess = consoleFormatterExtendOptions.MessageProcess;
             })
-        : null;
+            : null;
 
         return LoggerFactory.Create(builder =>
         {
