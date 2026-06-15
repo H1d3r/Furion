@@ -677,13 +677,11 @@ public static partial class HttpRemoteExtensions
     /// <returns>
     ///     <see cref="string" />
     /// </returns>
-    public static string? ResolveHttpClientName(this HttpResponseMessage? httpResponseMessage)
-    {
-        return httpResponseMessage?.RequestMessage?.Options.TryGetValue(
+    public static string? ResolveHttpClientName(this HttpResponseMessage? httpResponseMessage) =>
+        httpResponseMessage?.RequestMessage?.Options.TryGetValue(
             new HttpRequestOptionsKey<string>(Constants.HTTP_CLIENT_NAME), out var httpClientName) != true
             ? null
             : httpClientName;
-    }
 
     /// <summary>
     ///     将对象转换为 JSON 字符串
