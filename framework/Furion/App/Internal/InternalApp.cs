@@ -202,8 +202,8 @@ internal static class InternalApp
     internal static void AddJsonFiles(IConfigurationBuilder configurationBuilder, IHostEnvironment hostEnvironment)
     {
         // 获取根配置
-        var configuration = configurationBuilder is ConfigurationManager
-            ? (configurationBuilder as ConfigurationManager)
+        var configuration = configurationBuilder is ConfigurationManager configurationManager
+            ? configurationManager
             : configurationBuilder.Build();
 
         // 获取程序执行目录
@@ -214,44 +214,83 @@ internal static class InternalApp
                 .Get<string[]>()
             ?? []).Select(u => Path.Combine(executeDirectory, u));
 
-        // 扫描执行目录及自定义配置目录下的 *.json 文件
-        var jsonFiles = new[] { executeDirectory }
-                            .Concat(configurationScanDirectories)
-                            .Concat(InjectOptions.InternalConfigurationScanDirectories)
-                            .SelectMany(u =>
-                                Directory.GetFiles(u, "*.json", SearchOption.TopDirectoryOnly));
+        // 聚合所有扫描目录，并过滤掉不存在的目录
+        var directories = new[] { executeDirectory }
+            .Concat(configurationScanDirectories)
+            .Concat(InjectOptions.InternalConfigurationScanDirectories)
+            .Where(Directory.Exists);
+
+        // 扫描目录下所有 *.json 文件
+        var allJsonFiles = directories
+            .SelectMany(dir => Directory.GetFiles(dir, "*.json", SearchOption.TopDirectoryOnly))
+            .ToList();
 
         // 如果没有配置文件，中止执行
-        if (!jsonFiles.Any()) return;
+        if (allJsonFiles.Count == 0) return;
 
         // 获取 JSON 文件扫描配置（2025.07.25），修复 docker 中挂载大文件数据卷导致启动缓慢的问题
         var jsonFileScanner = configuration.GetSection("AppSettings:JsonFileScanner")
             .Get<JsonFileScanner>() ?? new JsonFileScanner();
 
-        // 获取环境变量名，如果没找到，则读取 NETCORE_ENVIRONMENT 环境变量信息识别（用于非 Web 环境）
-        var envName = hostEnvironment?.EnvironmentName ?? Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT") ?? "Unknown";
+        // 获取环境名称
+        var envName = hostEnvironment?.EnvironmentName
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+            ?? "Production";
 
-        // 读取忽略的配置文件
+        // 读取忽略的配置文件列表
         var ignoreConfigurationFiles = (configuration.GetSection("IgnoreConfigurationFiles")
                 .Get<string[]>()
             ?? []).Concat(InjectOptions.InternalIgnoreConfigurationFiles);
 
-        // 处理控制台应用程序
-        var _excludeJsonPrefixs = hostEnvironment == default ? excludeJsonPrefixs.Where(u => !u.Equals("appsettings")) : excludeJsonPrefixs;
+        // 将忽略列表拆分为精确文件名和 glob 模式
+        var ignoreFileNames = new HashSet<string>(ignoreConfigurationFiles.Where(i => !i.Contains('*') && !i.Contains('?')), StringComparer.OrdinalIgnoreCase);
+        var ignoreMatchers = ignoreConfigurationFiles
+            .Where(i => i.Contains('*') || i.Contains('?'))
+            .Select(i =>
+            {
+                var matcher = new Matcher();
+                matcher.AddInclude(i);
+                return matcher;
+            }).ToList();
 
-        // 将所有文件进行分组
-        var jsonFilesGroups = SplitConfigFileNameToGroups(jsonFiles)
-                                                                .Where(u => !_excludeJsonPrefixs.Contains(u.Key, StringComparer.OrdinalIgnoreCase) && !u.Any(c => runtimeJsonSuffixs.Any(z => c.EndsWith(z, StringComparison.OrdinalIgnoreCase)) || ignoreConfigurationFiles.Contains(Path.GetFileName(c), StringComparer.OrdinalIgnoreCase) || ignoreConfigurationFiles.Any(i => new Matcher().AddInclude(i).Match(Path.GetFileName(c)).HasMatches)));
+        // 先剔除运行时后缀、忽略文件，再进行分组
+        var filteredFiles = allJsonFiles.Where(file =>
+        {
+            var fileName = Path.GetFileName(file);
+
+            // 排除运行时生成的文件
+            if (runtimeJsonSuffixs.Any(suffix => fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)))
+                return false;
+
+            // 排除忽略配置中的精确文件名
+            if (ignoreFileNames.Contains(fileName)) return false;
+
+            // 排除忽略配置中的 glob 模式
+            if (ignoreMatchers.Any(m => m.Match(fileName).HasMatches)) return false;
+
+            return true;
+        }).ToList();
+
+        // 将所有有效文件进行分组
+        var jsonFilesGroups = SplitConfigFileNameToGroups(filteredFiles)
+            .Where(g => !excludeJsonPrefixs.Contains(g.Key));
 
         // 遍历所有配置分组
         foreach (var group in jsonFilesGroups)
         {
             // 限制查找的 json 文件组
-            var limitFileNames = new[] { $"{group.Key}.json", $"{group.Key}.{envName}.json" };
+            var baseFileName = $"{group.Key}.json";
+            var envFileName = $"{group.Key}.{envName}.json";
 
             // 查找默认配置和环境配置
-            var files = group.Where(u => limitFileNames.Contains(Path.GetFileName(u), StringComparer.OrdinalIgnoreCase))
-                                             .OrderBy(u => Path.GetFileName(u).Length);
+            var files = group
+                .Where(u =>
+                {
+                    var name = Path.GetFileName(u);
+                    return string.Equals(name, baseFileName, StringComparison.OrdinalIgnoreCase) || string.Equals(name, envFileName, StringComparison.OrdinalIgnoreCase);
+                })
+                .OrderBy(u => Path.GetFileName(u).Length);
 
             // 循环加载
             foreach (var jsonFile in files)
@@ -264,22 +303,26 @@ internal static class InternalApp
     /// <summary>
     /// 排除的配置文件前缀
     /// </summary>
-    private static readonly string[] excludeJsonPrefixs = ["appsettings", "bundleconfig", "compilerconfig"];
+    private static readonly HashSet<string> excludeJsonPrefixs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "appsettings", "bundleconfig", "compilerconfig", "ReSharperTestRunner"
+    };
 
     /// <summary>
     /// 排除运行时 Json 后缀
     /// </summary>
     private static readonly string[] runtimeJsonSuffixs =
     [
-            "deps.json",
-            "runtimeconfig.dev.json",
-            "runtimeconfig.prod.json",
-            "runtimeconfig.json",
-            "staticwebassets.runtime.json",
-            "nuget.dgspec.json",
-            "project.assets.json",
-            "MvcTestingAppManifest.json"
-        ];
+        "deps.json",
+        "runtimeconfig.dev.json",
+        "runtimeconfig.prod.json",
+        "runtimeconfig.json",
+        "staticwebassets.runtime.json",
+        "staticwebassets.endpoints.json",
+        "nuget.dgspec.json",
+        "project.assets.json",
+        "MvcTestingAppManifest.json"
+    ];
 
     /// <summary>
     /// 对配置文件名进行分组
