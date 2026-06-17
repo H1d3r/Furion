@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 // 版权信息
 // 版权归百小僧及百签科技（广东）有限公司所有。
 // 所有权利保留。
@@ -1097,9 +1097,9 @@ public partial class PrivateRepository<TEntity>
         var properties = EntityType?.GetProperties();
         if (properties == null) return;
 
-        foreach (var propety in properties)
+        foreach (var property in properties)
         {
-            var entityProperty = EntityPropertyEntry(entity, propety.Name);
+            var entityProperty = EntityPropertyEntry(entity, property.Name);
             var propertyValue = entityProperty?.CurrentValue;
             var propertyType = entityProperty?.Metadata?.PropertyInfo?.PropertyType;
 
