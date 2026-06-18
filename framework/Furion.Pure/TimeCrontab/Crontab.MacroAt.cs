@@ -142,6 +142,6 @@ public sealed partial class Crontab
     /// <returns><see cref="string"/></returns>
     private static string FieldsToString(params object[] fields)
     {
-        return string.Join(",", fields);
+        return string.Join(",", fields.Select(f => f.ToString()).ToArray());
     }
 }
