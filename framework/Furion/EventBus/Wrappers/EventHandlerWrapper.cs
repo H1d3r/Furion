@@ -51,7 +51,7 @@ internal sealed class EventHandlerWrapper
     /// <summary>
     /// 事件处理程序
     /// </summary>
-    internal Func<EventHandlerExecutingContext, Task> Handler { get; set; }
+    internal Func<EventHandlerExecutingContext, CancellationToken, Task> Handler { get; set; }
 
     /// <summary>
     /// 触发的方法

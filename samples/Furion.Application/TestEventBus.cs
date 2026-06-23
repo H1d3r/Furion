@@ -98,6 +98,33 @@ public class ToDoEventSubscriber : IEventSubscriber, ISingleton
         await Task.CompletedTask;
     }
 
+    [EventSubscribe("ToDo:Create")]
+    public async Task CreateToDo2(EventHandlerExecutingContext<string> context)
+    {
+        var todo = context.Source;
+        _logger.LogInformation("创建一个 ToDo：{Name}，这是泛型的", context.Payload);
+        context.SetResult("这是结果");
+        await Task.CompletedTask;
+    }
+
+    [EventSubscribe("ToDo:Create")]
+    public async Task CreateToDo(EventHandlerExecutingContext context, CancellationToken cancellationToken)
+    {
+        var todo = context.Source;
+        _logger.LogInformation("创建一个 ToDo：{Name}，带 cancellationToken", context.GetPayload<string>());
+        context.SetResult("这是结果");
+        await Task.CompletedTask;
+    }
+
+    [EventSubscribe("ToDo:Create")]
+    public async Task CreateToDo2(EventHandlerExecutingContext<string> context, CancellationToken cancellationToken)
+    {
+        var todo = context.Source;
+        _logger.LogInformation("创建一个 ToDo：{Name}，这是泛型的，带 cancellationToken", context.Payload);
+        context.SetResult("这是结果");
+        await Task.CompletedTask;
+    }
+
     [EventSubscribe(ValidationTypes.Numeric)]
     public async Task CreateEnum(EventHandlerExecutingContext context)
     {
@@ -129,7 +156,7 @@ public class EventFallbackPolicy : IEventFallbackPolicy
         _logger = logger;
     }
 
-    public async Task CallbackAsync(EventHandlerExecutingContext context, Exception ex)
+    public async Task CallbackAsync(EventHandlerExecutingContext context, Exception ex, CancellationToken cancellationToken)
     {
         _logger.LogError(ex, "重试了多次最终还是失败了");
         await Task.CompletedTask;
