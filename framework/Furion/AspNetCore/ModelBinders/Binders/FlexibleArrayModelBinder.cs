@@ -25,8 +25,8 @@
 
 using Furion.Extensions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 
 namespace Furion.AspNetCore;
 
@@ -76,31 +76,11 @@ internal class FlexibleArrayModelBinder<T> : IModelBinder
     /// </summary>
     private static bool GetSplitSetting(ModelBindingContext bindingContext)
     {
-        var modelMetadata = bindingContext.ModelMetadata;
-
-        // 方案1： 尝试从控制器 Action 参数中查找
-        if (bindingContext.ActionContext.ActionDescriptor is ControllerActionDescriptor actionDescriptor)
+        var flexibleArrayAttribute = (bindingContext.ModelMetadata as DefaultModelMetadata).Attributes
+            .Attributes.OfType<FlexibleArrayAttribute<T>>().SingleOrDefault();
+        if (flexibleArrayAttribute != null)
         {
-            var parameter = actionDescriptor.MethodInfo.GetParameters()// ParameterInfo[]
-                .FirstOrDefault(p => string.Equals(p.Name, bindingContext.ModelName, StringComparison.OrdinalIgnoreCase));
-
-            if (parameter != null)
-            {
-                var attr = parameter.GetCustomAttributes(typeof(FlexibleArrayAttribute<T>), false)
-                    .FirstOrDefault() as FlexibleArrayAttribute<T>;
-                if (attr != null)
-                {
-                    return attr.Split;
-                }
-            }
-        }
-
-        // 方案2：直接从模型元数据特性中查找
-        var flexibleArrayAttr = ((Microsoft.AspNetCore.Mvc.ModelBinding.Metadata.DefaultModelMetadata)modelMetadata).Attributes.PropertyAttributes
-            ?.OfType<FlexibleArrayAttribute<T>>().FirstOrDefault();
-        if (flexibleArrayAttr != null)
-        {
-            return flexibleArrayAttr.Split;
+            return flexibleArrayAttribute.Split;
         }
 
         // 默认返回 true
