@@ -49,11 +49,11 @@ internal class FlexibleArrayModelBinder<T> : IModelBinder
         var modelName = bindingContext.ModelName;
         var modelType = bindingContext.ModelType;
 
-        // 获取 Split 配置
-        var split = GetSplitSetting(bindingContext);
-
         // 获取 URL 参数集合
         var queryCollection = bindingContext.HttpContext.Request.Query;
+
+        // 获取 FlexibleArrayAttribute<T> 的 Split 配置
+        var split = GetSplitSetting(bindingContext);
 
         // 尝试从查询字符串中获取值
         var values = TryGetValues(queryCollection, modelName, split);
@@ -74,42 +74,42 @@ internal class FlexibleArrayModelBinder<T> : IModelBinder
     /// <summary>
     /// 获取 Split 配置
     /// </summary>
+    /// <param name="bindingContext"><see cref="ModelBindingContext"/></param>
+    /// <returns></returns>
     private static bool GetSplitSetting(ModelBindingContext bindingContext)
     {
+        // 获取 FlexibleArrayAttribute<T> 特性实例
         var flexibleArrayAttribute = (bindingContext.ModelMetadata as DefaultModelMetadata).Attributes
-            .Attributes.OfType<FlexibleArrayAttribute<T>>().SingleOrDefault();
-        if (flexibleArrayAttribute != null)
-        {
-            return flexibleArrayAttribute.Split;
-        }
+            .Attributes.OfType<FlexibleArrayAttribute<T>>().FirstOrDefault();
 
-        // 默认返回 true
-        return true;
+        return flexibleArrayAttribute?.Split ?? true;
     }
 
     /// <summary>
     /// 尝试从查询字符串中获取值
     /// </summary>
+    /// <param name="queryCollection"><see cref="IQueryCollection"/></param>
+    /// <param name="modelName">模型名称</param>
+    /// <param name="split">是否启用逗号拆分</param>
+    /// <returns></returns>
     private static IEnumerable<string> TryGetValues(IQueryCollection queryCollection, string modelName, bool split)
     {
-        // status[]=value1&status[]=value2 ac格式
-        if (queryCollection.ContainsKey(modelName + "[]"))
+        // 处理 status[]=value1&status[]=value2 格式
+        if (queryCollection.TryGetValue(modelName + "[]", out var arrValues) && arrValues.Count > 0)
         {
-            return queryCollection[modelName + "[]"]
-                .Where(s => !string.IsNullOrWhiteSpace(s));
+            return arrValues.Where(s => !string.IsNullOrWhiteSpace(s));
         }
 
-        if (queryCollection.ContainsKey(modelName) && queryCollection[modelName].Count > 0)
+        // 处理 status=value1&status=value2 格式
+        if (queryCollection.TryGetValue(modelName, out var values) && values.Count > 0)
         {
-            var values = queryCollection[modelName];
-
-            // 多个同名键（如 sort=age,asc&sort=name,desc）,每个键值作为独立元素，不拆分
+            // 处理多个同名键 sort=age,asc&sort=name,desc
             if (values.Count > 1)
             {
                 return values.Where(s => !string.IsNullOrWhiteSpace(s));
             }
 
-            // 单个键：根据 Split 决定是否按逗号拆分
+            // 处理单个键，根据 Split 决定是否按逗号拆分
             if (split)
             {
                 return values.ToString()
@@ -118,54 +118,43 @@ internal class FlexibleArrayModelBinder<T> : IModelBinder
                     .Where(s => !string.IsNullOrWhiteSpace(s));
             }
 
-            return new[] { values.ToString().Trim() };
+            // 不拆分时直接返回单一元素
+            return [values.ToString().Trim()];
         }
 
         return null;
     }
 
     /// <summary>
-    /// 转换集合类型值为模型类型值
+    /// 将字符串集合转换为目标模型类型
     /// </summary>
+    /// <param name="values">已过滤空值的字符串序列</param>
+    /// <param name="modelType">目标模型类型</param>
+    /// <returns></returns>
     private static object ConvertValues(IEnumerable<string> values, Type modelType)
     {
         var convertedList = values
-            .Where(s => !string.IsNullOrWhiteSpace(s))
             .Select(value => value.ChangeType<T>())
             .Where(v => v != null || _isNullableType)
             .ToList();
 
-        // 根据目标类型创建相应的集合
+        // 检查目标类型是否是数组类型
         if (modelType.IsArray)
         {
-            // 创建数组并填充转换后的值
-            var array = Array.CreateInstance(_elementType, convertedList.Count);
-            for (var i = 0; i < convertedList.Count; i++)
-            {
-                array.SetValue(convertedList[i], i);
-            }
-
-            return array;
+            return convertedList.ToArray();
         }
 
+        // 检查目标类型是否是泛型
         if (modelType.IsGenericType)
         {
             var genericTypeDefinition = modelType.GetGenericTypeDefinition();
 
             if (genericTypeDefinition == typeof(List<>))
             {
-                var listType = typeof(List<>).MakeGenericType(_elementType);
-                var list = (IList)Activator.CreateInstance(listType);
-
-                foreach (var item in convertedList)
-                {
-                    list.Add(item);
-                }
-
-                return list;
+                return convertedList;
             }
 
-            // 支持其他 IEnumerable<T> 衍生类型
+            // 其他 IEnumerable<T> 衍生类型
             if (genericTypeDefinition == typeof(IEnumerable<>) ||
                 genericTypeDefinition == typeof(ICollection<>) ||
                 genericTypeDefinition == typeof(IReadOnlyList<>) ||
@@ -179,20 +168,22 @@ internal class FlexibleArrayModelBinder<T> : IModelBinder
     }
 
     /// <summary>
-    /// 创建空集合
+    /// 创建与模型类型匹配的空集合
     /// </summary>
+    /// <param name="modelType">模型类型</param>
+    /// <returns></returns>
     private static object CreateEmptyCollection(Type modelType)
     {
         // 处理数组类型
         if (modelType.IsArray)
         {
-            return Array.CreateInstance(_elementType, 0);
+            return Array.Empty<T>();
         }
+
         // 处理 List 类型
         if (modelType.IsGenericType && modelType.GetGenericTypeDefinition() == typeof(List<>))
         {
-            var listType = typeof(List<>).MakeGenericType(_elementType);
-            return Activator.CreateInstance(listType);
+            return new List<T>();
         }
 
         return Array.Empty<T>();
