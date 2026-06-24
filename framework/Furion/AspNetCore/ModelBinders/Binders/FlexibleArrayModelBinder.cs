@@ -26,6 +26,7 @@
 using Furion.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 
 namespace Furion.AspNetCore;
 
@@ -48,11 +49,14 @@ internal class FlexibleArrayModelBinder<T> : IModelBinder
         var modelName = bindingContext.ModelName;
         var modelType = bindingContext.ModelType;
 
+        // 获取 Split 配置
+        var split = GetSplitSetting(bindingContext);
+
         // 获取 URL 参数集合
         var queryCollection = bindingContext.HttpContext.Request.Query;
 
         // 尝试从查询字符串中获取值
-        var values = TryGetValues(queryCollection, modelName);
+        var values = TryGetValues(queryCollection, modelName, split);
 
         if (values != null && values.Any())
         {
@@ -68,31 +72,53 @@ internal class FlexibleArrayModelBinder<T> : IModelBinder
     }
 
     /// <summary>
+    /// 获取 Split 配置
+    /// </summary>
+    private static bool GetSplitSetting(ModelBindingContext bindingContext)
+    {
+        var flexibleArrayAttribute = (bindingContext.ModelMetadata as DefaultModelMetadata).Attributes
+            .Attributes.OfType<FlexibleArrayAttribute<T>>().SingleOrDefault();
+        if (flexibleArrayAttribute != null)
+        {
+            return flexibleArrayAttribute.Split;
+        }
+
+        // 默认返回 true
+        return true;
+    }
+
+    /// <summary>
     /// 尝试从查询字符串中获取值
     /// </summary>
-    private static IEnumerable<string> TryGetValues(IQueryCollection queryCollection, string modelName)
+    private static IEnumerable<string> TryGetValues(IQueryCollection queryCollection, string modelName, bool split)
     {
-        // status[] 格式
+        // status[]=value1&status[]=value2 ac格式
         if (queryCollection.ContainsKey(modelName + "[]"))
         {
             return queryCollection[modelName + "[]"]
                 .Where(s => !string.IsNullOrWhiteSpace(s));
         }
 
-        // status=value1,value2,value3 格式
-        var commaValue = queryCollection[modelName];
-        if (!string.IsNullOrEmpty(commaValue))
-        {
-            return commaValue.ToString()
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => s.Trim())
-                .Where(s => !string.IsNullOrWhiteSpace(s));
-        }
-
-        // 多个 status=value 格式
         if (queryCollection.ContainsKey(modelName) && queryCollection[modelName].Count > 0)
         {
-            return queryCollection[modelName].Where(s => !string.IsNullOrWhiteSpace(s));
+            var values = queryCollection[modelName];
+
+            // 多个同名键（如 sort=age,asc&sort=name,desc）,每个键值作为独立元素，不拆分
+            if (values.Count > 1)
+            {
+                return values.Where(s => !string.IsNullOrWhiteSpace(s));
+            }
+
+            // 单个键：根据 Split 决定是否按逗号拆分
+            if (split)
+            {
+                return values.ToString()
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => s.Trim())
+                    .Where(s => !string.IsNullOrWhiteSpace(s));
+            }
+
+            return new[] { values.ToString().Trim() };
         }
 
         return null;
