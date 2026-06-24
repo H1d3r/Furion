@@ -40,4 +40,15 @@ public class FlexibleArrayAttribute<T> : ModelBinderAttribute
         : base(typeof(FlexibleArrayModelBinder<T>))
     {
     }
+
+    /// <summary>
+    /// 是否启用逗号拆分（仅对单个键生效，如 <c>status=1,2,3</c>）
+    /// </summary>
+    /// <remarks>
+    /// <para>当设置为 <c>true</c> 时，逗号分隔的参数值将被拆分为多个元素。</para>
+    /// <para>当设置为 <c>false</c> 时，逗号分隔的参数值将作为单一元素处理。</para>
+    /// <para>多个同名键（如 <c>sort=age,asc&amp;sort=id,desc</c>）始终不拆分，每个值作为独立元素。</para>
+    /// <para>默认值为 <c>true</c>。</para>
+    /// </remarks>
+    public bool Split { get; set; } = true;
 }
