@@ -29,4 +29,4 @@ namespace Furion.Validation;
 ///     单值验证器抽象基类
 /// </summary>
 /// <typeparam name="T">对象类型</typeparam>
-public class AbstractValueValidator<T> : ValueValidator<T>;
+public abstract class AbstractValueValidator<T> : ValueValidator<T>;
