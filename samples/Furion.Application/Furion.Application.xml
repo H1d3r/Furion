@@ -616,6 +616,13 @@
             <summary>
             测试模块
             </summary>
+            <param name="viewEngine"></param>
+        </member>
+        <member name="M:Furion.Application.TestModuleServices.#ctor(Furion.ViewEngine.IViewEngine)">
+            <summary>
+            测试模块
+            </summary>
+            <param name="viewEngine"></param>
         </member>
         <member name="M:Furion.Application.TestModuleServices.TestClayMonitor">
             <summary>

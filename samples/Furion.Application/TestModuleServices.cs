@@ -6,7 +6,6 @@ using Furion.Reflection;
 using Furion.Shapeless;
 using Furion.UnifyResult;
 using Furion.ViewEngine;
-using Furion.ViewEngine.Extensions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +22,8 @@ namespace Furion.Application;
 /// <summary>
 /// 测试模块
 /// </summary>
-public class TestModuleServices : IDynamicApiController
+/// <param name="viewEngine"></param>
+public class TestModuleServices(IViewEngine viewEngine) : IDynamicApiController
 {
     [HttpPost]
     public IActionResult UploadFileAsync(IFormFile file)
@@ -197,7 +197,7 @@ public class TestModuleServices : IDynamicApiController
      @GetResult()
      """;
 
-        var str = await viewEngine.RunCompileFromCachedAsync(template, null, null, builder =>
+        var str = await viewEngine.RunCompileFromCachedAsync(template, null, builder =>
         {
             builder.Options.CodeContextLines = 5;
         });
@@ -595,7 +595,9 @@ public class TestModuleServices : IDynamicApiController
         var order_nos = query.Select(u => u.order_no).ToList();
 
         //var result = await viewEngine.RunCompileAsync(sql, clay);
-        var result = await sql.RunCompileAsync((object)clay);
+        var result = await viewEngine.RunCompileAsync(sql, (object)clay);
+
+        var result2 = viewEngine.RunCompile("Hello @Model.Name", new { Name = "Furion" });
         return result;
     }
 

@@ -36,7 +36,7 @@ public class AnonymousTypeWrapper : DynamicObject
     /// <summary>
     /// 匿名模型
     /// </summary>
-    private readonly object model;
+    private readonly object _model;
 
     /// <summary>
     /// 构造函数
@@ -44,7 +44,7 @@ public class AnonymousTypeWrapper : DynamicObject
     /// <param name="model"></param>
     public AnonymousTypeWrapper(object model)
     {
-        this.model = model;
+        _model = model ?? throw new ArgumentNullException(nameof(model));
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public class AnonymousTypeWrapper : DynamicObject
     /// <returns></returns>
     public override bool TryGetMember(GetMemberBinder binder, out object result)
     {
-        var propertyInfo = model.GetType().GetProperty(binder.Name);
+        var propertyInfo = _model.GetType().GetProperty(binder.Name);
 
         if (propertyInfo == null)
         {
@@ -63,46 +63,53 @@ public class AnonymousTypeWrapper : DynamicObject
             return false;
         }
 
-        result = propertyInfo.GetValue(model, null);
+        result = propertyInfo.GetValue(_model, null);
 
         if (result == null)
         {
             return true;
         }
 
-        var type = result.GetType();
-
         if (result.IsAnonymous())
         {
             result = new AnonymousTypeWrapper(result);
+            return true;
         }
 
-        var isEnumerable = typeof(IEnumerable).IsAssignableFrom(type);
-        if (isEnumerable && result is not string)
+        // 处理集合类型
+        if (result is not string && result is IEnumerable enumerable)
         {
-            var actType = type.IsArray ? type.GetElementType() : type.GenericTypeArguments[0];
-
-            // https://gitee.com/dotnetchina/Furion/pulls/773
-            // 修复集合的泛型类型为匿名类型时类型转换
-            var genericType = actType.IsAnonymous()
-                ? typeof(List<AnonymousTypeWrapper>)
-                : typeof(List<>).MakeGenericType(actType);
-
-            // 创建集合实例
-            var list = Activator.CreateInstance(genericType);
-            var addMethod = list.GetType().GetMethod("Add");
-
-            var data = result as IEnumerable;
-            foreach (var item in data)
-            {
-                addMethod.Invoke(list, [
-                    item.IsAnonymous() ? new AnonymousTypeWrapper(item) : item
-                ]);
-            }
-
-            result = list;
+            result = ConvertEnumerable(enumerable);
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// 将匿名类型元素包装为 <see cref="AnonymousTypeWrapper"/>
+    /// </summary>
+    /// <param name="enumerable"></param>
+    /// <returns></returns>
+    private static object ConvertEnumerable(IEnumerable enumerable)
+    {
+        var list = new List<object>();
+
+        foreach (var item in enumerable)
+        {
+            if (item == null)
+            {
+                list.Add(null);
+            }
+            else if (item.IsAnonymous())
+            {
+                list.Add(new AnonymousTypeWrapper(item));
+            }
+            else
+            {
+                list.Add(item);
+            }
+        }
+
+        return list;
     }
 }

@@ -28,7 +28,6 @@ using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Caching.Memory;
-using System.Collections.Concurrent;
 using System.Text;
 
 namespace Furion.ViewEngine;
@@ -39,9 +38,17 @@ namespace Furion.ViewEngine;
 public class ViewEngine : IViewEngine
 {
     /// <summary>
+    /// 缓存滑动过期时间
+    /// </summary>
+    private static readonly TimeSpan _cacheSlidingExpiration = TimeSpan.FromHours(8);
+
+    /// <summary>
     /// Razor 引擎缓存
     /// </summary>
-    private static readonly ConcurrentDictionary<string, RazorProjectEngine> _razorEngineCache = new();
+    private static readonly MemoryCache _razorEngineCache = new(new MemoryCacheOptions
+    {
+        SizeLimit = 100 // 缓存最大条目数
+    });
 
     /// <summary>
     /// 编译结果缓存
@@ -52,14 +59,18 @@ public class ViewEngine : IViewEngine
     });
 
     /// <summary>
-    /// 模板类型缓存
-    /// </summary>
-    private static readonly ConcurrentDictionary<string, Type> _templateTypeCache = new();
-
-    /// <summary>
     /// 缓存是否启用
     /// </summary>
     private static readonly bool _enableCache = Environment.GetEnvironmentVariable("FURION_VIEWENGINE_CACHE") != "false";
+
+    /// <summary>
+    /// 编译缓存条目
+    /// </summary>
+    private sealed class CompilationCacheEntry
+    {
+        public byte[] AssemblyBytes { get; init; } = default!;
+        public Type TemplateType { get; init; } = default!;
+    }
 
     /// <summary>
     /// 编译并运行
@@ -132,28 +143,16 @@ public class ViewEngine : IViewEngine
     /// </summary>
     /// <param name="content"></param>
     /// <param name="model"></param>
-    /// <param name="cacheFileName"></param>
     /// <param name="builderAction"></param>
+    /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public string RunCompileFromCached(string content, object model = null, string cacheFileName = default, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public string RunCompileFromCached(string content, object model = null, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
     {
-        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction));
-        var templatePath = Penetrates.GetTemplateFileName(fileName);
-
         IViewEngineTemplate template = null;
 
         try
         {
-            if (File.Exists(templatePath))
-            {
-                template = ViewEngineTemplate.LoadFromFile(templatePath);
-            }
-            else
-            {
-                template = Compile(content, builderAction);
-                template.SaveToFile(templatePath);
-            }
-
+            template = CompileFromCached(content, builderAction, cacheFileName);
             var result = template.Run(model);
             return result;
         }
@@ -168,28 +167,16 @@ public class ViewEngine : IViewEngine
     /// </summary>
     /// <param name="content"></param>
     /// <param name="model"></param>
-    /// <param name="cacheFileName"></param>
     /// <param name="builderAction"></param>
+    /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public async Task<string> RunCompileFromCachedAsync(string content, object model = null, string cacheFileName = default, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public async Task<string> RunCompileFromCachedAsync(string content, object model = null, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
     {
-        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction));
-        var templatePath = Penetrates.GetTemplateFileName(fileName);
-
         IViewEngineTemplate template = null;
 
         try
         {
-            if (File.Exists(templatePath))
-            {
-                template = await ViewEngineTemplate.LoadFromFileAsync(templatePath);
-            }
-            else
-            {
-                template = await CompileAsync(content, builderAction);
-                await template.SaveToFileAsync(templatePath);
-            }
-
+            template = await CompileFromCachedAsync(content, builderAction, cacheFileName);
             var result = await template.RunAsync(model);
             return result;
         }
@@ -205,29 +192,17 @@ public class ViewEngine : IViewEngine
     /// <typeparam name="T"></typeparam>
     /// <param name="content"></param>
     /// <param name="model"></param>
-    /// <param name="cacheFileName"></param>
     /// <param name="builderAction"></param>
+    /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public string RunCompileFromCached<T>(string content, T model, string cacheFileName = default, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public string RunCompileFromCached<T>(string content, T model, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
         where T : class, new()
     {
-        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction, typeof(T)));
-        var templatePath = Penetrates.GetTemplateFileName(fileName);
-
         IViewEngineTemplate<ViewEngineModel<T>> template = null;
 
         try
         {
-            if (File.Exists(templatePath))
-            {
-                template = ViewEngineTemplate<ViewEngineModel<T>>.LoadFromFile(templatePath);
-            }
-            else
-            {
-                template = Compile<ViewEngineModel<T>>(content, builderAction);
-                template.SaveToFile(templatePath);
-            }
-
+            template = CompileFromCached<ViewEngineModel<T>>(content, builderAction, cacheFileName);
             var result = template.Run(u =>
             {
                 u.Model = model;
@@ -246,29 +221,17 @@ public class ViewEngine : IViewEngine
     /// <typeparam name="T"></typeparam>
     /// <param name="content"></param>
     /// <param name="model"></param>
-    /// <param name="cacheFileName"></param>
     /// <param name="builderAction"></param>
+    /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public async Task<string> RunCompileFromCachedAsync<T>(string content, T model, string cacheFileName = default, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public async Task<string> RunCompileFromCachedAsync<T>(string content, T model, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
         where T : class, new()
     {
-        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction, typeof(T)));
-        var templatePath = Penetrates.GetTemplateFileName(fileName);
-
         IViewEngineTemplate<ViewEngineModel<T>> template = null;
 
         try
         {
-            if (File.Exists(templatePath))
-            {
-                template = await ViewEngineTemplate<ViewEngineModel<T>>.LoadFromFileAsync(templatePath);
-            }
-            else
-            {
-                template = await CompileAsync<ViewEngineModel<T>>(content, builderAction);
-                await template.SaveToFileAsync(templatePath);
-            }
-
+            template = await CompileFromCachedAsync<ViewEngineModel<T>>(content, builderAction, cacheFileName);
             var result = await template.RunAsync(u =>
             {
                 u.Model = model;
@@ -282,6 +245,33 @@ public class ViewEngine : IViewEngine
     }
 
     /// <summary>
+    /// 从缓存中编译模板
+    /// </summary>
+    /// <param name="content"></param>
+    /// <param name="builderAction"></param>
+    /// <param name="cacheFileName"></param>
+    /// <returns></returns>
+    public IViewEngineTemplate CompileFromCached(string content, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    {
+        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction));
+        var templatePath = Penetrates.GetTemplateFileName(fileName);
+
+        IViewEngineTemplate template = null;
+
+        if (File.Exists(templatePath))
+        {
+            template = ViewEngineTemplate.LoadFromFile(templatePath);
+        }
+        else
+        {
+            template = Compile(content, builderAction);
+            template.SaveToFile(templatePath);
+        }
+
+        return template;
+    }
+
+    /// <summary>
     /// 编译模板
     /// </summary>
     /// <param name="content"></param>
@@ -289,7 +279,7 @@ public class ViewEngine : IViewEngine
     /// <returns></returns>
     public IViewEngineTemplate Compile(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
     {
-        IViewEngineOptionsBuilder compilationOptionsBuilder = new ViewEngineOptionsBuilder();
+        var compilationOptionsBuilder = new ViewEngineOptionsBuilder();
         compilationOptionsBuilder.Inherits(typeof(ViewEngineModel));
 
         builderAction?.Invoke(compilationOptionsBuilder);
@@ -297,32 +287,59 @@ public class ViewEngine : IViewEngine
         // 获取缓存键
         var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
 
-        if (_enableCache && !string.IsNullOrEmpty(cacheKey)
-            && _compilationCache.TryGetValue(cacheKey, out byte[] assemblyBytes)
-            && _templateTypeCache.TryGetValue(cacheKey, out var templateType))
+        CompilationCacheEntry cacheEntry;
+
+        if (_enableCache && !string.IsNullOrEmpty(cacheKey))
         {
-            // 存在缓存数据直接使用
+            cacheEntry = _compilationCache.GetOrCreate(cacheKey, entry =>
+            {
+                entry.Size = 1;
+                entry.SlidingExpiration = _cacheSlidingExpiration;
+
+                using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+                var assemblyBytes = memoryStream.ToArray();
+                var templateType = Penetrates.LoadTemplateType(assemblyBytes);
+
+                return new CompilationCacheEntry { AssemblyBytes = assemblyBytes, TemplateType = templateType };
+            })!;
         }
         else
         {
-            // 编译并获取类型
             using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
-            assemblyBytes = memoryStream.ToArray();
-            templateType = Penetrates.LoadTemplateType(assemblyBytes);
+            var assemblyBytes = memoryStream.ToArray();
+            var templateType = Penetrates.LoadTemplateType(assemblyBytes);
 
-            // 缓存编译后的程序集字节和类型
-            if (_enableCache && !string.IsNullOrEmpty(cacheKey))
-            {
-                _compilationCache.Set(cacheKey, assemblyBytes, new MemoryCacheEntryOptions
-                {
-                    Size = 1,
-                    SlidingExpiration = TimeSpan.FromHours(1)
-                });
-                _templateTypeCache[cacheKey] = templateType;
-            }
+            cacheEntry = new CompilationCacheEntry { AssemblyBytes = assemblyBytes, TemplateType = templateType };
         }
 
-        return new ViewEngineTemplate(assemblyBytes, templateType);
+        return new ViewEngineTemplate(cacheEntry.AssemblyBytes, cacheEntry.TemplateType);
+    }
+
+    /// <summary>
+    /// 从缓存中编译模板
+    /// </summary>
+    /// <param name="content"></param>
+    /// <param name="builderAction"></param>
+    /// <param name="cacheFileName"></param>
+    /// <returns></returns>
+    public async Task<IViewEngineTemplate> CompileFromCachedAsync(string content, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    {
+        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction));
+        var templatePath = Penetrates.GetTemplateFileName(fileName);
+
+        IViewEngineTemplate template = null;
+
+        if (File.Exists(templatePath))
+        {
+            template = await ViewEngineTemplate.LoadFromFileAsync(templatePath);
+        }
+        else
+        {
+            template = await CompileAsync(content, builderAction);
+            await template.SaveToFileAsync(templatePath);
+        }
+
+        return template;
     }
 
     /// <summary>
@@ -333,7 +350,36 @@ public class ViewEngine : IViewEngine
     /// <returns></returns>
     public async Task<IViewEngineTemplate> CompileAsync(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
     {
-        return await Task.Run(() => Compile(content: content, builderAction: builderAction));
+        return await Task.Run(() => Compile(content, builderAction));
+    }
+
+    /// <summary>
+    /// 从缓存中编译模板
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="content"></param>
+    /// <param name="builderAction"></param>
+    /// <param name="cacheFileName"></param>
+    /// <returns></returns>
+    public IViewEngineTemplate<T> CompileFromCached<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+        where T : IViewEngineModel
+    {
+        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction, typeof(T)));
+        var templatePath = Penetrates.GetTemplateFileName(fileName);
+
+        IViewEngineTemplate<T> template = null;
+
+        if (File.Exists(templatePath))
+        {
+            template = ViewEngineTemplate<T>.LoadFromFile(templatePath);
+        }
+        else
+        {
+            template = Compile<T>(content, builderAction);
+            template.SaveToFile(templatePath);
+        }
+
+        return template;
     }
 
     /// <summary>
@@ -346,7 +392,7 @@ public class ViewEngine : IViewEngine
     public IViewEngineTemplate<T> Compile<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
         where T : IViewEngineModel
     {
-        IViewEngineOptionsBuilder compilationOptionsBuilder = new ViewEngineOptionsBuilder();
+        var compilationOptionsBuilder = new ViewEngineOptionsBuilder();
 
         compilationOptionsBuilder.AddAssemblyReference(typeof(T).Assembly);
         compilationOptionsBuilder.Inherits(typeof(T));
@@ -356,31 +402,61 @@ public class ViewEngine : IViewEngine
         // 获取缓存键
         var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
 
-        if (_enableCache && !string.IsNullOrEmpty(cacheKey)
-            && _compilationCache.TryGetValue(cacheKey, out byte[] assemblyBytes)
-            && _templateTypeCache.TryGetValue(cacheKey, out var templateType))
+        CompilationCacheEntry cacheEntry;
+
+        if (_enableCache && !string.IsNullOrEmpty(cacheKey))
         {
-            // 存在缓存数据直接使用
+            cacheEntry = _compilationCache.GetOrCreate(cacheKey, entry =>
+            {
+                entry.Size = 1;
+                entry.SlidingExpiration = _cacheSlidingExpiration;
+
+                using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+                var assemblyBytes = memoryStream.ToArray();
+                var templateType = Penetrates.LoadTemplateType(assemblyBytes);
+
+                return new CompilationCacheEntry { AssemblyBytes = assemblyBytes, TemplateType = templateType };
+            })!;
         }
         else
         {
             using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
-            assemblyBytes = memoryStream.ToArray();
-            templateType = Penetrates.LoadTemplateType(assemblyBytes);
+            var assemblyBytes = memoryStream.ToArray();
+            var templateType = Penetrates.LoadTemplateType(assemblyBytes);
 
-            // 缓存编译后的程序集字节和类型
-            if (_enableCache && !string.IsNullOrEmpty(cacheKey))
-            {
-                _compilationCache.Set(cacheKey, assemblyBytes, new MemoryCacheEntryOptions
-                {
-                    Size = 1,
-                    SlidingExpiration = TimeSpan.FromHours(1)
-                });
-                _templateTypeCache[cacheKey] = templateType;
-            }
+            cacheEntry = new CompilationCacheEntry { AssemblyBytes = assemblyBytes, TemplateType = templateType };
         }
 
-        return new ViewEngineTemplate<T>(assemblyBytes, templateType);
+        return new ViewEngineTemplate<T>(cacheEntry.AssemblyBytes, cacheEntry.TemplateType);
+    }
+
+    /// <summary>
+    /// 从缓存中编译模板
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="content"></param>
+    /// <param name="builderAction"></param>
+    /// <param name="cacheFileName"></param>
+    /// <returns></returns>
+    public async Task<IViewEngineTemplate<T>> CompileFromCachedAsync<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+        where T : IViewEngineModel
+    {
+        var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction, typeof(T)));
+        var templatePath = Penetrates.GetTemplateFileName(fileName);
+
+        IViewEngineTemplate<T> template = null;
+
+        if (File.Exists(templatePath))
+        {
+            template = await ViewEngineTemplate<T>.LoadFromFileAsync(templatePath);
+        }
+        else
+        {
+            template = await CompileAsync<T>(content, builderAction);
+            await template.SaveToFileAsync(templatePath);
+        }
+
+        return template;
     }
 
     /// <summary>
@@ -393,7 +469,7 @@ public class ViewEngine : IViewEngine
     public async Task<IViewEngineTemplate<T>> CompileAsync<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
         where T : IViewEngineModel
     {
-        return await Task.Run(() => Compile<T>(content: content, builderAction: builderAction));
+        return await Task.Run(() => Compile<T>(content, builderAction));
     }
 
     /// <summary>
@@ -446,15 +522,20 @@ public class ViewEngine : IViewEngine
     {
         templateSource = WriteDirectives(templateSource, options);
 
-        // 缓存 Razor 引擎，避免重复创建
-        var engineKey = options.TemplateNamespace;
-        var engine = _razorEngineCache.GetOrAdd(engineKey, _ => RazorProjectEngine.Create(
-            RazorConfiguration.Default,
-            RazorProjectFileSystem.Create("."),
-            (builder) =>
-            {
-                builder.SetNamespace(options.TemplateNamespace);
-            }));
+        var engineKey = options.TemplateNamespace ?? "Furion.ViewEngine";
+        var engine = _razorEngineCache.GetOrCreate(engineKey, entry =>
+        {
+            entry.Size = 1;
+            entry.SlidingExpiration = _cacheSlidingExpiration;
+
+            return RazorProjectEngine.Create(
+                RazorConfiguration.Default,
+                RazorProjectFileSystem.Create("."),
+                (builder) =>
+                {
+                    builder.SetNamespace(options.TemplateNamespace ?? "Furion.ViewEngine");
+                });
+        })!;
 
         var fileName = Path.GetRandomFileName();
 
