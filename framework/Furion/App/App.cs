@@ -41,6 +41,7 @@ using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Security.Claims;
 
 namespace Furion;
@@ -437,8 +438,9 @@ public static class App
         // 编译代码
         using var memoryStream = CompileCSharpClassCodeToStream(csharpCode, assemblyName, additionalAssemblies);
 
-        // 返回编译程序集
-        return Assembly.Load(memoryStream.ToArray());
+        var alc = new AssemblyLoadContext("Furion.DynamicCompile", isCollectible: true);
+        using var ms = new MemoryStream(memoryStream.ToArray());
+        return alc.LoadFromStream(ms);
     }
 
     /// <summary>
@@ -458,6 +460,7 @@ public static class App
 
         // 编译代码
         using var memoryStream = CompileCSharpClassCodeToStream(csharpCode, assName, additionalAssemblies);
+        var bytes = memoryStream.ToArray();
 
         // 保存到 dll 文件
         using (var fileStream = new FileStream(
@@ -468,12 +471,13 @@ public static class App
             bufferSize: 8192,
             useAsync: false))
         {
-            memoryStream.CopyTo(fileStream);
+            fileStream.Write(bytes, 0, bytes.Length);
             fileStream.Flush();
         }
 
-        var bytes = File.ReadAllBytes(dllPath);
-        return Assembly.Load(bytes);
+        var alc = new AssemblyLoadContext("Furion.DynamicCompile", isCollectible: true);
+        using var ms = new MemoryStream(bytes);
+        return alc.LoadFromStream(ms);
     }
 
     /// <summary>
@@ -493,6 +497,7 @@ public static class App
 
         // 编译代码
         using var memoryStream = CompileCSharpClassCodeToStream(csharpCode, assName, additionalAssemblies);
+        var bytes = memoryStream.ToArray();
 
         // 保存到 dll 文件
         await using var fileStream = new FileStream(
@@ -503,11 +508,12 @@ public static class App
               bufferSize: 8192,
               useAsync: true);
 
-        await memoryStream.CopyToAsync(fileStream);
+        await fileStream.WriteAsync(bytes);
         await fileStream.FlushAsync();
 
-        var bytes = await File.ReadAllBytesAsync(dllPath);
-        return Assembly.Load(bytes);
+        var alc = new AssemblyLoadContext("Furion.DynamicCompile", isCollectible: true);
+        using var ms = new MemoryStream(bytes);
+        return alc.LoadFromStream(ms);
     }
 
     /// <summary>
@@ -516,7 +522,7 @@ public static class App
     /// <param name="csharpCode">字符串代码</param>
     /// <param name="assemblyName">自定义程序集名称</param>
     /// <param name="additionalAssemblies">附加的程序集</param>
-    /// <returns><see cref="Assembly"/></returns>
+    /// <returns><see cref="MemoryStream"/></returns>
     public static MemoryStream CompileCSharpClassCodeToStream(string csharpCode, string assemblyName = default, params Assembly[] additionalAssemblies)
     {
         // 空检查
@@ -571,12 +577,14 @@ public static class App
             ));
 
         // 编译代码
-        using var memoryStream = new MemoryStream();
+        var memoryStream = new MemoryStream();
         var emitResult = compilation.Emit(memoryStream);
 
         // 编译失败抛出异常
         if (!emitResult.Success)
         {
+            memoryStream.Dispose();
+
             var errors = emitResult.Diagnostics
                 .Where(d => d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
                 .Select(d => d.ToString())
