@@ -23,7 +23,7 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using System.Reflection;
+using System.Runtime.Loader;
 
 namespace Furion.ViewEngine;
 
@@ -47,7 +47,7 @@ internal static class Penetrates
         var templateSaveDir = Path.Combine(AppContext.BaseDirectory, "templates");
         if (!Directory.Exists(templateSaveDir)) Directory.CreateDirectory(templateSaveDir);
 
-        if (!fileName.EndsWith(".dll", System.StringComparison.OrdinalIgnoreCase)) fileName += ".dll";
+        if (!fileName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) fileName += ".dll";
         var templatePath = Path.Combine(templateSaveDir, "~" + fileName);
 
         return templatePath;
@@ -61,7 +61,10 @@ internal static class Penetrates
     /// <exception cref="InvalidOperationException"></exception>
     internal static Type LoadTemplateType(byte[] assemblyBytes)
     {
-        var assembly = Assembly.Load(assemblyBytes);
+        var alc = new AssemblyLoadContext(TemplateTypeName, isCollectible: true);
+
+        using var ms = new MemoryStream(assemblyBytes);
+        var assembly = alc.LoadFromStream(ms);
 
         return assembly.GetType(TemplateTypeName) ?? throw new InvalidOperationException("Template type not found in compiled assembly.");
     }

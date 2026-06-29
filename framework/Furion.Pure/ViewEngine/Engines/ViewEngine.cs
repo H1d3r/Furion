@@ -28,6 +28,7 @@ using Microsoft.AspNetCore.Razor.Language;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace Furion.ViewEngine;
@@ -62,6 +63,11 @@ public class ViewEngine : IViewEngine
     /// 缓存是否启用
     /// </summary>
     private static readonly bool _enableCache = Environment.GetEnvironmentVariable("FURION_VIEWENGINE_CACHE") != "false";
+
+    /// <summary>
+    /// 元数据引用缓存
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, MetadataReference> _metadataReferenceCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// 编译缓存条目
@@ -563,9 +569,10 @@ public class ViewEngine : IViewEngine
             if (!File.Exists(assembly.Location))
                 continue;
 
+            var assemblyLocation = assembly.Location;
             if (seen.Add(assembly.FullName ?? assembly.GetName().Name))
             {
-                metadataReferences.Add(MetadataReference.CreateFromFile(assembly.Location));
+                metadataReferences.Add(_metadataReferenceCache.GetOrAdd(assemblyLocation, loc => MetadataReference.CreateFromFile(loc)));
             }
         }
 
@@ -593,6 +600,8 @@ public class ViewEngine : IViewEngine
 
         if (!emitResult.Success)
         {
+            memoryStream.Dispose();
+
             //var errors = emitResult.Diagnostics
             //    .Where(d => d.Severity == DiagnosticSeverity.Error || d.IsWarningAsError)
             //    .Select(d => d.ToString())
