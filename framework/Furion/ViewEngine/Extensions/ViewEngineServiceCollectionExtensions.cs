@@ -40,7 +40,26 @@ public static class ViewEngineServiceCollectionExtensions
     /// <returns></returns>
     public static IServiceCollection AddViewEngine(this IServiceCollection services)
     {
+        services.TryAddSingleton(new ViewEngineOptions());
         services.TryAddSingleton<IViewEngine, ViewEngine>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// 添加视图引擎
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configure">自定义配置委托</param>
+    /// <returns></returns>
+    public static IServiceCollection AddViewEngine(this IServiceCollection services, Action<ViewEngineOptions> configure)
+    {
+        var options = new ViewEngineOptions();
+        configure?.Invoke(options);
+
+        services.TryAddSingleton(options);
+        services.TryAddSingleton<IViewEngine, ViewEngine>();
+
         return services;
     }
 }

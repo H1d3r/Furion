@@ -29,15 +29,10 @@ using System.Reflection;
 namespace Furion.ViewEngine;
 
 /// <summary>
-/// 视图引擎选项构建器
+/// 视图编译构建器接口
 /// </summary>
-public interface IViewEngineOptionsBuilder
+public interface IViewEngineCompileOptions
 {
-    /// <summary>
-    /// 视图编译选项
-    /// </summary>
-    ViewEngineOptions Options { get; set; }
-
     /// <summary>
     /// 添加程序集引用
     /// </summary>

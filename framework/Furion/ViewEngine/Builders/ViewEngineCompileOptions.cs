@@ -32,21 +32,26 @@ namespace Furion.ViewEngine;
 /// <summary>
 /// 视图编译构建器
 /// </summary>
-public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
+public sealed class ViewEngineCompileOptions : IViewEngineCompileOptions
 {
     /// <summary>
-    /// 视图编译选项
+    /// 编译选项副本
     /// </summary>
-    public ViewEngineOptions Options { get; set; }
+    private readonly ViewEngineOptions _options;
 
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="options"></param>
-    public ViewEngineOptionsBuilder(ViewEngineOptions options = null)
+    /// <param name="globalOptions">全局默认选项</param>
+    internal ViewEngineCompileOptions(ViewEngineOptions globalOptions)
     {
-        Options = options ?? new ViewEngineOptions();
+        _options = new ViewEngineOptions(globalOptions);
     }
+
+    /// <summary>
+    /// 获取编译选项副本
+    /// </summary>
+    internal ViewEngineOptions GetOptions() => _options;
 
     /// <summary>
     /// 添加程序集引用
@@ -64,9 +69,9 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     /// <param name="assembly"></param>
     public void AddAssemblyReference(Assembly assembly)
     {
-        if (assembly != null && !Options.ReferencedAssemblies.Contains(assembly))
+        if (assembly != null && !_options.ReferencedAssemblies.Contains(assembly))
         {
-            Options.ReferencedAssemblies.Add(assembly);
+            _options.ReferencedAssemblies.Add(assembly);
         }
     }
 
@@ -94,7 +99,7 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     {
         if (reference != null)
         {
-            Options.MetadataReferences.Add(reference);
+            _options.MetadataReferences.Add(reference);
         }
     }
 
@@ -106,7 +111,7 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     {
         if (!string.IsNullOrWhiteSpace(namespaceName))
         {
-            Options.DefaultUsings.Add(namespaceName);
+            _options.DefaultUsings.Add(namespaceName);
         }
     }
 
@@ -118,7 +123,7 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
     {
         if (type == null) return;
 
-        Options.Inherits = RenderTypeName(type);
+        _options.Inherits = RenderTypeName(type);
         AddAssemblyReference(type);
     }
 
@@ -153,7 +158,7 @@ public class ViewEngineOptionsBuilder : IViewEngineOptionsBuilder
         return result + "<" + string.Join(", ", type.GenericTypeArguments.Select(RenderTypeName)) + ">";
     }
 
-    private string RenderDeclaringType(Type type)
+    private static string RenderDeclaringType(Type type)
     {
         if (type == null)
         {

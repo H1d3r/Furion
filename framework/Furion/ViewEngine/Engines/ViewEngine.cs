@@ -36,12 +36,12 @@ namespace Furion.ViewEngine;
 /// <summary>
 /// 视图引擎实现类
 /// </summary>
-public class ViewEngine : IViewEngine
+internal sealed class ViewEngine : IViewEngine
 {
     /// <summary>
-    /// 缓存滑动过期时间
+    /// 全局默认编译选项
     /// </summary>
-    private static readonly TimeSpan _cacheSlidingExpiration = TimeSpan.FromHours(8);
+    private readonly ViewEngineOptions _globalOptions;
 
     /// <summary>
     /// Razor 引擎缓存
@@ -79,13 +79,22 @@ public class ViewEngine : IViewEngine
     }
 
     /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="globalOptions"></param>
+    public ViewEngine(ViewEngineOptions globalOptions)
+    {
+        _globalOptions = globalOptions ?? throw new ArgumentNullException(nameof(globalOptions));
+    }
+
+    /// <summary>
     /// 编译并运行
     /// </summary>
     /// <param name="content"></param>
     /// <param name="model"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public string RunCompile(string content, object model = null, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public string RunCompile(string content, object model = null, Action<IViewEngineCompileOptions> builderAction = null)
     {
         using var template = Compile(content, builderAction);
         var result = template.Run(model);
@@ -99,7 +108,7 @@ public class ViewEngine : IViewEngine
     /// <param name="model"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public async Task<string> RunCompileAsync(string content, object model = null, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public async Task<string> RunCompileAsync(string content, object model = null, Action<IViewEngineCompileOptions> builderAction = null)
     {
         using var template = await CompileAsync(content, builderAction);
         var result = await template.RunAsync(model);
@@ -114,7 +123,7 @@ public class ViewEngine : IViewEngine
     /// <param name="model"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public string RunCompile<T>(string content, T model, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public string RunCompile<T>(string content, T model, Action<IViewEngineCompileOptions> builderAction = null)
         where T : class, new()
     {
         using var template = Compile<ViewEngineModel<T>>(content, builderAction);
@@ -133,7 +142,7 @@ public class ViewEngine : IViewEngine
     /// <param name="model"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public async Task<string> RunCompileAsync<T>(string content, T model, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public async Task<string> RunCompileAsync<T>(string content, T model, Action<IViewEngineCompileOptions> builderAction = null)
         where T : class, new()
     {
         using var template = await CompileAsync<ViewEngineModel<T>>(content, builderAction);
@@ -152,7 +161,7 @@ public class ViewEngine : IViewEngine
     /// <param name="builderAction"></param>
     /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public string RunCompileFromCached(string content, object model = null, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    public string RunCompileFromCached(string content, object model = null, Action<IViewEngineCompileOptions> builderAction = null, string cacheFileName = default)
     {
         IViewEngineTemplate template = null;
 
@@ -176,7 +185,7 @@ public class ViewEngine : IViewEngine
     /// <param name="builderAction"></param>
     /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public async Task<string> RunCompileFromCachedAsync(string content, object model = null, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    public async Task<string> RunCompileFromCachedAsync(string content, object model = null, Action<IViewEngineCompileOptions> builderAction = null, string cacheFileName = default)
     {
         IViewEngineTemplate template = null;
 
@@ -201,7 +210,7 @@ public class ViewEngine : IViewEngine
     /// <param name="builderAction"></param>
     /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public string RunCompileFromCached<T>(string content, T model, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    public string RunCompileFromCached<T>(string content, T model, Action<IViewEngineCompileOptions> builderAction = null, string cacheFileName = default)
         where T : class, new()
     {
         IViewEngineTemplate<ViewEngineModel<T>> template = null;
@@ -230,7 +239,7 @@ public class ViewEngine : IViewEngine
     /// <param name="builderAction"></param>
     /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public async Task<string> RunCompileFromCachedAsync<T>(string content, T model, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    public async Task<string> RunCompileFromCachedAsync<T>(string content, T model, Action<IViewEngineCompileOptions> builderAction = null, string cacheFileName = default)
         where T : class, new()
     {
         IViewEngineTemplate<ViewEngineModel<T>> template = null;
@@ -257,7 +266,7 @@ public class ViewEngine : IViewEngine
     /// <param name="builderAction"></param>
     /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public IViewEngineTemplate CompileFromCached(string content, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    public IViewEngineTemplate CompileFromCached(string content, Action<IViewEngineCompileOptions> builderAction = null, string cacheFileName = default)
     {
         var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction));
         var templatePath = Penetrates.GetTemplateFileName(fileName);
@@ -283,15 +292,15 @@ public class ViewEngine : IViewEngine
     /// <param name="content"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public IViewEngineTemplate Compile(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public IViewEngineTemplate Compile(string content, Action<IViewEngineCompileOptions> builderAction = null)
     {
-        var compilationOptionsBuilder = new ViewEngineOptionsBuilder();
-        compilationOptionsBuilder.Inherits(typeof(ViewEngineModel));
+        var compileOptions = new ViewEngineCompileOptions(_globalOptions);
+        compileOptions.Inherits(typeof(ViewEngineModel));
 
-        builderAction?.Invoke(compilationOptionsBuilder);
+        builderAction?.Invoke(compileOptions);
 
-        // 获取缓存键
-        var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
+        var options = compileOptions.GetOptions();
+        var cacheKey = _enableCache ? GenerateCacheKey(content, options) : null;
 
         CompilationCacheEntry cacheEntry;
 
@@ -300,9 +309,9 @@ public class ViewEngine : IViewEngine
             cacheEntry = _compilationCache.GetOrCreate(cacheKey, entry =>
             {
                 entry.Size = 1;
-                entry.SlidingExpiration = _cacheSlidingExpiration;
+                entry.SlidingExpiration = options.CacheSlidingExpiration;
 
-                using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+                using var memoryStream = CreateAndCompileToStream(content, options);
                 var assemblyBytes = memoryStream.ToArray();
                 var templateType = Penetrates.LoadTemplateType(assemblyBytes);
 
@@ -311,7 +320,7 @@ public class ViewEngine : IViewEngine
         }
         else
         {
-            using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+            using var memoryStream = CreateAndCompileToStream(content, options);
             var assemblyBytes = memoryStream.ToArray();
             var templateType = Penetrates.LoadTemplateType(assemblyBytes);
 
@@ -328,7 +337,7 @@ public class ViewEngine : IViewEngine
     /// <param name="builderAction"></param>
     /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public async Task<IViewEngineTemplate> CompileFromCachedAsync(string content, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    public async Task<IViewEngineTemplate> CompileFromCachedAsync(string content, Action<IViewEngineCompileOptions> builderAction = null, string cacheFileName = default)
     {
         var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction));
         var templatePath = Penetrates.GetTemplateFileName(fileName);
@@ -354,7 +363,7 @@ public class ViewEngine : IViewEngine
     /// <param name="content"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public async Task<IViewEngineTemplate> CompileAsync(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public async Task<IViewEngineTemplate> CompileAsync(string content, Action<IViewEngineCompileOptions> builderAction = null)
     {
         return await Task.Run(() => Compile(content, builderAction));
     }
@@ -367,7 +376,7 @@ public class ViewEngine : IViewEngine
     /// <param name="builderAction"></param>
     /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public IViewEngineTemplate<T> CompileFromCached<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    public IViewEngineTemplate<T> CompileFromCached<T>(string content, Action<IViewEngineCompileOptions> builderAction = null, string cacheFileName = default)
         where T : IViewEngineModel
     {
         var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction, typeof(T)));
@@ -395,18 +404,18 @@ public class ViewEngine : IViewEngine
     /// <param name="content"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public IViewEngineTemplate<T> Compile<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public IViewEngineTemplate<T> Compile<T>(string content, Action<IViewEngineCompileOptions> builderAction = null)
         where T : IViewEngineModel
     {
-        var compilationOptionsBuilder = new ViewEngineOptionsBuilder();
+        var compileOptions = new ViewEngineCompileOptions(_globalOptions);
 
-        compilationOptionsBuilder.AddAssemblyReference(typeof(T).Assembly);
-        compilationOptionsBuilder.Inherits(typeof(T));
+        compileOptions.AddAssemblyReference(typeof(T).Assembly);
+        compileOptions.Inherits(typeof(T));
 
-        builderAction?.Invoke(compilationOptionsBuilder);
+        builderAction?.Invoke(compileOptions);
 
-        // 获取缓存键
-        var cacheKey = _enableCache ? GenerateCacheKey(content, compilationOptionsBuilder.Options) : null;
+        var options = compileOptions.GetOptions();
+        var cacheKey = _enableCache ? GenerateCacheKey(content, options) : null;
 
         CompilationCacheEntry cacheEntry;
 
@@ -415,9 +424,9 @@ public class ViewEngine : IViewEngine
             cacheEntry = _compilationCache.GetOrCreate(cacheKey, entry =>
             {
                 entry.Size = 1;
-                entry.SlidingExpiration = _cacheSlidingExpiration;
+                entry.SlidingExpiration = options.CacheSlidingExpiration;
 
-                using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+                using var memoryStream = CreateAndCompileToStream(content, options);
                 var assemblyBytes = memoryStream.ToArray();
                 var templateType = Penetrates.LoadTemplateType(assemblyBytes);
 
@@ -426,7 +435,7 @@ public class ViewEngine : IViewEngine
         }
         else
         {
-            using var memoryStream = CreateAndCompileToStream(content, compilationOptionsBuilder.Options);
+            using var memoryStream = CreateAndCompileToStream(content, options);
             var assemblyBytes = memoryStream.ToArray();
             var templateType = Penetrates.LoadTemplateType(assemblyBytes);
 
@@ -444,7 +453,7 @@ public class ViewEngine : IViewEngine
     /// <param name="builderAction"></param>
     /// <param name="cacheFileName"></param>
     /// <returns></returns>
-    public async Task<IViewEngineTemplate<T>> CompileFromCachedAsync<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null, string cacheFileName = default)
+    public async Task<IViewEngineTemplate<T>> CompileFromCachedAsync<T>(string content, Action<IViewEngineCompileOptions> builderAction = null, string cacheFileName = default)
         where T : IViewEngineModel
     {
         var fileName = cacheFileName ?? GenerateCacheKey(content, BuildOptionsForCacheKey(builderAction, typeof(T)));
@@ -472,7 +481,7 @@ public class ViewEngine : IViewEngine
     /// <param name="content"></param>
     /// <param name="builderAction"></param>
     /// <returns></returns>
-    public async Task<IViewEngineTemplate<T>> CompileAsync<T>(string content, Action<IViewEngineOptionsBuilder> builderAction = null)
+    public async Task<IViewEngineTemplate<T>> CompileAsync<T>(string content, Action<IViewEngineCompileOptions> builderAction = null)
         where T : IViewEngineModel
     {
         return await Task.Run(() => Compile<T>(content, builderAction));
@@ -499,22 +508,22 @@ public class ViewEngine : IViewEngine
     /// <summary>
     /// 构建用于缓存键生成的选项
     /// </summary>
-    private static ViewEngineOptions BuildOptionsForCacheKey(Action<IViewEngineOptionsBuilder> builderAction, Type modelType = null)
+    private ViewEngineOptions BuildOptionsForCacheKey(Action<IViewEngineCompileOptions> builderAction, Type modelType = null)
     {
-        var builder = new ViewEngineOptionsBuilder();
+        var compileOptions = new ViewEngineCompileOptions(_globalOptions);
 
         if (modelType != null)
         {
-            builder.AddAssemblyReference(modelType);
-            builder.Inherits(modelType);
+            compileOptions.AddAssemblyReference(modelType);
+            compileOptions.Inherits(modelType);
         }
         else
         {
-            builder.Inherits(typeof(ViewEngineModel));
+            compileOptions.Inherits(typeof(ViewEngineModel));
         }
 
-        builderAction?.Invoke(builder);
-        return builder.Options;
+        builderAction?.Invoke(compileOptions);
+        return compileOptions.GetOptions();
     }
 
     /// <summary>
@@ -524,7 +533,7 @@ public class ViewEngine : IViewEngine
     /// <param name="templateSource"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    protected virtual MemoryStream CreateAndCompileToStream(string templateSource, ViewEngineOptions options)
+    internal static MemoryStream CreateAndCompileToStream(string templateSource, ViewEngineOptions options)
     {
         templateSource = WriteDirectives(templateSource, options);
 
@@ -532,7 +541,7 @@ public class ViewEngine : IViewEngine
         var engine = _razorEngineCache.GetOrCreate(engineKey, entry =>
         {
             entry.Size = 1;
-            entry.SlidingExpiration = _cacheSlidingExpiration;
+            entry.SlidingExpiration = options.CacheSlidingExpiration;
 
             return RazorProjectEngine.Create(
                 RazorConfiguration.Default,
@@ -628,7 +637,7 @@ public class ViewEngine : IViewEngine
     /// <param name="content"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    protected virtual string WriteDirectives(string content, ViewEngineOptions options)
+    internal static string WriteDirectives(string content, ViewEngineOptions options)
     {
         var stringBuilder = new StringBuilder();
         stringBuilder.AppendLine($"@inherits {options.Inherits}");

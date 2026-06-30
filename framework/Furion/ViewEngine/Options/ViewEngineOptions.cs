@@ -56,17 +56,36 @@ public class ViewEngineOptions
             Reflect.GetAssembly("System.Collections"),
             Reflect.GetAssembly("netstandard"),
         };
+
+        CacheSlidingExpiration = TimeSpan.FromHours(8);
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="other"></param>
+    internal ViewEngineOptions(ViewEngineOptions other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+
+        ReferencedAssemblies = new HashSet<Assembly>(other.ReferencedAssemblies, new AssemblyEqualityComparer());
+        MetadataReferences = new(other.MetadataReferences);
+        TemplateNamespace = other.TemplateNamespace;
+        Inherits = other.Inherits;
+        DefaultUsings = new(other.DefaultUsings);
+        CodeContextLines = other.CodeContextLines;
+        CacheSlidingExpiration = other.CacheSlidingExpiration;
     }
 
     /// <summary>
     /// 引用程序集
     /// </summary>
-    public HashSet<Assembly> ReferencedAssemblies { get; set; }
+    public HashSet<Assembly> ReferencedAssemblies { get; }
 
     /// <summary>
     /// 元数据引用
     /// </summary>
-    public HashSet<MetadataReference> MetadataReferences { get; set; } = [];
+    public HashSet<MetadataReference> MetadataReferences { get; } = [];
 
     /// <summary>
     /// 模板命名空间
@@ -81,7 +100,7 @@ public class ViewEngineOptions
     /// <summary>
     /// 默认 Using
     /// </summary>
-    public HashSet<string> DefaultUsings { get; set; } =
+    public HashSet<string> DefaultUsings { get; } =
     [
         "System",
         "System.Linq",
@@ -98,6 +117,12 @@ public class ViewEngineOptions
     /// 编译错误时显示代码上下文的行数
     /// </summary>
     public int CodeContextLines { get; set; } = 3;
+
+    /// <summary>
+    /// 缓存滑动过期时间
+    /// </summary>
+    /// <remarks>默认 8 小时</remarks>
+    public TimeSpan CacheSlidingExpiration { get; set; }
 }
 
 /// <summary>
