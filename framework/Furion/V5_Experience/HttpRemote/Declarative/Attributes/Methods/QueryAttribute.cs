@@ -26,25 +26,18 @@
 namespace Furion.HttpRemote;
 
 /// <summary>
-///     HTTP 声明式请求原始字符串内容特性
+///     HTTP 声明式 QUERY 请求方式特性
 /// </summary>
-[AttributeUsage(AttributeTargets.Parameter)]
-public sealed class RawStringBodyAttribute : BodyAttribute
+/// <remarks>参考文献：https://www.rfc-editor.org/info/rfc10008/</remarks>
+[AttributeUsage(AttributeTargets.Method)]
+public sealed class QueryAttribute : HttpMethodAttribute
 {
     /// <summary>
-    ///     <inheritdoc cref="RawStringBodyAttribute" />
+    ///     <inheritdoc cref="QueryAttribute" />
     /// </summary>
-    /// <param name="contentType">内容类型</param>
-    public RawStringBodyAttribute(string contentType)
-        : base(contentType) =>
-        RawString = true;
-
-    /// <summary>
-    ///     <inheritdoc cref="RawStringBodyAttribute" />
-    /// </summary>
-    /// <param name="contentType">内容类型</param>
-    /// <param name="contentEncoding">内容编码</param>
-    public RawStringBodyAttribute(string contentType, string contentEncoding)
-        : base(contentType, contentEncoding) =>
-        RawString = true;
+    /// <param name="requestUri">请求地址</param>
+    public QueryAttribute(string? requestUri = null)
+        : base(Helpers.HttpQuery, requestUri)
+    {
+    }
 }
