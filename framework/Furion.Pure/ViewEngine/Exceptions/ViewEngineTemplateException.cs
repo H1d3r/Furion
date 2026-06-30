@@ -78,8 +78,24 @@ public class ViewEngineTemplateException : ViewEngineException
             if (_cachedMessage != null) return _cachedMessage;
 
             var sb = new StringBuilder("Unable to compile template:");
+            var errors = Errors?.Where(e => e.Severity == DiagnosticSeverity.Error || e.IsWarningAsError)
+                                  .OrderBy(e => e.Location.GetLineSpan().StartLinePosition.Line)   // 按行号排序
+                                  .ToList();
 
-            foreach (var error in Errors?.Where(e => e.Severity == DiagnosticSeverity.Error || e.IsWarningAsError) ?? [])
+            if (errors == null || errors.Count == 0)
+            {
+                sb.AppendLine().Append("  No errors available.");
+                return _cachedMessage = sb.ToString();
+            }
+
+            var lines = !string.IsNullOrEmpty(GeneratedCode)
+                ? GeneratedCode.Split(["\r\n", "\r", "\n"], StringSplitOptions.None)
+                : null;
+
+            var lastContextStart = -1;
+            var lastContextEnd = -1;
+
+            foreach (var error in errors)
             {
                 var loc = error.Location.GetLineSpan();
                 var line = loc.StartLinePosition.Line + 1;
@@ -87,12 +103,15 @@ public class ViewEngineTemplateException : ViewEngineException
 
                 sb.AppendLine().AppendFormat("  [{0}] ({1},{2}): {3}", error.Id, line, col, error.GetMessage());
 
-                // 显示错误行上下文（上下各 ContextLines 行）
-                if (!string.IsNullOrEmpty(GeneratedCode))
+                // 显示错误代码上下文（上下各 ContextLines 行）
+                if (lines != null)
                 {
-                    var lines = GeneratedCode.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
                     var start = Math.Max(0, line - 1 - ContextLines);
                     var end = Math.Min(lines.Length - 1, line - 1 + ContextLines);
+
+                    if (start == lastContextStart && end == lastContextEnd)
+                        continue;
+
                     var pad = end.ToString().Length;
 
                     sb.AppendLine().AppendLine("  Code Context:");
@@ -104,6 +123,9 @@ public class ViewEngineTemplateException : ViewEngineException
                         if (code.Length > 120) code = code[..120] + "...";
                         sb.AppendFormat("{0}{1} | {2}{3}", marker, ln.ToString().PadLeft(pad), code, Environment.NewLine);
                     }
+
+                    lastContextStart = start;
+                    lastContextEnd = end;
                 }
             }
 

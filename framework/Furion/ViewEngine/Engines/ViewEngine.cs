@@ -46,7 +46,7 @@ internal sealed class ViewEngine : IViewEngine
     /// <summary>
     /// Razor 引擎缓存
     /// </summary>
-    private static readonly MemoryCache _razorEngineCache = new(new MemoryCacheOptions
+    private readonly MemoryCache _razorEngineCache = new(new MemoryCacheOptions
     {
         SizeLimit = 100 // 缓存最大条目数
     });
@@ -54,7 +54,7 @@ internal sealed class ViewEngine : IViewEngine
     /// <summary>
     /// 编译结果缓存
     /// </summary>
-    private static readonly MemoryCache _compilationCache = new(new MemoryCacheOptions
+    private readonly MemoryCache _compilationCache = new(new MemoryCacheOptions
     {
         SizeLimit = 500 // 缓存最大条目数
     });
@@ -62,12 +62,12 @@ internal sealed class ViewEngine : IViewEngine
     /// <summary>
     /// 缓存是否启用
     /// </summary>
-    private static readonly bool _enableCache = Environment.GetEnvironmentVariable("FURION_VIEWENGINE_CACHE") != "false";
+    private readonly bool _enableCache = Environment.GetEnvironmentVariable("FURION_VIEWENGINE_CACHE") != "false";
 
     /// <summary>
     /// 元数据引用缓存
     /// </summary>
-    private static readonly ConcurrentDictionary<string, MetadataReference> _metadataReferenceCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, MetadataReference> _metadataReferenceCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// 编译缓存条目
@@ -533,7 +533,7 @@ internal sealed class ViewEngine : IViewEngine
     /// <param name="templateSource"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    internal static MemoryStream CreateAndCompileToStream(string templateSource, ViewEngineOptions options)
+    internal MemoryStream CreateAndCompileToStream(string templateSource, ViewEngineOptions options)
     {
         templateSource = WriteDirectives(templateSource, options);
 
