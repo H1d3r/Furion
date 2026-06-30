@@ -439,8 +439,7 @@ public static class App
         using var memoryStream = CompileCSharpClassCodeToStream(csharpCode, assemblyName, additionalAssemblies);
 
         var alc = new AssemblyLoadContext("Furion.DynamicCompile", isCollectible: true);
-        using var ms = new MemoryStream(memoryStream.ToArray());
-        return alc.LoadFromStream(ms);
+        return alc.LoadFromStream(memoryStream);
     }
 
     /// <summary>
@@ -460,7 +459,6 @@ public static class App
 
         // 编译代码
         using var memoryStream = CompileCSharpClassCodeToStream(csharpCode, assName, additionalAssemblies);
-        var bytes = memoryStream.ToArray();
 
         // 保存到 dll 文件
         using (var fileStream = new FileStream(
@@ -471,13 +469,13 @@ public static class App
             bufferSize: 8192,
             useAsync: false))
         {
-            fileStream.Write(bytes, 0, bytes.Length);
-            fileStream.Flush();
+            memoryStream.CopyTo(fileStream);
         }
 
+        memoryStream.Position = 0;
+
         var alc = new AssemblyLoadContext("Furion.DynamicCompile", isCollectible: true);
-        using var ms = new MemoryStream(bytes);
-        return alc.LoadFromStream(ms);
+        return alc.LoadFromStream(memoryStream);
     }
 
     /// <summary>
@@ -497,23 +495,23 @@ public static class App
 
         // 编译代码
         using var memoryStream = CompileCSharpClassCodeToStream(csharpCode, assName, additionalAssemblies);
-        var bytes = memoryStream.ToArray();
 
         // 保存到 dll 文件
-        await using var fileStream = new FileStream(
+        await using (var fileStream = new FileStream(
               path: dllPath,
               mode: FileMode.Create,
               access: FileAccess.Write,
               share: FileShare.Read,
               bufferSize: 8192,
-              useAsync: true);
+            useAsync: true))
+        {
+            await memoryStream.CopyToAsync(fileStream);
+        }
 
-        await fileStream.WriteAsync(bytes);
-        await fileStream.FlushAsync();
+        memoryStream.Position = 0;
 
         var alc = new AssemblyLoadContext("Furion.DynamicCompile", isCollectible: true);
-        using var ms = new MemoryStream(bytes);
-        return alc.LoadFromStream(ms);
+        return alc.LoadFromStream(memoryStream);
     }
 
     /// <summary>
