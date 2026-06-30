@@ -23,43 +23,49 @@
 // 请访问 https://gitee.com/dotnetchina/Furion 获取更多关于 Furion 项目的许可证和版权信息。
 // ------------------------------------------------------------------------
 
-using Furion.ViewEngine;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.CodeAnalysis;
+using System.Reflection;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace Furion.ViewEngine;
 
 /// <summary>
-/// 视图引擎服务扩展类
+/// 视图编译构建器接口
 /// </summary>
-public static class ViewEngineServiceCollectionExtensions
+public interface IViewEngineCompileOptions
 {
     /// <summary>
-    /// 添加视图引擎
+    /// 添加程序集引用
     /// </summary>
-    /// <param name="services"></param>
-    /// <returns></returns>
-    public static IServiceCollection AddViewEngine(this IServiceCollection services)
-    {
-        services.TryAddSingleton(new ViewEngineOptions());
-        services.TryAddSingleton<IViewEngine, ViewEngine>();
-
-        return services;
-    }
+    /// <param name="assemblyName"></param>
+    void AddAssemblyReferenceByName(string assemblyName);
 
     /// <summary>
-    /// 添加视图引擎
+    /// 添加程序集引用
     /// </summary>
-    /// <param name="services"></param>
-    /// <param name="configure">自定义配置委托</param>
-    /// <returns></returns>
-    public static IServiceCollection AddViewEngine(this IServiceCollection services, Action<ViewEngineOptions> configure)
-    {
-        var options = new ViewEngineOptions();
-        configure?.Invoke(options);
+    /// <param name="assembly"></param>
+    void AddAssemblyReference(Assembly assembly);
 
-        services.TryAddSingleton(options);
-        services.TryAddSingleton<IViewEngine, ViewEngine>();
+    /// <summary>
+    /// 添加程序集引用
+    /// </summary>
+    /// <param name="type"></param>
+    void AddAssemblyReference(Type type);
 
-        return services;
-    }
+    /// <summary>
+    /// 添加元数据引用
+    /// </summary>
+    /// <param name="reference"></param>
+    void AddMetadataReference(MetadataReference reference);
+
+    /// <summary>
+    /// 添加 Using
+    /// </summary>
+    /// <param name="namespaceName"></param>
+    void AddUsing(string namespaceName);
+
+    /// <summary>
+    /// 添加继承类型
+    /// </summary>
+    /// <param name="type"></param>
+    void Inherits(Type type);
 }

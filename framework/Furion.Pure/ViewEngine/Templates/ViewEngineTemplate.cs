@@ -48,11 +48,27 @@ public class ViewEngineTemplate : IViewEngineTemplate
     private bool _disposed;
 
     /// <summary>
+    /// 缓存文件路径
+    /// </summary>
+    private readonly string? _cacheFilePath;
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="assemblyBytes">程序集字节数组</param>
     /// <param name="templateType">模板类型</param>
     internal ViewEngineTemplate(byte[] assemblyBytes, Type templateType)
+        : this(assemblyBytes, templateType, null)
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="assemblyBytes">程序集字节数组</param>
+    /// <param name="templateType">模板类型</param>
+    /// <param name="cacheFilePath">缓存文件路径</param>
+    internal ViewEngineTemplate(byte[] assemblyBytes, Type templateType, string? cacheFilePath)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(assemblyBytes);
@@ -60,6 +76,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
 
         _assemblyBytes = assemblyBytes;
         _templateType = templateType;
+        _cacheFilePath = cacheFilePath;
     }
 
     /// <summary>
@@ -120,11 +137,18 @@ public class ViewEngineTemplate : IViewEngineTemplate
             model = new AnonymousTypeWrapper(model);
         }
 
-        var instance = (IViewEngineModel)Activator.CreateInstance(_templateType);
-        instance.Model = model;
+        try
+        {
+            var instance = (IViewEngineModel)Activator.CreateInstance(_templateType);
+            instance.Model = model;
 
-        instance.Execute();
-        return instance.Result();
+            instance.Execute();
+            return instance.Result();
+        }
+        catch (InvalidCastException ex)
+        {
+            throw GetCacheMismatchException(ex);
+        }
     }
 
     /// <summary>
@@ -141,11 +165,18 @@ public class ViewEngineTemplate : IViewEngineTemplate
             model = new AnonymousTypeWrapper(model);
         }
 
-        var instance = (IViewEngineModel)Activator.CreateInstance(_templateType);
-        instance.Model = model;
+        try
+        {
+            var instance = (IViewEngineModel)Activator.CreateInstance(_templateType);
+            instance.Model = model;
 
-        await instance.ExecuteAsync();
-        return await instance.ResultAsync();
+            await instance.ExecuteAsync();
+            return await instance.ResultAsync();
+        }
+        catch (InvalidCastException ex)
+        {
+            throw GetCacheMismatchException(ex);
+        }
     }
 
     /// <summary>
@@ -157,7 +188,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     {
         var bytes = File.ReadAllBytes(fullName);
         var type = Penetrates.LoadTemplateType(bytes);
-        return new ViewEngineTemplate(bytes, type);
+        return new ViewEngineTemplate(bytes, type, fullName);
     }
 
     /// <summary>
@@ -169,7 +200,7 @@ public class ViewEngineTemplate : IViewEngineTemplate
     {
         var bytes = await File.ReadAllBytesAsync(fullName);
         var type = Penetrates.LoadTemplateType(bytes);
-        return new ViewEngineTemplate(bytes, type);
+        return new ViewEngineTemplate(bytes, type, fullName);
     }
 
     /// <summary>
@@ -205,6 +236,21 @@ public class ViewEngineTemplate : IViewEngineTemplate
     {
         _disposed = true;
     }
+
+    /// <summary>
+    /// 生成缓存不匹配异常
+    /// </summary>
+    /// <returns></returns>
+    private Exception GetCacheMismatchException(InvalidCastException ex)
+    {
+        if (_cacheFilePath != null)
+        {
+            return new InvalidOperationException(
+                $"Failed to cast template type. The cached file may be incompatible with the current model. " +
+                $"Please delete the cache file and try again. File path: `{_cacheFilePath}`.", ex);
+        }
+        return ex;
+    }
 }
 
 /// <summary>
@@ -230,11 +276,27 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     private bool _disposed;
 
     /// <summary>
+    /// 缓存文件路径
+    /// </summary>
+    private readonly string? _cacheFilePath;
+
+    /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="assemblyBytes">程序集字节数组</param>
     /// <param name="templateType">模板类型</param>
     internal ViewEngineTemplate(byte[] assemblyBytes, Type templateType)
+        : this(assemblyBytes, templateType, null)
+    {
+    }
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="assemblyBytes">程序集字节数组</param>
+    /// <param name="templateType">模板类型</param>
+    /// <param name="cacheFilePath">缓存文件路径</param>
+    internal ViewEngineTemplate(byte[] assemblyBytes, Type templateType, string? cacheFilePath)
     {
         // 空检查
         ArgumentNullException.ThrowIfNull(assemblyBytes);
@@ -242,6 +304,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
 
         _assemblyBytes = assemblyBytes;
         _templateType = templateType;
+        _cacheFilePath = cacheFilePath;
     }
 
     /// <summary>
@@ -297,11 +360,18 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
 
-        var instance = (T)Activator.CreateInstance(_templateType);
-        initializer(instance);
+        try
+        {
+            var instance = (T)Activator.CreateInstance(_templateType);
+            initializer(instance);
 
-        instance.Execute();
-        return instance.Result();
+            instance.Execute();
+            return instance.Result();
+        }
+        catch (InvalidCastException ex)
+        {
+            throw GetCacheMismatchException(ex);
+        }
     }
 
     /// <summary>
@@ -313,11 +383,18 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         if (_disposed) throw new ObjectDisposedException(nameof(ViewEngineTemplate<T>));
 
-        var instance = (T)Activator.CreateInstance(_templateType);
-        initializer(instance);
+        try
+        {
+            var instance = (T)Activator.CreateInstance(_templateType);
+            initializer(instance);
 
-        await instance.ExecuteAsync();
-        return await instance.ResultAsync();
+            await instance.ExecuteAsync();
+            return await instance.ResultAsync();
+        }
+        catch (InvalidCastException ex)
+        {
+            throw GetCacheMismatchException(ex);
+        }
     }
 
     /// <summary>
@@ -329,7 +406,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         var bytes = File.ReadAllBytes(fullName);
         var type = Penetrates.LoadTemplateType(bytes);
-        return new ViewEngineTemplate<T>(bytes, type);
+        return new ViewEngineTemplate<T>(bytes, type, fullName);
     }
 
     /// <summary>
@@ -341,7 +418,7 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     {
         var bytes = await File.ReadAllBytesAsync(fullName);
         var type = Penetrates.LoadTemplateType(bytes);
-        return new ViewEngineTemplate<T>(bytes, type);
+        return new ViewEngineTemplate<T>(bytes, type, fullName);
     }
 
     /// <summary>
@@ -376,5 +453,20 @@ public class ViewEngineTemplate<T> : IViewEngineTemplate<T>
     public void Dispose()
     {
         _disposed = true;
+    }
+
+    /// <summary>
+    /// 生成缓存不匹配异常
+    /// </summary>
+    /// <returns></returns>
+    private Exception GetCacheMismatchException(InvalidCastException ex)
+    {
+        if (_cacheFilePath != null)
+        {
+            return new InvalidOperationException(
+                $"Failed to cast template type. The cached file may be incompatible with the current model. " +
+                $"Please delete the cache file and try again. File path: `{_cacheFilePath}`.", ex);
+        }
+        return ex;
     }
 }

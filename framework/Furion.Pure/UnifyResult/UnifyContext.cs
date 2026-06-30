@@ -141,7 +141,26 @@ public static class UnifyContext
             else
             {
                 var friendlyExceptionSettings = App.GetOptions<FriendlyExceptionSettingsOptions>();
-                errors = exception?.InnerException?.Message ?? exception?.Message ?? friendlyExceptionSettings.DefaultErrorMessage;
+
+                var outerMessage = exception?.Message;
+                var innerMessage = exception?.InnerException?.Message;
+
+                if (!string.IsNullOrEmpty(outerMessage) && !string.IsNullOrEmpty(innerMessage))
+                {
+                    errors = $"{outerMessage}\r\n\t---> {innerMessage}";
+                }
+                else if (!string.IsNullOrEmpty(outerMessage))
+                {
+                    errors = outerMessage;
+                }
+                else if (!string.IsNullOrEmpty(innerMessage))
+                {
+                    errors = innerMessage;
+                }
+                else
+                {
+                    errors = friendlyExceptionSettings.DefaultErrorMessage;
+                }
             }
         }
 

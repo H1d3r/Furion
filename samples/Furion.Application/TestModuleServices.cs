@@ -9,6 +9,7 @@ using Furion.ViewEngine;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MyApp.Helpers;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Swagger;
 using System.ComponentModel;
@@ -197,10 +198,7 @@ public class TestModuleServices(IViewEngine viewEngine) : IDynamicApiController
      @GetResult()
      """;
 
-        var str = await viewEngine.RunCompileFromCachedAsync(template, null, builder =>
-        {
-            builder.Options.CodeContextLines = 5;
-        });
+        var str = await viewEngine.RunCompileFromCachedAsync(template, null);
 
         return str;
     }
@@ -766,6 +764,59 @@ public class TestModuleServices(IViewEngine viewEngine) : IDynamicApiController
     public void 测试规范化额外数据()
     {
         UnifyContext.Fill(new { id = 1 });
+    }
+
+    public string 测试模板Linq()
+    {
+        var content = @"
+@{
+    var numbers = new List<int> { 5, 12, 3, 8, 15 };
+    var grouped = numbers.GroupBy(n => n % 2 == 0 ? ""Even"" : ""Odd"");
+}
+
+@foreach(var group in grouped)
+{
+    <h3>@group.Key Numbers</h3>
+    <ul>
+    @foreach(var num in group.OrderByDescending(n => n))
+    {
+        <li>@num</li>
+    }
+    </ul>
+}
+";
+
+        var result = viewEngine.RunCompileFromCached(content);
+
+        return result;
+    }
+
+    public string 测试模板自定义拓展方法()
+    {
+        var result = viewEngine.RunCompileFromCached(@"<p>@Model.Description.Truncate(50)</p>", new DescModel { Description = "这是一个很长的描述，需要截断显示。" },
+            builder =>
+            {
+                builder.AddAssemblyReference(typeof(MyApp.Helpers.StringExtensions).Assembly);
+                builder.AddUsing("MyApp.Helpers");
+            });
+
+        return result;
+    }
+
+    public string 测试模板组合与复用()
+    {
+var headerTemplate = viewEngine.RunCompileFromCached("<header>@Model.Title</header>", new { Title = "Furion" });
+var footerTemplate = viewEngine.RunCompileFromCached("<footer>@Model.Year</footer>", new { Year = DateTime.Now.Year });
+
+var pageTemplate = viewEngine.RunCompile(@"<body>@Model.Header @Model.Body @Model.Footer</body>",
+    new
+    {
+        Header = headerTemplate,
+        Body = "<p>Main Content</p>",
+        Footer = footerTemplate
+    });
+
+        return pageTemplate;
     }
 }
 
